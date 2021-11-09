@@ -4,12 +4,18 @@ resource "aws_dynamodb_table" "processesapi_dynamodb_table" {
   read_capacity  = 10
   write_capacity = 10
   hash_key       = "id"
+  range_key       = "processName"
 
   attribute {
     name = "id"
     type = "S"
   }
 
+  attribute {
+    name = "processName"
+    type = "S"
+  }
+  
   tags = merge(
     local.default_tags,
     { BackupPolicy = "Prod" }
