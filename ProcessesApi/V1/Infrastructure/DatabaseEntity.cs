@@ -14,6 +14,10 @@ namespace ProcessesApi.V1.Infrastructure
         [DynamoDBHashKey]
         public int Id { get; set; }
 
+        [DynamoDBRangeKey]
+        public int TargetId { get; set; }
+
+
         [DynamoDBProperty(Converter = typeof(DynamoDbDateTimeConverter))]
         public DateTime CreatedAt { get; set; }
     }
