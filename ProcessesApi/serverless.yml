@@ -86,12 +86,6 @@ resources:
                           - Ref: 'AWS::Region'
                           - Ref: 'AWS::AccountId'
                           - 'table/Processes'
-                    - 'Fn::Join':
-                        - ':'
-                        - - 'arn:aws:dynamodb'
-                          - Ref: 'AWS::Region'
-                          - Ref: 'AWS::AccountId'
-                          - 'table/Processes/index/*'
           - PolicyName: manageLogs
             PolicyDocument:
               Version: '2012-10-17'
