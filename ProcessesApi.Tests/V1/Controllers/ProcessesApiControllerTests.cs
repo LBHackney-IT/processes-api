@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace ProcessesApi.Tests.V1.Controllers
 {
+    [Collection("LogCall collection")]
     public class ProcessesApiControllerTests
     {
         private ProcessesApiController _classUnderTest;

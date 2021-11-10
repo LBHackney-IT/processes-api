@@ -5,6 +5,7 @@ using Xunit;
 
 namespace ProcessesApi.Tests.V1.UseCase
 {
+    [Collection("LogCall collection")]
     public class GetByIdUseCaseTests
     {
         private Mock<IExampleDynamoGateway> _mockGateway;
