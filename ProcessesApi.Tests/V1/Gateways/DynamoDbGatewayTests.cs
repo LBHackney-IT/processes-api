@@ -17,7 +17,7 @@ namespace ProcessesApi.Tests.V1.Gateways
     [Collection("DynamoDb collection")]
     public class DynamoDbGatewayTests : IDisposable
     {
-        private readonly Fixture _fixture = new Fixture();
+        // private readonly Fixture _fixture = new Fixture();
         private readonly IDynamoDBContext _dynamoDb;
         private DynamoDbGateway _classUnderTest;
         private readonly List<Action> _cleanup = new List<Action>();

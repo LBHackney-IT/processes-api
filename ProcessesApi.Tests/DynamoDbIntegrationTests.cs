@@ -1,6 +1,5 @@
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
-using Amazon.DynamoDBv2.Model;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -8,21 +7,22 @@ using Xunit;
 
 namespace ProcessesApi.Tests
 {
-    public class DynamoDbIntegrationTests<TStartup> : IDisposable where TStartup : class
+    public class DynamoDbIntegrationTests<TStartup> where TStartup : class
     {
         public HttpClient Client { get; private set; }
         public IDynamoDBContext DynamoDbContext => _factory?.DynamoDbContext;
-
-        public static string[] PatchByParentId { get; private set; }
 
         private readonly DynamoDbMockWebApplicationFactory<TStartup> _factory;
 
         private readonly List<TableDef> _tables = new List<TableDef>
         {
-            new TableDef {
+            new TableDef
+            {
                 Name = "Processes",
                 KeyName = "id",
-                KeyType = ScalarAttributeType.S
+                KeyType = ScalarAttributeType.S,
+                RangeKeyName = "targetId",
+                RangeKeyType = ScalarAttributeType.S,
             }
         };
 
@@ -30,16 +30,13 @@ namespace ProcessesApi.Tests
         {
             EnsureEnvVarConfigured("DynamoDb_LocalMode", "true");
             EnsureEnvVarConfigured("DynamoDb_LocalServiceUrl", "http://localhost:8000");
-
             _factory = new DynamoDbMockWebApplicationFactory<TStartup>(_tables);
-
             Client = _factory.CreateClient();
         }
 
         public void Dispose()
         {
             Dispose(true);
-            GC.SuppressFinalize(this);
         }
 
         private bool _disposed;
@@ -47,7 +44,6 @@ namespace ProcessesApi.Tests
         {
             if (disposing && !_disposed)
             {
-
                 if (null != _factory)
                     _factory.Dispose();
                 _disposed = true;
@@ -68,13 +64,12 @@ namespace ProcessesApi.Tests
         public string Name { get; set; }
         public string KeyName { get; set; }
         public ScalarAttributeType KeyType { get; set; }
-        public List<GlobalSecondaryIndex> GlobalSecondaryIndexes { get; set; } = new List<GlobalSecondaryIndex>();
-
+        public string RangeKeyName { get; set; }
+        public ScalarAttributeType RangeKeyType { get; set; }
     }
 
-
     [CollectionDefinition("DynamoDb collection", DisableParallelization = true)]
-    public class AwsCollection : ICollectionFixture<DynamoDbIntegrationTests<Startup>>
+    public class DynamoDbCollection : ICollectionFixture<DynamoDbIntegrationTests<Startup>>
     {
         // This class has no code, and is never created. Its purpose is simply
         // to be the place to apply [CollectionDefinition] and all the
