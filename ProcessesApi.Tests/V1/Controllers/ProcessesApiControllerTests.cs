@@ -16,14 +16,12 @@ namespace ProcessesApi.Tests.V1.Controllers
     {
         private ProcessesApiController _classUnderTest;
         private Mock<IGetByIdUseCase> _mockGetByIdUseCase;
-        private Mock<IGetAllUseCase> _mockGetByAllUseCase;
 
         [SetUp]
         public void SetUp()
         {
             _mockGetByIdUseCase = new Mock<IGetByIdUseCase>();
-            _mockGetByAllUseCase = new Mock<IGetAllUseCase>();
-            _classUnderTest = new ProcessesApiController(_mockGetByAllUseCase.Object, _mockGetByIdUseCase.Object);
+            _classUnderTest = new ProcessesApiController(_mockGetByIdUseCase.Object);
         }
 
 

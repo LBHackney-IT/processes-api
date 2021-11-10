@@ -15,29 +15,12 @@ namespace ProcessesApi.V1.Controllers
     //TODO: rename class to match the API name
     public class ProcessesApiController : BaseController
     {
-        private readonly IGetAllUseCase _getAllUseCase;
         private readonly IGetByIdUseCase _getByIdUseCase;
-        public ProcessesApiController(IGetAllUseCase getAllUseCase, IGetByIdUseCase getByIdUseCase)
+        public ProcessesApiController(IGetByIdUseCase getByIdUseCase)
         {
-            _getAllUseCase = getAllUseCase;
             _getByIdUseCase = getByIdUseCase;
         }
-
-        //TODO: add xml comments containing information that will be included in the auto generated swagger docs (https://github.com/LBHackney-IT/lbh-processes-api/wiki/Controllers-and-Response-Objects)
-        /// <summary>
-        /// ...
-        /// </summary>
-        /// <response code="200">...</response>
-        /// <response code="400">Invalid Query Parameter.</response>
-        [ProducesResponseType(typeof(ResponseObjectList), StatusCodes.Status200OK)]
-        [HttpGet]
-        [LogCall(LogLevel.Information)]
-
-        public IActionResult ListContacts()
-        {
-            return Ok(_getAllUseCase.Execute());
-        }
-
+        
         /// <summary>
         /// ...
         /// </summary>

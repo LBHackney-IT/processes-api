@@ -131,16 +131,6 @@ namespace ProcessesApi
             RegisterUseCases(services);
         }
 
-        private static void ConfigureDbContext(IServiceCollection services)
-        {
-            var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
-
-            services.AddDbContext<DatabaseContext>(
-                opt => opt.UseNpgsql(connectionString).AddXRayInterceptor(true));
-        }
-
-
-
         private static void RegisterGateways(IServiceCollection services)
         {
             services.AddScoped<IExampleDynamoGateway, DynamoDbGateway>();
@@ -148,7 +138,6 @@ namespace ProcessesApi
 
         private static void RegisterUseCases(IServiceCollection services)
         {
-            services.AddScoped<IGetAllUseCase, GetAllUseCase>();
             services.AddScoped<IGetByIdUseCase, GetByIdUseCase>();
         }
 
