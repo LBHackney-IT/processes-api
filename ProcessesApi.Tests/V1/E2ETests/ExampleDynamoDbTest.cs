@@ -6,7 +6,7 @@ using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure;
 using FluentAssertions;
 using Newtonsoft.Json;
-using NUnit.Framework;
+using Xunit;
 using System;
 using System.Net;
 using System.Threading.Tasks;

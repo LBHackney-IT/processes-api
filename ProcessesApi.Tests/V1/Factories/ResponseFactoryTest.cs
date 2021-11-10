@@ -1,6 +1,6 @@
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
-using NUnit.Framework;
+using Xunit;
 
 namespace ProcessesApi.Tests.V1.Factories
 {
@@ -8,7 +8,7 @@ namespace ProcessesApi.Tests.V1.Factories
     {
         //TODO: add assertions for all the fields being mapped in `ResponseFactory.ToResponse()`. Also be sure to add test cases for
         // any edge cases that might exist.
-        [Test]
+        [Fact]
         public void CanMapADatabaseEntityToADomainObject()
         {
             var domain = new Entity();

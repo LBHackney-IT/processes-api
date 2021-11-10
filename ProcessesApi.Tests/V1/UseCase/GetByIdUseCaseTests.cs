@@ -1,19 +1,18 @@
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.UseCase;
 using Moq;
-using NUnit.Framework;
+using Xunit;
 
 namespace ProcessesApi.Tests.V1.UseCase
 {
-    public class GetByIdUseCaseTests : LogCallAspectFixture
+    public class GetByIdUseCaseTests
     {
-        private Mock<IExampleGateway> _mockGateway;
+        private Mock<IExampleDynamoGateway> _mockGateway;
         private GetByIdUseCase _classUnderTest;
 
-        [SetUp]
-        public void SetUp()
+        public GetByIdUseCaseTests()
         {
-            _mockGateway = new Mock<IExampleGateway>();
+            _mockGateway = new Mock<IExampleDynamoGateway>();
             _classUnderTest = new GetByIdUseCase(_mockGateway.Object);
         }
 

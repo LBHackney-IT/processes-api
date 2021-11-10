@@ -4,6 +4,7 @@ using Hackney.Core.Logging;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.Controllers
 {
@@ -20,7 +21,7 @@ namespace ProcessesApi.V1.Controllers
         {
             _getByIdUseCase = getByIdUseCase;
         }
-        
+
         /// <summary>
         /// ...
         /// </summary>
@@ -31,9 +32,9 @@ namespace ProcessesApi.V1.Controllers
         [LogCall(LogLevel.Information)]
         //TODO: rename to match the identifier that will be used
         [Route("{yourId}")]
-        public IActionResult ViewRecord(int yourId)
+        public async Task<IActionResult> ViewRecord(int yourId)
         {
-            return Ok(_getByIdUseCase.Execute(yourId));
+            return Ok(await _getByIdUseCase.Execute(yourId).ConfigureAwait(false));
         }
     }
 }

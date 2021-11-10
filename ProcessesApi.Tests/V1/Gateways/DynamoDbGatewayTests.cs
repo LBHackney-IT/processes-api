@@ -7,59 +7,52 @@ using ProcessesApi.V1.Infrastructure;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
-using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Xunit;
 
 namespace ProcessesApi.Tests.V1.Gateways
 {
-    //TODO: Rename Tests to match gateway name
-    //For instruction on how to run tests please see the wiki: https://github.com/LBHackney-IT/lbh-processes-api/wiki/Running-the-test-suite.
-    [TestFixture]
-    public class DynamoDbGatewayTests : DynamoDbIntegrationTests<Startup>
+    [Collection("DynamoDb collection")]
+    public class DynamoDbGatewayTests : IDisposable
     {
         private readonly Fixture _fixture = new Fixture();
+        private readonly IDynamoDBContext _dynamoDb;
         private DynamoDbGateway _classUnderTest;
-
+        private readonly List<Action> _cleanup = new List<Action>();
         private Mock<ILogger<DynamoDbGateway>> _logger;
-        private LogCallAspectFixture _logCallAspectFixture;
 
-        [SetUp]
-        public void Setup()
+
+        public DynamoDbGatewayTests(DynamoDbIntegrationTests<Startup> dbTestFixture)
         {
-            _logCallAspectFixture = new LogCallAspectFixture();
-            _logCallAspectFixture.RunBeforeTests();
+            _dynamoDb = dbTestFixture.DynamoDbContext;
             _logger = new Mock<ILogger<DynamoDbGateway>>();
-            _classUnderTest = new DynamoDbGateway(DynamoDbContext, _logger.Object);
+            _classUnderTest = new DynamoDbGateway(_dynamoDb, _logger.Object);
         }
 
-        [Test]
-
-        public async Task GetEntityByIdReturnsNullIfEntityDoesntExist()
+        public void Dispose()
         {
-            var response = await _classUnderTest.GetEntityById(123).ConfigureAwait(false);
-
-            response.Should().BeNull();
-            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for id parameter 123", Times.Once());
-
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
-        [Test]
-        public async Task VerifiesGatewayMethodsAddtoDB()
+        private bool _disposed;
+        protected virtual void Dispose(bool disposing)
         {
-            var entity = _fixture.Build<DatabaseEntity>()
-                                   .With(x => x.CreatedAt, DateTime.UtcNow).Create();
-            InsertDatatoDynamoDB(entity);
+            if (disposing && !_disposed)
+            {
+                foreach (var action in _cleanup)
+                    action();
 
-            var result = await _classUnderTest.GetEntityById(entity.Id).ConfigureAwait(false);
-            result.Should().BeEquivalentTo(entity);
-            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for id parameter {entity.Id}", Times.Once());
+                _disposed = true;
+            }
         }
 
-        private void InsertDatatoDynamoDB(DatabaseEntity entity)
+        private async Task InsertDatatoDynamoDB(DatabaseEntity entity)
         {
-            DynamoDbContext.SaveAsync<DatabaseEntity>(entity).GetAwaiter().GetResult();
-            CleanupActions.Add(async () => await DynamoDbContext.DeleteAsync(entity).ConfigureAwait(false));
+            await _dynamoDb.SaveAsync(entity).ConfigureAwait(false);
+            _cleanup.Add(async () => await _dynamoDb.DeleteAsync<DatabaseEntity>(entity).ConfigureAwait(false));
         }
     }
 }

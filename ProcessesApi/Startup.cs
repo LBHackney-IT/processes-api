@@ -30,6 +30,10 @@ using Hackney.Core.HealthCheck;
 using Hackney.Core.Middleware.CorrelationId;
 using Hackney.Core.DynamoDb.HealthCheck;
 using Hackney.Core.DynamoDb;
+using Hackney.Core.Middleware.Exception;
+using System.Text.Json.Serialization;
+using Amazon.XRay.Recorder.Core;
+using Amazon;
 
 namespace ProcessesApi
 {
@@ -50,9 +54,16 @@ namespace ProcessesApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors();
+
             services
                 .AddMvc()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                })
                 .SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+
             services.AddApiVersioning(o =>
             {
                 o.DefaultApiVersion = new ApiVersion(1, 0);
@@ -123,22 +134,28 @@ namespace ProcessesApi
 
             services.ConfigureLambdaLogging(Configuration);
 
-            services.AddLogCallAspect();
+            AWSXRayRecorder.InitializeInstance(Configuration);
+            AWSXRayRecorder.RegisterLogger(LoggingOptions.SystemDiagnostics);
 
             services.ConfigureDynamoDB();
+            services.AddLogCallAspect();
+
 
             RegisterGateways(services);
             RegisterUseCases(services);
         }
 
+
         private static void RegisterGateways(IServiceCollection services)
         {
+
             services.AddScoped<IExampleDynamoGateway, DynamoDbGateway>();
         }
 
         private static void RegisterUseCases(IServiceCollection services)
         {
             services.AddScoped<IGetByIdUseCase, GetByIdUseCase>();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -150,9 +167,6 @@ namespace ProcessesApi
                   .AllowAnyMethod()
                   .WithExposedHeaders("x-correlation-id"));
 
-            app.UseCorrelationId();
-            app.UseLoggingScope();
-            app.UseCustomExceptionHandler(logger);
 
             if (env.IsDevelopment())
             {
@@ -163,6 +177,9 @@ namespace ProcessesApi
                 app.UseHsts();
             }
 
+            app.UseCorrelationId();
+            app.UseLoggingScope();
+            app.UseCustomExceptionHandler(logger);
             app.UseXRay("processes-api");
 
 

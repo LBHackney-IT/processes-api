@@ -1,21 +1,20 @@
 using System;
 using ProcessesApi.V1.Domain;
 using FluentAssertions;
-using NUnit.Framework;
+using Xunit;
 
 namespace ProcessesApi.Tests.V1.Domain
 {
-    [TestFixture]
     public class EntityTests
     {
-        [Test]
+        [Fact]
         public void EntitiesHaveAnId()
         {
             var entity = new Entity();
             entity.Id.Should().BeGreaterOrEqualTo(0);
         }
 
-        [Test]
+        [Fact]
         public void EntitiesHaveACreatedAt()
         {
             var entity = new Entity();

@@ -42,12 +42,3 @@ terraform {
     key     = "services/processes-api/state"
   }
 }
-
-module "processes_api_cloudwatch_dashboard" {
-  source              = "github.com/LBHackney-IT/aws-hackney-common-terraform.git//modules/cloudwatch/dashboards/api-dashboard"
-  environment_name    = var.environment_name
-  api_name            = "processes-api"
-  dynamodb_table_name = aws_dynamodb_table.processesapi_dynamodb_table.name
-  include_sns_widget  = false
-}
-

@@ -4,7 +4,7 @@ resource "aws_dynamodb_table" "processesapi_dynamodb_table" {
   read_capacity  = 10
   write_capacity = 10
   hash_key       = "id"
-  range_key       = "processName"
+  range_key       = "targetId"
 
   attribute {
     name = "id"
@@ -12,7 +12,7 @@ resource "aws_dynamodb_table" "processesapi_dynamodb_table" {
   }
 
   attribute {
-    name = "processName"
+    name = "targetId"
     type = "S"
   }
   

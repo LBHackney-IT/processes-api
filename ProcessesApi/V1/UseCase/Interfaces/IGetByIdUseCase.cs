@@ -1,9 +1,10 @@
+using System.Threading.Tasks;
 using ProcessesApi.V1.Boundary.Response;
 
 namespace ProcessesApi.V1.UseCase.Interfaces
 {
     public interface IGetByIdUseCase
     {
-        ResponseObject Execute(int id);
+        Task<ResponseObject> Execute(int id);
     }
 }
