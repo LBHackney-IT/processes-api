@@ -1,19 +1,24 @@
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using Xunit;
+using FluentAssertions;
 
 namespace ProcessesApi.Tests.V1.Factories
 {
     public class ResponseFactoryTest
     {
-        //TODO: add assertions for all the fields being mapped in `ResponseFactory.ToResponse()`. Also be sure to add test cases for
-        // any edge cases that might exist.
         [Fact]
         public void CanMapADatabaseEntityToADomainObject()
         {
-            var domain = new Entity();
+            var domain = new Process();
             var response = domain.ToResponse();
-            //TODO: check here that all of the fields have been mapped correctly. i.e. response.fieldOne.Should().Be("one")
+
+            response.Id.Should().Be(domain.Id);
+            response.TargetId.Should().Be(domain.TargetId);
+            response.RelatedEntities.Should().BeEquivalentTo(domain.RelatedEntities);
+            response.ProcessName.Should().Be(domain.ProcessName);
+            response.CurrentState.Should().Be(domain.CurrentState);
+            response.PreviousStates.Should().BeEquivalentTo(domain.PreviousStates);
         }
     }
 }

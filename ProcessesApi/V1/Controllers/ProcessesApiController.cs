@@ -5,15 +5,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
+using System;
 
 namespace ProcessesApi.V1.Controllers
 {
     [ApiController]
-    //TODO: Rename to match the APIs endpoint
-    [Route("api/v1/residents")]
+    [Route("api/v1/process")]
     [Produces("application/json")]
     [ApiVersion("1.0")]
-    //TODO: rename class to match the API name
     public class ProcessesApiController : BaseController
     {
         private readonly IGetByIdUseCase _getByIdUseCase;
@@ -23,18 +22,19 @@ namespace ProcessesApi.V1.Controllers
         }
 
         /// <summary>
-        /// ...
+        /// Retrieve all details about a particular process
         /// </summary>
-        /// <response code="200">...</response>
-        /// <response code="404">No ? found for the specified ID</response>
-        [ProducesResponseType(typeof(ResponseObject), StatusCodes.Status200OK)]
+        /// <response code="200">Successfully retrieved details for a particular process</response>
+        /// <response code="404">No process found for the specified ID</response>
+        [ProducesResponseType(typeof(ProcessesResponse), StatusCodes.Status200OK)]
         [HttpGet]
         [LogCall(LogLevel.Information)]
-        //TODO: rename to match the identifier that will be used
-        [Route("{yourId}")]
-        public async Task<IActionResult> ViewRecord(int yourId)
+        [Route("{process-name}/{id}")]
+        public async Task<IActionResult> GetProcessById(Guid id)
         {
-            return Ok(await _getByIdUseCase.Execute(yourId).ConfigureAwait(false));
+            var process = await _getByIdUseCase.Execute(id).ConfigureAwait(false);
+            if (process == null) return NotFound(id);
+            return Ok(process);
         }
     }
 }

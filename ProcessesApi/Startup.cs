@@ -73,7 +73,7 @@ namespace ProcessesApi
 
             services.AddSingleton<IApiVersionDescriptionProvider, DefaultApiVersionDescriptionProvider>();
 
-            services.AddDynamoDbHealthCheck<DatabaseEntity>();
+            services.AddDynamoDbHealthCheck<ProcessesDb>();
 
             services.AddSwaggerGen(c =>
             {
@@ -149,12 +149,12 @@ namespace ProcessesApi
         private static void RegisterGateways(IServiceCollection services)
         {
 
-            services.AddScoped<IExampleDynamoGateway, DynamoDbGateway>();
+            services.AddScoped<IProcessesGateway, ProcessesGateway>();
         }
 
         private static void RegisterUseCases(IServiceCollection services)
         {
-            services.AddScoped<IGetByIdUseCase, GetByIdUseCase>();
+            services.AddScoped<IGetByIdUseCase, GetProcessByIdUseCase>();
 
         }
 

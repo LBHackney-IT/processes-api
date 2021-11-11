@@ -1,13 +1,14 @@
 using AutoFixture;
 using ProcessesApi.V1.Controllers;
 using ProcessesApi.V1.UseCase;
+using ProcessesApi.V1.Boundary.Response;
 using ProcessesApi.V1.UseCase.Interfaces;
 using Moq;
 using Xunit;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using FluentAssertions;
 
 namespace ProcessesApi.Tests.V1.Controllers
 {
@@ -16,6 +17,7 @@ namespace ProcessesApi.Tests.V1.Controllers
     {
         private ProcessesApiController _classUnderTest;
         private Mock<IGetByIdUseCase> _mockGetByIdUseCase;
+        private readonly Fixture _fixture = new Fixture();
 
         public ProcessesApiControllerTests()
         {
@@ -23,7 +25,37 @@ namespace ProcessesApi.Tests.V1.Controllers
             _classUnderTest = new ProcessesApiController(_mockGetByIdUseCase.Object);
         }
 
+       [Fact]
+        public async Task GetProcessWithValidIDReturnsOKResponse()
+        {
+            var expectedResponse = _fixture.Create<ProcessesResponse>();
+            _mockGetByIdUseCase.Setup(x => x.Execute(expectedResponse.Id)).ReturnsAsync(expectedResponse);
 
-        //Add Tests Here
+            var actualResponse = await _classUnderTest.GetProcessById(expectedResponse.Id).ConfigureAwait(false) as OkObjectResult;
+
+            actualResponse.Should().NotBeNull();
+            actualResponse.StatusCode.Should().Be(200);
+            actualResponse.Value.Should().BeEquivalentTo(expectedResponse);
+        }
+
+        [Fact]
+        public async Task GetProcessWithNonExistentIDReturnsNotFoundResponse()
+        {
+            var id = Guid.NewGuid();
+            _mockGetByIdUseCase.Setup(x => x.Execute(id)).ReturnsAsync((ProcessesResponse) null);
+            var response = await _classUnderTest.GetProcessById(id).ConfigureAwait(false) as NotFoundObjectResult;
+            response.StatusCode.Should().Be(404);
+        }
+
+        [Fact]
+        public void GetProcessByIdExceptionIsThrown()
+        {
+            var id = Guid.NewGuid();
+            var exception = new ApplicationException("Test exception");
+            _mockGetByIdUseCase.Setup(x => x.Execute(id)).ThrowsAsync(exception);
+            
+            Func<Task<IActionResult>> func = async () => await _classUnderTest.GetProcessById(id).ConfigureAwait(false);
+            func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
+        }
     }
 }
