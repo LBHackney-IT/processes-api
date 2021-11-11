@@ -2,6 +2,7 @@ using AutoFixture;
 using ProcessesApi.V1.Controllers;
 using ProcessesApi.V1.UseCase;
 using ProcessesApi.V1.Boundary.Response;
+using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.UseCase.Interfaces;
 using Moq;
 using Xunit;
@@ -25,13 +26,22 @@ namespace ProcessesApi.Tests.V1.Controllers
             _classUnderTest = new ProcessesApiController(_mockGetByIdUseCase.Object);
         }
 
+        private static ProcessesQuery ConstructQuery(Guid Id)
+        {
+            return new ProcessesQuery
+            {
+                Id = Id
+            };
+        }
+
         [Fact]
         public async Task GetProcessWithValidIDReturnsOKResponse()
         {
             var expectedResponse = _fixture.Create<ProcessesResponse>();
-            _mockGetByIdUseCase.Setup(x => x.Execute(expectedResponse.Id)).ReturnsAsync(expectedResponse);
+            var query = ConstructQuery(expectedResponse.Id);
+            _mockGetByIdUseCase.Setup(x => x.Execute(query)).ReturnsAsync(expectedResponse);
 
-            var actualResponse = await _classUnderTest.GetProcessById(expectedResponse.Id).ConfigureAwait(false) as OkObjectResult;
+            var actualResponse = await _classUnderTest.GetProcessById(query).ConfigureAwait(false) as OkObjectResult;
 
             actualResponse.Should().NotBeNull();
             actualResponse.StatusCode.Should().Be(200);
@@ -42,8 +52,9 @@ namespace ProcessesApi.Tests.V1.Controllers
         public async Task GetProcessWithNonExistentIDReturnsNotFoundResponse()
         {
             var id = Guid.NewGuid();
-            _mockGetByIdUseCase.Setup(x => x.Execute(id)).ReturnsAsync((ProcessesResponse) null);
-            var response = await _classUnderTest.GetProcessById(id).ConfigureAwait(false) as NotFoundObjectResult;
+            var query = ConstructQuery(id);
+            _mockGetByIdUseCase.Setup(x => x.Execute(query)).ReturnsAsync((ProcessesResponse) null);
+            var response = await _classUnderTest.GetProcessById(query).ConfigureAwait(false) as NotFoundObjectResult;
             response.StatusCode.Should().Be(404);
         }
 
@@ -51,10 +62,11 @@ namespace ProcessesApi.Tests.V1.Controllers
         public void GetProcessByIdExceptionIsThrown()
         {
             var id = Guid.NewGuid();
+            var query = ConstructQuery(id);
             var exception = new ApplicationException("Test exception");
-            _mockGetByIdUseCase.Setup(x => x.Execute(id)).ThrowsAsync(exception);
+            _mockGetByIdUseCase.Setup(x => x.Execute(query)).ThrowsAsync(exception);
 
-            Func<Task<IActionResult>> func = async () => await _classUnderTest.GetProcessById(id).ConfigureAwait(false);
+            Func<Task<IActionResult>> func = async () => await _classUnderTest.GetProcessById(query).ConfigureAwait(false);
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }
     }

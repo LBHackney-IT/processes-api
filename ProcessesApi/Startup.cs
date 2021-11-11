@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using ProcessesApi.V1.Controllers;
 using Amazon.XRay.Recorder.Handlers.AwsSdk;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Infrastructure;
@@ -15,7 +14,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Versioning;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -36,6 +34,8 @@ using Hackney.Core.Http;
 using System.Text.Json.Serialization;
 using Amazon.XRay.Recorder.Core;
 using Amazon;
+using ProcessesApi.V1.Boundary.Request.Validation;
+using Hackney.Core.Validation.AspNet;
 
 namespace ProcessesApi
 {
@@ -65,6 +65,8 @@ namespace ProcessesApi
                     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                 })
                 .SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+
+            services.AddFluentValidation(Assembly.GetAssembly(typeof(ProcessValidator)));
 
 
             services.AddApiVersioning(o =>
@@ -178,7 +180,7 @@ namespace ProcessesApi
                   .AllowAnyOrigin()
                   .AllowAnyHeader()
                   .AllowAnyMethod()
-                  .WithExposedHeaders("ETag", "If-Match", "x-correlation-id"));
+                  .WithExposedHeaders("x-correlation-id"));
 
 
             if (env.IsDevelopment())

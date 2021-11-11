@@ -1,6 +1,7 @@
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.UseCase;
 using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Boundary.Response;
 using ProcessesApi.V1.Factories;
 using Moq;
@@ -24,13 +25,22 @@ namespace ProcessesApi.Tests.V1.UseCase
             _classUnderTest = new GetProcessByIdUseCase(_mockGateway.Object);
         }
 
+        private static ProcessesQuery ConstructQuery(Guid Id)
+        {
+            return new ProcessesQuery
+            {
+                Id = Id
+            };
+        }
+
         [Fact]
         public async Task GetProcessByIdReturnsNullIfNullResponseFromGateway()
         {
             var id = Guid.NewGuid();
             _mockGateway.Setup(x => x.GetProcessById(id)).ReturnsAsync((Process) null);
+            var query = ConstructQuery(id);
 
-            var response = await _classUnderTest.Execute(id).ConfigureAwait(false);
+            var response = await _classUnderTest.Execute(query).ConfigureAwait(false);
             response.Should().BeNull();
         }
 
@@ -38,10 +48,11 @@ namespace ProcessesApi.Tests.V1.UseCase
         public async Task GetProcessByIdReturnsProcessFromGateway()
         {
             var process = _fixture.Create<Process>();
+            var query = ConstructQuery(process.Id);
 
             _mockGateway.Setup(x => x.GetProcessById(process.Id)).ReturnsAsync((Process) process);
 
-            var response = await _classUnderTest.Execute(process.Id).ConfigureAwait(false);
+            var response = await _classUnderTest.Execute(query).ConfigureAwait(false);
             response.Should().BeEquivalentTo(process.ToResponse());
         }
 
@@ -51,8 +62,9 @@ namespace ProcessesApi.Tests.V1.UseCase
             var id = Guid.NewGuid();
             var exception = new ApplicationException("Test Exception");
             _mockGateway.Setup(x => x.GetProcessById(id)).ThrowsAsync(exception);
+            var query = ConstructQuery(id);
 
-            Func<Task<ProcessesResponse>> func = async () => await _classUnderTest.Execute(id).ConfigureAwait(false);
+            Func<Task<ProcessesResponse>> func = async () => await _classUnderTest.Execute(query).ConfigureAwait(false);
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }
 
