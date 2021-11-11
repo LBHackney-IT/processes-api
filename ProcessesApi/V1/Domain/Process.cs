@@ -11,5 +11,5 @@ namespace ProcessesApi.V1.Domain
         public string ProcessName { get; set; }
         public ProcessState CurrentState { get; set; }
         public List<ProcessState> PreviousStates { get; set; }
-    } 
+    }
 }

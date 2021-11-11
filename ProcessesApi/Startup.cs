@@ -31,6 +31,8 @@ using Hackney.Core.Middleware.CorrelationId;
 using Hackney.Core.DynamoDb.HealthCheck;
 using Hackney.Core.DynamoDb;
 using Hackney.Core.Middleware.Exception;
+using Hackney.Core.JWT;
+using Hackney.Core.Http;
 using System.Text.Json.Serialization;
 using Amazon.XRay.Recorder.Core;
 using Amazon;
@@ -63,6 +65,7 @@ namespace ProcessesApi
                     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                 })
                 .SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+
 
             services.AddApiVersioning(o =>
             {
@@ -143,7 +146,17 @@ namespace ProcessesApi
 
             RegisterGateways(services);
             RegisterUseCases(services);
+
+            ConfigureHackneyCoreDI(services);
+
         }
+
+        private static void ConfigureHackneyCoreDI(IServiceCollection services)
+        {
+            services.AddTokenFactory()
+                .AddHttpContextWrapper();
+        }
+
 
 
         private static void RegisterGateways(IServiceCollection services)
@@ -165,7 +178,7 @@ namespace ProcessesApi
                   .AllowAnyOrigin()
                   .AllowAnyHeader()
                   .AllowAnyMethod()
-                  .WithExposedHeaders("x-correlation-id"));
+                  .WithExposedHeaders("ETag", "If-Match", "x-correlation-id"));
 
 
             if (env.IsDevelopment())

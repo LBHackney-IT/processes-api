@@ -25,7 +25,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             _classUnderTest = new ProcessesApiController(_mockGetByIdUseCase.Object);
         }
 
-       [Fact]
+        [Fact]
         public async Task GetProcessWithValidIDReturnsOKResponse()
         {
             var expectedResponse = _fixture.Create<ProcessesResponse>();
@@ -53,7 +53,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             var id = Guid.NewGuid();
             var exception = new ApplicationException("Test exception");
             _mockGetByIdUseCase.Setup(x => x.Execute(id)).ThrowsAsync(exception);
-            
+
             Func<Task<IActionResult>> func = async () => await _classUnderTest.GetProcessById(id).ConfigureAwait(false);
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }

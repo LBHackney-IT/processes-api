@@ -12,5 +12,5 @@ namespace ProcessesApi.V1.Boundary.Response
         public String ProcessName { get; set; }
         public ProcessState CurrentState { get; set; }
         public List<ProcessState> PreviousStates { get; set; }
-    } 
+    }
 }

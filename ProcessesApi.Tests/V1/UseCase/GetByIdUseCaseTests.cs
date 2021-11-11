@@ -56,6 +56,6 @@ namespace ProcessesApi.Tests.V1.UseCase
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }
 
-        
+
     }
 }

@@ -22,6 +22,8 @@
     <PackageReference Include="AWSXRayRecorder.Handlers.EntityFramework" Version="1.1.0" />
     <PackageReference Include="Hackney.Core.DynamoDb" Version="1.30.0" />
     <PackageReference Include="Hackney.Core.HealthCheck" Version="1.30.0" />
+    <PackageReference Include="Hackney.Core.Http" Version="1.49.0" />
+    <PackageReference Include="Hackney.Core.JWT" Version="1.49.0" />
     <PackageReference Include="Hackney.Core.Logging" Version="1.30.0" />
     <PackageReference Include="Hackney.Core.Middleware" Version="1.30.0" />
     <PackageReference Include="Hackney.Core.Validation" Version="1.30.0" />

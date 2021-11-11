@@ -11,14 +11,14 @@ namespace ProcessesApi.V1.Infrastructure
     {
         [DynamoDBHashKey]
         public string Id { get; set; }
-        
-        [DynamoDBRangeKey]
+
+        [DynamoDBProperty]
         public string TargetId { get; set; }
-        
+
         [DynamoDBProperty]
         public string ProcessName { get; set; }
-        
-        [DynamoDBProperty(Converter = typeof(DynamoDbObjectListConverter<String>))]
+
+        [DynamoDBProperty]
         public List<String> RelatedEntities { get; set; }
 
         [DynamoDBProperty(Converter = typeof(DynamoDbObjectConverter<ProcessState>))]
