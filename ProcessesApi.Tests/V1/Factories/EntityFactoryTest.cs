@@ -3,6 +3,7 @@ using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure;
 using FluentAssertions;
+using System;
 using Xunit;
 
 namespace ProcessesApi.Tests.V1.Factories
@@ -11,28 +12,35 @@ namespace ProcessesApi.Tests.V1.Factories
     {
         private readonly Fixture _fixture = new Fixture();
 
-        //TODO: add assertions for all the fields being mapped in `EntityFactory.ToDomain()`. Also be sure to add test cases for
-        // any edge cases that might exist.
         [Fact]
         public void CanMapADatabaseEntityToADomainObject()
         {
-            var databaseEntity = _fixture.Create<DatabaseEntity>();
+            var databaseEntity = _fixture.Build<ProcessesDb>()
+                .With(process => process.Id, Guid.NewGuid())
+                .With(process => process.TargetId, Guid.NewGuid())
+                .Create();
             var entity = databaseEntity.ToDomain();
 
-            databaseEntity.Id.Should().Be(entity.Id);
-            databaseEntity.CreatedAt.Should().BeSameDateAs(entity.CreatedAt);
+            entity.Id.Should().Be(databaseEntity.Id);
+            entity.TargetId.Should().Be(databaseEntity.TargetId);
+            entity.RelatedEntities.Should().BeEquivalentTo(databaseEntity.RelatedEntities);
+            entity.ProcessName.Should().Be(databaseEntity.ProcessName);
+            entity.CurrentState.Should().Be(databaseEntity.CurrentState);
+            entity.PreviousStates.Should().BeEquivalentTo(databaseEntity.PreviousStates);
         }
 
-        //TODO: add assertions for all the fields being mapped in `EntityFactory.ToDatabase()`. Also be sure to add test cases for
-        // any edge cases that might exist.
         [Fact]
         public void CanMapADomainEntityToADatabaseObject()
         {
-            var entity = _fixture.Create<Entity>();
+            var entity = _fixture.Create<Process>();
             var databaseEntity = entity.ToDatabase();
 
-            entity.Id.Should().Be(databaseEntity.Id);
-            entity.CreatedAt.Should().BeSameDateAs(databaseEntity.CreatedAt);
+            databaseEntity.Id.Should().Be(entity.Id.ToString());
+            databaseEntity.TargetId.Should().Be(entity.TargetId.ToString());
+            databaseEntity.RelatedEntities.Should().BeEquivalentTo(entity.RelatedEntities);
+            databaseEntity.ProcessName.Should().Be(entity.ProcessName);
+            databaseEntity.CurrentState.Should().Be(entity.CurrentState);
+            databaseEntity.PreviousStates.Should().BeEquivalentTo(entity.PreviousStates);
         }
     }
 }

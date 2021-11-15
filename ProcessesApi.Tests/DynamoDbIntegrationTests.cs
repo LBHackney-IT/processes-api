@@ -21,8 +21,6 @@ namespace ProcessesApi.Tests
                 Name = "Processes",
                 KeyName = "id",
                 KeyType = ScalarAttributeType.S,
-                RangeKeyName = "targetId",
-                RangeKeyType = ScalarAttributeType.S,
             }
         };
 
@@ -64,8 +62,6 @@ namespace ProcessesApi.Tests
         public string Name { get; set; }
         public string KeyName { get; set; }
         public ScalarAttributeType KeyType { get; set; }
-        public string RangeKeyName { get; set; }
-        public ScalarAttributeType RangeKeyType { get; set; }
     }
 
     [CollectionDefinition("DynamoDb collection", DisableParallelization = true)]
