@@ -10,8 +10,8 @@ namespace ProcessesApi.V1.Factories
         {
             return new Process
             {
-                Id = Guid.Parse(databaseEntity.Id),
-                TargetId = Guid.Parse(databaseEntity.TargetId),
+                Id = databaseEntity.Id,
+                TargetId = databaseEntity.TargetId,
                 RelatedEntities = databaseEntity.RelatedEntities,
                 ProcessName = databaseEntity.ProcessName,
                 CurrentState = databaseEntity.CurrentState,
@@ -24,8 +24,8 @@ namespace ProcessesApi.V1.Factories
 
             return new ProcessesDb
             {
-                Id = entity.Id.ToString(),
-                TargetId = entity.TargetId.ToString(),
+                Id = entity.Id,
+                TargetId = entity.TargetId,
                 RelatedEntities = entity.RelatedEntities,
                 ProcessName = entity.ProcessName,
                 CurrentState = entity.CurrentState,

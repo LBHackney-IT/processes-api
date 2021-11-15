@@ -52,7 +52,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         private async Task InsertDatatoDynamoDB(ProcessesDb entity)
         {
             await _dynamoDb.SaveAsync(entity).ConfigureAwait(false);
-            _cleanup.Add(async () => await _dynamoDb.DeleteAsync<ProcessesDb>(entity).ConfigureAwait(false));
+            _cleanup.Add(async () => await _dynamoDb.DeleteAsync<ProcessesDb>(entity.Id).ConfigureAwait(false));
         }
 
         [Fact]
@@ -71,6 +71,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             await InsertDatatoDynamoDB(entity.ToDatabase()).ConfigureAwait(false);
             var response = await _classUnderTest.GetProcessById(entity.Id).ConfigureAwait(false);
             response.Should().BeEquivalentTo(entity);
+            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for id parameter {entity.Id}", Times.Once());
         }
 
         [Fact]
@@ -83,13 +84,13 @@ namespace ProcessesApi.Tests.V1.Gateways
             var id = Guid.NewGuid();
             var exception = new ApplicationException("Test Exception");
 
-            mockDynamoDb.Setup(x => x.LoadAsync<ProcessesDb>(id.ToString(), default))
+            mockDynamoDb.Setup(x => x.LoadAsync<ProcessesDb>(id, default))
                      .ThrowsAsync(exception);
             // Act
             Func<Task<Process>> func = async () => await _classUnderTest.GetProcessById(id).ConfigureAwait(false);
             // Assert
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
-            mockDynamoDb.Verify(x => x.LoadAsync<ProcessesDb>(id.ToString(), default), Times.Once);
+            mockDynamoDb.Verify(x => x.LoadAsync<ProcessesDb>(id, default), Times.Once);
         }
     }
 }

@@ -27,7 +27,7 @@ namespace ProcessesApi.V1.Gateways
         {
             _logger.LogDebug($"Calling IDynamoDBContext.LoadAsync for id parameter {id}");
 
-            var result = await _dynamoDbContext.LoadAsync<ProcessesDb>(id.ToString()).ConfigureAwait(false);
+            var result = await _dynamoDbContext.LoadAsync<ProcessesDb>(id).ConfigureAwait(false);
             return result?.ToDomain();
         }
     }

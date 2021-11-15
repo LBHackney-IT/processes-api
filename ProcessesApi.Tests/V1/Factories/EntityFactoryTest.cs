@@ -16,13 +16,13 @@ namespace ProcessesApi.Tests.V1.Factories
         public void CanMapADatabaseEntityToADomainObject()
         {
             var databaseEntity = _fixture.Build<ProcessesDb>()
-                .With(process => process.Id, Guid.NewGuid().ToString())
-                .With(process => process.TargetId, Guid.NewGuid().ToString())
+                .With(process => process.Id, Guid.NewGuid())
+                .With(process => process.TargetId, Guid.NewGuid())
                 .Create();
             var entity = databaseEntity.ToDomain();
 
-            entity.Id.Should().Be(Guid.Parse(databaseEntity.Id));
-            entity.TargetId.Should().Be(Guid.Parse(databaseEntity.TargetId));
+            entity.Id.Should().Be(databaseEntity.Id);
+            entity.TargetId.Should().Be(databaseEntity.TargetId);
             entity.RelatedEntities.Should().BeEquivalentTo(databaseEntity.RelatedEntities);
             entity.ProcessName.Should().Be(databaseEntity.ProcessName);
             entity.CurrentState.Should().Be(databaseEntity.CurrentState);

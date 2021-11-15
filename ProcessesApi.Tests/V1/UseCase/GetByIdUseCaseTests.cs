@@ -57,7 +57,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         }
 
         [Fact]
-        public void GetTechnologyByIdExceptionIsThrown()
+        public void GetProcessByIdExceptionIsThrown()
         {
             var id = Guid.NewGuid();
             var exception = new ApplicationException("Test Exception");

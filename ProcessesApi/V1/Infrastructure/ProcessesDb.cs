@@ -10,10 +10,10 @@ namespace ProcessesApi.V1.Infrastructure
     public class ProcessesDb
     {
         [DynamoDBHashKey]
-        public string Id { get; set; }
+        public Guid Id { get; set; }
 
         [DynamoDBProperty]
-        public string TargetId { get; set; }
+        public Guid TargetId { get; set; }
 
         [DynamoDBProperty]
         public string ProcessName { get; set; }

@@ -56,6 +56,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             _mockGetByIdUseCase.Setup(x => x.Execute(query)).ReturnsAsync((ProcessesResponse) null);
             var response = await _classUnderTest.GetProcessById(query).ConfigureAwait(false) as NotFoundObjectResult;
             response.StatusCode.Should().Be(404);
+            response.Value.Should().Be(query);
         }
 
         [Fact]
