@@ -1,4 +1,4 @@
-namespace ProcessesApi.V1.Boundary.Request.Validation
+namespace ProcessesApi.V1.Boundary.Constants
 {
     public static class ErrorCodes
     {

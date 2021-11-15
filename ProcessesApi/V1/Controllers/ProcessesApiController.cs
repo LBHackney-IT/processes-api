@@ -1,12 +1,14 @@
+using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Response;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.UseCase.Interfaces;
+using ProcessesApi.V1.Factories;
 using Hackney.Core.Logging;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
-using System;
+using System.Net.Http.Headers;
 
 namespace ProcessesApi.V1.Controllers
 {
@@ -38,8 +40,15 @@ namespace ProcessesApi.V1.Controllers
         public async Task<IActionResult> GetProcessById([FromRoute] ProcessesQuery query)
         {
             var process = await _getByIdUseCase.Execute(query).ConfigureAwait(false);
-            if (process == null) return NotFound(query);
-            return Ok(process);
+            if (process == null) return NotFound(query.Id);
+            
+            var eTag = string.Empty;
+            if (process.VersionNumber.HasValue)
+                eTag = process.VersionNumber.ToString();
+            
+            HttpContext.Response.Headers.Add(HeaderConstants.ETag, EntityTagHeaderValue.Parse($"\"{eTag}\"").Tag);
+            
+            return Ok(process.ToResponse());
         }
     }
 }

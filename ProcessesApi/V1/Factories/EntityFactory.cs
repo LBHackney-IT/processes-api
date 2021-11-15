@@ -15,7 +15,8 @@ namespace ProcessesApi.V1.Factories
                 RelatedEntities = databaseEntity.RelatedEntities,
                 ProcessName = databaseEntity.ProcessName,
                 CurrentState = databaseEntity.CurrentState,
-                PreviousStates = databaseEntity.PreviousStates
+                PreviousStates = databaseEntity.PreviousStates,
+                VersionNumber = databaseEntity.VersionNumber
             };
         }
 
@@ -29,7 +30,8 @@ namespace ProcessesApi.V1.Factories
                 RelatedEntities = entity.RelatedEntities,
                 ProcessName = entity.ProcessName,
                 CurrentState = entity.CurrentState,
-                PreviousStates = entity.PreviousStates
+                PreviousStates = entity.PreviousStates,
+                VersionNumber = entity.VersionNumber
             };
         }
     }

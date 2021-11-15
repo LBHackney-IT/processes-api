@@ -1,6 +1,5 @@
 using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.Boundary.Response;
-using ProcessesApi.V1.Factories;
+using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.UseCase.Interfaces;
 using Hackney.Core.Logging;
@@ -17,10 +16,10 @@ namespace ProcessesApi.V1.UseCase
             _gateway = gateway;
         }
         [LogCall]
-        public async Task<ProcessesResponse> Execute(ProcessesQuery query)
+        public async Task<Process> Execute(ProcessesQuery query)
         {
             var entity = await _gateway.GetProcessById(query.Id).ConfigureAwait(false);
-            return entity.ToResponse();
+            return entity;
         }
     }
 }

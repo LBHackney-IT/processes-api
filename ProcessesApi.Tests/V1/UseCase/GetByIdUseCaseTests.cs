@@ -2,8 +2,6 @@ using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.UseCase;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.Boundary.Response;
-using ProcessesApi.V1.Factories;
 using Moq;
 using FluentAssertions;
 using AutoFixture;
@@ -53,7 +51,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             _mockGateway.Setup(x => x.GetProcessById(process.Id)).ReturnsAsync((Process) process);
 
             var response = await _classUnderTest.Execute(query).ConfigureAwait(false);
-            response.Should().BeEquivalentTo(process.ToResponse());
+            response.Should().BeEquivalentTo(process);
         }
 
         [Fact]
@@ -64,7 +62,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             _mockGateway.Setup(x => x.GetProcessById(id)).ThrowsAsync(exception);
             var query = ConstructQuery(id);
 
-            Func<Task<ProcessesResponse>> func = async () => await _classUnderTest.Execute(query).ConfigureAwait(false);
+            Func<Task<Process>> func = async () => await _classUnderTest.Execute(query).ConfigureAwait(false);
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }
 

@@ -1,8 +1,7 @@
 using AutoFixture;
 using ProcessesApi.V1.Controllers;
-using ProcessesApi.V1.UseCase;
-using ProcessesApi.V1.Boundary.Response;
 using ProcessesApi.V1.Boundary.Request;
+using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.UseCase.Interfaces;
 using Moq;
 using Xunit;
@@ -10,6 +9,13 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using FluentAssertions;
+using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Factories;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Primitives;
+using System.Linq;
 
 namespace ProcessesApi.Tests.V1.Controllers
 {
@@ -37,15 +43,23 @@ namespace ProcessesApi.Tests.V1.Controllers
         [Fact]
         public async Task GetProcessWithValidIDReturnsOKResponse()
         {
-            var expectedResponse = _fixture.Create<ProcessesResponse>();
-            var query = ConstructQuery(expectedResponse.Id);
-            _mockGetByIdUseCase.Setup(x => x.Execute(query)).ReturnsAsync(expectedResponse);
+            var stubHttpContext = new DefaultHttpContext();
+            var controllerContext = new ControllerContext(new ActionContext(stubHttpContext, new RouteData(), new ControllerActionDescriptor()));
+            _classUnderTest.ControllerContext = controllerContext;
+            
+            var process = _fixture.Create<Process>();
+            var query = ConstructQuery(process.Id);
+            _mockGetByIdUseCase.Setup(x => x.Execute(query)).ReturnsAsync(process);
 
-            var actualResponse = await _classUnderTest.GetProcessById(query).ConfigureAwait(false) as OkObjectResult;
+            var response = await _classUnderTest.GetProcessById(query).ConfigureAwait(false) as OkObjectResult;
 
-            actualResponse.Should().NotBeNull();
-            actualResponse.StatusCode.Should().Be(200);
-            actualResponse.Value.Should().BeEquivalentTo(expectedResponse);
+            response.Should().NotBeNull();
+            response.StatusCode.Should().Be(200);
+            response.Value.Should().BeEquivalentTo(process.ToResponse());
+
+            var expectedEtagValue = $"\"{process.VersionNumber}\"";
+            _classUnderTest.HttpContext.Response.Headers.TryGetValue(HeaderConstants.ETag, out StringValues val).Should().BeTrue();
+            val.First().Should().Be(expectedEtagValue);
         }
 
         [Fact]
@@ -53,10 +67,10 @@ namespace ProcessesApi.Tests.V1.Controllers
         {
             var id = Guid.NewGuid();
             var query = ConstructQuery(id);
-            _mockGetByIdUseCase.Setup(x => x.Execute(query)).ReturnsAsync((ProcessesResponse) null);
+            _mockGetByIdUseCase.Setup(x => x.Execute(query)).ReturnsAsync((Process) null);
             var response = await _classUnderTest.GetProcessById(query).ConfigureAwait(false) as NotFoundObjectResult;
             response.StatusCode.Should().Be(404);
-            response.Value.Should().Be(query);
+            response.Value.Should().Be(query.Id);
         }
 
         [Fact]

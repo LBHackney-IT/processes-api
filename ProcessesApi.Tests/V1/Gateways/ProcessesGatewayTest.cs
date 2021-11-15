@@ -67,10 +67,12 @@ namespace ProcessesApi.Tests.V1.Gateways
         [Fact]
         public async Task GetProcessByIdReturnsTheProcessIfItExists()
         {
-            var entity = _fixture.Create<Process>();
+            var entity = _fixture.Build<Process>()
+                                .With(x => x.VersionNumber, (int?) null)
+                                .Create();
             await InsertDatatoDynamoDB(entity.ToDatabase()).ConfigureAwait(false);
             var response = await _classUnderTest.GetProcessById(entity.Id).ConfigureAwait(false);
-            response.Should().BeEquivalentTo(entity);
+            response.Should().BeEquivalentTo(entity, config => config.Excluding( y => y.VersionNumber));
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for id parameter {entity.Id}", Times.Once());
         }
 

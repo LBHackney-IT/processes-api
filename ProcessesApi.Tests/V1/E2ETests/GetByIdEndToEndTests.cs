@@ -27,7 +27,9 @@ namespace ProcessesApi.Tests.V1.E2ETests
         }
         private Process ConstructTestEntity()
         {
-            var entity = _fixture.Create<Process>();
+            var entity = _fixture.Build<Process>()
+                                .With(x => x.VersionNumber, (int?) null)
+                                .Create();
             return entity;
         }
 
@@ -71,7 +73,8 @@ namespace ProcessesApi.Tests.V1.E2ETests
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.OK);
-            apiEntity.Should().BeEquivalentTo(entity);
+            apiEntity.Should().BeEquivalentTo(entity, config => config.Excluding(y => y.VersionNumber));
+
         }
 
         [Fact]
