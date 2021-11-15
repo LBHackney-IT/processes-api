@@ -46,7 +46,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             var stubHttpContext = new DefaultHttpContext();
             var controllerContext = new ControllerContext(new ActionContext(stubHttpContext, new RouteData(), new ControllerActionDescriptor()));
             _classUnderTest.ControllerContext = controllerContext;
-            
+
             var process = _fixture.Create<Process>();
             var query = ConstructQuery(process.Id);
             _mockGetByIdUseCase.Setup(x => x.Execute(query)).ReturnsAsync(process);

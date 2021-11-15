@@ -41,13 +41,13 @@ namespace ProcessesApi.V1.Controllers
         {
             var process = await _getByIdUseCase.Execute(query).ConfigureAwait(false);
             if (process == null) return NotFound(query.Id);
-            
+
             var eTag = string.Empty;
             if (process.VersionNumber.HasValue)
                 eTag = process.VersionNumber.ToString();
-            
+
             HttpContext.Response.Headers.Add(HeaderConstants.ETag, EntityTagHeaderValue.Parse($"\"{eTag}\"").Tag);
-            
+
             return Ok(process.ToResponse());
         }
     }

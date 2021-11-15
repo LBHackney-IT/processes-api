@@ -26,7 +26,7 @@ namespace ProcessesApi.V1.Infrastructure
 
         [DynamoDBProperty(Converter = typeof(DynamoDbObjectListConverter<ProcessState>))]
         public List<ProcessState> PreviousStates { get; set; }
-        
+
         [DynamoDBVersion]
         public int? VersionNumber { get; set; }
     }

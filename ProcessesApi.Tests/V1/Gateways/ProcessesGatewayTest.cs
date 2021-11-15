@@ -72,7 +72,7 @@ namespace ProcessesApi.Tests.V1.Gateways
                                 .Create();
             await InsertDatatoDynamoDB(entity.ToDatabase()).ConfigureAwait(false);
             var response = await _classUnderTest.GetProcessById(entity.Id).ConfigureAwait(false);
-            response.Should().BeEquivalentTo(entity, config => config.Excluding( y => y.VersionNumber));
+            response.Should().BeEquivalentTo(entity, config => config.Excluding(y => y.VersionNumber));
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for id parameter {entity.Id}", Times.Once());
         }
 
