@@ -1,7 +1,7 @@
 using FluentValidation;
 using Hackney.Core.Validation;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Boundary.Constants;
+using System;
 
 namespace ProcessesApi.V1.Boundary.Request.Validation
 {
@@ -9,8 +9,8 @@ namespace ProcessesApi.V1.Boundary.Request.Validation
     {
         public ProcessDataValidator()
         {
-            RuleForEach(x => x.Documents).NotXssString()
-                         .WithErrorCode(ErrorCodes.XssCheckFailure);
+            RuleForEach(x => x.Documents).NotNull()
+                                        .NotEqual(Guid.Empty);
         }
     }
 }
