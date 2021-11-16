@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using System.Net.Http.Headers;
+using System;
 
 namespace ProcessesApi.V1.Controllers
 {
@@ -19,9 +20,11 @@ namespace ProcessesApi.V1.Controllers
     public class ProcessesApiController : BaseController
     {
         private readonly IGetByIdUseCase _getByIdUseCase;
-        public ProcessesApiController(IGetByIdUseCase getByIdUseCase)
+        private readonly ICreateNewProcessUsecase _createNewProcessUseCase;
+        public ProcessesApiController(IGetByIdUseCase getByIdUseCase, ICreateNewProcessUsecase createNewProcessUsecase)
         {
             _getByIdUseCase = getByIdUseCase;
+            _createNewProcessUseCase = createNewProcessUsecase;
         }
 
         /// <summary>
@@ -49,6 +52,24 @@ namespace ProcessesApi.V1.Controllers
             HttpContext.Response.Headers.Add(HeaderConstants.ETag, EntityTagHeaderValue.Parse($"\"{eTag}\"").Tag);
 
             return Ok(process.ToResponse());
+        }
+
+        /// <summary>
+        /// Create a new process
+        /// </summary>
+        /// <response code="201">Process has been created successfully</response>
+        /// <response code="400">Bad Request</response> 
+        /// <response code="500">Internal Server Error</response>
+        [ProducesResponseType(typeof(ProcessesResponse), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [HttpPost]
+        [LogCall(LogLevel.Information)]
+        [Route("{process-name}")]
+        public async Task<IActionResult> CreateNewProcess([FromBody] CreateProcessQuery query)
+        {
+            var process = await _createNewProcessUseCase.Execute(query).ConfigureAwait(false);
+            return Created(new Uri($"api/v1/processes/{process.ProcessName}/{process.Id}", UriKind.Relative), process);
         }
     }
 }

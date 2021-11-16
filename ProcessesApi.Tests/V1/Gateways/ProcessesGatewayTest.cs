@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
+using ProcessesApi.V1.Boundary.Request;
 
 namespace ProcessesApi.Tests.V1.Gateways
 {
@@ -93,6 +94,21 @@ namespace ProcessesApi.Tests.V1.Gateways
             // Assert
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
             mockDynamoDb.Verify(x => x.LoadAsync<ProcessesDb>(id, default), Times.Once);
+        }
+
+        [Fact]
+        public async Task CreateNewProcessSucessfullySavesProcess()
+        {
+            // Arrange
+            var query = _fixture.Create<CreateProcessQuery>();
+            // Act
+            var process = await _classUnderTest.CreateNewProcess(query).ConfigureAwait(false);
+            // Assert
+            var processDb = await _dynamoDb.LoadAsync<ProcessesDb>(process.Id).ConfigureAwait(false);
+            processDb.Should().BeEquivalentTo(query.ToDatabase(), config => config.Excluding(y => y.VersionNumber));
+            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync", Times.Once());
+
+            _cleanup.Add(async () => await _dynamoDb.DeleteAsync<ProcessesDb>(process.Id).ConfigureAwait(false));
         }
     }
 }

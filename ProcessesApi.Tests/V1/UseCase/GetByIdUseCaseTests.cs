@@ -65,7 +65,5 @@ namespace ProcessesApi.Tests.V1.UseCase
             Func<Task<Process>> func = async () => await _classUnderTest.Execute(query).ConfigureAwait(false);
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }
-
-
     }
 }
