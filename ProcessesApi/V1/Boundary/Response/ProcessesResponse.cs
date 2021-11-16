@@ -8,7 +8,7 @@ namespace ProcessesApi.V1.Boundary.Response
     {
         public Guid Id { get; set; }
         public Guid TargetId { get; set; }
-        public List<String> RelatedEntities { get; set; }
+        public List<Guid> RelatedEntities { get; set; }
         public String ProcessName { get; set; }
         public ProcessState CurrentState { get; set; }
         public List<ProcessState> PreviousStates { get; set; }

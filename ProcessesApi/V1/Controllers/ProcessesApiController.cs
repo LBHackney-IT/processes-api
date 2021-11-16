@@ -29,7 +29,7 @@ namespace ProcessesApi.V1.Controllers
         /// </summary>
         /// <response code="200">Successfully retrieved details for a particular process</response>
         /// <response code="404">No process found for the specified ID</response> 
-        /// <response code="500">Something went wrong</response>
+        /// <response code="500">Internal Server Error</response>
         [ProducesResponseType(typeof(ProcessesResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -1,6 +1,5 @@
 using FluentValidation.TestHelper;
 using ProcessesApi.V1.Boundary.Request.Validation;
-using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Domain;
 using Xunit;
 using System;
@@ -16,8 +15,6 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         {
             _classUnderTest = new ProcessValidator();
         }
-
-        private const string StringWithTags = "Some string with <tag> in it.";
 
         [Fact]
         public void RequestShouldErrorWithNullId()
@@ -64,39 +61,14 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         }
 
         [Fact]
-        public void RequestShouldErrorWithTagsInRelatedEntity()
+        public void RequestShouldErrorWithEmptyRelatedEntity()
         {
             //Arrange
-            var model = new Process() { RelatedEntities = new List<string> { StringWithTags } };
+            var query = new Process() { RelatedEntities = new List<Guid> { Guid.Empty } };
             //Act
-            var result = _classUnderTest.TestValidate(model);
+            var result = _classUnderTest.TestValidate(query);
             //Assert
-            result.ShouldHaveValidationErrorFor(x => x.RelatedEntities)
-                  .WithErrorCode(ErrorCodes.XssCheckFailure);
-        }
-
-        [Fact]
-        public void RequestShouldNotErrorWithValidRelatedEntity()
-        {
-            //Arrange
-            string relatedEntity = "entiy12345";
-            var model = new Process() { RelatedEntities = new List<string> { relatedEntity } };
-            //Act
-            var result = _classUnderTest.TestValidate(model);
-            //Assert
-            result.ShouldNotHaveValidationErrorFor(x => x.RelatedEntities);
-        }
-
-        [Fact]
-        public void RequestShouldErrorWithTagsInProcessName()
-        {
-            //Arrange
-            var model = new Process() { ProcessName = StringWithTags };
-            //Act
-            var result = _classUnderTest.TestValidate(model);
-            //Assert
-            result.ShouldHaveValidationErrorFor(x => x.ProcessName)
-                  .WithErrorCode(ErrorCodes.XssCheckFailure);
+            result.ShouldHaveValidationErrorFor(x => x.RelatedEntities);
         }
 
         [Fact]

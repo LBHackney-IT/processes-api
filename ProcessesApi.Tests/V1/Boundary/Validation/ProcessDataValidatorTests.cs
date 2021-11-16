@@ -1,9 +1,9 @@
 using FluentValidation.TestHelper;
 using ProcessesApi.V1.Boundary.Request.Validation;
-using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Domain;
 using Xunit;
 using System.Collections.Generic;
+using System;
 
 namespace ProcessesApi.Tests.V1.Boundary.Validation
 {
@@ -16,30 +16,26 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
             _classUnderTest = new ProcessDataValidator();
         }
 
-        private const string StringWithTags = "Some string with <tag> in it.";
-
         [Fact]
-        public void RequestShouldErrorWithTagsInDocument()
+        public void RequestShouldErrorWithEmptyDocumentIDs()
         {
             //Arrange
-            var model = new ProcessData() { Documents = new List<string> { StringWithTags } };
+            var model = new ProcessData() { Documents = new List<Guid> { Guid.Empty } };
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert
-            result.ShouldHaveValidationErrorFor(x => x.Documents)
-                  .WithErrorCode(ErrorCodes.XssCheckFailure);
+            result.ShouldHaveValidationErrorFor(x => x.Documents);
         }
-
         [Fact]
-        public void RequestShouldNotErrorWithValidDocument()
+        public void RequestShouldNotErrorWithValidDocumentIDs()
         {
             //Arrange
-            string document = "document12345";
-            var model = new ProcessData() { Documents = new List<string> { document } };
+            var model = new ProcessData() { Documents = new List<Guid> { Guid.NewGuid() } };
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert
             result.ShouldNotHaveValidationErrorFor(x => x.Documents);
         }
+
     }
 }
