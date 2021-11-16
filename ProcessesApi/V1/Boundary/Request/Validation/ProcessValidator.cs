@@ -14,8 +14,8 @@ namespace ProcessesApi.V1.Boundary.Request.Validation
                 .NotEqual(Guid.Empty);
             RuleFor(x => x.TargetId).NotNull()
                 .NotEqual(Guid.Empty);
-            RuleForEach(x => x.RelatedEntities).NotXssString()
-                         .WithErrorCode(ErrorCodes.XssCheckFailure);
+            RuleForEach(x => x.RelatedEntities).NotNull()
+                         .NotEqual(Guid.Empty);
             RuleFor(x => x.ProcessName).NotXssString()
                          .WithErrorCode(ErrorCodes.XssCheckFailure);
             RuleFor(x => x.CurrentState).SetValidator(new ProcessStateValidator());

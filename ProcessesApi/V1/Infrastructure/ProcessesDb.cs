@@ -19,7 +19,7 @@ namespace ProcessesApi.V1.Infrastructure
         public string ProcessName { get; set; }
 
         [DynamoDBProperty]
-        public List<String> RelatedEntities { get; set; }
+        public List<Guid> RelatedEntities { get; set; }
 
         [DynamoDBProperty(Converter = typeof(DynamoDbObjectConverter<ProcessState>))]
         public ProcessState CurrentState { get; set; }
