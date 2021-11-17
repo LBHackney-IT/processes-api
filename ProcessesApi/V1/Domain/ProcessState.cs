@@ -9,7 +9,7 @@ namespace ProcessesApi.V1.Domain
         public List<String> PermittedTriggers { get; set; }
         public Assignment Assignment { get; set; }
         public ProcessData ProcessData { get; set; }
-        public DateTime? CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
     }
 }

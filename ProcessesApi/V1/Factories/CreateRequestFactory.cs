@@ -27,8 +27,8 @@ namespace ProcessesApi.V1.Factories
                         FormData = createProcessQuery.FormData,
                         Documents = createProcessQuery.Documents
                     },
-                    CreatedAt = null,
-                    UpdatedAt = null
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 },
                 PreviousStates = new List<ProcessState>()
                 // Will change once the logic is implemented

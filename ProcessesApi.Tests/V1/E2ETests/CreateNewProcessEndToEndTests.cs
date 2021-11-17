@@ -20,7 +20,6 @@ namespace ProcessesApi.Tests.V1.E2ETests
     {
 
         private readonly Fixture _fixture = new Fixture();
-        public ProcessesDb Technology { get; private set; }
         private readonly DynamoDbIntegrationTests<Startup> _dbFixture;
         private readonly List<Action> _cleanupActions = new List<Action>();
 
@@ -75,7 +74,9 @@ namespace ProcessesApi.Tests.V1.E2ETests
             apiProcess.Id.Should().NotBeEmpty();
 
             var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(apiProcess.Id).ConfigureAwait(false);
-            dbRecord.Should().BeEquivalentTo(query.ToDatabase(), c => c.Excluding(x => x.VersionNumber));
+            dbRecord.Should().BeEquivalentTo(query.ToDatabase(), c => c.Excluding(x => x.VersionNumber).Excluding(y => y.CurrentState.CreatedAt).Excluding(z => z.CurrentState.UpdatedAt));
+            dbRecord.CurrentState.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            dbRecord.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
 
             // Cleanup
             _cleanupActions.Add(async () => await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false));

@@ -17,7 +17,6 @@ namespace ProcessesApi.Tests.V1.E2ETests
     {
 
         private readonly Fixture _fixture = new Fixture();
-        public ProcessesDb Technology { get; private set; }
         private readonly DynamoDbIntegrationTests<Startup> _dbFixture;
         private readonly List<Action> _cleanupActions = new List<Action>();
 

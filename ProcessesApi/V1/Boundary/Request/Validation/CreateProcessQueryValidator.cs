@@ -11,13 +11,15 @@ namespace ProcessesApi.V1.Boundary.Request.Validation
         public CreateProcessQueryValidator()
         {
             RuleFor(x => x.TargetId).NotNull()
-                              .NotEqual(Guid.Empty);
+                            .NotEqual(Guid.Empty);
             RuleForEach(x => x.RelatedEntities).NotNull()
-                                        .NotEqual(Guid.Empty);
-            RuleFor(x => x.ProcessName).NotXssString()
-                         .WithErrorCode(ErrorCodes.XssCheckFailure);
+                            .NotEqual(Guid.Empty);
+            RuleFor(x => x.ProcessName).NotNull()
+                            .NotEmpty()
+                            .NotXssString()
+                                .WithErrorCode(ErrorCodes.XssCheckFailure);
             RuleForEach(x => x.Documents).NotNull()
-                                        .NotEqual(Guid.Empty);
+                            .NotEqual(Guid.Empty);
         }
     }
 }
