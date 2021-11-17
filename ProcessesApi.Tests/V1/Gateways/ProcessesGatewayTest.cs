@@ -108,7 +108,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             processDb.Should().BeEquivalentTo(query.ToDatabase(), config => config.Excluding(x => x.VersionNumber).Excluding(y => y.CurrentState.CreatedAt).Excluding(y => y.CurrentState.UpdatedAt));
             processDb.CurrentState.CreatedAt.Should().BeCloseTo(query.ToDatabase().CurrentState.CreatedAt, 2000);
             processDb.CurrentState.UpdatedAt.Should().BeCloseTo(query.ToDatabase().CurrentState.UpdatedAt, 2000);
-            
+
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync", Times.Once());
 
             _cleanup.Add(async () => await _dynamoDb.DeleteAsync<ProcessesDb>(process.Id).ConfigureAwait(false));
