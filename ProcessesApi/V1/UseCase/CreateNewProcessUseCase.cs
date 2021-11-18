@@ -16,9 +16,9 @@ namespace ProcessesApi.V1.UseCase
             _gateway = gateway;
         }
         [LogCall]
-        public async Task<ProcessesResponse> Execute(CreateProcessQuery createProcessQuery)
+        public async Task<ProcessesResponse> Execute(CreateProcessQuery createProcessQuery, string processName)
         {
-            var process = await _gateway.CreateNewProcess(createProcessQuery).ConfigureAwait(false);
+            var process = await _gateway.CreateNewProcess(createProcessQuery, processName).ConfigureAwait(false);
             return process.ToResponse();
         }
     }

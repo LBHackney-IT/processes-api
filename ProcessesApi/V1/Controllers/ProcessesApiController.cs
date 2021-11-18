@@ -65,10 +65,10 @@ namespace ProcessesApi.V1.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [HttpPost]
         [LogCall(LogLevel.Information)]
-        [Route("{process-name}")]
-        public async Task<IActionResult> CreateNewProcess([FromBody] CreateProcessQuery query)
+        [Route("{processName}")]
+        public async Task<IActionResult> CreateNewProcess([FromBody] CreateProcessQuery query, [FromRoute] string processName)
         {
-            var process = await _createNewProcessUseCase.Execute(query).ConfigureAwait(false);
+            var process = await _createNewProcessUseCase.Execute(query, processName).ConfigureAwait(false);
             return Created(new Uri($"api/v1/processes/{process.ProcessName}/{process.Id}", UriKind.Relative), process);
         }
     }

@@ -99,12 +99,13 @@ namespace ProcessesApi.Tests.V1.Controllers
         {
             // Arrange
             var processResponse = _fixture.Create<ProcessesResponse>();
-            _mockCreateProcessUseCase.Setup(x => x.Execute(It.IsAny<CreateProcessQuery>()))
+            var processName = "some-process";
+            _mockCreateProcessUseCase.Setup(x => x.Execute(It.IsAny<CreateProcessQuery>(), processName))
                 .ReturnsAsync(processResponse);
 
             // Act
             var request = ConstructPostRequest();
-            var response = await _classUnderTest.CreateNewProcess(request).ConfigureAwait(false);
+            var response = await _classUnderTest.CreateNewProcess(request, processName).ConfigureAwait(false);
 
             // Assert
             response.Should().BeOfType(typeof(CreatedResult));
@@ -115,10 +116,11 @@ namespace ProcessesApi.Tests.V1.Controllers
         public void CreateNewProcessExceptionIsThrown()
         {
             var query = _fixture.Create<CreateProcessQuery>();
+            var processName = "some-process";
             var exception = new ApplicationException("Test exception");
-            _mockCreateProcessUseCase.Setup(x => x.Execute(query)).ThrowsAsync(exception);
+            _mockCreateProcessUseCase.Setup(x => x.Execute(query, processName)).ThrowsAsync(exception);
 
-            Func<Task<IActionResult>> func = async () => await _classUnderTest.CreateNewProcess(query).ConfigureAwait(false);
+            Func<Task<IActionResult>> func = async () => await _classUnderTest.CreateNewProcess(query, processName).ConfigureAwait(false);
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }
     }

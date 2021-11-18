@@ -16,7 +16,6 @@ namespace ProcessesApi.V1.Factories
                 Id = createProcessQuery.Id == Guid.Empty ? Guid.NewGuid() : createProcessQuery.Id,
                 TargetId = createProcessQuery.TargetId,
                 RelatedEntities = createProcessQuery.RelatedEntities,
-                ProcessName = createProcessQuery.ProcessName,
                 CurrentState = new ProcessState
                 {
                     StateName = null,

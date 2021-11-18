@@ -12,6 +12,7 @@ using ProcessesApi.V1.Infrastructure;
 using Xunit;
 using System.Net.Http;
 using System.Text;
+using ProcessesApi.V1.Boundary.Response;
 
 namespace ProcessesApi.Tests.V1.E2ETests
 {
@@ -67,14 +68,18 @@ namespace ProcessesApi.Tests.V1.E2ETests
             // Act
             var response = await _dbFixture.Client.SendAsync(message).ConfigureAwait(false);
             var responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            var apiProcess = JsonConvert.DeserializeObject<Process>(responseContent);
+            var apiProcess = JsonConvert.DeserializeObject<ProcessesResponse>(responseContent);
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.Created);
             apiProcess.Id.Should().NotBeEmpty();
 
             var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(apiProcess.Id).ConfigureAwait(false);
-            dbRecord.Should().BeEquivalentTo(query.ToDatabase(), c => c.Excluding(x => x.VersionNumber).Excluding(y => y.CurrentState.CreatedAt).Excluding(z => z.CurrentState.UpdatedAt));
+            dbRecord.Should().BeEquivalentTo(query.ToDatabase(), c => c.Excluding(x => x.VersionNumber)
+                                                                       .Excluding(y => y.ProcessName)
+                                                                       .Excluding(z => z.CurrentState.CreatedAt)
+                                                                       .Excluding(a => a.CurrentState.UpdatedAt));
+            dbRecord.ProcessName.Should().Be(processName);
             dbRecord.CurrentState.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
             dbRecord.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
 
@@ -86,9 +91,8 @@ namespace ProcessesApi.Tests.V1.E2ETests
         [Fact]
         public async Task CreateNewProcessReturnsBadRequestWhenThereAreValidationErrors()
         {
-            var stringWithTags = "Some string with <tag> in it.";
             var badRequest = _fixture.Build<CreateProcessQuery>()
-                            .With(x => x.ProcessName, stringWithTags)
+                            .With(x => x.TargetId, Guid.Empty)
                             .Create();
 
             var processName = "Some-process";

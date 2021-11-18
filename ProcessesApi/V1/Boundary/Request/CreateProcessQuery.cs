@@ -9,8 +9,6 @@ namespace ProcessesApi.V1.Boundary.Request
         public Guid Id { get; set; }
         public Guid TargetId { get; set; }
         public List<Guid> RelatedEntities { get; set; }
-        [FromRoute(Name = "process-name")]
-        public string ProcessName { get; set; }
         public Object FormData { get; set; }
         public List<Guid> Documents { get; set; }
     }

@@ -18,8 +18,6 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
             _classUnderTest = new CreateProcessQueryValidator();
         }
 
-        private const string StringWithTags = "Some string with <tag> in it.";
-
         [Fact]
         public void RequestShouldErrorWithNullTargetId()
         {
@@ -51,52 +49,6 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
             var result = _classUnderTest.TestValidate(query);
             //Assert
             result.ShouldHaveValidationErrorFor(x => x.RelatedEntities);
-        }
-
-        [Fact]
-        public void RequestShouldErrorWithTagsInProcessName()
-        {
-            //Arrange
-            var model = new CreateProcessQuery() { ProcessName = StringWithTags };
-            //Act
-            var result = _classUnderTest.TestValidate(model);
-            //Assert
-            result.ShouldHaveValidationErrorFor(x => x.ProcessName)
-                  .WithErrorCode(ErrorCodes.XssCheckFailure);
-        }
-
-        [Fact]
-        public void RequestShouldErrorWithNullProcessName()
-        {
-            //Arrange
-            var model = new CreateProcessQuery() { ProcessName = null };
-            //Act
-            var result = _classUnderTest.TestValidate(model);
-            //Assert
-            result.ShouldHaveValidationErrorFor(x => x.ProcessName);
-        }
-
-        [Fact]
-        public void RequestShouldErrorWithEmptyProcessName()
-        {
-            //Arrange
-            var model = new CreateProcessQuery() { ProcessName = string.Empty };
-            //Act
-            var result = _classUnderTest.TestValidate(model);
-            //Assert
-            result.ShouldHaveValidationErrorFor(x => x.ProcessName);
-        }
-
-        [Fact]
-        public void RequestShouldNotErrorWithValidProcessName()
-        {
-            //Arrange
-            string processName = "process12345";
-            var model = new CreateProcessQuery() { ProcessName = processName };
-            //Act
-            var result = _classUnderTest.TestValidate(model);
-            //Assert
-            result.ShouldNotHaveValidationErrorFor(x => x.ProcessName);
         }
 
         [Fact]

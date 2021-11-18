@@ -101,11 +101,16 @@ namespace ProcessesApi.Tests.V1.Gateways
         {
             // Arrange
             var query = _fixture.Create<CreateProcessQuery>();
+            var processName = "test-process";
             // Act
-            var process = await _classUnderTest.CreateNewProcess(query).ConfigureAwait(false);
+            var process = await _classUnderTest.CreateNewProcess(query, processName).ConfigureAwait(false);
             // Assert
             var processDb = await _dynamoDb.LoadAsync<ProcessesDb>(process.Id).ConfigureAwait(false);
-            processDb.Should().BeEquivalentTo(query.ToDatabase(), config => config.Excluding(x => x.VersionNumber).Excluding(y => y.CurrentState.CreatedAt).Excluding(y => y.CurrentState.UpdatedAt));
+            processDb.Should().BeEquivalentTo(query.ToDatabase(), config => config.Excluding(x => x.VersionNumber)
+                                                                                  .Excluding(y => y.ProcessName)
+                                                                                  .Excluding(z => z.CurrentState.CreatedAt)
+                                                                                  .Excluding(a => a.CurrentState.UpdatedAt));
+            processDb.ProcessName.Should().Be(processName);
             processDb.CurrentState.CreatedAt.Should().BeCloseTo(query.ToDatabase().CurrentState.CreatedAt, 2000);
             processDb.CurrentState.UpdatedAt.Should().BeCloseTo(query.ToDatabase().CurrentState.UpdatedAt, 2000);
 

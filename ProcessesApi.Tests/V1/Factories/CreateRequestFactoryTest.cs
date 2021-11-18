@@ -18,7 +18,6 @@ namespace ProcessesApi.Tests.V1.Factories
             processDb.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
             processDb.TargetId.Should().Be(request.TargetId);
             processDb.RelatedEntities.Should().BeEquivalentTo(request.RelatedEntities);
-            processDb.ProcessName.Should().Be(request.ProcessName);
             processDb.CurrentState.ProcessData.FormData.Should().Be(request.FormData);
             processDb.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(request.Documents);
         }

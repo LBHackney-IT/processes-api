@@ -9,6 +9,7 @@ using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure;
 using Xunit;
+using ProcessesApi.V1.Boundary.Response;
 
 namespace ProcessesApi.Tests.V1.E2ETests
 {
@@ -68,7 +69,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
             // Act
             var response = await _dbFixture.Client.GetAsync(uri).ConfigureAwait(false);
             var responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            var apiEntity = JsonConvert.DeserializeObject<Process>(responseContent);
+            var apiEntity = JsonConvert.DeserializeObject<ProcessesResponse>(responseContent);
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.OK);

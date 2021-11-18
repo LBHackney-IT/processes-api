@@ -33,10 +33,11 @@ namespace ProcessesApi.V1.Gateways
         }
 
         [LogCall]
-        public async Task<Process> CreateNewProcess(CreateProcessQuery query)
+        public async Task<Process> CreateNewProcess(CreateProcessQuery query, string processName)
         {
             _logger.LogDebug("Calling IDynamoDBContext.SaveAsync");
             var processDbEntity = query.ToDatabase();
+            processDbEntity.ProcessName = processName;
 
             await _dynamoDbContext.SaveAsync(processDbEntity).ConfigureAwait(false);
             return processDbEntity.ToDomain();
