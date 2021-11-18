@@ -1,29 +1,30 @@
 using AutoFixture;
 using FluentAssertions;
+using Hackney.Core.Testing.DynamoDb;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Threading.Tasks;
+using ProcessesApi.V1.Boundary.Response;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
-using ProcessesApi.V1.Infrastructure;
+using System;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Xunit;
-using ProcessesApi.V1.Boundary.Response;
 
 namespace ProcessesApi.Tests.V1.E2ETests
 {
-    [Collection("DynamoDb collection")]
+    [Collection("AppTest collection")]
     public class GetByIdEndToEndTests : IDisposable
     {
 
         private readonly Fixture _fixture = new Fixture();
-        private readonly DynamoDbIntegrationTests<Startup> _dbFixture;
-        private readonly List<Action> _cleanupActions = new List<Action>();
+        private readonly IDynamoDbFixture _dbFixture;
+        private readonly HttpClient _httpClient;
 
-        public GetByIdEndToEndTests(DynamoDbIntegrationTests<Startup> dbFixture)
+        public GetByIdEndToEndTests(MockWebApplicationFactory<Startup> appFactory)
         {
-            _dbFixture = dbFixture;
+            _dbFixture = appFactory.DynamoDbFixture;
+            _httpClient = appFactory.Client;
         }
         private Process ConstructTestEntity()
         {
@@ -35,8 +36,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
 
         private async Task SaveTestData(Process entity)
         {
-            await _dbFixture.DynamoDbContext.SaveAsync(entity.ToDatabase()).ConfigureAwait(false);
-            _cleanupActions.Add(async () => await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(entity.Id.ToString()).ConfigureAwait(false));
+            await _dbFixture.SaveEntityAsync(entity.ToDatabase()).ConfigureAwait(false);
         }
 
         public void Dispose()
@@ -50,9 +50,6 @@ namespace ProcessesApi.Tests.V1.E2ETests
         {
             if (disposing && !_disposed)
             {
-                foreach (var action in _cleanupActions)
-                    action();
-
                 _disposed = true;
             }
         }
@@ -67,7 +64,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
             var uri = new Uri($"api/v1/process/{processName}/{entity.Id}", UriKind.Relative);
 
             // Act
-            var response = await _dbFixture.Client.GetAsync(uri).ConfigureAwait(false);
+            var response = await _httpClient.GetAsync(uri).ConfigureAwait(false);
             var responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             var apiEntity = JsonConvert.DeserializeObject<ProcessResponse>(responseContent);
 
@@ -85,7 +82,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
             var processName = "Some-process";
             var uri = new Uri($"api/v1/process/{processName}/{badId}", UriKind.Relative);
             // Act
-            var response = await _dbFixture.Client.GetAsync(uri).ConfigureAwait(false);
+            var response = await _httpClient.GetAsync(uri).ConfigureAwait(false);
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         }
@@ -98,7 +95,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
             var processName = "Some-process";
             var uri = new Uri($"api/v1/process/{processName}/{id}", UriKind.Relative);
             // Act
-            var response = await _dbFixture.Client.GetAsync(uri).ConfigureAwait(false);
+            var response = await _httpClient.GetAsync(uri).ConfigureAwait(false);
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         }

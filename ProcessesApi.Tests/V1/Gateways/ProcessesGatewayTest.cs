@@ -1,33 +1,36 @@
 using Amazon.DynamoDBv2.DataModel;
 using AutoFixture;
+using FluentAssertions;
+using Hackney.Core.Testing.DynamoDb;
+using Hackney.Core.Testing.Shared;
+using Microsoft.Extensions.Logging;
+using Moq;
+using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Infrastructure;
-using FluentAssertions;
-using Microsoft.Extensions.Logging;
-using Moq;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
-using ProcessesApi.V1.Boundary.Request;
 
 namespace ProcessesApi.Tests.V1.Gateways
 {
-    [Collection("DynamoDb collection")]
+    [Collection("AppTest collection")]
     public class ProcessesGatewayTests : IDisposable
     {
         private readonly Fixture _fixture = new Fixture();
-        private readonly IDynamoDBContext _dynamoDb;
+        private readonly IDynamoDbFixture _dbFixture;
+        private IDynamoDBContext _dynamoDb => _dbFixture.DynamoDbContext;
         private ProcessesGateway _classUnderTest;
         private readonly List<Action> _cleanup = new List<Action>();
-        private Mock<ILogger<ProcessesGateway>> _logger;
+        private readonly Mock<ILogger<ProcessesGateway>> _logger;
 
 
-        public ProcessesGatewayTests(DynamoDbIntegrationTests<Startup> dbTestFixture)
+        public ProcessesGatewayTests(MockWebApplicationFactory<Startup> appFactory)
         {
-            _dynamoDb = dbTestFixture.DynamoDbContext;
+            _dbFixture = appFactory.DynamoDbFixture;
             _logger = new Mock<ILogger<ProcessesGateway>>();
             _classUnderTest = new ProcessesGateway(_dynamoDb, _logger.Object);
         }
@@ -52,8 +55,7 @@ namespace ProcessesApi.Tests.V1.Gateways
 
         private async Task InsertDatatoDynamoDB(ProcessesDb entity)
         {
-            await _dynamoDb.SaveAsync(entity).ConfigureAwait(false);
-            _cleanup.Add(async () => await _dynamoDb.DeleteAsync<ProcessesDb>(entity.Id).ConfigureAwait(false));
+            await _dbFixture.SaveEntityAsync(entity).ConfigureAwait(false);
         }
 
         [Fact]

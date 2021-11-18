@@ -1,32 +1,33 @@
 using AutoFixture;
 using FluentAssertions;
+using Hackney.Core.Testing.DynamoDb;
 using Newtonsoft.Json;
+using ProcessesApi.V1.Boundary.Request;
+using ProcessesApi.V1.Boundary.Response;
+using ProcessesApi.V1.Factories;
+using ProcessesApi.V1.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Threading.Tasks;
-using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.Factories;
-using ProcessesApi.V1.Infrastructure;
-using Xunit;
 using System.Net.Http;
 using System.Text;
-using ProcessesApi.V1.Boundary.Response;
+using System.Threading.Tasks;
+using Xunit;
 
 namespace ProcessesApi.Tests.V1.E2ETests
 {
-    [Collection("DynamoDb collection")]
+    [Collection("AppTest collection")]
     public class CreateNewProcessEndToEndTests : IDisposable
     {
-
         private readonly Fixture _fixture = new Fixture();
-        private readonly DynamoDbIntegrationTests<Startup> _dbFixture;
+        private readonly IDynamoDbFixture _dbFixture;
+        private readonly HttpClient _httpClient;
         private readonly List<Action> _cleanupActions = new List<Action>();
 
-        public CreateNewProcessEndToEndTests(DynamoDbIntegrationTests<Startup> dbFixture)
+        public CreateNewProcessEndToEndTests(MockWebApplicationFactory<Startup> appFactory)
         {
-            _dbFixture = dbFixture;
+            _dbFixture = appFactory.DynamoDbFixture;
+            _httpClient = appFactory.Client;
         }
         private CreateProcessQuery ConstructQuery()
         {
@@ -66,7 +67,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
             message.Method = HttpMethod.Post;
 
             // Act
-            var response = await _dbFixture.Client.SendAsync(message).ConfigureAwait(false);
+            var response = await _httpClient.SendAsync(message).ConfigureAwait(false);
             var responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             var apiProcess = JsonConvert.DeserializeObject<ProcessResponse>(responseContent);
 
@@ -101,7 +102,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
             message.Content = new StringContent(JsonConvert.SerializeObject(badRequest), Encoding.UTF8, "application/json");
             message.Method = HttpMethod.Post;
 
-            var response = await _dbFixture.Client.SendAsync(message).ConfigureAwait(false);
+            var response = await _httpClient.SendAsync(message).ConfigureAwait(false);
             response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
             message.Dispose();
