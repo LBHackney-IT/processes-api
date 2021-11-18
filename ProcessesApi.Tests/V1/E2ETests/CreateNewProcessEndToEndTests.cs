@@ -68,7 +68,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
             // Act
             var response = await _dbFixture.Client.SendAsync(message).ConfigureAwait(false);
             var responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            var apiProcess = JsonConvert.DeserializeObject<ProcessesResponse>(responseContent);
+            var apiProcess = JsonConvert.DeserializeObject<ProcessResponse>(responseContent);
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.Created);

@@ -69,7 +69,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
             // Act
             var response = await _dbFixture.Client.GetAsync(uri).ConfigureAwait(false);
             var responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            var apiEntity = JsonConvert.DeserializeObject<ProcessesResponse>(responseContent);
+            var apiEntity = JsonConvert.DeserializeObject<ProcessResponse>(responseContent);
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.OK);

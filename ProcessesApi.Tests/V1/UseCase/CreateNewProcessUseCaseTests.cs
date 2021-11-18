@@ -47,7 +47,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             var exception = new ApplicationException("Test Exception");
             _mockGateway.Setup(x => x.CreateNewProcess(createProcessQuery, processName)).ThrowsAsync(exception);
 
-            Func<Task<ProcessesResponse>> func = async () => await _classUnderTest.Execute(createProcessQuery, processName).ConfigureAwait(false);
+            Func<Task<ProcessResponse>> func = async () => await _classUnderTest.Execute(createProcessQuery, processName).ConfigureAwait(false);
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }
     }

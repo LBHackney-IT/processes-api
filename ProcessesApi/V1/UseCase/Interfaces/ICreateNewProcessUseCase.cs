@@ -8,6 +8,6 @@ namespace ProcessesApi.V1.UseCase.Interfaces
 {
     public interface ICreateNewProcessUsecase
     {
-        Task<ProcessesResponse> Execute(CreateProcessQuery createProcessQuery, string processName);
+        Task<ProcessResponse> Execute(CreateProcessQuery createProcessQuery, string processName);
     }
 }

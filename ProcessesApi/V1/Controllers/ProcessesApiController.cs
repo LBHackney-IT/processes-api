@@ -33,7 +33,7 @@ namespace ProcessesApi.V1.Controllers
         /// <response code="200">Successfully retrieved details for a particular process</response>
         /// <response code="404">No process found for the specified ID</response> 
         /// <response code="500">Internal Server Error</response>
-        [ProducesResponseType(typeof(ProcessesResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProcessResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -60,7 +60,7 @@ namespace ProcessesApi.V1.Controllers
         /// <response code="201">Process has been created successfully</response>
         /// <response code="400">Bad Request</response> 
         /// <response code="500">Internal Server Error</response>
-        [ProducesResponseType(typeof(ProcessesResponse), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ProcessResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [HttpPost]

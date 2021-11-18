@@ -98,7 +98,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         public async void CreateNewProcessReturnsCreatedResponse()
         {
             // Arrange
-            var processResponse = _fixture.Create<ProcessesResponse>();
+            var processResponse = _fixture.Create<ProcessResponse>();
             var processName = "some-process";
             _mockCreateProcessUseCase.Setup(x => x.Execute(It.IsAny<CreateProcessQuery>(), processName))
                 .ReturnsAsync(processResponse);

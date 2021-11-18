@@ -4,7 +4,7 @@ using ProcessesApi.V1.Domain;
 
 namespace ProcessesApi.V1.Boundary.Response
 {
-    public class ProcessesResponse
+    public class ProcessResponse
     {
         public Guid Id { get; set; }
         public Guid TargetId { get; set; }
