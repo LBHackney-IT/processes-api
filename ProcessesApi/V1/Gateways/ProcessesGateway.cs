@@ -6,6 +6,7 @@ using Hackney.Core.Logging;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using System;
+using ProcessesApi.V1.Boundary.Request;
 
 namespace ProcessesApi.V1.Gateways
 {
@@ -29,6 +30,17 @@ namespace ProcessesApi.V1.Gateways
 
             var result = await _dynamoDbContext.LoadAsync<ProcessesDb>(id).ConfigureAwait(false);
             return result?.ToDomain();
+        }
+
+        [LogCall]
+        public async Task<Process> CreateNewProcess(CreateProcessQuery query, string processName)
+        {
+            _logger.LogDebug("Calling IDynamoDBContext.SaveAsync");
+            var processDbEntity = query.ToDatabase();
+            processDbEntity.ProcessName = processName;
+
+            await _dynamoDbContext.SaveAsync(processDbEntity).ConfigureAwait(false);
+            return processDbEntity.ToDomain();
         }
     }
 }

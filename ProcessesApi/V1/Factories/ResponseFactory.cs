@@ -7,10 +7,10 @@ namespace ProcessesApi.V1.Factories
 {
     public static class ResponseFactory
     {
-        public static ProcessesResponse ToResponse(this Process domain)
+        public static ProcessResponse ToResponse(this Process domain)
         {
             if (domain == null) return null;
-            return new ProcessesResponse
+            return new ProcessResponse
             {
                 Id = domain.Id,
                 TargetId = domain.TargetId,

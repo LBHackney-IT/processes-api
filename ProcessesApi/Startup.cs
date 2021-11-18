@@ -170,6 +170,7 @@ namespace ProcessesApi
         private static void RegisterUseCases(IServiceCollection services)
         {
             services.AddScoped<IGetByIdUseCase, GetProcessByIdUseCase>();
+            services.AddScoped<ICreateNewProcessUsecase, CreateNewProcessUseCase>();
 
         }
 
