@@ -26,13 +26,15 @@ namespace ProcessesApi.Tests.V1.Controllers
         private ProcessesApiController _classUnderTest;
         private Mock<IGetByIdUseCase> _mockGetByIdUseCase;
         private Mock<ICreateNewProcessUsecase> _mockCreateProcessUseCase;
+        private Mock<IUpdateProcessUsecase> _mockUpdateProcessUseCase;
         private readonly Fixture _fixture = new Fixture();
 
         public ProcessesApiControllerTests()
         {
             _mockGetByIdUseCase = new Mock<IGetByIdUseCase>();
             _mockCreateProcessUseCase = new Mock<ICreateNewProcessUsecase>();
-            _classUnderTest = new ProcessesApiController(_mockGetByIdUseCase.Object, _mockCreateProcessUseCase.Object);
+            _mockUpdateProcessUseCase = new Mock<IUpdateProcessUsecase>();
+            _classUnderTest = new ProcessesApiController(_mockGetByIdUseCase.Object, _mockCreateProcessUseCase.Object, _mockUpdateProcessUseCase.Object);
         }
 
         private static ProcessesQuery ConstructQuery(Guid Id)

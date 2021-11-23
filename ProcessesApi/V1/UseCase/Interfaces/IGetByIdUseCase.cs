@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Boundary.Request;

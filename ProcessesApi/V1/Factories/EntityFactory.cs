@@ -1,4 +1,3 @@
-using System;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Infrastructure;
 
