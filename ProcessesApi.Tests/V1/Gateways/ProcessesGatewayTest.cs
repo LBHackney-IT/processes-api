@@ -10,8 +10,10 @@ using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Infrastructure;
+using ProcessesApi.V1.Infrastructure.Exceptions;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -58,13 +60,28 @@ namespace ProcessesApi.Tests.V1.Gateways
             await _dbFixture.SaveEntityAsync(entity).ConfigureAwait(false);
         }
 
+        private async Task<(ProcessesDb, UpdateProcessQuery, UpdateProcessQueryObject)> SetUpUpdateQuery()
+        {
+            var originalProcess = _fixture.Build<ProcessesDb>()
+                                .With(x => x.VersionNumber, (int?) null)
+                                .Create();
+            await InsertDatatoDynamoDB(originalProcess).ConfigureAwait(false);
+
+            var query = _fixture.Build<UpdateProcessQuery>()
+                                .With(x => x.ProcessName, originalProcess.ProcessName)
+                                .With(x => x.Id, originalProcess.Id)
+                                .Create();
+            var queryObject = _fixture.Create<UpdateProcessQueryObject>();
+            return (originalProcess, query, queryObject);
+        }
+
         [Fact]
         public async Task GetProcessByIdReturnsNullIfEntityDoesntExist()
         {
             var id = Guid.NewGuid();
             var response = await _classUnderTest.GetProcessById(id).ConfigureAwait(false);
             response.Should().BeNull();
-            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for id parameter {id}", Times.Once());
+            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for ID: {id}", Times.Once());
         }
 
         [Fact]
@@ -76,7 +93,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             await InsertDatatoDynamoDB(entity.ToDatabase()).ConfigureAwait(false);
             var response = await _classUnderTest.GetProcessById(entity.Id).ConfigureAwait(false);
             response.Should().BeEquivalentTo(entity, config => config.Excluding(y => y.VersionNumber));
-            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for id parameter {entity.Id}", Times.Once());
+            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for ID: {entity.Id}", Times.Once());
         }
 
         [Fact]
@@ -113,12 +130,46 @@ namespace ProcessesApi.Tests.V1.Gateways
                                                                                   .Excluding(z => z.CurrentState.CreatedAt)
                                                                                   .Excluding(a => a.CurrentState.UpdatedAt));
             processDb.ProcessName.Should().Be(processName);
-            processDb.CurrentState.CreatedAt.Should().BeCloseTo(query.ToDatabase().CurrentState.CreatedAt, 2000);
-            processDb.CurrentState.UpdatedAt.Should().BeCloseTo(query.ToDatabase().CurrentState.UpdatedAt, 2000);
+            processDb.CurrentState.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            processDb.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
 
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync", Times.Once());
 
             _cleanup.Add(async () => await _dynamoDb.DeleteAsync<ProcessesDb>(process.Id).ConfigureAwait(false));
+        }
+
+        [Fact]
+        public async Task UpdateProcessSuccessfullyUpdatesProcess()
+        {
+            // Arrange
+            (var originalProcess, var query, var queryObject) = await SetUpUpdateQuery().ConfigureAwait(false);
+            // Act
+            var updatedProcess = await _classUnderTest.UpdateProcess(queryObject, query, 0).ConfigureAwait(false);
+            // Assert
+            updatedProcess.CurrentState.Should().NotBe(originalProcess.CurrentState);
+            updatedProcess.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(queryObject.Documents);
+            updatedProcess.CurrentState.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            updatedProcess.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
+
+            updatedProcess.PreviousStates.LastOrDefault().Should().BeEquivalentTo(originalProcess.CurrentState, c => c.Excluding(x => x.ProcessData.FormData));
+
+            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for ID: {query.Id}", Times.Once());
+            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync to update ID: {query.Id}", Times.Once());
+        }
+
+        [Fact]
+        public async Task UpdateProcessThrowsExceptionOnVersionConflict()
+        {
+            // Arrange
+            (var originalProcess, var query, var queryObject) = await SetUpUpdateQuery().ConfigureAwait(false);
+            var ifMatch = 5;
+            // Act
+            Func<Task<Process>> func = async () => await _classUnderTest.UpdateProcess(queryObject, query, ifMatch).ConfigureAwait(false);
+            // Assert
+            func.Should().Throw<VersionNumberConflictException>().Where(x => (x.IncomingVersionNumber == ifMatch) && (x.ExpectedVersionNumber == 0));
+
+            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for ID: {query.Id}", Times.Once());
+            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync to update ID: {query.Id}", Times.Never());
         }
     }
 }
