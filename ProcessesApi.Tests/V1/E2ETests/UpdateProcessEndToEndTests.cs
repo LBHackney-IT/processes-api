@@ -97,7 +97,6 @@ namespace ProcessesApi.Tests.V1.E2ETests
 
             var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(originalEntity.Id).ConfigureAwait(false);
             dbRecord.PreviousStates.LastOrDefault().Should().BeEquivalentTo(originalEntity.CurrentState, c => c.Excluding(x => x.ProcessData.FormData));
-            // dbRecord.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(queryObject.FormData);
             dbRecord.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(queryObject.Documents);
 
             // Cleanup

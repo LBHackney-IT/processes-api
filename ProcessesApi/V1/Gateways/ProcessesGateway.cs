@@ -23,24 +23,6 @@ namespace ProcessesApi.V1.Gateways
             _logger = logger;
         }
 
-        private ProcessesDb CreateUpdatedProcess(ProcessesDb process, UpdateProcessQueryObject requestObject, UpdateProcessQuery query)
-        {
-            process.PreviousStates.Add(process.CurrentState);
-            process.CurrentState = new ProcessState
-            {
-                StateName = query.ProcessTrigger,
-                ProcessData = new ProcessData
-                {
-                    FormData = requestObject.FormData,
-                    Documents = requestObject.Documents
-                },
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
-            return process;
-        }
-
-
         [LogCall]
         public async Task<Process> GetProcessById(Guid id)
         {
@@ -59,6 +41,24 @@ namespace ProcessesApi.V1.Gateways
 
             await _dynamoDbContext.SaveAsync(processDbEntity).ConfigureAwait(false);
             return processDbEntity.ToDomain();
+        }
+
+        private ProcessesDb CreateUpdatedProcess(ProcessesDb process, UpdateProcessQueryObject requestObject, UpdateProcessQuery query)
+        {
+            process.PreviousStates.Add(process.CurrentState);
+            process.CurrentState = new ProcessState
+            {
+                StateName = query.ProcessTrigger,
+                ProcessData = new ProcessData
+                {
+                    FormData = requestObject.FormData,
+                    Documents = requestObject.Documents
+                },
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            // TODO: Update to add Assignment and PermittedTriggers when stateless is implemented
+            return process;
         }
 
         [LogCall]
