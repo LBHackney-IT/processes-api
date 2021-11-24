@@ -181,7 +181,7 @@ namespace ProcessesApi
                   .AllowAnyOrigin()
                   .AllowAnyHeader()
                   .AllowAnyMethod()
-                  .WithExposedHeaders("ETag", "x-correlation-id"));
+                  .WithExposedHeaders("ETag", "If-Match", "x-correlation-id"));
 
 
             if (env.IsDevelopment())
