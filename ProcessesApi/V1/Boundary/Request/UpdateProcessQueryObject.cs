@@ -3,11 +3,8 @@ using System.Collections.Generic;
 
 namespace ProcessesApi.V1.Boundary.Request
 {
-    public class CreateProcessQuery
+    public class UpdateProcessQueryObject
     {
-        public Guid Id { get; set; }
-        public Guid TargetId { get; set; }
-        public List<Guid> RelatedEntities { get; set; }
         public Object FormData { get; set; }
         public List<Guid> Documents { get; set; }
     }

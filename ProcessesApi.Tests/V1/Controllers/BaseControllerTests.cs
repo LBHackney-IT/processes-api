@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using ProcessesApi.V1.Controllers;
-using ProcessesApi.V1.Infrastructure;
 using FluentAssertions;
-using Hackney.Core.Middleware;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;

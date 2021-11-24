@@ -171,7 +171,7 @@ namespace ProcessesApi
         {
             services.AddScoped<IGetByIdUseCase, GetProcessByIdUseCase>();
             services.AddScoped<ICreateNewProcessUsecase, CreateNewProcessUseCase>();
-
+            services.AddScoped<IUpdateProcessUsecase, UpdateProcessUseCase>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

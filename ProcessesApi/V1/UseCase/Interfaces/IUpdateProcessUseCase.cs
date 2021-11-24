@@ -4,8 +4,8 @@ using ProcessesApi.V1.Boundary.Response;
 
 namespace ProcessesApi.V1.UseCase.Interfaces
 {
-    public interface ICreateNewProcessUsecase
+    public interface IUpdateProcessUsecase
     {
-        Task<ProcessResponse> Execute(CreateProcessQuery createProcessQuery, string processName);
+        Task<ProcessResponse> Execute(UpdateProcessQueryObject requestObject, UpdateProcessQuery query, int? ifMatch);
     }
 }

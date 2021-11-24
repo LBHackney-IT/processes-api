@@ -1,4 +1,3 @@
-using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Response;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.UseCase.Interfaces;
@@ -10,6 +9,8 @@ using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using System.Net.Http.Headers;
 using System;
+using Hackney.Core.Middleware;
+using ProcessesApi.V1.Infrastructure.Exceptions;
 
 namespace ProcessesApi.V1.Controllers
 {
@@ -21,10 +22,12 @@ namespace ProcessesApi.V1.Controllers
     {
         private readonly IGetByIdUseCase _getByIdUseCase;
         private readonly ICreateNewProcessUsecase _createNewProcessUseCase;
-        public ProcessesApiController(IGetByIdUseCase getByIdUseCase, ICreateNewProcessUsecase createNewProcessUsecase)
+        private readonly IUpdateProcessUsecase _updateProcessUsecase;
+        public ProcessesApiController(IGetByIdUseCase getByIdUseCase, ICreateNewProcessUsecase createNewProcessUsecase, IUpdateProcessUsecase updateProcessUsecase)
         {
             _getByIdUseCase = getByIdUseCase;
             _createNewProcessUseCase = createNewProcessUsecase;
+            _updateProcessUsecase = updateProcessUsecase;
         }
 
         /// <summary>
@@ -49,7 +52,7 @@ namespace ProcessesApi.V1.Controllers
             if (process.VersionNumber.HasValue)
                 eTag = process.VersionNumber.ToString();
 
-            HttpContext.Response.Headers.Add(HeaderConstants.ETag, EntityTagHeaderValue.Parse($"\"{eTag}\"").Tag);
+            HttpContext.Response.Headers.Add(Boundary.Constants.HeaderConstants.ETag, EntityTagHeaderValue.Parse($"\"{eTag}\"").Tag);
 
             return Ok(process.ToResponse());
         }
@@ -70,6 +73,55 @@ namespace ProcessesApi.V1.Controllers
         {
             var process = await _createNewProcessUseCase.Execute(query, processName).ConfigureAwait(false);
             return Created(new Uri($"api/v1/processes/{process.ProcessName}/{process.Id}", UriKind.Relative), process);
+        }
+
+        /// <summary>
+        /// Update a process's state
+        /// </summary>
+        /// <response code="204">Process has been updated successfully</response>
+        /// <response code="400">Bad Request</response> 
+        /// <response code="404">Not Found</response> 
+        /// <response code="500">Internal Server Error</response>
+        [ProducesResponseType(typeof(ProcessResponse), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [HttpPatch]
+        [LogCall(LogLevel.Information)]
+        [Route("{processName}/{id}/{processTrigger}")]
+        public async Task<IActionResult> UpdateProcess([FromBody] UpdateProcessQueryObject requestObject, [FromRoute] UpdateProcessQuery query)
+        {
+            var ifMatch = GetIfMatchFromHeader();
+            try
+            {
+                var process = await _updateProcessUsecase.Execute(requestObject, query, ifMatch).ConfigureAwait(false);
+                if (process == null) return NotFound(query.Id);
+                return NoContent();
+            }
+            catch (VersionNumberConflictException vncErr)
+            {
+                return Conflict(vncErr.Message);
+            }
+        }
+
+        private int? GetIfMatchFromHeader()
+        {
+            var header = HttpContext.Request.Headers.GetHeaderValue(Boundary.Constants.HeaderConstants.IfMatch);
+
+            if (header == null)
+                return null;
+
+            _ = EntityTagHeaderValue.TryParse(header, out var entityTagHeaderValue);
+
+            if (entityTagHeaderValue == null)
+                return null;
+
+            var version = entityTagHeaderValue.Tag.Replace("\"", string.Empty);
+
+            if (int.TryParse(version, out var numericValue))
+                return numericValue;
+
+            return null;
         }
     }
 }

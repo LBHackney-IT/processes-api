@@ -9,5 +9,6 @@ namespace ProcessesApi.V1.Gateways
     {
         Task<Process> GetProcessById(Guid id);
         Task<Process> CreateNewProcess(CreateProcessQuery createProcessQuery, string ProcessName);
+        Task<Process> UpdateProcess(UpdateProcessQueryObject requestObject, UpdateProcessQuery query, int? ifMatch);
     }
 }
