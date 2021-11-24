@@ -2,10 +2,12 @@ using AutoFixture;
 using FluentAssertions;
 using Hackney.Core.Testing.DynamoDb;
 using Newtonsoft.Json;
+using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Response;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using System;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -55,7 +57,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
         }
 
         [Fact]
-        public async Task GetProcessByValidIdReturnsOKResponse()
+        public async Task GetProcessByValidIdReturnsOKResponseWithETagHeaders()
         {
             // Arrange
             var entity = ConstructTestEntity();
@@ -72,6 +74,11 @@ namespace ProcessesApi.Tests.V1.E2ETests
             response.StatusCode.Should().Be(HttpStatusCode.OK);
             apiEntity.Should().BeEquivalentTo(entity, config => config.Excluding(y => y.VersionNumber));
 
+            var expectedEtagValue = $"\"{0}\"";
+            response.Headers.ETag.Tag.Should().Be(expectedEtagValue);
+            var eTagHeaders = response.Headers.GetValues(HeaderConstants.ETag);
+            eTagHeaders.Count().Should().Be(1);
+            eTagHeaders.First().Should().Be(expectedEtagValue);
         }
 
         [Fact]
