@@ -11,6 +11,9 @@ using System.Net.Http.Headers;
 using System;
 using Hackney.Core.Middleware;
 using ProcessesApi.V1.Infrastructure.Exceptions;
+using Hackney.Core.Http;
+using ProcessesApi.V1.Domain.SoleToJoint;
+using ProcessesApi.V1.Domain;
 
 namespace ProcessesApi.V1.Controllers
 {
@@ -22,12 +25,19 @@ namespace ProcessesApi.V1.Controllers
     {
         private readonly IGetByIdUseCase _getByIdUseCase;
         private readonly ICreateNewProcessUsecase _createNewProcessUseCase;
+        private readonly ISoleToJointUseCase _soleToJointUseCase;
         private readonly IUpdateProcessUsecase _updateProcessUsecase;
-        public ProcessesApiController(IGetByIdUseCase getByIdUseCase, ICreateNewProcessUsecase createNewProcessUsecase, IUpdateProcessUsecase updateProcessUsecase)
+        private readonly IHttpContextWrapper _contextWrapper;
+        public ProcessRequest ProcessRequest { get; set; }
+
+
+        public ProcessesApiController(IGetByIdUseCase getByIdUseCase, ICreateNewProcessUsecase createNewProcessUsecase,
+            IUpdateProcessUsecase updateProcessUsecase, IHttpContextWrapper contextWrapper)
         {
             _getByIdUseCase = getByIdUseCase;
             _createNewProcessUseCase = createNewProcessUsecase;
             _updateProcessUsecase = updateProcessUsecase;
+            _contextWrapper = contextWrapper;
         }
 
         /// <summary>
@@ -71,8 +81,47 @@ namespace ProcessesApi.V1.Controllers
         [Route("{processName}")]
         public async Task<IActionResult> CreateNewProcess([FromBody] CreateProcessQuery query, [FromRoute] string processName)
         {
-            var process = await _createNewProcessUseCase.Execute(query, processName).ConfigureAwait(false);
-            return Created(new Uri($"api/v1/processes/{process.ProcessName}/{process.Id}", UriKind.Relative), process);
+            try
+            {
+                ProcessRequest = new ProcessRequest
+                {
+                     Documents = query.Documents,
+                     FormData = query.FormData,
+                     TargetId = query.TargetId
+                };
+                switch (processName)
+                {
+                    case "soletojoint":
+                        var soleToJointResult = await _soleToJointUseCase.Execute(SoleToJointRequest.Create(Guid.NewGuid(), "StartApplication", ProcessRequest));
+
+                        Response.Headers["Location"] = soleToJointResult.Id.ToString();
+
+                        return Ok(soleToJointResult);
+                    default:
+                        var error = new ErrorResponse
+                        {
+                            ErrorCode = 1,
+                            ProcessId = Guid.Empty,
+                            ErrorMessage = "Process type does not exist",
+                            ProcessName = processName
+                        };
+                        return new BadRequestObjectResult(error);
+                }
+            }
+            catch (Exception e)
+            {
+                var res = new ErrorResponse
+                {
+                    ErrorCode = 1,
+                    ProcessId = Guid.Empty,
+                    ErrorMessage = e.Message,
+                    ProcessName = processName
+                };
+
+                return new BadRequestObjectResult(res);
+            }
+            //var process = await _createNewProcessUseCase.Execute(query, processName).ConfigureAwait(false);
+            //return Created(new Uri($"api/v1/processes/{process.ProcessName}/{process.Id}", UriKind.Relative), process);
         }
 
         /// <summary>
@@ -91,6 +140,7 @@ namespace ProcessesApi.V1.Controllers
         [Route("{processName}/{id}/{processTrigger}")]
         public async Task<IActionResult> UpdateProcess([FromBody] UpdateProcessQueryObject requestObject, [FromRoute] UpdateProcessQuery query)
         {
+            _contextWrapper.GetContextRequestHeaders(HttpContext);
             var ifMatch = GetIfMatchFromHeader();
             try
             {

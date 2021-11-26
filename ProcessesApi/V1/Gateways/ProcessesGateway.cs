@@ -49,7 +49,7 @@ namespace ProcessesApi.V1.Gateways
             process.CurrentState = new ProcessState
             {
                 StateName = query.ProcessTrigger,
-                ProcessData = new ProcessData
+                ProcessData = new ProcessRequest
                 {
                     FormData = requestObject.FormData,
                     Documents = requestObject.Documents

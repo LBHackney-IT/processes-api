@@ -8,7 +8,7 @@ namespace ProcessesApi.V1.Domain
         public string StateName { get; set; }
         public List<String> PermittedTriggers { get; set; }
         public Assignment Assignment { get; set; }
-        public ProcessData ProcessData { get; set; }
+        public ProcessRequest ProcessData { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }

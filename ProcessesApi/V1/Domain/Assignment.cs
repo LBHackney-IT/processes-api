@@ -4,5 +4,16 @@ namespace ProcessesApi.V1.Domain
     {
         public string Type { get; set; }
         public string Value { get; set; }
+        public string Patch { get; }
+
+        private Assignment(string patch)
+        {
+            Patch = patch;
+        }
+
+        public static Assignment Create(string patch)
+        {
+            return new Assignment(patch);
+        }
     }
 }

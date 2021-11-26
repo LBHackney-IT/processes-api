@@ -21,7 +21,7 @@ namespace ProcessesApi.V1.Factories
                     StateName = null,
                     PermittedTriggers = new List<string>(),
                     Assignment = new Assignment(),
-                    ProcessData = new ProcessData
+                    ProcessData = new ProcessRequest
                     {
                         FormData = createProcessQuery.FormData,
                         Documents = createProcessQuery.Documents
