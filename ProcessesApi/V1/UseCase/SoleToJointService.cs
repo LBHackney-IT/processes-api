@@ -23,40 +23,16 @@ namespace ProcessesApi.V1.UseCase
 
         private void SetUpStates()
         {
-            _machine.Configure(SoleToJointStates.ApplicationStarted).Permit(SoleToJointTriggers.StartApplication, SoleToJointStates.SelectTenants);
-            _machine.Configure(SoleToJointStates.SelectTenants).Permit(SoleToJointTriggers.CheckEligibility, SoleToJointStates.SelectTenants);
 
-            _machine.Configure(SoleToJointStates.CheckEligibility)
+            _machine.Configure(SoleToJointStates.SelectTenants)
                 .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksFailed, () => !_soleToJointProcess.IsEligible())
-                .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksPassed, () => !_soleToJointProcess.IsEligible());
-            _machine.Configure(SoleToJointStates.AutomatedChecksFailed)
-                .Permit(SoleToJointTriggers.ExitApplication, SoleToJointStates.AutomatedChecksFailed);
-            _machine.Configure(SoleToJointStates.AutomatedChecksPassed)
-                .Permit(SoleToJointTriggers.CheckManualEligibility, SoleToJointStates.AutomatedChecksPassed);
-
+                .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksPassed, () => _soleToJointProcess.IsEligible());
+            
         }
 
         private void SetUpStateActions()
         {
-            Configure(SoleToJointStates.ApplicationStarted, Assignment.Create("tenants"));
-
-            _machine.Configure(SoleToJointStates.CheckEligibility)
-                .OnEntryAsync((x) =>
-                {
-                    var processRequest = x.Parameters[0] as SoleToJointObject<SoleToJointTriggers>;
-                    var soleToJointProcess = x.Parameters[1] as SoleToJointProcess;
-
-                    _currentState = ProcessState<SoleToJointStates, SoleToJointTriggers>.Create(_machine.State, _machine.PermittedTriggers.ToList(), Assignment.Create("tenants"), processRequest?.ProcessRequest);
-
-                    var application = soleToJointProcess?.ProcessStates.First(x => x.CurrentStateEnum == SoleToJointStates.ApplicationStarted);
-
-                    var formData = JsonSerializer.Deserialize<SoleToJointFormData>(application?.ProcessData.FormData, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true });
-
-                    return Task.CompletedTask;
-                });
-
-            Configure(SoleToJointStates.AutomatedChecksFailed, Assignment.Create("tenants"));
-            Configure(SoleToJointStates.AutomatedChecksPassed, Assignment.Create("tenants"));
+            Configure(SoleToJointStates.SelectTenants, Assignment.Create("tenants"));
            
         }
 
@@ -65,20 +41,20 @@ namespace ProcessesApi.V1.UseCase
             _machine.Configure(state)
                 .OnEntry((x) =>
                 {
-                    var processRequest = x.Parameters[0] as SoleToJointObject<SoleToJointTriggers>;
+                    var processRequest = x.Parameters[0] as SoleToJointTrigger<SoleToJointTriggers>;
 
-                    _currentState = ProcessState<SoleToJointStates, SoleToJointTriggers>.Create(_machine.State, _machine.PermittedTriggers.ToList(), assignment, processRequest?.ProcessRequest);
+                    _currentState = ProcessState<SoleToJointStates, SoleToJointTriggers>.Create(_machine.State, _machine.PermittedTriggers.ToList(), assignment, ProcessData.Create(processRequest.FormData, processRequest.Documents), DateTime.UtcNow, DateTime.UtcNow);
                 });
         }
 
-        public async Task Process(SoleToJointObject<SoleToJointTriggers> processRequest, SoleToJointProcess soleToJointProcess)
+        public async Task Process(SoleToJointTrigger<SoleToJointTriggers> processRequest, SoleToJointProcess soleToJointProcess)
         {
             _soleToJointProcess = soleToJointProcess;
 
-            var state = soleToJointProcess.ProcessStates.Count > 0 ? soleToJointProcess.ProcessStates.Last().CurrentStateEnum : SoleToJointStates.ApplicationStarted;
+            var state = soleToJointProcess.PreviousStates.Count > 0 ? soleToJointProcess.PreviousStates.Last().CurrentStateEnum : SoleToJointStates.SelectTenants;
 
             _machine = new StateMachine<SoleToJointStates, SoleToJointTriggers>(() => state, s => state = s);
-            var res = _machine.SetTriggerParameters<SoleToJointObject<SoleToJointTriggers>, SoleToJointProcess>(processRequest.Trigger);
+            var res = _machine.SetTriggerParameters<SoleToJointTrigger<SoleToJointTriggers>, SoleToJointProcess>(processRequest.Trigger);
 
             SetUpStates();
             SetUpStateActions();

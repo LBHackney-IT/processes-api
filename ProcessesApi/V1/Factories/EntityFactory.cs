@@ -1,27 +1,29 @@
 using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Domain.Enums;
+using ProcessesApi.V1.Domain.SoleToJoint;
 using ProcessesApi.V1.Infrastructure;
+using System.Collections.Generic;
 
 namespace ProcessesApi.V1.Factories
 {
     public static class EntityFactory
     {
-        public static Process ToDomain(this ProcessesDb databaseEntity)
-        {
-            return new Process
-            {
-                Id = databaseEntity.Id,
-                TargetId = databaseEntity.TargetId,
-                RelatedEntities = databaseEntity.RelatedEntities,
-                ProcessName = databaseEntity.ProcessName,
-                CurrentState = databaseEntity.CurrentState,
-                PreviousStates = databaseEntity.PreviousStates,
-                VersionNumber = databaseEntity.VersionNumber
-            };
+        public static SoleToJointProcess ToDomain(this ProcessesDb entity)
+        {   
+            SoleToJointProcess soleToJointProcess;
+            soleToJointProcess = SoleToJointProcess.Create(
+                    entity.Id,
+                    entity.PreviousStates,
+                    entity.CurrentState,
+                    entity.TargetId,
+                    entity.RelatedEntities,
+                    entity.ProcessName,
+                    entity.VersionNumber);
+            return soleToJointProcess;
         }
 
-        public static ProcessesDb ToDatabase(this Process entity)
+        public static ProcessesDb ToDatabase(this SoleToJointProcess entity)
         {
-
             return new ProcessesDb
             {
                 Id = entity.Id,

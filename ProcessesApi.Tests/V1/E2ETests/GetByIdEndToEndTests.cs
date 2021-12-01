@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Response;
 using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Domain.SoleToJoint;
 using ProcessesApi.V1.Factories;
 using System;
 using System.Linq;
@@ -28,15 +29,15 @@ namespace ProcessesApi.Tests.V1.E2ETests
             _dbFixture = appFactory.DynamoDbFixture;
             _httpClient = appFactory.Client;
         }
-        private Process ConstructTestEntity()
+        private SoleToJointProcess ConstructTestEntity()
         {
-            var entity = _fixture.Build<Process>()
+            var entity = _fixture.Build<SoleToJointProcess>()
                                 .With(x => x.VersionNumber, (int?) null)
                                 .Create();
             return entity;
         }
 
-        private async Task SaveTestData(Process entity)
+        private async Task SaveTestData(SoleToJointProcess entity)
         {
             await _dbFixture.SaveEntityAsync(entity.ToDatabase()).ConfigureAwait(false);
         }
@@ -61,7 +62,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
         {
             // Arrange
             var entity = ConstructTestEntity();
-            var processName = "Some-process";
+            var processName = ProcessNamesConstants.SoleToJoint;
             await SaveTestData(entity).ConfigureAwait(false);
             var uri = new Uri($"api/v1/process/{processName}/{entity.Id}", UriKind.Relative);
 
@@ -86,7 +87,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
         {
             // Arrange
             var badId = _fixture.Create<int>();
-            var processName = "Some-process";
+            var processName = ProcessNamesConstants.SoleToJoint;
             var uri = new Uri($"api/v1/process/{processName}/{badId}", UriKind.Relative);
             // Act
             var response = await _httpClient.GetAsync(uri).ConfigureAwait(false);
@@ -99,7 +100,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
         {
             // Arrange
             var id = Guid.NewGuid();
-            var processName = "Some-process";
+            var processName = ProcessNamesConstants.SoleToJoint;
             var uri = new Uri($"api/v1/process/{processName}/{id}", UriKind.Relative);
             // Act
             var response = await _httpClient.GetAsync(uri).ConfigureAwait(false);

@@ -4,12 +4,16 @@ using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Domain;
 using Xunit;
 using System.Collections.Generic;
+using ProcessesApi.V1.Domain.Enums;
+using AutoFixture;
 
 namespace ProcessesApi.Tests.V1.Boundary.Validation
 {
     public class ProcessStateValidatorTests
     {
         private readonly ProcessStateValidator _classUnderTest;
+        private readonly Fixture _fixture = new Fixture();
+
 
         public ProcessStateValidatorTests()
         {
@@ -22,11 +26,13 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         public void RequestShouldErrorWithTagsInStateName()
         {
             //Arrange
-            var model = new ProcessState() { StateName = StringWithTags };
+            var model = _fixture.Build<ProcessState<SoleToJointStates, SoleToJointTriggers>>()
+                                .With(x => x.State, StringWithTags)
+                                .Create();
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert
-            result.ShouldHaveValidationErrorFor(x => x.StateName)
+            result.ShouldHaveValidationErrorFor(x => x.State)
                   .WithErrorCode(ErrorCodes.XssCheckFailure);
         }
 
@@ -35,35 +41,15 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         {
             //Arrange
             string stateName = "name12345";
-            var model = new ProcessState() { StateName = stateName };
+            var model = _fixture.Build<ProcessState<SoleToJointStates, SoleToJointTriggers>>()
+                               .With(x => x.State, stateName)
+                               .Create();
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert
-            result.ShouldNotHaveValidationErrorFor(x => x.StateName);
+            result.ShouldNotHaveValidationErrorFor(x => x.State);
         }
 
-        [Fact]
-        public void RequestShouldErrorWithTagsInPermittedTriggers()
-        {
-            //Arrange
-            var model = new ProcessState() { PermittedTriggers = new List<string> { StringWithTags } };
-            //Act
-            var result = _classUnderTest.TestValidate(model);
-            //Assert
-            result.ShouldHaveValidationErrorFor(x => x.PermittedTriggers)
-                  .WithErrorCode(ErrorCodes.XssCheckFailure);
-        }
-
-        [Fact]
-        public void RequestShouldNotErrorWithValidPermittedTriggers()
-        {
-            //Arrange
-            string permittedTrigger = "trigger12345";
-            var model = new ProcessState() { PermittedTriggers = new List<string> { permittedTrigger } };
-            //Act
-            var result = _classUnderTest.TestValidate(model);
-            //Assert
-            result.ShouldNotHaveValidationErrorFor(x => x.StateName);
-        }
+       
     }
 }

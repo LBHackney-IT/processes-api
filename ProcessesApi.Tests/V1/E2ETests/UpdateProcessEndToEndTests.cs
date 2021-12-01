@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Domain.SoleToJoint;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure;
 using System;
@@ -38,15 +39,15 @@ namespace ProcessesApi.Tests.V1.E2ETests
             return originalEntity;
         }
 
-        private Process ConstructTestEntity()
+        private SoleToJointProcess ConstructTestEntity()
         {
-            var originalEntity = _fixture.Build<Process>()
+            var originalEntity = _fixture.Build<SoleToJointProcess>()
                                 .With(x => x.VersionNumber, (int?) null)
                                 .Create();
             return originalEntity;
         }
 
-        private async Task SaveTestData(Process originalEntity)
+        private async Task SaveTestData(SoleToJointProcess originalEntity)
         {
             await _dbFixture.SaveEntityAsync(originalEntity.ToDatabase()).ConfigureAwait(false);
         }

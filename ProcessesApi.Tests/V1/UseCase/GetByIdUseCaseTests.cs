@@ -8,6 +8,7 @@ using AutoFixture;
 using System.Threading.Tasks;
 using System;
 using Xunit;
+using ProcessesApi.V1.Domain.SoleToJoint;
 
 namespace ProcessesApi.Tests.V1.UseCase
 {
@@ -23,11 +24,11 @@ namespace ProcessesApi.Tests.V1.UseCase
             _classUnderTest = new GetProcessByIdUseCase(_mockGateway.Object);
         }
 
-        private static ProcessesQuery ConstructQuery(Guid Id)
+        private static ProcessesQuery ConstructQuery(Guid id)
         {
             return new ProcessesQuery
             {
-                Id = Id
+                Id = id
             };
         }
 
@@ -35,7 +36,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         public async Task GetProcessByIdReturnsNullIfNullResponseFromGateway()
         {
             var id = Guid.NewGuid();
-            _mockGateway.Setup(x => x.GetProcessById(id)).ReturnsAsync((Process) null);
+            _mockGateway.Setup(x => x.GetProcessById(id)).ReturnsAsync((SoleToJointProcess) null);
             var query = ConstructQuery(id);
 
             var response = await _classUnderTest.Execute(query).ConfigureAwait(false);
@@ -45,10 +46,10 @@ namespace ProcessesApi.Tests.V1.UseCase
         [Fact]
         public async Task GetProcessByIdReturnsProcessFromGateway()
         {
-            var process = _fixture.Create<Process>();
+            var process = _fixture.Create<SoleToJointProcess>();
             var query = ConstructQuery(process.Id);
 
-            _mockGateway.Setup(x => x.GetProcessById(process.Id)).ReturnsAsync((Process) process);
+            _mockGateway.Setup(x => x.GetProcessById(process.Id)).ReturnsAsync((SoleToJointProcess) process);
 
             var response = await _classUnderTest.Execute(query).ConfigureAwait(false);
             response.Should().BeEquivalentTo(process);
@@ -62,7 +63,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             _mockGateway.Setup(x => x.GetProcessById(id)).ThrowsAsync(exception);
             var query = ConstructQuery(id);
 
-            Func<Task<Process>> func = async () => await _classUnderTest.Execute(query).ConfigureAwait(false);
+            Func<Task<SoleToJointProcess>> func = async () => await _classUnderTest.Execute(query).ConfigureAwait(false);
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }
     }

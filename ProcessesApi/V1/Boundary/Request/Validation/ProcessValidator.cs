@@ -3,10 +3,11 @@ using Hackney.Core.Validation;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Boundary.Constants;
 using System;
+using ProcessesApi.V1.Domain.SoleToJoint;
 
 namespace ProcessesApi.V1.Boundary.Request.Validation
 {
-    public class ProcessValidator : AbstractValidator<Process>
+    public class ProcessValidator : AbstractValidator<SoleToJointProcess>
     {
         public ProcessValidator()
         {

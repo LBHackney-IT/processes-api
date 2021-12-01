@@ -5,6 +5,7 @@ using ProcessesApi.V1.Infrastructure;
 using FluentAssertions;
 using System;
 using Xunit;
+using ProcessesApi.V1.Domain.SoleToJoint;
 
 namespace ProcessesApi.Tests.V1.Factories
 {
@@ -32,7 +33,7 @@ namespace ProcessesApi.Tests.V1.Factories
         [Fact]
         public void CanMapADomainEntityToADatabaseObject()
         {
-            var entity = _fixture.Create<Process>();
+            var entity = _fixture.Create<SoleToJointProcess>();
             var databaseEntity = entity.ToDatabase();
 
             databaseEntity.Id.Should().Be(entity.Id.ToString());

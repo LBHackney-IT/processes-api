@@ -4,9 +4,9 @@ namespace ProcessesApi.V1.Domain
     {
         public string Type { get; set; }
         public string Value { get; set; }
-        public string Patch { get; }
+        public string Patch { get; set; }
 
-        private Assignment(string patch)
+        public Assignment(string patch)
         {
             Patch = patch;
         }

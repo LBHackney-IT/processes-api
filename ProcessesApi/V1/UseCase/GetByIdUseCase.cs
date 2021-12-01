@@ -4,6 +4,7 @@ using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.UseCase.Interfaces;
 using Hackney.Core.Logging;
 using System.Threading.Tasks;
+using ProcessesApi.V1.Domain.SoleToJoint;
 
 namespace ProcessesApi.V1.UseCase
 {
@@ -15,7 +16,7 @@ namespace ProcessesApi.V1.UseCase
             _gateway = gateway;
         }
         [LogCall]
-        public async Task<Process> Execute(ProcessesQuery query)
+        public async Task<SoleToJointProcess> Execute(ProcessesQuery query)
         {
             var entity = await _gateway.GetProcessById(query.Id).ConfigureAwait(false);
             return entity;

@@ -7,6 +7,7 @@ using ProcessesApi.V1.UseCase.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.UseCase
@@ -22,27 +23,25 @@ namespace ProcessesApi.V1.UseCase
             _soleToJointService = soleToJointService;
         }
 
-        public async Task<SoleToJointProcess> Execute(SoleToJointRequest request)
+        public async Task<SoleToJointProcess> Execute(Guid id, SoleToJointTriggers processTrigger, Guid? targetId, List<Guid> relatedEntities, object formData, List<Guid> documents, string processName)
         {
-            var processTrigger = SoleToJointObject<SoleToJointTriggers>.Create(
-                request.Id,
-                Enum.Parse<SoleToJointTriggers>(request.Trigger),
-                ProcessData.Create(request.ProcessRequest.TargetId, request.ProcessRequest.FormData.ToString(), request.ProcessRequest.Documents));
+            var triggerObject = SoleToJointTrigger<SoleToJointTriggers>.Create(id, targetId, processTrigger, formData, documents, relatedEntities);
 
             SoleToJointProcess process;
 
-            if (processTrigger.Trigger != SoleToJointTriggers.StartApplication)
+            if (processTrigger != SoleToJointTriggers.StartApplication)
             {
-                process = await _processGateway.GetProcess(request.Id);
+                process = await _processGateway.GetProcessById(id).ConfigureAwait(false);
             }
             else
             {
-                process = SoleToJointProcess.Create(Guid.NewGuid(), new List<ProcessState<SoleToJointStates, SoleToJointTriggers>>(), null);
+                process = SoleToJointProcess.Create(id, new List<ProcessState<SoleToJointStates, SoleToJointTriggers>>(), null, targetId.Value, relatedEntities,processName, null);
+                
             }
 
-            await _soleToJointService.Process(processTrigger, process);
+            await _soleToJointService.Process(triggerObject, process).ConfigureAwait(false);
 
-            await _processGateway.Save(process);
+            await _processGateway.SaveProcess(process).ConfigureAwait(false);
 
             return process;
         }

@@ -3,12 +3,14 @@ using ProcessesApi.V1.Boundary.Request.Validation;
 using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Domain;
 using Xunit;
+using AutoFixture;
 
 namespace ProcessesApi.Tests.V1.Boundary.Validation
 {
     public class AssignmentValidatorTests
     {
         private readonly AssignmentValidator _classUnderTest;
+        private readonly Fixture _fixture = new Fixture();
 
         public AssignmentValidatorTests()
         {
@@ -21,7 +23,8 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         public void RequestShouldErrorWithTagsInType()
         {
             //Arrange
-            var model = new Assignment() { Type = StringWithTags };
+            var patch = "MMH";
+            var model = new Assignment(patch) { Type = StringWithTags };
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert
@@ -34,7 +37,8 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         {
             //Arrange
             string type = "type12345";
-            var model = new Assignment() { Type = type };
+            var patch = "MMH";
+            var model = new Assignment(patch) { Type = type };
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert
@@ -45,7 +49,8 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         public void RequestShouldErrorWithTagsInValue()
         {
             //Arrange
-            var model = new Assignment() { Value = StringWithTags };
+            var patch = "MMH";
+            var model = new Assignment(patch) { Value = StringWithTags };
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert
@@ -58,7 +63,8 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         {
             //Arrange
             string value = "value12345";
-            var model = new Assignment() { Value = value };
+            var patch = "MMH";
+            var model = new Assignment(patch) { Value = value };
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert

@@ -4,12 +4,16 @@ using ProcessesApi.V1.Domain;
 using Xunit;
 using System;
 using System.Collections.Generic;
+using ProcessesApi.V1.Domain.SoleToJoint;
+using AutoFixture;
 
 namespace ProcessesApi.Tests.V1.Boundary.Validation
 {
     public class ProcessValidatorTests
     {
         private readonly ProcessValidator _classUnderTest;
+        private readonly Fixture _fixture = new Fixture();
+
 
         public ProcessValidatorTests()
         {
@@ -17,43 +21,21 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         }
 
         [Fact]
-        public void RequestShouldErrorWithNullId()
-        {
-            //Arrange
-            var query = new Process();
-            //Act
-            var result = _classUnderTest.TestValidate(query);
-            //Assert
-            result.ShouldHaveValidationErrorFor(x => x.Id);
-        }
-
-        [Fact]
         public void RequestShouldErrorWithEmptyId()
         {
             //Arrange
-            var query = new Process() { Id = Guid.Empty };
+            var query = _fixture.Build<SoleToJointProcess>().With(x => x.Id, Guid.Empty).Create();
             //Act
             var result = _classUnderTest.TestValidate(query);
             //Assert
             result.ShouldHaveValidationErrorFor(x => x.Id);
-        }
-
-        [Fact]
-        public void RequestShouldErrorWithNullTargetId()
-        {
-            //Arrange
-            var query = new Process();
-            //Act
-            var result = _classUnderTest.TestValidate(query);
-            //Assert
-            result.ShouldHaveValidationErrorFor(x => x.TargetId);
         }
 
         [Fact]
         public void RequestShouldErrorWithEmptyTargetId()
         {
             //Arrange
-            var query = new Process() { TargetId = Guid.Empty };
+            var query = _fixture.Build<SoleToJointProcess>().With(x => x.TargetId, Guid.Empty).Create();
             //Act
             var result = _classUnderTest.TestValidate(query);
             //Assert
@@ -64,7 +46,7 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         public void RequestShouldErrorWithEmptyRelatedEntity()
         {
             //Arrange
-            var query = new Process() { RelatedEntities = new List<Guid> { Guid.Empty } };
+            var query = _fixture.Build<SoleToJointProcess>().With(x => x.RelatedEntities, new List<Guid> { Guid.Empty}).Create();
             //Act
             var result = _classUnderTest.TestValidate(query);
             //Assert
@@ -76,9 +58,9 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         {
             //Arrange
             string processName = "process12345";
-            var model = new Process() { ProcessName = processName };
+            var query = _fixture.Build<SoleToJointProcess>().With(x => x.ProcessName, processName).Create();
             //Act
-            var result = _classUnderTest.TestValidate(model);
+            var result = _classUnderTest.TestValidate(query);
             //Assert
             result.ShouldNotHaveValidationErrorFor(x => x.ProcessName);
         }

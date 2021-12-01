@@ -8,7 +8,7 @@ namespace ProcessesApi.V1.Boundary.Request
 {
     public class SoleToJointRequest
     {
-        private SoleToJointRequest(Guid id, string trigger, ProcessRequest processRequest)
+        private SoleToJointRequest(Guid id, string trigger, ProcessData processRequest)
         {
             Id = id;
             Trigger = trigger;
@@ -17,9 +17,9 @@ namespace ProcessesApi.V1.Boundary.Request
 
         public Guid Id { get; }
         public string Trigger { get; }
-        public ProcessRequest ProcessRequest { get; }
+        public ProcessData ProcessRequest { get; }
 
-        public static SoleToJointRequest Create(Guid id, string trigger, ProcessRequest processRequest)
+        public static SoleToJointRequest Create(Guid id, string trigger, ProcessData processRequest)
         {
             return new SoleToJointRequest(id, trigger, processRequest);
         }

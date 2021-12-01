@@ -1,14 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.Domain.Enums
 {
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum SoleToJointStates
     {
+        ApplicationStarted,
         SelectTenants,
-        CheckingEligibility,
         AutomatedChecksFailed,
         AutomatedChecksPassed,
         ManualChecksFailed,
@@ -16,7 +18,7 @@ namespace ProcessesApi.V1.Domain.Enums
         ConfirmAppointmentScheduled
     }
 
-    public enum SoleToJoinPermittedTriggers
+    public enum SoleToJointPermittedTriggers
     {
         CheckEligibility,
         CheckManualEligibility,
@@ -25,6 +27,7 @@ namespace ProcessesApi.V1.Domain.Enums
         CheckTenancyBreach
     }
 
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum SoleToJointTriggers
     {
         StartApplication,

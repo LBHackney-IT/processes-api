@@ -2,15 +2,19 @@ using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using Xunit;
 using FluentAssertions;
+using AutoFixture;
+using ProcessesApi.V1.Domain.SoleToJoint;
 
 namespace ProcessesApi.Tests.V1.Factories
 {
     public class ResponseFactoryTest
     {
+        private readonly Fixture _fixture = new Fixture();
+
         [Fact]
         public void CanMapADatabaseEntityToADomainObject()
         {
-            var domain = new Process();
+            var domain = _fixture.Create<SoleToJointProcess>();
             var response = domain.ToResponse();
 
             response.Id.Should().Be(domain.Id);

@@ -170,8 +170,8 @@ namespace ProcessesApi
         private static void RegisterUseCases(IServiceCollection services)
         {
             services.AddScoped<IGetByIdUseCase, GetProcessByIdUseCase>();
-            services.AddScoped<ICreateNewProcessUsecase, CreateNewProcessUseCase>();
-            services.AddScoped<IUpdateProcessUsecase, UpdateProcessUseCase>();
+            services.AddScoped<ISoleToJointUseCase, SoleToJointUseCase>();
+            services.AddScoped<ISoleToJointService, SoleToJointService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

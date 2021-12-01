@@ -14,6 +14,8 @@ using ProcessesApi.V1.Infrastructure.Exceptions;
 using Hackney.Core.Http;
 using ProcessesApi.V1.Domain.SoleToJoint;
 using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Domain.Enums;
+using ProcessesApi.V1.Boundary.Constants;
 
 namespace ProcessesApi.V1.Controllers
 {
@@ -24,19 +26,14 @@ namespace ProcessesApi.V1.Controllers
     public class ProcessesApiController : BaseController
     {
         private readonly IGetByIdUseCase _getByIdUseCase;
-        private readonly ICreateNewProcessUsecase _createNewProcessUseCase;
         private readonly ISoleToJointUseCase _soleToJointUseCase;
-        private readonly IUpdateProcessUsecase _updateProcessUsecase;
         private readonly IHttpContextWrapper _contextWrapper;
-        public ProcessRequest ProcessRequest { get; set; }
 
 
-        public ProcessesApiController(IGetByIdUseCase getByIdUseCase, ICreateNewProcessUsecase createNewProcessUsecase,
-            IUpdateProcessUsecase updateProcessUsecase, IHttpContextWrapper contextWrapper)
+        public ProcessesApiController(IGetByIdUseCase getByIdUseCase, ISoleToJointUseCase soleToJointUseCase, IHttpContextWrapper contextWrapper)
         {
             _getByIdUseCase = getByIdUseCase;
-            _createNewProcessUseCase = createNewProcessUsecase;
-            _updateProcessUsecase = updateProcessUsecase;
+            _soleToJointUseCase = soleToJointUseCase;
             _contextWrapper = contextWrapper;
         }
 
@@ -79,22 +76,22 @@ namespace ProcessesApi.V1.Controllers
         [HttpPost]
         [LogCall(LogLevel.Information)]
         [Route("{processName}")]
-        public async Task<IActionResult> CreateNewProcess([FromBody] CreateProcessQuery query, [FromRoute] string processName)
+        public async Task<IActionResult> CreateNewProcess([FromBody] CreateProcess request, [FromRoute] string processName)
         {
-            try
-            {
-                ProcessRequest = new ProcessRequest
-                {
-                     Documents = query.Documents,
-                     FormData = query.FormData,
-                     TargetId = query.TargetId
-                };
                 switch (processName)
                 {
-                    case "soletojoint":
-                        var soleToJointResult = await _soleToJointUseCase.Execute(SoleToJointRequest.Create(Guid.NewGuid(), "StartApplication", ProcessRequest));
+                    case ProcessNamesConstants.SoleToJoint:
+                        var soleToJointResult = await _soleToJointUseCase.Execute(
+                                                                          Guid.NewGuid(),
+                                                                          SoleToJointTriggers.StartApplication,
+                                                                          request.TargetId,
+                                                                          request.RelatedEntities,
+                                                                          request.FormData,
+                                                                          request.Documents,
+                                                                          processName)
+                                                                         .ConfigureAwait(false);
 
-                        Response.Headers["Location"] = soleToJointResult.Id.ToString();
+                        //Response.Headers["Location"] = soleToJointResult.Id.ToString();
 
                         return Ok(soleToJointResult);
                     default:
@@ -107,19 +104,6 @@ namespace ProcessesApi.V1.Controllers
                         };
                         return new BadRequestObjectResult(error);
                 }
-            }
-            catch (Exception e)
-            {
-                var res = new ErrorResponse
-                {
-                    ErrorCode = 1,
-                    ProcessId = Guid.Empty,
-                    ErrorMessage = e.Message,
-                    ProcessName = processName
-                };
-
-                return new BadRequestObjectResult(res);
-            }
             //var process = await _createNewProcessUseCase.Execute(query, processName).ConfigureAwait(false);
             //return Created(new Uri($"api/v1/processes/{process.ProcessName}/{process.Id}", UriKind.Relative), process);
         }
@@ -144,8 +128,8 @@ namespace ProcessesApi.V1.Controllers
             var ifMatch = GetIfMatchFromHeader();
             try
             {
-                var process = await _updateProcessUsecase.Execute(requestObject, query, ifMatch).ConfigureAwait(false);
-                if (process == null) return NotFound(query.Id);
+                var soleToJointResult = await _soleToJointUseCase.Execute(query.Id, SoleToJointTriggers.StartApplication, null,null, requestObject.FormData,requestObject.Documents, query.ProcessName);
+                if (soleToJointResult == null) return NotFound(query.Id);
                 return NoContent();
             }
             catch (VersionNumberConflictException vncErr)
