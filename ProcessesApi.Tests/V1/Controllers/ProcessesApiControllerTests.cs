@@ -152,10 +152,10 @@ namespace ProcessesApi.Tests.V1.Controllers
                                           .Create();
             var processName = ProcessNamesConstants.SoleToJoint;
             var request = ConstructPostRequest();
-            
-             _mockSoleToJointUseCase.Setup(x => x.Execute(It.IsAny<Guid>(), SoleToJointTriggers.StartApplication,
-              request.TargetId, request.RelatedEntities, request.FormData, request.Documents, processName))
-              .ReturnsAsync(processResponse);
+
+            _mockSoleToJointUseCase.Setup(x => x.Execute(It.IsAny<Guid>(), SoleToJointTriggers.StartApplication,
+             request.TargetId, request.RelatedEntities, request.FormData, request.Documents, processName))
+             .ReturnsAsync(processResponse);
 
             // Act
             var response = await _classUnderTest.CreateNewProcess(request, processName).ConfigureAwait(false);

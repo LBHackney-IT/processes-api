@@ -50,6 +50,6 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
             result.ShouldNotHaveValidationErrorFor(x => x.State);
         }
 
-       
+
     }
 }

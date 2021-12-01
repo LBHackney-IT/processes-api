@@ -78,32 +78,32 @@ namespace ProcessesApi.V1.Controllers
         [Route("{processName}")]
         public async Task<IActionResult> CreateNewProcess([FromBody] CreateProcess request, [FromRoute] string processName)
         {
-                switch (processName)
-                {
-                    case ProcessNamesConstants.SoleToJoint:
-                        var soleToJointResult = await _soleToJointUseCase.Execute(
-                                                                          Guid.NewGuid(),
-                                                                          SoleToJointTriggers.StartApplication,
-                                                                          request.TargetId,
-                                                                          request.RelatedEntities,
-                                                                          request.FormData,
-                                                                          request.Documents,
-                                                                          processName)
-                                                                         .ConfigureAwait(false);
+            switch (processName)
+            {
+                case ProcessNamesConstants.SoleToJoint:
+                    var soleToJointResult = await _soleToJointUseCase.Execute(
+                                                                      Guid.NewGuid(),
+                                                                      SoleToJointTriggers.StartApplication,
+                                                                      request.TargetId,
+                                                                      request.RelatedEntities,
+                                                                      request.FormData,
+                                                                      request.Documents,
+                                                                      processName)
+                                                                     .ConfigureAwait(false);
 
-                        //Response.Headers["Location"] = soleToJointResult.Id.ToString();
+                    //Response.Headers["Location"] = soleToJointResult.Id.ToString();
 
-                        return Ok(soleToJointResult);
-                    default:
-                        var error = new ErrorResponse
-                        {
-                            ErrorCode = 1,
-                            ProcessId = Guid.Empty,
-                            ErrorMessage = "Process type does not exist",
-                            ProcessName = processName
-                        };
-                        return new BadRequestObjectResult(error);
-                }
+                    return Ok(soleToJointResult);
+                default:
+                    var error = new ErrorResponse
+                    {
+                        ErrorCode = 1,
+                        ProcessId = Guid.Empty,
+                        ErrorMessage = "Process type does not exist",
+                        ProcessName = processName
+                    };
+                    return new BadRequestObjectResult(error);
+            }
             //var process = await _createNewProcessUseCase.Execute(query, processName).ConfigureAwait(false);
             //return Created(new Uri($"api/v1/processes/{process.ProcessName}/{process.Id}", UriKind.Relative), process);
         }
@@ -128,7 +128,7 @@ namespace ProcessesApi.V1.Controllers
             var ifMatch = GetIfMatchFromHeader();
             try
             {
-                var soleToJointResult = await _soleToJointUseCase.Execute(query.Id, SoleToJointTriggers.StartApplication, null,null, requestObject.FormData,requestObject.Documents, query.ProcessName);
+                var soleToJointResult = await _soleToJointUseCase.Execute(query.Id, SoleToJointTriggers.StartApplication, null, null, requestObject.FormData, requestObject.Documents, query.ProcessName);
                 if (soleToJointResult == null) return NotFound(query.Id);
                 return NoContent();
             }

@@ -46,7 +46,7 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         public void RequestShouldErrorWithEmptyRelatedEntity()
         {
             //Arrange
-            var query = _fixture.Build<SoleToJointProcess>().With(x => x.RelatedEntities, new List<Guid> { Guid.Empty}).Create();
+            var query = _fixture.Build<SoleToJointProcess>().With(x => x.RelatedEntities, new List<Guid> { Guid.Empty }).Create();
             //Act
             var result = _classUnderTest.TestValidate(query);
             //Assert

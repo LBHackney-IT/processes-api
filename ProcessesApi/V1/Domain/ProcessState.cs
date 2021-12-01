@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.Domain
 {
-    public class ProcessState<TSt, TTr> where TSt: Enum where TTr: Enum
+    public class ProcessState<TSt, TTr> where TSt : Enum where TTr : Enum
     {
         private readonly TSt _state;
         private readonly IList<TTr> _permittedTriggers;

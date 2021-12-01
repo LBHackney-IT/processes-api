@@ -9,6 +9,6 @@ namespace ProcessesApi.V1.UseCase.Interfaces
 {
     public interface ISoleToJointService
     {
-        Task Process(SoleToJointObject<SoleToJointTriggers> processRequest, SoleToJointProcess soleToJointProcess);
+        Task Process(SoleToJointTrigger<SoleToJointTriggers> processRequest, SoleToJointProcess soleToJointProcess);
     }
 }

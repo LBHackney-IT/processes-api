@@ -12,17 +12,17 @@ namespace ProcessesApi.V1.Domain.SoleToJoint
         public Guid Id { get; set; }
 
         public ProcessState<SoleToJointStates, SoleToJointTriggers> _currentState;
-        public ProcessState<SoleToJointStates, SoleToJointTriggers> CurrentState  => _currentState;
+        public ProcessState<SoleToJointStates, SoleToJointTriggers> CurrentState => _currentState;
 
         public List<ProcessState<SoleToJointStates, SoleToJointTriggers>> PreviousStates => _previousStates;
         private readonly List<ProcessState<SoleToJointStates, SoleToJointTriggers>> _previousStates;
-        public Guid? TargetId { get; set; }
+        public Guid TargetId { get; set; }
         public List<Guid> RelatedEntities { get; set; }
         public string ProcessName { get; set; }
         public int? VersionNumber { get; set; }
 
         public SoleToJointProcess(Guid id, List<ProcessState<SoleToJointStates, SoleToJointTriggers>> previousStates,
-            ProcessState<SoleToJointStates, SoleToJointTriggers> currentState, Guid? targetId,
+            ProcessState<SoleToJointStates, SoleToJointTriggers> currentState, Guid targetId,
             List<Guid> relatedEntities, string processName, int? versionNumber)
         {
             Id = id;
@@ -69,10 +69,10 @@ namespace ProcessesApi.V1.Domain.SoleToJoint
 
         public static SoleToJointProcess Create(Guid id,
            List<ProcessState<SoleToJointStates, SoleToJointTriggers>> previousStates,
-           ProcessState<SoleToJointStates, SoleToJointTriggers> currentState, Guid? targetId,
+           ProcessState<SoleToJointStates, SoleToJointTriggers> currentState, Guid targetId,
            List<Guid> relatedEntities, string processName, int? versionNumber)
         {
-            
+
             return new SoleToJointProcess(id, previousStates, currentState, targetId, relatedEntities, processName, versionNumber);
         }
     }

@@ -66,7 +66,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
         {
             // Arrange
             (var process, var query) = ConstructQuery();
-           var processName = ProcessNamesConstants.SoleToJoint;
+            var processName = ProcessNamesConstants.SoleToJoint;
             var uri = new Uri($"api/v1/process/{processName}/", UriKind.Relative);
 
             var message = new HttpRequestMessage(HttpMethod.Post, uri);

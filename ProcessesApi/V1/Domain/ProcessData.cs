@@ -10,7 +10,7 @@ namespace ProcessesApi.V1.Domain
     {
         public object FormData { get; set; }
         public IList<Guid> Documents { get; set; }
-        public ProcessData( object formData, IList<Guid> documents)
+        public ProcessData(object formData, IList<Guid> documents)
         {
             FormData = formData;
             Documents = documents;

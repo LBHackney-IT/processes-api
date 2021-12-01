@@ -35,20 +35,20 @@ namespace ProcessesApi.Tests.V1.UseCase
         [Fact]
         public async Task CreateNewProcessReturnsProcessFromGateway()
         {
-           
+
             var createProcessQuery = _fixture.Build<CreateProcess>()
                                              .Create();
 
             var processName = ProcessNamesConstants.SoleToJoint;
             var processId = Guid.NewGuid();
 
-            _mockSTJService.Setup(x => x.Process(It.IsAny<SoleToJointObject<SoleToJointTriggers>>(), It.IsAny<SoleToJointProcess>()));
+            _mockSTJService.Setup(x => x.Process(It.IsAny<SoleToJointTrigger<SoleToJointTriggers>>(), It.IsAny<SoleToJointProcess>()));
 
             var response = await _classUnderTest.Execute(
                 processId, SoleToJointTriggers.StartApplication,
                 createProcessQuery.TargetId, createProcessQuery.RelatedEntities, createProcessQuery.FormData,
                 createProcessQuery.Documents, processName).ConfigureAwait(false);
-            _mockSTJService.Verify(x => x.Process(It.IsAny<SoleToJointObject<SoleToJointTriggers>>(), It.IsAny<SoleToJointProcess>()), Times.Once);
+            _mockSTJService.Verify(x => x.Process(It.IsAny<SoleToJointTrigger<SoleToJointTriggers>>(), It.IsAny<SoleToJointProcess>()), Times.Once);
             _mockGateway.Verify(x => x.SaveProcess(It.IsAny<SoleToJointProcess>()), Times.Once);
 
             response.PreviousStates.Should().BeEmpty();
@@ -81,7 +81,7 @@ namespace ProcessesApi.Tests.V1.UseCase
                 process.Id, SoleToJointTriggers.StartApplication,
                 process.TargetId, process.RelatedEntities, createProcessQuery.FormData,
                 createProcessQuery.Documents, process.ProcessName).ConfigureAwait(false);
-            _mockSTJService.Verify(x => x.Process(It.IsAny<SoleToJointObject<SoleToJointTriggers>>(), It.IsAny<SoleToJointProcess>()), Times.Once);
+            _mockSTJService.Verify(x => x.Process(It.IsAny<SoleToJointTrigger<SoleToJointTriggers>>(), It.IsAny<SoleToJointProcess>()), Times.Once);
             _mockGateway.Verify(x => x.SaveProcess(It.IsAny<SoleToJointProcess>()), Times.Once);
 
             response.PreviousStates.Should().BeEmpty();

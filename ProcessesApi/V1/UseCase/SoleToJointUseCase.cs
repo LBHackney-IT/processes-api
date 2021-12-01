@@ -35,8 +35,8 @@ namespace ProcessesApi.V1.UseCase
             }
             else
             {
-                process = SoleToJointProcess.Create(id, new List<ProcessState<SoleToJointStates, SoleToJointTriggers>>(), null, targetId.Value, relatedEntities,processName, null);
-                
+                process = SoleToJointProcess.Create(id, new List<ProcessState<SoleToJointStates, SoleToJointTriggers>>(), null, targetId.Value, relatedEntities, processName, null);
+
             }
 
             await _soleToJointService.Process(triggerObject, process).ConfigureAwait(false);

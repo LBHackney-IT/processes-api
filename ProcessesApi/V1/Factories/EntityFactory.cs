@@ -9,7 +9,7 @@ namespace ProcessesApi.V1.Factories
     public static class EntityFactory
     {
         public static SoleToJointProcess ToDomain(this ProcessesDb entity)
-        {   
+        {
             SoleToJointProcess soleToJointProcess;
             soleToJointProcess = SoleToJointProcess.Create(
                     entity.Id,

@@ -8,7 +8,7 @@ namespace ProcessesApi.V1.Domain.SoleToJoint
 {
     public class SoleToJointTrigger<T>
     {
-        private SoleToJointTrigger(Guid id,Guid? targetId, T trigger, object formData, List<Guid> documents, List<Guid> relatedEntities)
+        private SoleToJointTrigger(Guid id, Guid? targetId, T trigger, object formData, List<Guid> documents, List<Guid> relatedEntities)
         {
             Id = id;
             TargetId = targetId;
@@ -27,7 +27,7 @@ namespace ProcessesApi.V1.Domain.SoleToJoint
 
         public static SoleToJointTrigger<T> Create(Guid id, Guid? targetId, T trigger, object formData, List<Guid> documents, List<Guid> relatedEntities)
         {
-            return new SoleToJointTrigger<T>(id, targetId, trigger, formData, documents,relatedEntities);
+            return new SoleToJointTrigger<T>(id, targetId, trigger, formData, documents, relatedEntities);
         }
     }
 }

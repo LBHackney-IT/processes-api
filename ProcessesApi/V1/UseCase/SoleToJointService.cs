@@ -27,13 +27,13 @@ namespace ProcessesApi.V1.UseCase
             _machine.Configure(SoleToJointStates.SelectTenants)
                 .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksFailed, () => !_soleToJointProcess.IsEligible())
                 .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksPassed, () => _soleToJointProcess.IsEligible());
-            
+
         }
 
         private void SetUpStateActions()
         {
             Configure(SoleToJointStates.SelectTenants, Assignment.Create("tenants"));
-           
+
         }
 
         private void Configure(SoleToJointStates state, Assignment assignment)
