@@ -23,7 +23,8 @@ namespace ProcessesApi.V1.UseCase
 
         private void SetUpStates()
         {
-
+            _machine.Configure(SoleToJointStates.InitialiseProcess)
+                .Permit(SoleToJointTriggers.StartApplication, SoleToJointStates.SelectTenants);
             _machine.Configure(SoleToJointStates.SelectTenants)
                 .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksFailed, () => !_soleToJointProcess.IsEligible())
                 .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksPassed, () => _soleToJointProcess.IsEligible());
@@ -51,7 +52,7 @@ namespace ProcessesApi.V1.UseCase
         {
             _soleToJointProcess = soleToJointProcess;
 
-            var state = soleToJointProcess.PreviousStates.Count > 0 ? soleToJointProcess.PreviousStates.Last().CurrentStateEnum : SoleToJointStates.SelectTenants;
+            var state = soleToJointProcess.CurrentState is null ? SoleToJointStates.InitialiseProcess : soleToJointProcess.CurrentState.CurrentStateEnum;
 
             _machine = new StateMachine<SoleToJointStates, SoleToJointTriggers>(() => state, s => state = s);
             var res = _machine.SetTriggerParameters<SoleToJointTrigger<SoleToJointTriggers>, SoleToJointProcess>(processRequest.Trigger);

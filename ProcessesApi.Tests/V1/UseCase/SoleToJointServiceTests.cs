@@ -1,4 +1,5 @@
 using AutoFixture;
+using FluentAssertions;
 using Moq;
 using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
@@ -22,20 +23,22 @@ namespace ProcessesApi.Tests.V1.UseCase
 
         public SoleToJointServiceTests()
         {
+            _classUnderTest = new SoleToJointService();
         }
 
         [Fact]
-        // [InlineData(SoleToJointTriggers.StartApplication, SoleToJointStates.ApplicationStarted, SoleToJointStates.SelectTenants, SoleToJointPermittedTriggers.CheckEligibility )]
-        public void StartSoleToJointState()
+        // [InlineData(SoleToJointTriggers.StartApplication, SoleToJointStates.InitialiseProcess, SoleToJointStates.SelectTenants, SoleToJointPermittedTriggers.CheckEligibility )]
+        public async Task InitialiseStateToSelectTenantsIfCurrentStateIsNotDefined()
         {
-            var id = Guid.NewGuid();
-            var processTrigger = _fixture.Build<SoleToJointTrigger<SoleToJointTriggers>>()
-                                          .With(x => x.Id, id)
-                                          .Create();
-            //var processName = ProcessNamesConstants.SoleToJoint;
-            //var currentState = ProcessState<SoleToJointStates, SoleToJointTriggers>.Create(SoleToJointStates.ApplicationStarted, SoleToJointPermittedTriggers.CheckEligibility, null, null, DateTime.UtcNow, DateTime.UtcNow);
-
-            //var process = SoleToJointProcess.Create(id, new List<ProcessState<SoleToJointStates, SoleToJointTriggers>>(), currentState, processTrigger.TargetId, processTrigger.RelatedEntities, processName, null);
+            var processData = _fixture.Create<SoleToJointProcess>(); // set up some mock data
+            var process = SoleToJointProcess.Create(processData.Id, new List<ProcessState<SoleToJointStates, SoleToJointTriggers>>(), null, processData.TargetId, processData.RelatedEntities, ProcessNamesConstants.SoleToJoint, null);
+            var triggerObject = SoleToJointTrigger<SoleToJointTriggers>.Create(process.Id, process.TargetId, SoleToJointTriggers.StartApplication, processData.CurrentState.ProcessData.FormData, processData.CurrentState.ProcessData.Documents, process.RelatedEntities);
+            // arrange
+            await _classUnderTest.Process(triggerObject, process).ConfigureAwait(false);
+            // act
+            process.CurrentState.CurrentStateEnum.Should().Be(SoleToJointStates.SelectTenants);
+            process.PreviousStates.Should().BeEmpty();
+            // assert
         }
     }
 }

@@ -36,9 +36,8 @@ namespace ProcessesApi.V1.Domain.SoleToJoint
 
         public Task AddState(ProcessState<SoleToJointStates, SoleToJointTriggers> state)
         {
+            if (_currentState != null) PreviousStates.Add(_currentState);
             _currentState = state;
-
-            PreviousStates.Add(state);
 
             return Task.CompletedTask;
         }

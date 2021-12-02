@@ -9,6 +9,7 @@ namespace ProcessesApi.V1.Domain.Enums
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum SoleToJointStates
     {
+        InitialiseProcess,
         SelectTenants,
         AutomatedChecksFailed,
         AutomatedChecksPassed,

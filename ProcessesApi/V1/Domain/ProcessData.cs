@@ -9,14 +9,14 @@ namespace ProcessesApi.V1.Domain
     public class ProcessData
     {
         public object FormData { get; set; }
-        public IList<Guid> Documents { get; set; }
-        public ProcessData(object formData, IList<Guid> documents)
+        public List<Guid> Documents { get; set; }
+        public ProcessData(object formData, List<Guid> documents)
         {
             FormData = formData;
             Documents = documents;
         }
 
-        public static ProcessData Create(object formData, IList<Guid> documents)
+        public static ProcessData Create(object formData, List<Guid> documents)
         {
             return new ProcessData(formData, documents);
         }
