@@ -84,8 +84,8 @@ namespace ProcessesApi.Tests.V1.E2ETests
 
             var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(apiProcess.Id).ConfigureAwait(false);
             dbRecord.Should().BeEquivalentTo(process.ToDatabase(), c => c.Excluding(x => x.VersionNumber)
-                                                                       .Excluding(z => z.CurrentState.CreatedAt)
-                                                                       .Excluding(a => a.CurrentState.UpdatedAt));
+                                                                         .Excluding(z => z.CurrentState.CreatedAt)
+                                                                         .Excluding(a => a.CurrentState.UpdatedAt));
             dbRecord.CurrentState.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
             dbRecord.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
 

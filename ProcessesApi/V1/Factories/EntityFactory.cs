@@ -3,6 +3,7 @@ using ProcessesApi.V1.Domain.Enums;
 using ProcessesApi.V1.Domain.SoleToJoint;
 using ProcessesApi.V1.Infrastructure;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ProcessesApi.V1.Factories
 {
@@ -13,8 +14,8 @@ namespace ProcessesApi.V1.Factories
             SoleToJointProcess soleToJointProcess;
             soleToJointProcess = SoleToJointProcess.Create(
                     entity.Id,
-                    entity.PreviousStates,
-                    entity.CurrentState,
+                    entity.PreviousStates?.Select( x => x.ConvertStringToEnum<SoleToJointStates, SoleToJointTriggers>()).ToList(),
+                    entity.CurrentState?.ConvertStringToEnum<SoleToJointStates, SoleToJointTriggers>(),
                     entity.TargetId,
                     entity.RelatedEntities,
                     entity.ProcessName,
@@ -30,8 +31,8 @@ namespace ProcessesApi.V1.Factories
                 TargetId = entity.TargetId,
                 RelatedEntities = entity.RelatedEntities,
                 ProcessName = entity.ProcessName,
-                CurrentState = entity.CurrentState,
-                PreviousStates = entity.PreviousStates,
+                CurrentState = entity.CurrentState?.ConvertEnumsToString(),
+                PreviousStates = entity.PreviousStates?.Select(x => x.ConvertEnumsToString()).ToList(),
                 VersionNumber = entity.VersionNumber
             };
         }

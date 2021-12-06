@@ -10,6 +10,8 @@ namespace ProcessesApi.V1.Infrastructure
     [DynamoDBTable("Processes", LowerCamelCaseProperties = true)]
     public class ProcessesDb
     {
+        public ProcessesDb()
+        { }
         [DynamoDBHashKey]
         public Guid Id { get; set; }
 
@@ -22,11 +24,11 @@ namespace ProcessesApi.V1.Infrastructure
         [DynamoDBProperty]
         public List<Guid> RelatedEntities { get; set; }
 
-        [DynamoDBProperty(Converter = typeof(DynamoDbObjectConverter<ProcessState<SoleToJointStates, SoleToJointTriggers>>))]
-        public ProcessState<SoleToJointStates, SoleToJointTriggers> CurrentState { get; set; }
+        [DynamoDBProperty(Converter = typeof(DynamoDbObjectConverter<ProcessState<string, string>>))]
+        public ProcessState<string, string> CurrentState { get; set; }
 
-        [DynamoDBProperty(Converter = typeof(DynamoDbObjectListConverter<ProcessState<SoleToJointStates, SoleToJointTriggers>>))]
-        public List<ProcessState<SoleToJointStates, SoleToJointTriggers>> PreviousStates { get; set; }
+        [DynamoDBProperty(Converter = typeof(DynamoDbObjectListConverter<ProcessState<string, string>>))]
+        public List<ProcessState<string, string>> PreviousStates { get; set; }
 
         [DynamoDBVersion]
         public int? VersionNumber { get; set; }

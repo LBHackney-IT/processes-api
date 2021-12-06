@@ -42,8 +42,6 @@ namespace ProcessesApi.Tests.V1.UseCase
             var processName = ProcessNamesConstants.SoleToJoint;
             var processId = Guid.NewGuid();
 
-            _mockSTJService.Setup(x => x.Process(It.IsAny<SoleToJointTrigger<SoleToJointTriggers>>(), It.IsAny<SoleToJointProcess>()));
-
             var response = await _classUnderTest.Execute(
                 processId, SoleToJointTriggers.StartApplication,
                 createProcessQuery.TargetId, createProcessQuery.RelatedEntities, createProcessQuery.FormData,
@@ -51,41 +49,10 @@ namespace ProcessesApi.Tests.V1.UseCase
             _mockSTJService.Verify(x => x.Process(It.IsAny<SoleToJointTrigger<SoleToJointTriggers>>(), It.IsAny<SoleToJointProcess>()), Times.Once);
             _mockGateway.Verify(x => x.SaveProcess(It.IsAny<SoleToJointProcess>()), Times.Once);
 
-            response.PreviousStates.Should().BeEmpty();
             response.Id.Should().Be(processId);
             response.TargetId.Should().Be(createProcessQuery.TargetId);
             response.ProcessName.Should().Be(processName);
             response.RelatedEntities.Should().BeEquivalentTo(createProcessQuery.RelatedEntities);
-            response.CurrentState.State.Should().Be(SoleToJointStates.SelectTenants.ToString());
-            response.CurrentState.PermittedTriggers.Should().BeEquivalentTo(new List<string>() { SoleToJointPermittedTriggers.CheckEligibility.ToString() });
-            response.CurrentState.ProcessData.FormData.Should().Be(createProcessQuery.FormData);
-            response.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(createProcessQuery.Documents);
-            response.CurrentState.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
-            response.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
-            // response.Should().BeEquivalentTo(createProcessQuery.ToResponse(),config => config.Excluding(x => x.PreviousStates));//.Excluding(x => x.CurrentState));
-        }
-
-        [Fact]
-        public async Task UpdateProcessSendNewStateToGateway()
-        {
-            var process = _fixture.Build<SoleToJointProcess>()
-                                  .With(x => x.VersionNumber, (int?) null)
-                                  .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
-                                  .Create();
-            var createProcessQuery = _fixture.Build<CreateProcess>()
-                                             .Create();
-
-            _mockGateway.Setup(x => x.SaveProcess(It.IsAny<SoleToJointProcess>())).ReturnsAsync(process);
-
-            var response = await _classUnderTest.Execute(
-                process.Id, SoleToJointTriggers.StartApplication,
-                process.TargetId, process.RelatedEntities, createProcessQuery.FormData,
-                createProcessQuery.Documents, process.ProcessName).ConfigureAwait(false);
-            _mockSTJService.Verify(x => x.Process(It.IsAny<SoleToJointTrigger<SoleToJointTriggers>>(), It.IsAny<SoleToJointProcess>()), Times.Once);
-            _mockGateway.Verify(x => x.SaveProcess(It.IsAny<SoleToJointProcess>()), Times.Once);
-
-            response.PreviousStates.Should().BeEmpty();
-            response.Should().BeEquivalentTo(process.ToResponse(), config => config.Excluding(x => x.PreviousStates));//.Excluding(x => x.CurrentState));
         }
 
         [Fact]
@@ -105,6 +72,53 @@ namespace ProcessesApi.Tests.V1.UseCase
                 process.Id, SoleToJointTriggers.StartApplication,
                 process.TargetId, process.RelatedEntities, createProcessQuery.FormData,
                 createProcessQuery.Documents, process.ProcessName).ConfigureAwait(false);
+            func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
+        }
+
+        [Fact]
+        public async Task UpdateProcessSendNewStateToGateway()
+        {
+            var process = _fixture.Build<SoleToJointProcess>()
+                                  .With(x => x.VersionNumber, (int?) null)
+                                  .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
+                                  .Create();
+
+            var updateProcessQuery = _fixture.Build<UpdateProcessQueryObject>()
+                                             .Create();
+
+
+            _mockGateway.Setup(x => x.GetProcessById(process.Id)).ReturnsAsync(process);
+
+            var response = await _classUnderTest.Execute(
+                process.Id, SoleToJointTriggers.CheckEligibility,
+                process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
+                updateProcessQuery.Documents, process.ProcessName).ConfigureAwait(false);
+            _mockSTJService.Verify(x => x.Process(It.IsAny<SoleToJointTrigger<SoleToJointTriggers>>(), It.IsAny<SoleToJointProcess>()), Times.Once);
+            _mockGateway.Verify(x => x.SaveProcess(It.IsAny<SoleToJointProcess>()), Times.Once);
+
+            response.Id.Should().Be(process.Id);
+            response.TargetId.Should().Be(process.TargetId);
+            response.ProcessName.Should().Be(process.ProcessName);
+            response.RelatedEntities.Should().BeEquivalentTo(process.RelatedEntities);
+        }
+
+        [Fact]
+        public void UpdateProcessExceptionIsThrown()
+        {
+            var process = _fixture.Build<SoleToJointProcess>()
+                                 .With(x => x.VersionNumber, (int?) null)
+                                 .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
+                                 .Create();
+            var updateProcessQuery = _fixture.Build<UpdateProcessQueryObject>()
+                                             .Create();
+
+            var exception = new ApplicationException("Test Exception");
+            _mockGateway.Setup(x => x.GetProcessById(It.IsAny<Guid>())).ThrowsAsync(exception);
+
+            Func<Task<SoleToJointProcess>> func = async () => await _classUnderTest.Execute(
+                process.Id, SoleToJointTriggers.CheckEligibility,
+                process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
+                updateProcessQuery.Documents, process.ProcessName).ConfigureAwait(false);
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }
     }

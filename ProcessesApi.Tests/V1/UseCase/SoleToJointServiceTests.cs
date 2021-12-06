@@ -27,18 +27,22 @@ namespace ProcessesApi.Tests.V1.UseCase
         }
 
         [Fact]
-        // [InlineData(SoleToJointTriggers.StartApplication, SoleToJointStates.InitialiseProcess, SoleToJointStates.SelectTenants, SoleToJointPermittedTriggers.CheckEligibility )]
         public async Task InitialiseStateToSelectTenantsIfCurrentStateIsNotDefined()
         {
+            // Arrange
             var processData = _fixture.Create<SoleToJointProcess>(); // set up some mock data
             var process = SoleToJointProcess.Create(processData.Id, new List<ProcessState<SoleToJointStates, SoleToJointTriggers>>(), null, processData.TargetId, processData.RelatedEntities, ProcessNamesConstants.SoleToJoint, null);
             var triggerObject = SoleToJointTrigger<SoleToJointTriggers>.Create(process.Id, process.TargetId, SoleToJointTriggers.StartApplication, processData.CurrentState.ProcessData.FormData, processData.CurrentState.ProcessData.Documents, process.RelatedEntities);
-            // arrange
+            // Act
             await _classUnderTest.Process(triggerObject, process).ConfigureAwait(false);
-            // act
-            process.CurrentState.CurrentStateEnum.Should().Be(SoleToJointStates.SelectTenants);
+            // Assert
             process.PreviousStates.Should().BeEmpty();
-            // assert
+            process.CurrentState.CurrentStateEnum.Should().Be(SoleToJointStates.SelectTenants);
+            process.CurrentState.PermittedTriggers.Should().BeEquivalentTo(new List<string>() { SoleToJointPermittedTriggers.CheckEligibility.ToString() });
+            process.CurrentState.ProcessData.FormData.Should().Be(processData.CurrentState.ProcessData.FormData);
+            process.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(processData.CurrentState.ProcessData.Documents);
+            process.CurrentState.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            process.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
         }
     }
 }

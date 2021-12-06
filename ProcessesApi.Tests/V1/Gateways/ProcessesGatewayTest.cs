@@ -109,12 +109,12 @@ namespace ProcessesApi.Tests.V1.Gateways
                                         .With(x => x.VersionNumber, (int?) null)
                                         .Create();
             // Act
-            var process = await _classUnderTest.SaveProcess(processObject).ConfigureAwait(false);
+             var process = await _classUnderTest.SaveProcess(processObject).ConfigureAwait(false);
             // Assert
             var processDb = await _dynamoDb.LoadAsync<ProcessesDb>(process.Id).ConfigureAwait(false);
             processDb.Should().BeEquivalentTo(processObject.ToDatabase(), config => config.Excluding(x => x.VersionNumber)
-                                                                                  .Excluding(z => z.CurrentState.CreatedAt)
-                                                                                  .Excluding(a => a.CurrentState.UpdatedAt));
+                                                                                   .Excluding(z => z.CurrentState.CreatedAt)
+                                                                                   .Excluding(a => a.CurrentState.UpdatedAt));
             processDb.CurrentState.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
             processDb.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
 
