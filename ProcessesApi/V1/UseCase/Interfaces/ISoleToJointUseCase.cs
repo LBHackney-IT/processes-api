@@ -11,6 +11,6 @@ namespace ProcessesApi.V1.UseCase.Interfaces
 {
     public interface ISoleToJointUseCase
     {
-        Task<SoleToJointProcess> Execute(Guid id, SoleToJointTriggers processTrigger, Guid? targetId, List<Guid> relatedEntities, object formData, List<Guid> documents, string processName);
+        Task<SoleToJointProcess> Execute(Guid id, string processTrigger, Guid? targetId, List<Guid> relatedEntities, object formData, List<Guid> documents, string processName);
     }
 }

@@ -128,7 +128,7 @@ namespace ProcessesApi.V1.Controllers
             var ifMatch = GetIfMatchFromHeader();
             try
             {
-                var soleToJointResult = await _soleToJointUseCase.Execute(query.Id, SoleToJointTriggers.StartApplication, null, null, requestObject.FormData, requestObject.Documents, query.ProcessName);
+                var soleToJointResult = await _soleToJointUseCase.Execute(query.Id, query.ProcessTrigger, null, null, requestObject.FormData, requestObject.Documents, query.ProcessName);
                 if (soleToJointResult == null) return NotFound(query.Id);
                 return NoContent();
             }

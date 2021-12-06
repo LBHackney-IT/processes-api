@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Domain.Enums;
 using ProcessesApi.V1.Domain.SoleToJoint;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
@@ -107,6 +108,14 @@ namespace ProcessesApi.Tests.V1.Gateways
             // Arrange
             var processObject = _fixture.Build<SoleToJointProcess>()
                                         .With(x => x.VersionNumber, (int?) null)
+                                        .With(x => x.CurrentState,
+                                                   _fixture.Build<ProcessState>()
+                                                           .With(x => x.CreatedAt, DateTime.UtcNow)
+                                                           .With(x => x.UpdatedAt, DateTime.UtcNow)
+                                                           .With(x => x.State, SoleToJointStates.ApplicationInitialised)
+                                                           .With(x => x.PermittedTriggers, (new[] { SoleToJointTriggers.StartApplication }).ToList())
+                                                           .Create())
+                                        .Without(x => x.PreviousStates)
                                         .Create();
             // Act
              var process = await _classUnderTest.SaveProcess(processObject).ConfigureAwait(false);
@@ -115,6 +124,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             processDb.Should().BeEquivalentTo(processObject.ToDatabase(), config => config.Excluding(x => x.VersionNumber)
                                                                                    .Excluding(z => z.CurrentState.CreatedAt)
                                                                                    .Excluding(a => a.CurrentState.UpdatedAt));
+            processDb.VersionNumber.Should().Be(0);
             processDb.CurrentState.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
             processDb.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
 
@@ -129,17 +139,34 @@ namespace ProcessesApi.Tests.V1.Gateways
             // Arrange
             var originalProcess = _fixture.Build<SoleToJointProcess>()
                                         .With(x => x.VersionNumber, (int?) null)
+                                        .With(x => x.CurrentState,
+                                                   _fixture.Build<ProcessState>()
+                                                           .With(x => x.CreatedAt, DateTime.UtcNow)
+                                                           .With(x => x.UpdatedAt, DateTime.UtcNow)
+                                                           .With(x => x.State, SoleToJointStates.ApplicationInitialised)
+                                                           .With(x => x.PermittedTriggers, (new[] { SoleToJointTriggers.StartApplication }).ToList())
+                                                           .Create())
+                                        .Without(x => x.PreviousStates)
                                         .Create();
             await InsertDatatoDynamoDB(originalProcess.ToDatabase()).ConfigureAwait(false);
 
             var updateObject = _fixture.Build<SoleToJointProcess>()
                                        .With(x => x.Id, originalProcess.Id)
-                                       .With(x => x.VersionNumber, (int?) null)
+                                       .With(x => x.VersionNumber, 0)
+                                       .With(x => x.CurrentState,
+                                                  _fixture.Build<ProcessState>()
+                                                          .With(x => x.CreatedAt, DateTime.UtcNow)
+                                                          .With(x => x.UpdatedAt, DateTime.UtcNow)
+                                                          .With(x => x.State, SoleToJointStates.SelectTenants)
+                                                          .With(x => x.PermittedTriggers, (new[] { SoleToJointTriggers.CheckEligibility }).ToList())
+                                                          .Create())
+                                       .Without(x => x.PreviousStates)
                                        .Create();
             // Act
             var updatedProcess = await _classUnderTest.SaveProcess(updateObject).ConfigureAwait(false);
             // Assert
-            updatedProcess.Should().BeEquivalentTo(updateObject);
+            updatedProcess.Should().BeEquivalentTo(updateObject, c => c.Excluding(y => y.VersionNumber));
+            updatedProcess.VersionNumber.Should().Be(1);
 
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync for id {updateObject.Id}", Times.Once());
         }

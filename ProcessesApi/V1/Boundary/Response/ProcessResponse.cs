@@ -11,7 +11,7 @@ namespace ProcessesApi.V1.Boundary.Response
         public Guid TargetId { get; set; }
         public List<Guid> RelatedEntities { get; set; }
         public String ProcessName { get; set; }
-        public ProcessState<SoleToJointStates, SoleToJointTriggers> CurrentState { get; set; }
-        public List<ProcessState<SoleToJointStates, SoleToJointTriggers>> PreviousStates { get; set; }
+        public ProcessState CurrentState { get; set; }
+        public List<ProcessState> PreviousStates { get; set; }
     }
 }

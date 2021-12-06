@@ -11,40 +11,39 @@ namespace ProcessesApi.V1.Domain.SoleToJoint
     {
         public Guid Id { get; set; }
 
-        public ProcessState<SoleToJointStates, SoleToJointTriggers> _currentState;
-        public ProcessState<SoleToJointStates, SoleToJointTriggers> CurrentState => _currentState;
-
-        public List<ProcessState<SoleToJointStates, SoleToJointTriggers>> PreviousStates => _previousStates;
-        private readonly List<ProcessState<SoleToJointStates, SoleToJointTriggers>> _previousStates;
+        public ProcessState CurrentState { get; set; }
+        public List<ProcessState> PreviousStates { get; set; }
         public Guid TargetId { get; set; }
         public List<Guid> RelatedEntities { get; set; }
         public string ProcessName { get; set; }
         public int? VersionNumber { get; set; }
 
-        public SoleToJointProcess(Guid id, List<ProcessState<SoleToJointStates, SoleToJointTriggers>> previousStates,
-            ProcessState<SoleToJointStates, SoleToJointTriggers> currentState, Guid targetId,
+        public SoleToJointProcess() { }
+
+        public SoleToJointProcess(Guid id, List<ProcessState> previousStates,
+            ProcessState currentState, Guid targetId,
             List<Guid> relatedEntities, string processName, int? versionNumber)
         {
             Id = id;
-            _currentState = currentState;
-            _previousStates = previousStates;
+            CurrentState = currentState;
+            PreviousStates = previousStates;
             TargetId = targetId;
             RelatedEntities = relatedEntities;
             ProcessName = processName;
             VersionNumber = versionNumber;
         }
 
-        public Task AddState(ProcessState<SoleToJointStates, SoleToJointTriggers> state)
+        public Task AddState(ProcessState state)
         {
-            if (_currentState != null) PreviousStates.Add(_currentState);
-            _currentState = state;
+            if (CurrentState != null) PreviousStates.Add(CurrentState);
+            CurrentState = state;
 
             return Task.CompletedTask;
         }
 
         public bool IsEligible()
         {
-            var application = PreviousStates.FirstOrDefault(x => x.CurrentStateEnum == SoleToJointStates.SelectTenants);
+            var application = PreviousStates.FirstOrDefault(x => x.State == SoleToJointStates.SelectTenants);
 
             if (application == null)
                 return false;
@@ -67,8 +66,8 @@ namespace ProcessesApi.V1.Domain.SoleToJoint
         }
 
         public static SoleToJointProcess Create(Guid id,
-           List<ProcessState<SoleToJointStates, SoleToJointTriggers>> previousStates,
-           ProcessState<SoleToJointStates, SoleToJointTriggers> currentState, Guid targetId,
+           List<ProcessState> previousStates,
+           ProcessState currentState, Guid targetId,
            List<Guid> relatedEntities, string processName, int? versionNumber)
         {
 

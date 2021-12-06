@@ -26,7 +26,7 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         public void RequestShouldErrorWithTagsInStateName()
         {
             //Arrange
-            var model = _fixture.Build<ProcessState<SoleToJointStates, SoleToJointTriggers>>()
+            var model = _fixture.Build<ProcessState>()
                                 .With(x => x.State, StringWithTags)
                                 .Create();
             //Act
@@ -41,7 +41,7 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         {
             //Arrange
             string stateName = "name12345";
-            var model = _fixture.Build<ProcessState<SoleToJointStates, SoleToJointTriggers>>()
+            var model = _fixture.Build<ProcessState>()
                                .With(x => x.State, stateName)
                                .Create();
             //Act

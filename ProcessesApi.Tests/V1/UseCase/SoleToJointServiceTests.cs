@@ -31,13 +31,13 @@ namespace ProcessesApi.Tests.V1.UseCase
         {
             // Arrange
             var processData = _fixture.Create<SoleToJointProcess>(); // set up some mock data
-            var process = SoleToJointProcess.Create(processData.Id, new List<ProcessState<SoleToJointStates, SoleToJointTriggers>>(), null, processData.TargetId, processData.RelatedEntities, ProcessNamesConstants.SoleToJoint, null);
-            var triggerObject = SoleToJointTrigger<SoleToJointTriggers>.Create(process.Id, process.TargetId, SoleToJointTriggers.StartApplication, processData.CurrentState.ProcessData.FormData, processData.CurrentState.ProcessData.Documents, process.RelatedEntities);
+            var process = SoleToJointProcess.Create(processData.Id, new List<ProcessState>(), null, processData.TargetId, processData.RelatedEntities, ProcessNamesConstants.SoleToJoint, null);
+            var triggerObject = SoleToJointTrigger.Create(process.Id, process.TargetId, SoleToJointTriggers.StartApplication, processData.CurrentState.ProcessData.FormData, processData.CurrentState.ProcessData.Documents, process.RelatedEntities);
             // Act
             await _classUnderTest.Process(triggerObject, process).ConfigureAwait(false);
             // Assert
             process.PreviousStates.Should().BeEmpty();
-            process.CurrentState.CurrentStateEnum.Should().Be(SoleToJointStates.SelectTenants);
+            process.CurrentState.State.Should().Be(SoleToJointStates.SelectTenants);
             process.CurrentState.PermittedTriggers.Should().BeEquivalentTo(new List<string>() { SoleToJointPermittedTriggers.CheckEligibility.ToString() });
             process.CurrentState.ProcessData.FormData.Should().Be(processData.CurrentState.ProcessData.FormData);
             process.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(processData.CurrentState.ProcessData.Documents);

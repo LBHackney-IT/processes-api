@@ -14,8 +14,8 @@ namespace ProcessesApi.V1.Factories
             SoleToJointProcess soleToJointProcess;
             soleToJointProcess = SoleToJointProcess.Create(
                     entity.Id,
-                    entity.PreviousStates?.Select( x => x.ConvertStringToEnum<SoleToJointStates, SoleToJointTriggers>()).ToList(),
-                    entity.CurrentState?.ConvertStringToEnum<SoleToJointStates, SoleToJointTriggers>(),
+                    entity.PreviousStates,
+                    entity.CurrentState,
                     entity.TargetId,
                     entity.RelatedEntities,
                     entity.ProcessName,
@@ -31,8 +31,8 @@ namespace ProcessesApi.V1.Factories
                 TargetId = entity.TargetId,
                 RelatedEntities = entity.RelatedEntities,
                 ProcessName = entity.ProcessName,
-                CurrentState = entity.CurrentState?.ConvertEnumsToString(),
-                PreviousStates = entity.PreviousStates?.Select(x => x.ConvertEnumsToString()).ToList(),
+                CurrentState = entity.CurrentState,
+                PreviousStates = entity.PreviousStates,
                 VersionNumber = entity.VersionNumber
             };
         }

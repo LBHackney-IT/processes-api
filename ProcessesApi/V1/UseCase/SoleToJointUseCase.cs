@@ -23,9 +23,9 @@ namespace ProcessesApi.V1.UseCase
             _soleToJointService = soleToJointService;
         }
 
-        public async Task<SoleToJointProcess> Execute(Guid id, SoleToJointTriggers processTrigger, Guid? targetId, List<Guid> relatedEntities, object formData, List<Guid> documents, string processName)
+        public async Task<SoleToJointProcess> Execute(Guid id, string processTrigger, Guid? targetId, List<Guid> relatedEntities, object formData, List<Guid> documents, string processName)
         {
-            var triggerObject = SoleToJointTrigger<SoleToJointTriggers>.Create(id, targetId, processTrigger, formData, documents, relatedEntities);
+            var triggerObject = SoleToJointTrigger.Create(id, targetId, processTrigger, formData, documents, relatedEntities);
 
             SoleToJointProcess process;
 
@@ -35,7 +35,7 @@ namespace ProcessesApi.V1.UseCase
             }
             else
             {
-                process = SoleToJointProcess.Create(id, new List<ProcessState<SoleToJointStates, SoleToJointTriggers>>(), null, targetId.Value, relatedEntities, processName, null);
+                process = SoleToJointProcess.Create(id, new List<ProcessState>(), null, targetId.Value, relatedEntities, processName, null);
             }
 
             await _soleToJointService.Process(triggerObject, process).ConfigureAwait(false);

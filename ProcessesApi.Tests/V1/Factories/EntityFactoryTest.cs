@@ -30,8 +30,8 @@ namespace ProcessesApi.Tests.V1.Factories
             domain.TargetId.Should().Be(entity.TargetId);
             domain.RelatedEntities.Should().BeEquivalentTo(entity.RelatedEntities);
             domain.ProcessName.Should().Be(entity.ProcessName);
-            domain.CurrentState.Should().BeEquivalentTo(entity.CurrentState.ConvertStringToEnum<SoleToJointStates, SoleToJointTriggers>());
-            domain.PreviousStates.Should().BeEquivalentTo(entity.PreviousStates.Select(x => x.ConvertStringToEnum<SoleToJointStates, SoleToJointTriggers>()).ToList());
+            domain.CurrentState.Should().BeEquivalentTo(entity.CurrentState);
+            domain.PreviousStates.Should().BeEquivalentTo(entity.PreviousStates);
         }
 
         [Fact]
@@ -44,8 +44,8 @@ namespace ProcessesApi.Tests.V1.Factories
             databaseEntity.TargetId.Should().Be(entity.TargetId.ToString());
             databaseEntity.RelatedEntities.Should().BeEquivalentTo(entity.RelatedEntities);
             databaseEntity.ProcessName.Should().Be(entity.ProcessName);
-            databaseEntity.CurrentState.Should().BeEquivalentTo(entity.CurrentState.ConvertEnumsToString());
-            databaseEntity.PreviousStates.Should().BeEquivalentTo(entity.PreviousStates.Select(x => x.ConvertEnumsToString()));
+            databaseEntity.CurrentState.Should().BeEquivalentTo(entity.CurrentState);
+            databaseEntity.PreviousStates.Should().BeEquivalentTo(entity.PreviousStates);
         }
     }
 }

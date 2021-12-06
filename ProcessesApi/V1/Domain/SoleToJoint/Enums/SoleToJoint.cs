@@ -6,34 +6,69 @@ using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.Domain.Enums
 {
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum SoleToJointStates
+    public static class SoleToJointStates
     {
-        ApplicationInitialised,
-        SelectTenants,
-        AutomatedChecksFailed,
-        AutomatedChecksPassed,
-        ManualChecksFailed,
-        ManualChecksPassed,
-        ConfirmAppointmentScheduled
+        public const string ApplicationInitialised = "ApplicationInitialised";
+        public const string SelectTenants = "SelectTenants";
+        public const string AutomatedChecksFailed = "AutomatedChecksFailed";
+        public const string AutomatedChecksPassed = "AutomatedChecksPassed";
+        public const string ManualChecksFailed = "ManualChecksFailed";
+        public const string ManualChecksPassed = "ManualChecksPassed";
+        public const string ConfirmAppointmentScheduled = "ConfirmAppointmentScheduled";
+
+        //public bool IsValid(string val)
+        //{
+        //    return (val == ApplicationInitialised)
+        //        || (val == SelectTenants);
+        //}
     }
 
-    public enum SoleToJointPermittedTriggers
+    public static class SoleToJointPermittedTriggers
     {
-        CheckEligibility,
-        CheckManualEligibility,
-        ExitApplication,
-        RequestDocuments,
-        CheckTenancyBreach
+        public const string CheckEligibility = "CheckEligibility";
+        public const string CheckManualEligibility = "CheckManualEligibility";
+        public const string ExitApplication = "ExitApplication";
+        public const string RequestDocuments = "RequestDocuments";
+        public const string CheckTenancyBreach = "CheckTenancyBreach";
     }
 
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum SoleToJointTriggers
+    public static class SoleToJointTriggers
     {
-        StartApplication,
-        CheckEligibility,
-        CheckManualEligibility,
-        RequestDocuments,
-        CheckTenancyBreach
+        public const string StartApplication = "StartApplication";
+        public const string CheckEligibility = "CheckEligibility";
+        public const string CheckManualEligibility = "CheckManualEligibility";
+        public const string RequestDocuments = "RequestDocuments";
+        public const string CheckTenancyBreach = "CheckTenancyBreach";
     }
+
+    //[JsonConverter(typeof(JsonStringEnumConverter))]
+    //public enum SoleToJointStates
+    //{
+    //    ApplicationInitialised,
+    //    SelectTenants,
+    //    AutomatedChecksFailed,
+    //    AutomatedChecksPassed,
+    //    ManualChecksFailed,
+    //    ManualChecksPassed,
+    //    ConfirmAppointmentScheduled
+    //}
+
+    //public enum SoleToJointPermittedTriggers
+    //{
+    //    CheckEligibility,
+    //    CheckManualEligibility,
+    //    ExitApplication,
+    //    RequestDocuments,
+    //    CheckTenancyBreach
+    //}
+
+    //[JsonConverter(typeof(JsonStringEnumConverter))]
+    //public enum SoleToJointTriggers
+    //{
+    //    StartApplication,
+    //    CheckEligibility,
+    //    CheckManualEligibility,
+    //    RequestDocuments,
+    //    CheckTenancyBreach
+    //}
 }

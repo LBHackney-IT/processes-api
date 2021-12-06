@@ -46,7 +46,7 @@ namespace ProcessesApi.Tests.V1.UseCase
                 processId, SoleToJointTriggers.StartApplication,
                 createProcessQuery.TargetId, createProcessQuery.RelatedEntities, createProcessQuery.FormData,
                 createProcessQuery.Documents, processName).ConfigureAwait(false);
-            _mockSTJService.Verify(x => x.Process(It.IsAny<SoleToJointTrigger<SoleToJointTriggers>>(), It.IsAny<SoleToJointProcess>()), Times.Once);
+            _mockSTJService.Verify(x => x.Process(It.IsAny<SoleToJointTrigger>(), It.IsAny<SoleToJointProcess>()), Times.Once);
             _mockGateway.Verify(x => x.SaveProcess(It.IsAny<SoleToJointProcess>()), Times.Once);
 
             response.Id.Should().Be(processId);
@@ -93,7 +93,7 @@ namespace ProcessesApi.Tests.V1.UseCase
                 process.Id, SoleToJointTriggers.CheckEligibility,
                 process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
                 updateProcessQuery.Documents, process.ProcessName).ConfigureAwait(false);
-            _mockSTJService.Verify(x => x.Process(It.IsAny<SoleToJointTrigger<SoleToJointTriggers>>(), It.IsAny<SoleToJointProcess>()), Times.Once);
+            _mockSTJService.Verify(x => x.Process(It.IsAny<SoleToJointTrigger>(), It.IsAny<SoleToJointProcess>()), Times.Once);
             _mockGateway.Verify(x => x.SaveProcess(It.IsAny<SoleToJointProcess>()), Times.Once);
 
             response.Id.Should().Be(process.Id);

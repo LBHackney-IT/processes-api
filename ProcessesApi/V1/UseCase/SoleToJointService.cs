@@ -13,8 +13,8 @@ namespace ProcessesApi.V1.UseCase
 {
     public class SoleToJointService : ISoleToJointService
     {
-        private StateMachine<SoleToJointStates, SoleToJointTriggers> _machine;
-        private ProcessState<SoleToJointStates, SoleToJointTriggers> _currentState;
+        private StateMachine<string , string> _machine;
+        private ProcessState _currentState;
         private SoleToJointProcess _soleToJointProcess;
 
         public SoleToJointService()
@@ -37,25 +37,25 @@ namespace ProcessesApi.V1.UseCase
 
         }
 
-        private void Configure(SoleToJointStates state, Assignment assignment)
+        private void Configure(string state, Assignment assignment)
         {
             _machine.Configure(state)
                 .OnEntry((x) =>
                 {
-                    var processRequest = x.Parameters[0] as SoleToJointTrigger<SoleToJointTriggers>;
+                    var processRequest = x.Parameters[0] as SoleToJointTrigger;
 
-                    _currentState = ProcessState<SoleToJointStates, SoleToJointTriggers>.Create(_machine.State, _machine.PermittedTriggers.ToList(), assignment, ProcessData.Create(processRequest.FormData, processRequest.Documents), DateTime.UtcNow, DateTime.UtcNow);
+                    _currentState = ProcessState.Create(_machine.State, _machine.PermittedTriggers.ToList(), assignment, ProcessData.Create(processRequest.FormData, processRequest.Documents), DateTime.UtcNow, DateTime.UtcNow);
                 });
         }
 
-        public async Task Process(SoleToJointTrigger<SoleToJointTriggers> processRequest, SoleToJointProcess soleToJointProcess)
+        public async Task Process(SoleToJointTrigger processRequest, SoleToJointProcess soleToJointProcess)
         {
             _soleToJointProcess = soleToJointProcess;
 
-            var state = soleToJointProcess.CurrentState is null ? SoleToJointStates.ApplicationInitialised : soleToJointProcess.CurrentState.CurrentStateEnum;
+            var state = soleToJointProcess.CurrentState is null ? SoleToJointStates.ApplicationInitialised : soleToJointProcess.CurrentState.State;
 
-            _machine = new StateMachine<SoleToJointStates, SoleToJointTriggers>(() => state, s => state = s);
-            var res = _machine.SetTriggerParameters<SoleToJointTrigger<SoleToJointTriggers>, SoleToJointProcess>(processRequest.Trigger);
+            _machine = new StateMachine<string, string>(() => state, s => state = s);
+            var res = _machine.SetTriggerParameters<SoleToJointTrigger, SoleToJointProcess>(processRequest.Trigger);
 
             SetUpStates();
             SetUpStateActions();

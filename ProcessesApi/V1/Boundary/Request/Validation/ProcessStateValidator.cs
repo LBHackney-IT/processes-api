@@ -6,7 +6,7 @@ using ProcessesApi.V1.Domain.Enums;
 
 namespace ProcessesApi.V1.Boundary.Request.Validation
 {
-    public class ProcessStateValidator : AbstractValidator<ProcessState<SoleToJointStates, SoleToJointTriggers>>
+    public class ProcessStateValidator : AbstractValidator<ProcessState>
     {
         public ProcessStateValidator()
         {
