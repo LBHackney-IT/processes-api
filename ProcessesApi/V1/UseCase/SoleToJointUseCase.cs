@@ -1,13 +1,8 @@
-using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Domain.Enums;
-using ProcessesApi.V1.Domain.SoleToJoint;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.UseCase.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.UseCase
@@ -23,11 +18,11 @@ namespace ProcessesApi.V1.UseCase
             _soleToJointService = soleToJointService;
         }
 
-        public async Task<SoleToJointProcess> Execute(Guid id, string processTrigger, Guid? targetId, List<Guid> relatedEntities, object formData, List<Guid> documents, string processName)
+        public async Task<Process> Execute(Guid id, string processTrigger, Guid? targetId, List<Guid> relatedEntities, object formData, List<Guid> documents, string processName)
         {
-            var triggerObject = SoleToJointTrigger.Create(id, targetId, processTrigger, formData, documents, relatedEntities);
+            var triggerObject = UpdateProcessState.Create(id, targetId, processTrigger, formData, documents, relatedEntities);
 
-            SoleToJointProcess process;
+            Process process;
 
             if (processTrigger != SoleToJointTriggers.StartApplication)
             {
@@ -35,7 +30,7 @@ namespace ProcessesApi.V1.UseCase
             }
             else
             {
-                process = SoleToJointProcess.Create(id, new List<ProcessState>(), null, targetId.Value, relatedEntities, processName, null);
+                process = Process.Create(id, new List<ProcessState>(), null, targetId.Value, relatedEntities, processName, null);
             }
 
             await _soleToJointService.Process(triggerObject, process).ConfigureAwait(false);

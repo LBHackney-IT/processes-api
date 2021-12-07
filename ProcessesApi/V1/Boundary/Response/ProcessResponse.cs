@@ -1,7 +1,6 @@
+using ProcessesApi.V1.Domain;
 using System;
 using System.Collections.Generic;
-using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Domain.Enums;
 
 namespace ProcessesApi.V1.Boundary.Response
 {

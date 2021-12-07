@@ -7,6 +7,7 @@ namespace ProcessesApi.V1.Domain
         public string Patch { get; set; }
         public Assignment()
         { }
+
         public Assignment(string patch)
         {
             Patch = patch;

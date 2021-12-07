@@ -1,18 +1,14 @@
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Domain.Enums;
-using ProcessesApi.V1.Domain.SoleToJoint;
 using ProcessesApi.V1.Infrastructure;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace ProcessesApi.V1.Factories
 {
     public static class EntityFactory
     {
-        public static SoleToJointProcess ToDomain(this ProcessesDb entity)
+        public static Process ToDomain(this ProcessesDb entity)
         {
-            SoleToJointProcess soleToJointProcess;
-            soleToJointProcess = SoleToJointProcess.Create(
+            Process soleToJointProcess;
+            soleToJointProcess = Process.Create(
                     entity.Id,
                     entity.PreviousStates,
                     entity.CurrentState,
@@ -23,7 +19,7 @@ namespace ProcessesApi.V1.Factories
             return soleToJointProcess;
         }
 
-        public static ProcessesDb ToDatabase(this SoleToJointProcess entity)
+        public static ProcessesDb ToDatabase(this Process entity)
         {
             return new ProcessesDb
             {

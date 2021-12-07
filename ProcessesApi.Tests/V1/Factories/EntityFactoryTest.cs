@@ -1,13 +1,8 @@
 using AutoFixture;
+using FluentAssertions;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
-using ProcessesApi.V1.Infrastructure;
-using FluentAssertions;
-using System;
 using Xunit;
-using ProcessesApi.V1.Domain.SoleToJoint;
-using ProcessesApi.V1.Domain.Enums;
-using System.Linq;
 
 namespace ProcessesApi.Tests.V1.Factories
 {
@@ -22,7 +17,7 @@ namespace ProcessesApi.Tests.V1.Factories
             //    .With(process => process.Id, Guid.NewGuid())
             //    .With(process => process.TargetId, Guid.NewGuid())
             //    .Create();
-            var entity = _fixture.Create<SoleToJointProcess>();
+            var entity = _fixture.Create<Process>();
             var databaseEntity = entity.ToDatabase();
             var domain = databaseEntity.ToDomain();
 
@@ -37,7 +32,7 @@ namespace ProcessesApi.Tests.V1.Factories
         [Fact]
         public void CanMapADomainEntityToADatabaseObject()
         {
-            var entity = _fixture.Create<SoleToJointProcess>();
+            var entity = _fixture.Create<Process>();
             var databaseEntity = entity.ToDatabase();
 
             databaseEntity.Id.Should().Be(entity.Id.ToString());

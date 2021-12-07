@@ -1,21 +1,19 @@
-using ProcessesApi.V1.Boundary.Response;
-using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.UseCase.Interfaces;
-using ProcessesApi.V1.Factories;
+using Hackney.Core.Http;
 using Hackney.Core.Logging;
+using Hackney.Core.Middleware;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
-using System.Net.Http.Headers;
-using System;
-using Hackney.Core.Middleware;
-using ProcessesApi.V1.Infrastructure.Exceptions;
-using Hackney.Core.Http;
-using ProcessesApi.V1.Domain.SoleToJoint;
-using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Domain.Enums;
 using ProcessesApi.V1.Boundary.Constants;
+using ProcessesApi.V1.Boundary.Request;
+using ProcessesApi.V1.Boundary.Response;
+using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Factories;
+using ProcessesApi.V1.Infrastructure.Exceptions;
+using ProcessesApi.V1.UseCase.Interfaces;
+using System;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.Controllers
 {
@@ -91,8 +89,6 @@ namespace ProcessesApi.V1.Controllers
                                                                       processName)
                                                                      .ConfigureAwait(false);
 
-                    //Response.Headers["Location"] = soleToJointResult.Id.ToString();
-
                     return Ok(soleToJointResult);
                 default:
                     var error = new ErrorResponse
@@ -125,6 +121,7 @@ namespace ProcessesApi.V1.Controllers
         public async Task<IActionResult> UpdateProcess([FromBody] UpdateProcessQueryObject requestObject, [FromRoute] UpdateProcessQuery query)
         {
             _contextWrapper.GetContextRequestHeaders(HttpContext);
+            //TO DO: Complete ifMatch stuff
             var ifMatch = GetIfMatchFromHeader();
             try
             {

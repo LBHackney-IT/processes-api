@@ -1,14 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
 
-namespace ProcessesApi.V1.Domain.SoleToJoint
+namespace ProcessesApi.V1.Domain
 {
-    public class SoleToJointTrigger
+    public class UpdateProcessState
     {
-        private SoleToJointTrigger(Guid id, Guid? targetId, string trigger, object formData, List<Guid> documents, List<Guid> relatedEntities)
+        private UpdateProcessState(Guid id, Guid? targetId, string trigger, object formData, List<Guid> documents, List<Guid> relatedEntities)
         {
             Id = id;
             TargetId = targetId;
@@ -25,9 +22,9 @@ namespace ProcessesApi.V1.Domain.SoleToJoint
         public List<Guid> Documents { get; private set; }
         public List<Guid> RelatedEntities { get; private set; }
 
-        public static SoleToJointTrigger Create(Guid id, Guid? targetId, string trigger, object formData, List<Guid> documents, List<Guid> relatedEntities)
+        public static UpdateProcessState Create(Guid id, Guid? targetId, string trigger, object formData, List<Guid> documents, List<Guid> relatedEntities)
         {
-            return new SoleToJointTrigger(id, targetId, trigger, formData, documents, relatedEntities);
+            return new UpdateProcessState(id, targetId, trigger, formData, documents, relatedEntities);
         }
     }
 }

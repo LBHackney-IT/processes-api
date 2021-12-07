@@ -1,14 +1,10 @@
-using ProcessesApi.V1.Domain.Enums;
-using ProcessesApi.V1.Domain.SoleToJoint;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using ProcessesApi.V1.Domain;
 using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.UseCase.Interfaces
 {
     public interface ISoleToJointService
     {
-        Task Process(SoleToJointTrigger processRequest, SoleToJointProcess soleToJointProcess);
+        Task Process(UpdateProcessState processRequest, Process soleToJointProcess);
     }
 }

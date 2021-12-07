@@ -1,27 +1,24 @@
 using AutoFixture;
-using ProcessesApi.V1.Controllers;
-using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.Boundary.Constants;
-using ProcessesApi.V1.UseCase.Interfaces;
-using Moq;
-using Xunit;
-using System;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using FluentAssertions;
-using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Factories;
+using Hackney.Core.Http;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Primitives;
-using System.Linq;
-using ProcessesApi.V1.Boundary.Response;
-using Hackney.Core.Http;
+using Moq;
+using ProcessesApi.V1.Boundary.Constants;
+using ProcessesApi.V1.Boundary.Request;
+using ProcessesApi.V1.Controllers;
+using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Factories;
+using ProcessesApi.V1.UseCase.Interfaces;
+using System;
 using System.IO;
+using System.Linq;
 using System.Text;
-using ProcessesApi.V1.Domain.SoleToJoint;
-using ProcessesApi.V1.Domain.Enums;
+using System.Threading.Tasks;
+using Xunit;
 
 namespace ProcessesApi.Tests.V1.Controllers
 {
@@ -85,9 +82,9 @@ namespace ProcessesApi.Tests.V1.Controllers
                            .Create();
         }
 
-        private (SoleToJointProcess, UpdateProcessQuery, UpdateProcessQueryObject) ConstructPatchRequest()
+        private (Process, UpdateProcessQuery, UpdateProcessQueryObject) ConstructPatchRequest()
         {
-            var processResponse = _fixture.Build<SoleToJointProcess>()
+            var processResponse = _fixture.Build<Process>()
                                           .With(x => x.VersionNumber, (int?) null)
                                           .Create();
             var query = _fixture.Build<UpdateProcessQuery>()
@@ -105,7 +102,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             var controllerContext = new ControllerContext(new ActionContext(stubHttpContext, new RouteData(), new ControllerActionDescriptor()));
             _classUnderTest.ControllerContext = controllerContext;
 
-            var process = _fixture.Create<SoleToJointProcess>();
+            var process = _fixture.Create<Process>();
             var query = ConstructQuery(process.Id);
             _mockGetByIdUseCase.Setup(x => x.Execute(query)).ReturnsAsync(process);
 
@@ -125,7 +122,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         {
             var id = Guid.NewGuid();
             var query = ConstructQuery(id);
-            _mockGetByIdUseCase.Setup(x => x.Execute(query)).ReturnsAsync((SoleToJointProcess) null);
+            _mockGetByIdUseCase.Setup(x => x.Execute(query)).ReturnsAsync((Process) null);
             var response = await _classUnderTest.GetProcessById(query).ConfigureAwait(false) as NotFoundObjectResult;
             response.StatusCode.Should().Be(404);
             response.Value.Should().Be(query.Id);
@@ -147,7 +144,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         public async void CreateNewProcessReturnsOKResponse()
         {
             // Arrange
-            var processResponse = _fixture.Build<SoleToJointProcess>()
+            var processResponse = _fixture.Build<Process>()
                                           .With(x => x.VersionNumber, (int?) null)
                                           .Create();
             var processName = ProcessNamesConstants.SoleToJoint;
@@ -183,7 +180,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         {
             // Arrange
             (var processResponse, var request, var requestObject) = ConstructPatchRequest();
-            _mockSoleToJointUseCase.Setup(x => x.Execute(request.Id, SoleToJointTriggers.StartApplication,
+            _mockSoleToJointUseCase.Setup(x => x.Execute(request.Id, request.ProcessTrigger,
               null, null, requestObject.FormData, requestObject.Documents, request.ProcessName))
                 .ReturnsAsync(processResponse);
             // Act
@@ -199,7 +196,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             (var processResponse, var request, var requestObject) = ConstructPatchRequest();
             _mockSoleToJointUseCase.Setup(x => x.Execute(request.Id, SoleToJointTriggers.StartApplication,
               null, null, requestObject.FormData, requestObject.Documents, request.ProcessName))
-                .ReturnsAsync((SoleToJointProcess) null);
+                .ReturnsAsync((Process) null);
             // Act
             var response = await _classUnderTest.UpdateProcess(requestObject, request).ConfigureAwait(false);
             // Assert
@@ -213,7 +210,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             // Arrange
             var exception = new ApplicationException("Test exception");
             (var processResponse, var request, var requestObject) = ConstructPatchRequest();
-            _mockSoleToJointUseCase.Setup(x => x.Execute(request.Id, SoleToJointTriggers.StartApplication,
+            _mockSoleToJointUseCase.Setup(x => x.Execute(request.Id, request.ProcessTrigger,
               null, null, requestObject.FormData, requestObject.Documents, request.ProcessName))
                 .ThrowsAsync(exception);
             // Act

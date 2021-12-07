@@ -5,7 +5,6 @@ using Newtonsoft.Json;
 using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Response;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Domain.SoleToJoint;
 using ProcessesApi.V1.Factories;
 using System;
 using System.Linq;
@@ -29,15 +28,15 @@ namespace ProcessesApi.Tests.V1.E2ETests
             _dbFixture = appFactory.DynamoDbFixture;
             _httpClient = appFactory.Client;
         }
-        private SoleToJointProcess ConstructTestEntity()
+        private Process ConstructTestEntity()
         {
-            var entity = _fixture.Build<SoleToJointProcess>()
+            var entity = _fixture.Build<Process>()
                                 .With(x => x.VersionNumber, (int?) null)
                                 .Create();
             return entity;
         }
 
-        private async Task SaveTestData(SoleToJointProcess entity)
+        private async Task SaveTestData(Process entity)
         {
             await _dbFixture.SaveEntityAsync(entity.ToDatabase()).ConfigureAwait(false);
         }

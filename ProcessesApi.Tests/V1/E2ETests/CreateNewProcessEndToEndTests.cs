@@ -5,11 +5,12 @@ using Newtonsoft.Json;
 using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Boundary.Response;
-using ProcessesApi.V1.Domain.SoleToJoint;
+using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -31,9 +32,21 @@ namespace ProcessesApi.Tests.V1.E2ETests
             _dbFixture = appFactory.DynamoDbFixture;
             _httpClient = appFactory.Client;
         }
-        private (SoleToJointProcess, CreateProcess) ConstructQuery()
+        private (Process, CreateProcess) ConstructQuery()
         {
-            var process = _fixture.Create<SoleToJointProcess>();
+            var process = _fixture.Build<Process>()
+                                        .With(x => x.VersionNumber, (int?) null)
+                                        .Without(x => x.Id)
+                                        .With(x => x.CurrentState,
+                                                   _fixture.Build<ProcessState>()
+                                                           .With(x => x.CreatedAt, DateTime.UtcNow)
+                                                           .With(x => x.UpdatedAt, DateTime.UtcNow)
+                                                           .With(x => x.State, SoleToJointStates.ApplicationInitialised)
+                                                           .With(x => x.PermittedTriggers, (new[] { SoleToJointTriggers.StartApplication }).ToList())
+                                                           .Create())
+                                        .Without(x => x.PreviousStates)
+                                        .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
+                                        .Create();
             var request = _fixture.Build<CreateProcess>()
                                  .With(x => x.TargetId, process.TargetId)
                                  .With(x => x.FormData, process.CurrentState.ProcessData.FormData)
@@ -79,15 +92,21 @@ namespace ProcessesApi.Tests.V1.E2ETests
             var apiProcess = JsonConvert.DeserializeObject<ProcessResponse>(responseContent);
 
             // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Created);
-            apiProcess.Id.Should().NotBeEmpty();
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
 
             var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(apiProcess.Id).ConfigureAwait(false);
             dbRecord.Should().BeEquivalentTo(process.ToDatabase(), c => c.Excluding(x => x.VersionNumber)
-                                                                         .Excluding(z => z.CurrentState.CreatedAt)
-                                                                         .Excluding(a => a.CurrentState.UpdatedAt));
+                                                                         .Excluding(z => z.CurrentState)
+                                                                         .Excluding(z => z.PreviousStates)
+                                                                         .Excluding(a => a.Id));
+            apiProcess.Id.Should().NotBeEmpty();
             dbRecord.CurrentState.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
             dbRecord.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            dbRecord.CurrentState.State.Should().Be(SoleToJointStates.SelectTenants);
+            dbRecord.CurrentState.PermittedTriggers.Should().BeEquivalentTo(new List<string>() { SoleToJointPermittedTriggers.CheckEligibility });
+            dbRecord.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(query.Documents);
+            dbRecord.PreviousStates.Should().BeEmpty();
+            //dbRecord.CurrentState.ProcessData.FormData.Should().Be(query.FormData);
 
             // Cleanup
             _cleanupActions.Add(async () => await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false));

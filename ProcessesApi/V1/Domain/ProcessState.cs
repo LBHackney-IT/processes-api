@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.Domain
 {
     public class ProcessState
     {
+
         public ProcessState(string state, IList<string> permittedTriggers, Assignment assignment, ProcessData processData, DateTime createdAt, DateTime updatedAt)
         {
             State = state;
@@ -15,10 +13,10 @@ namespace ProcessesApi.V1.Domain
             Assignment = assignment;
             ProcessData = processData;
             CreatedAt = createdAt;
-            UpdatedAt = updatedAt;       
+            UpdatedAt = updatedAt;
         }
 
-        public string State { get; set; } 
+        public string State { get; set; }
         public IList<string> PermittedTriggers { get; set; }
 
         public Assignment Assignment { get; set; }

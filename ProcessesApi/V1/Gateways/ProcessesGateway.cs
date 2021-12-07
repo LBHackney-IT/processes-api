@@ -1,14 +1,11 @@
 using Amazon.DynamoDBv2.DataModel;
+using Hackney.Core.Logging;
+using Microsoft.Extensions.Logging;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure;
-using Hackney.Core.Logging;
-using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
 using System;
-using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.Infrastructure.Exceptions;
-using ProcessesApi.V1.Domain.SoleToJoint;
+using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.Gateways
 {
@@ -25,7 +22,7 @@ namespace ProcessesApi.V1.Gateways
         }
 
         [LogCall]
-        public async Task<SoleToJointProcess> GetProcessById(Guid id)
+        public async Task<Process> GetProcessById(Guid id)
         {
             _logger.LogDebug($"Calling IDynamoDBContext.LoadAsync for ID: {id}");
 
@@ -34,7 +31,7 @@ namespace ProcessesApi.V1.Gateways
         }
 
         [LogCall]
-        public async Task<SoleToJointProcess> SaveProcess(SoleToJointProcess query)
+        public async Task<Process> SaveProcess(Process query)
         {
             _logger.LogDebug($"Calling IDynamoDBContext.SaveAsync for id {query.Id}");
             var processDbEntity = query.ToDatabase();

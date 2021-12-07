@@ -1,20 +1,15 @@
+using AutoFixture;
+using FluentAssertions;
+using Moq;
+using ProcessesApi.V1.Boundary.Constants;
+using ProcessesApi.V1.Boundary.Request;
+using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.UseCase;
-using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.Boundary.Response;
-using Moq;
-using FluentAssertions;
-using AutoFixture;
-using System.Threading.Tasks;
-using System;
-using Xunit;
-using ProcessesApi.V1.Factories;
-using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.UseCase.Interfaces;
-using ProcessesApi.V1.Domain.SoleToJoint;
-using ProcessesApi.V1.Domain.Enums;
-using ProcessesApi.V1.Boundary.Constants;
-using System.Collections.Generic;
+using System;
+using System.Threading.Tasks;
+using Xunit;
 
 namespace ProcessesApi.Tests.V1.UseCase
 {
@@ -46,8 +41,8 @@ namespace ProcessesApi.Tests.V1.UseCase
                 processId, SoleToJointTriggers.StartApplication,
                 createProcessQuery.TargetId, createProcessQuery.RelatedEntities, createProcessQuery.FormData,
                 createProcessQuery.Documents, processName).ConfigureAwait(false);
-            _mockSTJService.Verify(x => x.Process(It.IsAny<SoleToJointTrigger>(), It.IsAny<SoleToJointProcess>()), Times.Once);
-            _mockGateway.Verify(x => x.SaveProcess(It.IsAny<SoleToJointProcess>()), Times.Once);
+            _mockSTJService.Verify(x => x.Process(It.IsAny<UpdateProcessState>(), It.IsAny<Process>()), Times.Once);
+            _mockGateway.Verify(x => x.SaveProcess(It.IsAny<Process>()), Times.Once);
 
             response.Id.Should().Be(processId);
             response.TargetId.Should().Be(createProcessQuery.TargetId);
@@ -58,7 +53,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         [Fact]
         public void CreateNewProcessExceptionIsThrown()
         {
-            var process = _fixture.Build<SoleToJointProcess>()
+            var process = _fixture.Build<Process>()
                                  .With(x => x.VersionNumber, (int?) null)
                                  .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
                                  .Create();
@@ -66,9 +61,9 @@ namespace ProcessesApi.Tests.V1.UseCase
                                              .Create();
 
             var exception = new ApplicationException("Test Exception");
-            _mockGateway.Setup(x => x.SaveProcess(It.IsAny<SoleToJointProcess>())).ThrowsAsync(exception);
+            _mockGateway.Setup(x => x.SaveProcess(It.IsAny<Process>())).ThrowsAsync(exception);
 
-            Func<Task<SoleToJointProcess>> func = async () => await _classUnderTest.Execute(
+            Func<Task<Process>> func = async () => await _classUnderTest.Execute(
                 process.Id, SoleToJointTriggers.StartApplication,
                 process.TargetId, process.RelatedEntities, createProcessQuery.FormData,
                 createProcessQuery.Documents, process.ProcessName).ConfigureAwait(false);
@@ -78,7 +73,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         [Fact]
         public async Task UpdateProcessSendNewStateToGateway()
         {
-            var process = _fixture.Build<SoleToJointProcess>()
+            var process = _fixture.Build<Process>()
                                   .With(x => x.VersionNumber, (int?) null)
                                   .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
                                   .Create();
@@ -93,8 +88,8 @@ namespace ProcessesApi.Tests.V1.UseCase
                 process.Id, SoleToJointTriggers.CheckEligibility,
                 process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
                 updateProcessQuery.Documents, process.ProcessName).ConfigureAwait(false);
-            _mockSTJService.Verify(x => x.Process(It.IsAny<SoleToJointTrigger>(), It.IsAny<SoleToJointProcess>()), Times.Once);
-            _mockGateway.Verify(x => x.SaveProcess(It.IsAny<SoleToJointProcess>()), Times.Once);
+            _mockSTJService.Verify(x => x.Process(It.IsAny<UpdateProcessState>(), It.IsAny<Process>()), Times.Once);
+            _mockGateway.Verify(x => x.SaveProcess(It.IsAny<Process>()), Times.Once);
 
             response.Id.Should().Be(process.Id);
             response.TargetId.Should().Be(process.TargetId);
@@ -105,7 +100,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         [Fact]
         public void UpdateProcessExceptionIsThrown()
         {
-            var process = _fixture.Build<SoleToJointProcess>()
+            var process = _fixture.Build<Process>()
                                  .With(x => x.VersionNumber, (int?) null)
                                  .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
                                  .Create();
@@ -115,7 +110,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             var exception = new ApplicationException("Test Exception");
             _mockGateway.Setup(x => x.GetProcessById(It.IsAny<Guid>())).ThrowsAsync(exception);
 
-            Func<Task<SoleToJointProcess>> func = async () => await _classUnderTest.Execute(
+            Func<Task<Process>> func = async () => await _classUnderTest.Execute(
                 process.Id, SoleToJointTriggers.CheckEligibility,
                 process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
                 updateProcessQuery.Documents, process.ProcessName).ConfigureAwait(false);

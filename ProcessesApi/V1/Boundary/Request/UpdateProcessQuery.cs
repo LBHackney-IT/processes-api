@@ -1,5 +1,5 @@
-using System;
 using Microsoft.AspNetCore.Mvc;
+using System;
 
 namespace ProcessesApi.V1.Boundary.Request
 {

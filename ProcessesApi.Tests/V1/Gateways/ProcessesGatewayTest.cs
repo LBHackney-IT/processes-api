@@ -5,14 +5,10 @@ using Hackney.Core.Testing.DynamoDb;
 using Hackney.Core.Testing.Shared;
 using Microsoft.Extensions.Logging;
 using Moq;
-using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Domain.Enums;
-using ProcessesApi.V1.Domain.SoleToJoint;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Infrastructure;
-using ProcessesApi.V1.Infrastructure.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -74,7 +70,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         [Fact]
         public async Task GetProcessByIdReturnsTheProcessIfItExists()
         {
-            var entity = _fixture.Build<SoleToJointProcess>()
+            var entity = _fixture.Build<Process>()
                                 .With(x => x.VersionNumber, (int?) null)
                                 .Create();
             await InsertDatatoDynamoDB(entity.ToDatabase()).ConfigureAwait(false);
@@ -96,7 +92,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             mockDynamoDb.Setup(x => x.LoadAsync<ProcessesDb>(id, default))
                      .ThrowsAsync(exception);
             // Act
-            Func<Task<SoleToJointProcess>> func = async () => await _classUnderTest.GetProcessById(id).ConfigureAwait(false);
+            Func<Task<Process>> func = async () => await _classUnderTest.GetProcessById(id).ConfigureAwait(false);
             // Assert
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
             mockDynamoDb.Verify(x => x.LoadAsync<ProcessesDb>(id, default), Times.Once);
@@ -106,7 +102,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         public async Task CreateNewProcessSucessfullySavesProcess()
         {
             // Arrange
-            var processObject = _fixture.Build<SoleToJointProcess>()
+            var processObject = _fixture.Build<Process>()
                                         .With(x => x.VersionNumber, (int?) null)
                                         .With(x => x.CurrentState,
                                                    _fixture.Build<ProcessState>()
@@ -118,7 +114,7 @@ namespace ProcessesApi.Tests.V1.Gateways
                                         .Without(x => x.PreviousStates)
                                         .Create();
             // Act
-             var process = await _classUnderTest.SaveProcess(processObject).ConfigureAwait(false);
+            var process = await _classUnderTest.SaveProcess(processObject).ConfigureAwait(false);
             // Assert
             var processDb = await _dynamoDb.LoadAsync<ProcessesDb>(process.Id).ConfigureAwait(false);
             processDb.Should().BeEquivalentTo(processObject.ToDatabase(), config => config.Excluding(x => x.VersionNumber)
@@ -137,7 +133,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         public async Task UpdateProcessSuccessfullySavesProcess()
         {
             // Arrange
-            var originalProcess = _fixture.Build<SoleToJointProcess>()
+            var originalProcess = _fixture.Build<Process>()
                                         .With(x => x.VersionNumber, (int?) null)
                                         .With(x => x.CurrentState,
                                                    _fixture.Build<ProcessState>()
@@ -150,7 +146,7 @@ namespace ProcessesApi.Tests.V1.Gateways
                                         .Create();
             await InsertDatatoDynamoDB(originalProcess.ToDatabase()).ConfigureAwait(false);
 
-            var updateObject = _fixture.Build<SoleToJointProcess>()
+            var updateObject = _fixture.Build<Process>()
                                        .With(x => x.Id, originalProcess.Id)
                                        .With(x => x.VersionNumber, 0)
                                        .With(x => x.CurrentState,

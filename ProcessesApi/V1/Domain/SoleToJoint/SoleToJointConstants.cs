@@ -1,10 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-
-namespace ProcessesApi.V1.Domain.Enums
+namespace ProcessesApi.V1.Domain
 {
     public static class SoleToJointStates
     {
@@ -15,12 +9,6 @@ namespace ProcessesApi.V1.Domain.Enums
         public const string ManualChecksFailed = "ManualChecksFailed";
         public const string ManualChecksPassed = "ManualChecksPassed";
         public const string ConfirmAppointmentScheduled = "ConfirmAppointmentScheduled";
-
-        //public bool IsValid(string val)
-        //{
-        //    return (val == ApplicationInitialised)
-        //        || (val == SelectTenants);
-        //}
     }
 
     public static class SoleToJointPermittedTriggers
@@ -41,34 +29,4 @@ namespace ProcessesApi.V1.Domain.Enums
         public const string CheckTenancyBreach = "CheckTenancyBreach";
     }
 
-    //[JsonConverter(typeof(JsonStringEnumConverter))]
-    //public enum SoleToJointStates
-    //{
-    //    ApplicationInitialised,
-    //    SelectTenants,
-    //    AutomatedChecksFailed,
-    //    AutomatedChecksPassed,
-    //    ManualChecksFailed,
-    //    ManualChecksPassed,
-    //    ConfirmAppointmentScheduled
-    //}
-
-    //public enum SoleToJointPermittedTriggers
-    //{
-    //    CheckEligibility,
-    //    CheckManualEligibility,
-    //    ExitApplication,
-    //    RequestDocuments,
-    //    CheckTenancyBreach
-    //}
-
-    //[JsonConverter(typeof(JsonStringEnumConverter))]
-    //public enum SoleToJointTriggers
-    //{
-    //    StartApplication,
-    //    CheckEligibility,
-    //    CheckManualEligibility,
-    //    RequestDocuments,
-    //    CheckTenancyBreach
-    //}
 }
