@@ -141,7 +141,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         }
 
         [Fact]
-        public async void CreateNewProcessReturnsOKResponse()
+        public async void CreateNewProcessReturnsCreatedResponse()
         {
             // Arrange
             var processResponse = _fixture.Build<Process>()
@@ -158,8 +158,8 @@ namespace ProcessesApi.Tests.V1.Controllers
             var response = await _classUnderTest.CreateNewProcess(request, processName).ConfigureAwait(false);
 
             // Assert
-            response.Should().BeOfType(typeof(OkObjectResult));
-            (response as OkObjectResult).Value.Should().Be(processResponse);
+            response.Should().BeOfType(typeof(CreatedResult));
+            (response as CreatedResult).Value.Should().Be(processResponse);
         }
 
         [Fact]

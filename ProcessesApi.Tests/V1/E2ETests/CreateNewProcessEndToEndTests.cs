@@ -92,7 +92,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
             var apiProcess = JsonConvert.DeserializeObject<ProcessResponse>(responseContent);
 
             // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.StatusCode.Should().Be(HttpStatusCode.Created);
 
             var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(apiProcess.Id).ConfigureAwait(false);
             dbRecord.Should().BeEquivalentTo(process.ToDatabase(), c => c.Excluding(x => x.VersionNumber)
@@ -106,7 +106,6 @@ namespace ProcessesApi.Tests.V1.E2ETests
             dbRecord.CurrentState.PermittedTriggers.Should().BeEquivalentTo(new List<string>() { SoleToJointPermittedTriggers.CheckEligibility });
             dbRecord.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(query.Documents);
             dbRecord.PreviousStates.Should().BeEmpty();
-            //dbRecord.CurrentState.ProcessData.FormData.Should().Be(query.FormData);
 
             // Cleanup
             _cleanupActions.Add(async () => await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false));

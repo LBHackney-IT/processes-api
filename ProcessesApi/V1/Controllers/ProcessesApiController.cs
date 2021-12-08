@@ -89,7 +89,7 @@ namespace ProcessesApi.V1.Controllers
                                                                       processName)
                                                                      .ConfigureAwait(false);
 
-                    return Ok(soleToJointResult);
+                    return Created(new Uri($"api/v1/processes/{processName}/{soleToJointResult.Id}", UriKind.Relative),soleToJointResult);
                 default:
                     var error = new ErrorResponse
                     {
@@ -100,8 +100,7 @@ namespace ProcessesApi.V1.Controllers
                     };
                     return new BadRequestObjectResult(error);
             }
-            //var process = await _createNewProcessUseCase.Execute(query, processName).ConfigureAwait(false);
-            //return Created(new Uri($"api/v1/processes/{process.ProcessName}/{process.Id}", UriKind.Relative), process);
+            
         }
 
         /// <summary>
