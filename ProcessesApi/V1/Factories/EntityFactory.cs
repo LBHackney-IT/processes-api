@@ -5,23 +5,22 @@ namespace ProcessesApi.V1.Factories
 {
     public static class EntityFactory
     {
-        public static Process ToDomain(this ProcessesDb databaseEntity)
+        public static Process ToDomain(this ProcessesDb entity)
         {
-            return new Process
-            {
-                Id = databaseEntity.Id,
-                TargetId = databaseEntity.TargetId,
-                RelatedEntities = databaseEntity.RelatedEntities,
-                ProcessName = databaseEntity.ProcessName,
-                CurrentState = databaseEntity.CurrentState,
-                PreviousStates = databaseEntity.PreviousStates,
-                VersionNumber = databaseEntity.VersionNumber
-            };
+            Process soleToJointProcess;
+            soleToJointProcess = Process.Create(
+                    entity.Id,
+                    entity.PreviousStates,
+                    entity.CurrentState,
+                    entity.TargetId,
+                    entity.RelatedEntities,
+                    entity.ProcessName,
+                    entity.VersionNumber);
+            return soleToJointProcess;
         }
 
         public static ProcessesDb ToDatabase(this Process entity)
         {
-
             return new ProcessesDb
             {
                 Id = entity.Id,

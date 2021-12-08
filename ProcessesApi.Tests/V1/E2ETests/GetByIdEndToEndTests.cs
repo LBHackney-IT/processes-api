@@ -61,7 +61,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
         {
             // Arrange
             var entity = ConstructTestEntity();
-            var processName = "Some-process";
+            var processName = ProcessNamesConstants.SoleToJoint;
             await SaveTestData(entity).ConfigureAwait(false);
             var uri = new Uri($"api/v1/process/{processName}/{entity.Id}", UriKind.Relative);
 
@@ -86,7 +86,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
         {
             // Arrange
             var badId = _fixture.Create<int>();
-            var processName = "Some-process";
+            var processName = ProcessNamesConstants.SoleToJoint;
             var uri = new Uri($"api/v1/process/{processName}/{badId}", UriKind.Relative);
             // Act
             var response = await _httpClient.GetAsync(uri).ConfigureAwait(false);
@@ -99,7 +99,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
         {
             // Arrange
             var id = Guid.NewGuid();
-            var processName = "Some-process";
+            var processName = ProcessNamesConstants.SoleToJoint;
             var uri = new Uri($"api/v1/process/{processName}/{id}", UriKind.Relative);
             // Act
             var response = await _httpClient.GetAsync(uri).ConfigureAwait(false);

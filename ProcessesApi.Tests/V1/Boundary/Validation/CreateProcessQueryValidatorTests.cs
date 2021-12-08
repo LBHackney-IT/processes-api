@@ -1,9 +1,9 @@
 using FluentValidation.TestHelper;
-using ProcessesApi.V1.Boundary.Request.Validation;
 using ProcessesApi.V1.Boundary.Request;
-using Xunit;
+using ProcessesApi.V1.Boundary.Request.Validation;
 using System;
 using System.Collections.Generic;
+using Xunit;
 
 namespace ProcessesApi.Tests.V1.Boundary.Validation
 {
@@ -20,7 +20,7 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         public void RequestShouldErrorWithNullTargetId()
         {
             //Arrange
-            var query = new CreateProcessQuery();
+            var query = new CreateProcess();
             //Act
             var result = _classUnderTest.TestValidate(query);
             //Assert
@@ -31,7 +31,7 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         public void RequestShouldErrorWithEmptyTargetId()
         {
             //Arrange
-            var query = new CreateProcessQuery() { TargetId = Guid.Empty };
+            var query = new CreateProcess() { TargetId = Guid.Empty };
             //Act
             var result = _classUnderTest.TestValidate(query);
             //Assert
@@ -42,7 +42,7 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         public void RequestShouldErrorWithEmptyRelatedEntity()
         {
             //Arrange
-            var query = new CreateProcessQuery() { RelatedEntities = new List<Guid> { Guid.Empty } };
+            var query = new CreateProcess() { RelatedEntities = new List<Guid> { Guid.Empty } };
             //Act
             var result = _classUnderTest.TestValidate(query);
             //Assert
@@ -53,7 +53,7 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         public void RequestShouldErrorWithEmptyDocumentIDs()
         {
             //Arrange
-            var model = new CreateProcessQuery() { Documents = new List<Guid> { Guid.Empty } };
+            var model = new CreateProcess() { Documents = new List<Guid> { Guid.Empty } };
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert
@@ -63,7 +63,7 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         public void RequestShouldNotErrorWithValidDocumentIDs()
         {
             //Arrange
-            var model = new CreateProcessQuery() { Documents = new List<Guid> { Guid.NewGuid() } };
+            var model = new CreateProcess() { Documents = new List<Guid> { Guid.NewGuid() } };
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert

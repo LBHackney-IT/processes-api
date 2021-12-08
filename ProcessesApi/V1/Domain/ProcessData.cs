@@ -5,7 +5,17 @@ namespace ProcessesApi.V1.Domain
 {
     public class ProcessData
     {
-        public Object FormData { get; set; }
+        public object FormData { get; set; }
         public List<Guid> Documents { get; set; }
+        public ProcessData(object formData, List<Guid> documents)
+        {
+            FormData = formData;
+            Documents = documents;
+        }
+
+        public static ProcessData Create(object formData, List<Guid> documents)
+        {
+            return new ProcessData(formData, documents);
+        }
     }
 }
