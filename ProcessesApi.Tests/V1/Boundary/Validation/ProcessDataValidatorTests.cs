@@ -1,15 +1,17 @@
+using AutoFixture;
 using FluentValidation.TestHelper;
 using ProcessesApi.V1.Boundary.Request.Validation;
 using ProcessesApi.V1.Domain;
-using Xunit;
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
+using Xunit;
 
 namespace ProcessesApi.Tests.V1.Boundary.Validation
 {
     public class ProcessDataValidatorTests
     {
         private readonly ProcessDataValidator _classUnderTest;
+        private readonly Fixture _fixture = new Fixture();
 
         public ProcessDataValidatorTests()
         {
@@ -20,7 +22,8 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         public void RequestShouldErrorWithEmptyDocumentIDs()
         {
             //Arrange
-            var model = new ProcessData() { Documents = new List<Guid> { Guid.Empty } };
+            var formData = _fixture.Build<object>().Create();
+            var model = new ProcessData(formData, new List<Guid> { Guid.Empty });
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert
@@ -30,7 +33,8 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         public void RequestShouldNotErrorWithValidDocumentIDs()
         {
             //Arrange
-            var model = new ProcessData() { Documents = new List<Guid> { Guid.NewGuid() } };
+            var formData = _fixture.Build<object>().Create();
+            var model = new ProcessData(formData, new List<Guid> { Guid.NewGuid() });
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert

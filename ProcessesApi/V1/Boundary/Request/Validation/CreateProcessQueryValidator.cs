@@ -3,7 +3,7 @@ using System;
 
 namespace ProcessesApi.V1.Boundary.Request.Validation
 {
-    public class CreateProcessQueryValidator : AbstractValidator<CreateProcessQuery>
+    public class CreateProcessQueryValidator : AbstractValidator<CreateProcess>
     {
         public CreateProcessQueryValidator()
         {

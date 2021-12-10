@@ -1,12 +1,12 @@
+using AutoFixture;
+using FluentAssertions;
+using Moq;
+using ProcessesApi.V1.Boundary.Request;
+using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.UseCase;
-using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Boundary.Request;
-using Moq;
-using FluentAssertions;
-using AutoFixture;
-using System.Threading.Tasks;
 using System;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace ProcessesApi.Tests.V1.UseCase
@@ -23,11 +23,11 @@ namespace ProcessesApi.Tests.V1.UseCase
             _classUnderTest = new GetProcessByIdUseCase(_mockGateway.Object);
         }
 
-        private static ProcessesQuery ConstructQuery(Guid Id)
+        private static ProcessesQuery ConstructQuery(Guid id)
         {
             return new ProcessesQuery
             {
-                Id = Id
+                Id = id
             };
         }
 

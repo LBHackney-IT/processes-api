@@ -1,16 +1,19 @@
-using ProcessesApi.V1.Boundary.Response;
-using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.UseCase.Interfaces;
-using ProcessesApi.V1.Factories;
+using Hackney.Core.Http;
 using Hackney.Core.Logging;
+using Hackney.Core.Middleware;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
-using System.Net.Http.Headers;
-using System;
-using Hackney.Core.Middleware;
+using ProcessesApi.V1.Boundary.Constants;
+using ProcessesApi.V1.Boundary.Request;
+using ProcessesApi.V1.Boundary.Response;
+using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure.Exceptions;
+using ProcessesApi.V1.UseCase.Interfaces;
+using System;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.Controllers
 {
@@ -21,13 +24,15 @@ namespace ProcessesApi.V1.Controllers
     public class ProcessesApiController : BaseController
     {
         private readonly IGetByIdUseCase _getByIdUseCase;
-        private readonly ICreateNewProcessUsecase _createNewProcessUseCase;
-        private readonly IUpdateProcessUsecase _updateProcessUsecase;
-        public ProcessesApiController(IGetByIdUseCase getByIdUseCase, ICreateNewProcessUsecase createNewProcessUsecase, IUpdateProcessUsecase updateProcessUsecase)
+        private readonly ISoleToJointUseCase _soleToJointUseCase;
+        private readonly IHttpContextWrapper _contextWrapper;
+
+
+        public ProcessesApiController(IGetByIdUseCase getByIdUseCase, ISoleToJointUseCase soleToJointUseCase, IHttpContextWrapper contextWrapper)
         {
             _getByIdUseCase = getByIdUseCase;
-            _createNewProcessUseCase = createNewProcessUsecase;
-            _updateProcessUsecase = updateProcessUsecase;
+            _soleToJointUseCase = soleToJointUseCase;
+            _contextWrapper = contextWrapper;
         }
 
         /// <summary>
@@ -69,10 +74,33 @@ namespace ProcessesApi.V1.Controllers
         [HttpPost]
         [LogCall(LogLevel.Information)]
         [Route("{processName}")]
-        public async Task<IActionResult> CreateNewProcess([FromBody] CreateProcessQuery query, [FromRoute] string processName)
+        public async Task<IActionResult> CreateNewProcess([FromBody] CreateProcess request, [FromRoute] string processName)
         {
-            var process = await _createNewProcessUseCase.Execute(query, processName).ConfigureAwait(false);
-            return Created(new Uri($"api/v1/processes/{process.ProcessName}/{process.Id}", UriKind.Relative), process);
+            switch (processName)
+            {
+                case ProcessNamesConstants.SoleToJoint:
+                    var soleToJointResult = await _soleToJointUseCase.Execute(
+                                                                      Guid.NewGuid(),
+                                                                      SoleToJointTriggers.StartApplication,
+                                                                      request.TargetId,
+                                                                      request.RelatedEntities,
+                                                                      request.FormData,
+                                                                      request.Documents,
+                                                                      processName)
+                                                                     .ConfigureAwait(false);
+
+                    return Created(new Uri($"api/v1/processes/{processName}/{soleToJointResult.Id}", UriKind.Relative), soleToJointResult);
+                default:
+                    var error = new ErrorResponse
+                    {
+                        ErrorCode = 1,
+                        ProcessId = Guid.Empty,
+                        ErrorMessage = "Process type does not exist",
+                        ProcessName = processName
+                    };
+                    return new BadRequestObjectResult(error);
+            }
+
         }
 
         /// <summary>
@@ -91,11 +119,13 @@ namespace ProcessesApi.V1.Controllers
         [Route("{processName}/{id}/{processTrigger}")]
         public async Task<IActionResult> UpdateProcess([FromBody] UpdateProcessQueryObject requestObject, [FromRoute] UpdateProcessQuery query)
         {
+            _contextWrapper.GetContextRequestHeaders(HttpContext);
+            //TO DO: Complete ifMatch stuff
             var ifMatch = GetIfMatchFromHeader();
             try
             {
-                var process = await _updateProcessUsecase.Execute(requestObject, query, ifMatch).ConfigureAwait(false);
-                if (process == null) return NotFound(query.Id);
+                var soleToJointResult = await _soleToJointUseCase.Execute(query.Id, query.ProcessTrigger, null, null, requestObject.FormData, requestObject.Documents, query.ProcessName);
+                if (soleToJointResult == null) return NotFound(query.Id);
                 return NoContent();
             }
             catch (VersionNumberConflictException vncErr)

@@ -1,8 +1,8 @@
 using FluentValidation.TestHelper;
-using ProcessesApi.V1.Boundary.Request.Validation;
-using Xunit;
-using System;
 using ProcessesApi.V1.Boundary.Request;
+using ProcessesApi.V1.Boundary.Request.Validation;
+using System;
+using Xunit;
 
 namespace ProcessesApi.Tests.V1.Boundary.Validation
 {

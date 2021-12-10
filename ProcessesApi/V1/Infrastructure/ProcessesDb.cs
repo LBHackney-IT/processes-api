@@ -9,6 +9,7 @@ namespace ProcessesApi.V1.Infrastructure
     [DynamoDBTable("Processes", LowerCamelCaseProperties = true)]
     public class ProcessesDb
     {
+
         [DynamoDBHashKey]
         public Guid Id { get; set; }
 
