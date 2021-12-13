@@ -17,7 +17,6 @@ namespace ProcessesApi.V1.UseCase
         public SoleToJointService()
         {
         }
-
         private void SetUpStates()
         {
             _machine.Configure(SoleToJointStates.ApplicationInitialised)
@@ -27,26 +26,27 @@ namespace ProcessesApi.V1.UseCase
                 .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksPassed, () => _soleToJointProcess.IsEligible());
 
         }
-        private void SetUpStateActions()
+
+        private void AddIncomingTenantId(UpdateProcessState processRequest)
         {
-            Configure(SoleToJointStates.SelectTenants, Assignment.Create("tenants"));
-            Configure(SoleToJointStates.AutomatedChecksFailed, Assignment.Create("tenants"));
-            Configure(SoleToJointStates.AutomatedChecksPassed, Assignment.Create("tenants"));
+            _soleToJointProcess.RelatedEntities.Add(Guid.Parse(processRequest.FormData["incomingTenantId"].ToString()));
         }
 
-        private void Configure(string state, Assignment assignment)
+        private void SetUpStateActions()
+        {
+            Configure(SoleToJointStates.SelectTenants, Assignment.Create("tenants"), null);
+            Configure(SoleToJointStates.AutomatedChecksFailed, Assignment.Create("tenants"), AddIncomingTenantId);
+            Configure(SoleToJointStates.AutomatedChecksPassed, Assignment.Create("tenants"), AddIncomingTenantId);
+        }
+
+        private void Configure(string state, Assignment assignment, Action<UpdateProcessState> func)
         {
             _machine.Configure(state)
                 .OnEntry((x) =>
                 {
                     var processRequest = x.Parameters[0] as UpdateProcessState;
                     _currentState = ProcessState.Create(_machine.State, _machine.PermittedTriggers.ToList(), assignment, ProcessData.Create(processRequest.FormData, processRequest.Documents), DateTime.UtcNow, DateTime.UtcNow);
-
-                    if (state == SoleToJointStates.AutomatedChecksFailed || state == SoleToJointStates.AutomatedChecksPassed)
-                    {
-                        _soleToJointProcess.RelatedEntities.Add(Guid.Parse(processRequest.FormData["incomingTenantId"].ToString()));
-                    }
-
+                    func?.Invoke(processRequest);
                 });
         }
 
