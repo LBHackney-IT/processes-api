@@ -70,7 +70,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         public async Task GetProcessByIdReturnsTheProcessIfItExists()
         {
             var entity = _fixture.Build<Process>()
-                        .Without(x => x.VersionNumber)
+                        .With(x => x.VersionNumber, (int?) null)
                         .Create();
             await InsertDatatoDynamoDB(entity.ToDatabase()).ConfigureAwait(false);
             var response = await _classUnderTest.GetProcessById(entity.Id).ConfigureAwait(false);
@@ -98,10 +98,12 @@ namespace ProcessesApi.Tests.V1.Gateways
         }
 
         [Fact]
-        public async Task CreateNewProcessSucessfullySavesProcess()
+        public async Task SaveProcessSucessfullySavesNewProcessToDatabase()
         {
             // Arrange
-            var process = _fixture.Create<Process>();
+            var process = _fixture.Build<Process>()
+                        .With(x => x.VersionNumber, (int?) null)
+                        .Create();
             // Act
             await _classUnderTest.SaveProcess(process).ConfigureAwait(false);
             // Assert
@@ -114,17 +116,17 @@ namespace ProcessesApi.Tests.V1.Gateways
         }
 
         [Fact]
-        public async Task UpdateProcessSuccessfullySavesProcess()
+        public async Task SaveProcessSuccessfullyOverwritesExistingProcess()
         {
             // Arrange
             var originalProcess = _fixture.Build<Process>()
-                                    .Without(x => x.VersionNumber)
+                                    .With(x => x.VersionNumber, (int?) null)
                                     .Create();
             await InsertDatatoDynamoDB(originalProcess.ToDatabase()).ConfigureAwait(false);
 
             var updateObject = _fixture.Build<Process>()
                                     .With(x => x.Id, originalProcess.Id)
-                                    .Without(x => x.VersionNumber)
+                                    .With(x => x.VersionNumber, 0)
                                     .Create();
 
             // Act
@@ -134,6 +136,8 @@ namespace ProcessesApi.Tests.V1.Gateways
             updatedProcess.VersionNumber.Should().Be(1);
 
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync for id {updateObject.Id}", Times.Once());
+
+            _cleanup.Add(async () => await _dynamoDb.DeleteAsync<ProcessesDb>(originalProcess.Id).ConfigureAwait(false));
         }
     }
 }

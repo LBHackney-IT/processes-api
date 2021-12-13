@@ -18,7 +18,7 @@ namespace ProcessesApi.V1.Domain
         public Guid Id { get; private set; }
         public Guid? TargetId { get; private set; }
         public string Trigger { get; private set; }
-        public Dictionary<string,Object> FormData { get; private set; }
+        public Dictionary<string, Object> FormData { get; private set; }
         public List<Guid> Documents { get; private set; }
         public List<Guid> RelatedEntities { get; private set; }
 

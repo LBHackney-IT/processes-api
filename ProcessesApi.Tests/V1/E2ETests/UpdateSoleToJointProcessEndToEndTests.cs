@@ -19,14 +19,14 @@ using Xunit;
 namespace ProcessesApi.Tests.V1.E2ETests
 {
     [Collection("AppTest collection")]
-    public class UpdateProcessEndToEndTests : IDisposable
+    public class UpdateSoleToJointProcessEndToEndTests : IDisposable
     {
         private readonly Fixture _fixture = new Fixture();
         private readonly IDynamoDbFixture _dbFixture;
         private readonly HttpClient _httpClient;
         private readonly List<Action> _cleanupActions = new List<Action>();
 
-        public UpdateProcessEndToEndTests(MockWebApplicationFactory<Startup> appFactory)
+        public UpdateSoleToJointProcessEndToEndTests(MockWebApplicationFactory<Startup> appFactory)
         {
             _dbFixture = appFactory.DynamoDbFixture;
             _httpClient = appFactory.Client;

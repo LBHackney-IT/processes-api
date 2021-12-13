@@ -38,7 +38,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
                                         .With(x => x.PermittedTriggers, (new[] { SoleToJointTriggers.StartApplication }).ToList())
                                         .Create())
                         .Without(x => x.PreviousStates)
-                        .Without(x => x.VersionNumber)
+                        .With(x => x.VersionNumber, (int?) null)
                         .Create();
             return process;
         }
