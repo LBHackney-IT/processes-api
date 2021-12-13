@@ -3,6 +3,7 @@ using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.UseCase.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.UseCase
@@ -18,7 +19,7 @@ namespace ProcessesApi.V1.UseCase
             _soleToJointService = soleToJointService;
         }
 
-        public async Task<Process> Execute(Guid id, string processTrigger, Guid? targetId, List<Guid> relatedEntities, object formData, List<Guid> documents, string processName)
+        public async Task<Process> Execute(Guid id, string processTrigger, Guid? targetId, List<Guid> relatedEntities, JsonElement formData, List<Guid> documents, string processName)
         {
             var triggerObject = UpdateProcessState.Create(id, targetId, processTrigger, formData, documents, relatedEntities);
 

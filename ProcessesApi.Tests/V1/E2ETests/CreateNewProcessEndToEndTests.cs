@@ -14,6 +14,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -116,6 +117,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
         public async Task CreateNewProcessReturnsBadRequestWhenThereAreValidationErrors()
         {
             var badRequest = _fixture.Build<CreateProcess>()
+                            .With(x => x.FormData, new JsonElement())
                             .With(x => x.TargetId, Guid.Empty)
                             .Create();
 

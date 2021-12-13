@@ -4,6 +4,7 @@ using ProcessesApi.V1.UseCase.Interfaces;
 using Stateless;
 using System;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.UseCase
@@ -31,6 +32,8 @@ namespace ProcessesApi.V1.UseCase
         private void SetUpStateActions()
         {
             Configure(SoleToJointStates.SelectTenants, Assignment.Create("tenants"));
+            if(_soleToJointProcess.CurrentState != null)
+                Configure(SoleToJointStates.SelectTenants, _soleToJointProcess.CurrentState.ProcessData.FormData.GetProperty("incomingTenantId"));
 
         }
 
@@ -42,6 +45,17 @@ namespace ProcessesApi.V1.UseCase
                     var processRequest = x.Parameters[0] as UpdateProcessState;
 
                     _currentState = ProcessState.Create(_machine.State, _machine.PermittedTriggers.ToList(), assignment, ProcessData.Create(processRequest.FormData, processRequest.Documents), DateTime.UtcNow, DateTime.UtcNow);
+                });
+        }
+
+        private void Configure(string state, JsonElement formData)
+        {
+            _machine.Configure(state)
+                .OnEntry((x) =>
+                {
+                    var processRequest = x.Parameters[0] as UpdateProcessState;
+                    _soleToJointProcess.RelatedEntities.Add(Guid.Parse(formData.GetProperty("incomingTenantId").ToString()));
+
                 });
         }
 

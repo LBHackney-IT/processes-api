@@ -5,6 +5,7 @@ using Hackney.Core.Testing.DynamoDb;
 using Hackney.Core.Testing.Shared;
 using Microsoft.Extensions.Logging;
 using Moq;
+using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
@@ -12,6 +13,7 @@ using ProcessesApi.V1.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -70,9 +72,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         [Fact]
         public async Task GetProcessByIdReturnsTheProcessIfItExists()
         {
-            var entity = _fixture.Build<Process>()
-                                .With(x => x.VersionNumber, (int?) null)
-                                .Create();
+            var entity = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), new List<Guid>() { Guid.NewGuid() }, ProcessNamesConstants.SoleToJoint, null);
             await InsertDatatoDynamoDB(entity.ToDatabase()).ConfigureAwait(false);
             var response = await _classUnderTest.GetProcessById(entity.Id).ConfigureAwait(false);
             response.Should().BeEquivalentTo(entity, config => config.Excluding(y => y.VersionNumber));
@@ -102,17 +102,14 @@ namespace ProcessesApi.Tests.V1.Gateways
         public async Task CreateNewProcessSucessfullySavesProcess()
         {
             // Arrange
-            var processObject = _fixture.Build<Process>()
-                                        .With(x => x.VersionNumber, (int?) null)
-                                        .With(x => x.CurrentState,
-                                                   _fixture.Build<ProcessState>()
-                                                           .With(x => x.CreatedAt, DateTime.UtcNow)
-                                                           .With(x => x.UpdatedAt, DateTime.UtcNow)
-                                                           .With(x => x.State, SoleToJointStates.ApplicationInitialised)
-                                                           .With(x => x.PermittedTriggers, (new[] { SoleToJointTriggers.StartApplication }).ToList())
-                                                           .Create())
-                                        .Without(x => x.PreviousStates)
-                                        .Create();
+            var processData = new ProcessData(new JsonElement(), new List<Guid>());
+            var processState = new ProcessState(SoleToJointStates.ApplicationInitialised,
+                                                (new[] { SoleToJointTriggers.StartApplication }).ToList(),
+                                                new Assignment(),
+                                                processData,
+                                                DateTime.UtcNow,
+                                                DateTime.UtcNow);
+            var processObject = Process.Create(Guid.NewGuid(), new List<ProcessState>(), processState, Guid.NewGuid(), new List<Guid>(), ProcessNamesConstants.SoleToJoint, null);
             // Act
             var process = await _classUnderTest.SaveProcess(processObject).ConfigureAwait(false);
             // Assert
@@ -133,31 +130,26 @@ namespace ProcessesApi.Tests.V1.Gateways
         public async Task UpdateProcessSuccessfullySavesProcess()
         {
             // Arrange
-            var originalProcess = _fixture.Build<Process>()
-                                        .With(x => x.VersionNumber, (int?) null)
-                                        .With(x => x.CurrentState,
-                                                   _fixture.Build<ProcessState>()
-                                                           .With(x => x.CreatedAt, DateTime.UtcNow)
-                                                           .With(x => x.UpdatedAt, DateTime.UtcNow)
-                                                           .With(x => x.State, SoleToJointStates.ApplicationInitialised)
-                                                           .With(x => x.PermittedTriggers, (new[] { SoleToJointTriggers.StartApplication }).ToList())
-                                                           .Create())
-                                        .Without(x => x.PreviousStates)
-                                        .Create();
+            //var originalProcessCurrentState = ProcessState.Create(SoleToJointStates.ApplicationInitialised,
+            //                                       (new[] { SoleToJointTriggers.StartApplication }).ToList(),
+            //                                       new Assignment(),
+            //                                       new ProcessData(new System.Text.Json.JsonElement(),
+            //                                       new List<Guid>()),
+            //                                       DateTime.UtcNow,
+            //                                       DateTime.UtcNow);
+            var processState = new ProcessState(SoleToJointStates.ApplicationInitialised, (new[] { SoleToJointTriggers.StartApplication }).ToList(), new Assignment(), new ProcessData(new JsonElement(), new List<Guid>()), DateTime.UtcNow, DateTime.UtcNow);
+            var originalProcess = Process.Create(Guid.NewGuid(), new List<ProcessState>(), processState, Guid.NewGuid(), new List<Guid>(), ProcessNamesConstants.SoleToJoint, null);
+          
             await InsertDatatoDynamoDB(originalProcess.ToDatabase()).ConfigureAwait(false);
-
-            var updateObject = _fixture.Build<Process>()
-                                       .With(x => x.Id, originalProcess.Id)
-                                       .With(x => x.VersionNumber, 0)
-                                       .With(x => x.CurrentState,
-                                                  _fixture.Build<ProcessState>()
-                                                          .With(x => x.CreatedAt, DateTime.UtcNow)
-                                                          .With(x => x.UpdatedAt, DateTime.UtcNow)
-                                                          .With(x => x.State, SoleToJointStates.SelectTenants)
-                                                          .With(x => x.PermittedTriggers, (new[] { SoleToJointTriggers.CheckEligibility }).ToList())
-                                                          .Create())
-                                       .Without(x => x.PreviousStates)
-                                       .Create();
+            var updateProcessCurrentState = ProcessState.Create(SoleToJointStates.SelectTenants,
+                                                   (new[] { SoleToJointTriggers.CheckEligibility }).ToList(),
+                                                   new Assignment(),
+                                                   new ProcessData(new System.Text.Json.JsonElement(),
+                                                   new List<Guid>()),
+                                                   DateTime.UtcNow,
+                                                   DateTime.UtcNow);
+            var updateObject = Process.Create(originalProcess.Id, new List<ProcessState>(), updateProcessCurrentState, Guid.NewGuid(), new List<Guid>(), ProcessNamesConstants.SoleToJoint, 0);
+          
             // Act
             var updatedProcess = await _classUnderTest.SaveProcess(updateObject).ConfigureAwait(false);
             // Assert

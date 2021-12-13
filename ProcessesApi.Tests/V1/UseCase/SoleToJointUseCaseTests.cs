@@ -8,6 +8,8 @@ using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.UseCase;
 using ProcessesApi.V1.UseCase.Interfaces;
 using System;
+using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -32,6 +34,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         {
 
             var createProcessQuery = _fixture.Build<CreateProcess>()
+                                             .With(x => x.FormData, new JsonElement())
                                              .Create();
 
             var processName = ProcessNamesConstants.SoleToJoint;
@@ -53,12 +56,10 @@ namespace ProcessesApi.Tests.V1.UseCase
         [Fact]
         public void CreateNewProcessExceptionIsThrown()
         {
-            var process = _fixture.Build<Process>()
-                                 .With(x => x.VersionNumber, (int?) null)
-                                 .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
-                                 .Create();
             var createProcessQuery = _fixture.Build<CreateProcess>()
+                                             .With(x => x.FormData, new JsonElement())
                                              .Create();
+            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, createProcessQuery.TargetId, createProcessQuery.RelatedEntities, ProcessNamesConstants.SoleToJoint, null);
 
             var exception = new ApplicationException("Test Exception");
             _mockGateway.Setup(x => x.SaveProcess(It.IsAny<Process>())).ThrowsAsync(exception);
@@ -73,12 +74,10 @@ namespace ProcessesApi.Tests.V1.UseCase
         [Fact]
         public async Task UpdateProcessSendNewStateToGateway()
         {
-            var process = _fixture.Build<Process>()
-                                  .With(x => x.VersionNumber, (int?) null)
-                                  .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
-                                  .Create();
+            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), null, ProcessNamesConstants.SoleToJoint, null);
 
             var updateProcessQuery = _fixture.Build<UpdateProcessQueryObject>()
+                                             .With( x=> x.FormData, new JsonElement())
                                              .Create();
 
 
@@ -100,11 +99,9 @@ namespace ProcessesApi.Tests.V1.UseCase
         [Fact]
         public void UpdateProcessExceptionIsThrown()
         {
-            var process = _fixture.Build<Process>()
-                                 .With(x => x.VersionNumber, (int?) null)
-                                 .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
-                                 .Create();
+            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), null, ProcessNamesConstants.SoleToJoint, null);
             var updateProcessQuery = _fixture.Build<UpdateProcessQueryObject>()
+                                             .With( x=> x.FormData, new JsonElement())
                                              .Create();
 
             var exception = new ApplicationException("Test Exception");

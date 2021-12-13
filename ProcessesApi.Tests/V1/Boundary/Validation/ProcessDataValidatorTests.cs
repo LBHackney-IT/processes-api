@@ -4,6 +4,7 @@ using ProcessesApi.V1.Boundary.Request.Validation;
 using ProcessesApi.V1.Domain;
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using Xunit;
 
 namespace ProcessesApi.Tests.V1.Boundary.Validation
@@ -22,8 +23,7 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         public void RequestShouldErrorWithEmptyDocumentIDs()
         {
             //Arrange
-            var formData = _fixture.Build<object>().Create();
-            var model = new ProcessData(formData, new List<Guid> { Guid.Empty });
+            var model = new ProcessData(new JsonElement(), new List<Guid> { Guid.Empty });
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert
@@ -33,8 +33,7 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         public void RequestShouldNotErrorWithValidDocumentIDs()
         {
             //Arrange
-            var formData = _fixture.Build<object>().Create();
-            var model = new ProcessData(formData, new List<Guid> { Guid.NewGuid() });
+            var model = new ProcessData(new JsonElement(), new List<Guid> { Guid.NewGuid() });
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert
