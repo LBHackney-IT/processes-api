@@ -46,8 +46,8 @@ namespace ProcessesApi.Tests.V1.E2ETests
                                                    _fixture.Build<ProcessState>()
                                                            .With(x => x.CreatedAt, DateTime.UtcNow)
                                                            .With(x => x.UpdatedAt, DateTime.UtcNow)
-                                                           .With(x => x.State, SoleToJointStates.ApplicationInitialised)
-                                                           .With(x => x.PermittedTriggers, (new[] { SoleToJointTriggers.StartApplication }).ToList())
+                                                           .With(x => x.State, SoleToJointStates.SelectTenants)
+                                                           .With(x => x.PermittedTriggers, (new[] { SoleToJointTriggers.CheckEligibility }).ToList())
                                                            .Create())
                                         .Without(x => x.PreviousStates)
                                         .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
@@ -79,7 +79,6 @@ namespace ProcessesApi.Tests.V1.E2ETests
         }
 
         [Fact(Skip = "To be completed when adding another state")]
-
         public async Task UpdateProcessReturnsUpdatedResponse()
         {
             // Arrange
@@ -110,6 +109,38 @@ namespace ProcessesApi.Tests.V1.E2ETests
             dbRecord.PreviousStates.LastOrDefault().Should().BeEquivalentTo(originalEntity.CurrentState, c => c.Excluding(x => x.ProcessData.FormData));
             dbRecord.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(queryObject.Documents);
 
+            // Cleanup
+            message.Dispose();
+        }
+
+
+        [Fact]
+        public async Task AddTenantToRelatedEntitiesOnCheckEligibilityTrigger()
+        {
+            // Arrange
+            var originalEntity = ConstructTestEntity();
+            await SaveTestData(originalEntity).ConfigureAwait(false);
+            var ifMatch = 0;
+
+            var incomingTenantId = Guid.NewGuid();
+            var queryObject = _fixture.Build<UpdateProcessQueryObject>()
+                            .With(x => x.FormData, new Dictionary<string, object> { { "incomingTenantId", incomingTenantId } })
+                            .Create();
+            var uri = new Uri($"api/v1/process/{originalEntity.ProcessName}/{originalEntity.Id}/{SoleToJointTriggers.CheckEligibility}", UriKind.Relative);
+
+            var message = new HttpRequestMessage(HttpMethod.Patch, uri);
+            message.Content = new StringContent(JsonConvert.SerializeObject(queryObject), Encoding.UTF8, "application/json");
+            message.Headers.TryAddWithoutValidation(HeaderConstants.IfMatch, $"\"{ifMatch.ToString()}\"");
+            message.Method = HttpMethod.Patch;
+
+            // Act
+            var response = await _httpClient.SendAsync(message).ConfigureAwait(false);
+
+            // Assert
+            response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(originalEntity.Id).ConfigureAwait(false);
+            dbRecord.RelatedEntities.Should().Contain(incomingTenantId);
             // Cleanup
             message.Dispose();
         }
