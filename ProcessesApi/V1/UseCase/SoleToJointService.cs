@@ -4,7 +4,6 @@ using ProcessesApi.V1.UseCase.Interfaces;
 using Stateless;
 using System;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.UseCase
@@ -28,13 +27,11 @@ namespace ProcessesApi.V1.UseCase
                 .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksPassed, () => _soleToJointProcess.IsEligible());
 
         }
-
         private void SetUpStateActions()
         {
             Configure(SoleToJointStates.SelectTenants, Assignment.Create("tenants"));
-            if(_soleToJointProcess.CurrentState != null)
-                Configure(SoleToJointStates.SelectTenants, _soleToJointProcess.CurrentState.ProcessData.FormData.GetProperty("incomingTenantId"));
-
+            Configure(SoleToJointStates.AutomatedChecksFailed, Assignment.Create("tenants"));
+            Configure(SoleToJointStates.AutomatedChecksPassed, Assignment.Create("tenants"));
         }
 
         private void Configure(string state, Assignment assignment)
@@ -43,18 +40,12 @@ namespace ProcessesApi.V1.UseCase
                 .OnEntry((x) =>
                 {
                     var processRequest = x.Parameters[0] as UpdateProcessState;
-
                     _currentState = ProcessState.Create(_machine.State, _machine.PermittedTriggers.ToList(), assignment, ProcessData.Create(processRequest.FormData, processRequest.Documents), DateTime.UtcNow, DateTime.UtcNow);
-                });
-        }
 
-        private void Configure(string state, JsonElement formData)
-        {
-            _machine.Configure(state)
-                .OnEntry((x) =>
-                {
-                    var processRequest = x.Parameters[0] as UpdateProcessState;
-                    _soleToJointProcess.RelatedEntities.Add(Guid.Parse(formData.GetProperty("incomingTenantId").ToString()));
+                    if (state == SoleToJointStates.AutomatedChecksFailed || state == SoleToJointStates.AutomatedChecksPassed)
+                    {
+                        _soleToJointProcess.RelatedEntities.Add(Guid.Parse(processRequest.FormData["incomingTenantId"].ToString()));
+                    }
 
                 });
         }

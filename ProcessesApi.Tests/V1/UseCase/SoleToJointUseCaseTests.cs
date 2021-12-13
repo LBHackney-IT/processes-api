@@ -9,7 +9,6 @@ using ProcessesApi.V1.UseCase;
 using ProcessesApi.V1.UseCase.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -29,21 +28,27 @@ namespace ProcessesApi.Tests.V1.UseCase
             _classUnderTest = new SoleToJointUseCase(_mockGateway.Object, _mockSTJService.Object);
         }
 
-        [Fact]
-        public async Task CreateNewProcessReturnsProcessFromGateway()
+        private Process CreateProcessInInitialState()
         {
+            return _fixture.Build<Process>()
+                    .With(x => x.CurrentState, (ProcessState) null)
+                    .With(x => x.PreviousStates, new List<ProcessState>())
+                    .Create();
+        }
 
-            var createProcessQuery = _fixture.Build<CreateProcess>()
-                                             .With(x => x.FormData, new JsonElement())
-                                             .Create();
-
+        [Fact]
+        public async Task CreateNewProcessCallsServiceAndGateway()
+        {
+            // Arrange
+            var createProcessQuery = _fixture.Create<CreateProcess>();
             var processName = ProcessNamesConstants.SoleToJoint;
             var processId = Guid.NewGuid();
-
+            // Act
             var response = await _classUnderTest.Execute(
                 processId, SoleToJointTriggers.StartApplication,
                 createProcessQuery.TargetId, createProcessQuery.RelatedEntities, createProcessQuery.FormData,
                 createProcessQuery.Documents, processName).ConfigureAwait(false);
+            // Assert
             _mockSTJService.Verify(x => x.Process(It.IsAny<UpdateProcessState>(), It.IsAny<Process>()), Times.Once);
             _mockGateway.Verify(x => x.SaveProcess(It.IsAny<Process>()), Times.Once);
 
@@ -56,9 +61,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         [Fact]
         public void CreateNewProcessExceptionIsThrown()
         {
-            var createProcessQuery = _fixture.Build<CreateProcess>()
-                                             .With(x => x.FormData, new JsonElement())
-                                             .Create();
+            var createProcessQuery = _fixture.Create<CreateProcess>();
             var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, createProcessQuery.TargetId, createProcessQuery.RelatedEntities, ProcessNamesConstants.SoleToJoint, null);
 
             var exception = new ApplicationException("Test Exception");
@@ -72,21 +75,19 @@ namespace ProcessesApi.Tests.V1.UseCase
         }
 
         [Fact]
-        public async Task UpdateProcessSendNewStateToGateway()
+        public async Task UpdateProcessCallsServiceAndSendsNewStateToGateway()
         {
-            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), null, ProcessNamesConstants.SoleToJoint, null);
-
-            var updateProcessQuery = _fixture.Build<UpdateProcessQueryObject>()
-                                             .With( x=> x.FormData, new JsonElement())
-                                             .Create();
-
-
+            // Arrange
+            var process = CreateProcessInInitialState();
+            var updateProcessQuery = _fixture.Create<UpdateProcessQueryObject>();
             _mockGateway.Setup(x => x.GetProcessById(process.Id)).ReturnsAsync(process);
-
+            // Act
             var response = await _classUnderTest.Execute(
                 process.Id, SoleToJointTriggers.CheckEligibility,
                 process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
                 updateProcessQuery.Documents, process.ProcessName).ConfigureAwait(false);
+
+            // Assert
             _mockSTJService.Verify(x => x.Process(It.IsAny<UpdateProcessState>(), It.IsAny<Process>()), Times.Once);
             _mockGateway.Verify(x => x.SaveProcess(It.IsAny<Process>()), Times.Once);
 
@@ -99,10 +100,8 @@ namespace ProcessesApi.Tests.V1.UseCase
         [Fact]
         public void UpdateProcessExceptionIsThrown()
         {
-            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), null, ProcessNamesConstants.SoleToJoint, null);
-            var updateProcessQuery = _fixture.Build<UpdateProcessQueryObject>()
-                                             .With( x=> x.FormData, new JsonElement())
-                                             .Create();
+            var process = CreateProcessInInitialState();
+            var updateProcessQuery = _fixture.Create<UpdateProcessQueryObject>();
 
             var exception = new ApplicationException("Test Exception");
             _mockGateway.Setup(x => x.GetProcessById(It.IsAny<Guid>())).ThrowsAsync(exception);

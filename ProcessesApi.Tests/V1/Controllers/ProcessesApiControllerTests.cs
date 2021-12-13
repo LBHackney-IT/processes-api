@@ -18,7 +18,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -80,16 +79,12 @@ namespace ProcessesApi.Tests.V1.Controllers
 
         private CreateProcess ConstructPostRequest()
         {
-            return _fixture.Build<CreateProcess>()
-                           .With(x => x.FormData, new JsonElement())
-                           .Create();
+            return _fixture.Create<CreateProcess>();
         }
 
         private (Process, UpdateProcessQuery, UpdateProcessQueryObject) ConstructPatchRequest()
         {
-            var queryObject = _fixture.Build<UpdateProcessQueryObject>()
-                                      .With(x => x.FormData, new JsonElement())
-                                      .Create();
+            var queryObject = _fixture.Create<UpdateProcessQueryObject>();
             var processName = ProcessNamesConstants.SoleToJoint;
             var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), null, processName, null);
             var query = _fixture.Build<UpdateProcessQuery>()
@@ -167,9 +162,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         [Fact]
         public void CreateNewProcessExceptionIsThrown()
         {
-            var request = _fixture.Build<CreateProcess>()
-                                  .With(x => x.FormData, new JsonElement())
-                                  .Create();
+            var request = _fixture.Create<CreateProcess>();
             var processName = ProcessNamesConstants.SoleToJoint;
             var exception = new ApplicationException("Test exception");
             _mockSoleToJointUseCase.Setup(x => x.Execute(It.IsAny<Guid>(), SoleToJointTriggers.StartApplication,

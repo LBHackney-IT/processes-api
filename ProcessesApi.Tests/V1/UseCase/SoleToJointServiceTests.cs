@@ -2,15 +2,11 @@ using Amazon.DynamoDBv2.DataModel;
 using AutoFixture;
 using FluentAssertions;
 using Hackney.Core.Testing.DynamoDb;
-using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.UseCase;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -57,41 +53,58 @@ namespace ProcessesApi.Tests.V1.UseCase
         public async Task InitialiseStateToSelectTenantsIfCurrentStateIsNotDefined()
         {
             // Arrange
-            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), new List<Guid>(), ProcessNamesConstants.SoleToJoint, null);
-            var processData = new ProcessData(new JsonElement(), new List<Guid>() { Guid.NewGuid()});
-            var triggerObject = UpdateProcessState.Create(process.Id, process.TargetId, SoleToJointTriggers.StartApplication, processData.FormData,processData.Documents, process.RelatedEntities);
+            var process = _fixture.Build<Process>()
+                                    .With(x => x.CurrentState, (ProcessState) null)
+                                    .With(x => x.PreviousStates, new List<ProcessState>())
+                                    .Create();
+            var triggerObject = UpdateProcessState.Create
+            (
+                process.Id,
+                process.TargetId,
+                SoleToJointTriggers.StartApplication,
+                _fixture.Create<Dictionary<string, object>>(),
+                _fixture.Create<List<Guid>>(),
+                process.RelatedEntities
+            );
             // Act
             await _classUnderTest.Process(triggerObject, process).ConfigureAwait(false);
             // Assert
-            process.PreviousStates.Should().BeEmpty();
             process.CurrentState.State.Should().Be(SoleToJointStates.SelectTenants);
+            process.PreviousStates.Should().BeEmpty();
             process.CurrentState.PermittedTriggers.Should().BeEquivalentTo(new List<string>() { SoleToJointPermittedTriggers.CheckEligibility });
-            process.CurrentState.ProcessData.FormData.Should().Be(triggerObject.FormData);
+            process.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(triggerObject.FormData);
             process.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(triggerObject.Documents);
             process.CurrentState.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
             process.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
         }
 
         [Fact]
-        public async Task AddTenantToRelatedEntities()
+        public async Task AddTenantToRelatedEntitiesOnCheckEligibilityTrigger()
         {
             // Arrange
-            var currentState = new ProcessState(SoleToJointStates.SelectTenants, (new[] { SoleToJointTriggers.CheckEligibility }).ToList(), new Assignment(), new ProcessData(new JsonElement(), new List<Guid>()), DateTime.UtcNow, DateTime.UtcNow);
-            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), currentState, Guid.NewGuid(), new List<Guid>(), ProcessNamesConstants.SoleToJoint, null);
-            await InsertDatatoDynamoDB(process.ToDatabase()).ConfigureAwait(false);
-            var formDataValue = Guid.NewGuid();
-            var dictionary = new Dictionary<string, string>()
-            {
-                {"incomingTenantId", formDataValue.ToString() }
-            };
-            var formData = JsonSerializer.Serialize(dictionary);
-            var convertFormData = JsonDocument.Parse(formData).RootElement;
-            var triggerObject = UpdateProcessState.Create(process.Id, null, SoleToJointTriggers.CheckEligibility, convertFormData, process.CurrentState.ProcessData.Documents, null);
+            var process = _fixture.Build<Process>()
+                                .With(x => x.CurrentState,
+                                    _fixture.Build<ProcessState>()
+                                        .With(x => x.State, SoleToJointStates.SelectTenants)
+                                        .Create()
+                                )
+                                .Create();
+
+            var incomingTenantId = Guid.NewGuid();
+            var triggerObject = UpdateProcessState.Create
+            (
+                process.Id,
+                process.TargetId,
+                SoleToJointTriggers.CheckEligibility,
+                new Dictionary<string, object> { { "incomingTenantId", incomingTenantId } },
+                _fixture.Create<List<Guid>>(),
+                process.RelatedEntities
+            );
             // Act
             await _classUnderTest.Process(triggerObject, process).ConfigureAwait(false);
 
-            //Assert
-            process.RelatedEntities.Should().Contain(formDataValue);
+            // Assert
+            process.RelatedEntities.Should().Contain(incomingTenantId);
         }
     }
 }
