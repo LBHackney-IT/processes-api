@@ -50,6 +50,17 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         }
 
         [Fact]
+        public void RequestShouldErrorWithNullRelatedEntity()
+        {
+            //Arrange
+            var query = new CreateProcess() {  };
+            //Act
+            var result = _classUnderTest.TestValidate(query);
+            //Assert
+            result.ShouldHaveValidationErrorFor(x => x.RelatedEntities);
+        }
+
+        [Fact]
         public void RequestShouldErrorWithEmptyDocumentIDs()
         {
             //Arrange

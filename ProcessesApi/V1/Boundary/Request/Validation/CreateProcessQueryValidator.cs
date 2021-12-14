@@ -9,7 +9,8 @@ namespace ProcessesApi.V1.Boundary.Request.Validation
         {
             RuleFor(x => x.TargetId).NotNull()
                             .NotEqual(Guid.Empty);
-            RuleForEach(x => x.RelatedEntities).NotNull()
+            RuleFor(x => x.RelatedEntities).NotNull();
+            RuleForEach(x => x.RelatedEntities)
                             .NotEqual(Guid.Empty);
             RuleForEach(x => x.Documents).NotNull()
                             .NotEqual(Guid.Empty);
