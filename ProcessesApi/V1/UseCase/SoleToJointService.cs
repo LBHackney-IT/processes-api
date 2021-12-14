@@ -1,5 +1,4 @@
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Helper;
 using ProcessesApi.V1.UseCase.Interfaces;
 using Stateless;
 using System;
@@ -23,8 +22,9 @@ namespace ProcessesApi.V1.UseCase
             _machine.Configure(SoleToJointStates.ApplicationInitialised)
                 .Permit(SoleToJointTriggers.StartApplication, SoleToJointStates.SelectTenants);
             _machine.Configure(SoleToJointStates.SelectTenants)
-                .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksFailed, () => !_soleToJointProcess.IsEligible())
-                .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksPassed, () => _soleToJointProcess.IsEligible());
+                .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksFailed, () => true)
+                .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksPassed, () => false);
+                // TODO: Implement Eligibility Checks
 
         }
 
