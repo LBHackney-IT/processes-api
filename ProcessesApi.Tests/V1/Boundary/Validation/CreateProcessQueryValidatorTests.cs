@@ -53,7 +53,7 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         public void RequestShouldErrorWithNullRelatedEntity()
         {
             //Arrange
-            var query = new CreateProcess() {  };
+            var query = new CreateProcess() { };
             //Act
             var result = _classUnderTest.TestValidate(query);
             //Assert
