@@ -14,6 +14,7 @@ using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.UseCase.Interfaces;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -78,20 +79,18 @@ namespace ProcessesApi.Tests.V1.Controllers
 
         private CreateProcess ConstructPostRequest()
         {
-            return _fixture.Build<CreateProcess>()
-                           .Create();
+            return _fixture.Create<CreateProcess>();
         }
 
         private (Process, UpdateProcessQuery, UpdateProcessQueryObject) ConstructPatchRequest()
         {
-            var processResponse = _fixture.Build<Process>()
-                                          .With(x => x.VersionNumber, (int?) null)
-                                          .Create();
+            var queryObject = _fixture.Create<UpdateProcessQueryObject>();
+            var processName = ProcessNamesConstants.SoleToJoint;
+            var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), null, processName, null);
             var query = _fixture.Build<UpdateProcessQuery>()
                                 .With(x => x.ProcessName, processResponse.ProcessName)
                                 .With(x => x.Id, processResponse.Id)
                                 .Create();
-            var queryObject = _fixture.Create<UpdateProcessQueryObject>();
             return (processResponse, query, queryObject);
         }
 
@@ -102,7 +101,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             var controllerContext = new ControllerContext(new ActionContext(stubHttpContext, new RouteData(), new ControllerActionDescriptor()));
             _classUnderTest.ControllerContext = controllerContext;
 
-            var process = _fixture.Create<Process>();
+            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), new List<Guid>(), null, null);
             var query = ConstructQuery(process.Id);
             _mockGetByIdUseCase.Setup(x => x.Execute(query)).ReturnsAsync(process);
 
@@ -144,11 +143,9 @@ namespace ProcessesApi.Tests.V1.Controllers
         public async void CreateNewProcessReturnsCreatedResponse()
         {
             // Arrange
-            var processResponse = _fixture.Build<Process>()
-                                          .With(x => x.VersionNumber, (int?) null)
-                                          .Create();
-            var processName = ProcessNamesConstants.SoleToJoint;
             var request = ConstructPostRequest();
+            var processName = ProcessNamesConstants.SoleToJoint;
+            var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, request.TargetId, request.RelatedEntities, processName, null);
 
             _mockSoleToJointUseCase.Setup(x => x.Execute(It.IsAny<Guid>(), SoleToJointTriggers.StartApplication,
              request.TargetId, request.RelatedEntities, request.FormData, request.Documents, processName))

@@ -6,11 +6,9 @@ using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Boundary.Response;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -20,40 +18,17 @@ using Xunit;
 namespace ProcessesApi.Tests.V1.E2ETests
 {
     [Collection("AppTest collection")]
-    public class CreateNewProcessEndToEndTests : IDisposable
+    public class CreateNewSoleToJointProcessEndToEndTests : IDisposable
     {
         private readonly Fixture _fixture = new Fixture();
         private readonly IDynamoDbFixture _dbFixture;
         private readonly HttpClient _httpClient;
         private readonly List<Action> _cleanupActions = new List<Action>();
 
-        public CreateNewProcessEndToEndTests(MockWebApplicationFactory<Startup> appFactory)
+        public CreateNewSoleToJointProcessEndToEndTests(MockWebApplicationFactory<Startup> appFactory)
         {
             _dbFixture = appFactory.DynamoDbFixture;
             _httpClient = appFactory.Client;
-        }
-        private (Process, CreateProcess) ConstructQuery()
-        {
-            var process = _fixture.Build<Process>()
-                                        .With(x => x.VersionNumber, (int?) null)
-                                        .Without(x => x.Id)
-                                        .With(x => x.CurrentState,
-                                                   _fixture.Build<ProcessState>()
-                                                           .With(x => x.CreatedAt, DateTime.UtcNow)
-                                                           .With(x => x.UpdatedAt, DateTime.UtcNow)
-                                                           .With(x => x.State, SoleToJointStates.ApplicationInitialised)
-                                                           .With(x => x.PermittedTriggers, (new[] { SoleToJointTriggers.StartApplication }).ToList())
-                                                           .Create())
-                                        .Without(x => x.PreviousStates)
-                                        .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
-                                        .Create();
-            var request = _fixture.Build<CreateProcess>()
-                                 .With(x => x.TargetId, process.TargetId)
-                                 .With(x => x.FormData, process.CurrentState.ProcessData.FormData)
-                                 .With(x => x.RelatedEntities, process.RelatedEntities)
-                                 .With(x => x.Documents, process.CurrentState.ProcessData.Documents)
-                                .Create();
-            return (process, request);
         }
 
         public void Dispose()
@@ -78,7 +53,8 @@ namespace ProcessesApi.Tests.V1.E2ETests
         public async Task CreateNewProcessReturnsTheRequestedProcess()
         {
             // Arrange
-            (var process, var query) = ConstructQuery();
+            var query = _fixture.Build<CreateProcess>()
+                                .Create();
             var processName = ProcessNamesConstants.SoleToJoint;
             var uri = new Uri($"api/v1/process/{processName}/", UriKind.Relative);
 
@@ -94,17 +70,22 @@ namespace ProcessesApi.Tests.V1.E2ETests
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.Created);
 
-            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(apiProcess.Id).ConfigureAwait(false);
-            dbRecord.Should().BeEquivalentTo(process.ToDatabase(), c => c.Excluding(x => x.VersionNumber)
-                                                                         .Excluding(z => z.CurrentState)
-                                                                         .Excluding(z => z.PreviousStates)
-                                                                         .Excluding(a => a.Id));
             apiProcess.Id.Should().NotBeEmpty();
-            dbRecord.CurrentState.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
-            dbRecord.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(apiProcess.Id).ConfigureAwait(false);
+
+            dbRecord.TargetId.Should().Be(query.TargetId);
+            dbRecord.RelatedEntities.Should().BeEquivalentTo(query.RelatedEntities);
+            dbRecord.ProcessName.Should().Be(ProcessNamesConstants.SoleToJoint);
+
             dbRecord.CurrentState.State.Should().Be(SoleToJointStates.SelectTenants);
             dbRecord.CurrentState.PermittedTriggers.Should().BeEquivalentTo(new List<string>() { SoleToJointPermittedTriggers.CheckEligibility });
+            // TODO: Add test fpr assignment when implemented
+            // dbRecord.CurrentState.ProcessData.FormData.Should().Be(query.FormData);
+            dbRecord.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(query.FormData);
             dbRecord.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(query.Documents);
+            dbRecord.CurrentState.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            dbRecord.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
+
             dbRecord.PreviousStates.Should().BeEmpty();
 
             // Cleanup

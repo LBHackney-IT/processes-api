@@ -30,10 +30,17 @@ namespace ProcessesApi.Tests.V1.E2ETests
         }
         private Process ConstructTestEntity()
         {
-            var entity = _fixture.Build<Process>()
-                                .With(x => x.VersionNumber, (int?) null)
-                                .Create();
-            return entity;
+            var process = _fixture.Build<Process>()
+                        .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
+                        .With(x => x.CurrentState,
+                                _fixture.Build<ProcessState>()
+                                        .With(x => x.State, SoleToJointStates.ApplicationInitialised)
+                                        .With(x => x.PermittedTriggers, (new[] { SoleToJointTriggers.StartApplication }).ToList())
+                                        .Create())
+                        .Without(x => x.PreviousStates)
+                        .With(x => x.VersionNumber, (int?) null)
+                        .Create();
+            return process;
         }
 
         private async Task SaveTestData(Process entity)
@@ -61,9 +68,8 @@ namespace ProcessesApi.Tests.V1.E2ETests
         {
             // Arrange
             var entity = ConstructTestEntity();
-            var processName = ProcessNamesConstants.SoleToJoint;
             await SaveTestData(entity).ConfigureAwait(false);
-            var uri = new Uri($"api/v1/process/{processName}/{entity.Id}", UriKind.Relative);
+            var uri = new Uri($"api/v1/process/{entity.ProcessName}/{entity.Id}", UriKind.Relative);
 
             // Act
             var response = await _httpClient.GetAsync(uri).ConfigureAwait(false);

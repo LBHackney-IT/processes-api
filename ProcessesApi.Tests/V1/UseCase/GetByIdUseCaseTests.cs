@@ -6,6 +6,7 @@ using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.UseCase;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -45,7 +46,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         [Fact]
         public async Task GetProcessByIdReturnsProcessFromGateway()
         {
-            var process = _fixture.Create<Process>();
+            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), new List<Guid>(), null, null);
             var query = ConstructQuery(process.Id);
 
             _mockGateway.Setup(x => x.GetProcessById(process.Id)).ReturnsAsync((Process) process);

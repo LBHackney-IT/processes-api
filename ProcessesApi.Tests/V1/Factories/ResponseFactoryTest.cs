@@ -2,6 +2,8 @@ using AutoFixture;
 using FluentAssertions;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
+using System;
+using System.Collections.Generic;
 using Xunit;
 
 namespace ProcessesApi.Tests.V1.Factories
@@ -13,7 +15,7 @@ namespace ProcessesApi.Tests.V1.Factories
         [Fact]
         public void CanMapADatabaseEntityToADomainObject()
         {
-            var domain = _fixture.Create<Process>();
+            var domain = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), new List<Guid>(), null, null);
             var response = domain.ToResponse();
 
             response.Id.Should().Be(domain.Id);

@@ -18,7 +18,7 @@ namespace ProcessesApi.V1.UseCase
             _soleToJointService = soleToJointService;
         }
 
-        public async Task<Process> Execute(Guid id, string processTrigger, Guid? targetId, List<Guid> relatedEntities, object formData, List<Guid> documents, string processName)
+        public async Task<Process> Execute(Guid id, string processTrigger, Guid? targetId, List<Guid> relatedEntities, Dictionary<string, object> formData, List<Guid> documents, string processName)
         {
             var triggerObject = UpdateProcessState.Create(id, targetId, processTrigger, formData, documents, relatedEntities);
 
