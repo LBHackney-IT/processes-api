@@ -165,6 +165,7 @@ namespace ProcessesApi
         {
 
             services.AddScoped<IProcessesGateway, ProcessesGateway>();
+            services.AddScoped<ISoleToJointGateway, SoleToJointGateway>();
         }
 
         private static void RegisterUseCases(IServiceCollection services)

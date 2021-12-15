@@ -1,4 +1,5 @@
 using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.UseCase.Interfaces;
 using Stateless;
 using System;
@@ -13,19 +14,27 @@ namespace ProcessesApi.V1.UseCase
         private StateMachine<string, string> _machine;
         private ProcessState _currentState;
         private Process _soleToJointProcess;
+        private ISoleToJointGateway _soleToJointGateway;
+        private bool _isEligible;
 
-        public SoleToJointService()
+        public SoleToJointService(ISoleToJointGateway gateway)
         {
+            _soleToJointGateway = gateway;
         }
+
         private void SetUpStates()
         {
             _machine.Configure(SoleToJointStates.ApplicationInitialised)
                 .Permit(SoleToJointTriggers.StartApplication, SoleToJointStates.SelectTenants);
             _machine.Configure(SoleToJointStates.SelectTenants)
-                .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksFailed, () => true)
-                .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksPassed, () => false);
-            // TODO: Implement Eligibility Checks
-
+                .OnExitAsync(async (x) => 
+                    {
+                        var processRequest = x.Parameters[0] as UpdateProcessState;
+                        _isEligible = await _soleToJointGateway.CheckEligibility(_soleToJointProcess.TargetId, Guid.Parse(processRequest.FormData["incomingTenantId"].ToString()))
+                                                   .ConfigureAwait(false);
+                    })
+                .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksFailed, () => !_isEligible)
+                .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksPassed, () => _isEligible);
         }
 
         private void AddIncomingTenantId(UpdateProcessState processRequest)
