@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using System.Linq;
 using Amazon.DynamoDBv2.DataModel;
 using Hackney.Core.Logging;
 using Hackney.Shared.Tenure.Domain;
@@ -34,13 +35,17 @@ namespace ProcessesApi.V1.Helpers
             var tenure = await GetTenureById(tenureId).ConfigureAwait(false);
             var tenantInformation = tenure.HouseholdMembers.ToListOrEmpty().Find(x => x.Id == incomingTenantId);
 
-            if(tenantInformation.PersonTenureType != PersonTenureType.Tenant)
+            if (tenantInformation.PersonTenureType != PersonTenureType.Tenant
+                || tenure.HouseholdMembers.Count(x => x.IsResponsible) > 1
+                || tenure.TenureType.Code != TenureTypes.Secure.Code
+                || !tenure.IsActive
+                || tenantInformation.DateOfBirth.AddYears(18) > DateTime.UtcNow)
             {
-                return false; //AutomaticChecksFailed
+                return false;
             }
             else
             {
-                return true; //AutomaticChecksPassed
+                return true;
             }
         }
 

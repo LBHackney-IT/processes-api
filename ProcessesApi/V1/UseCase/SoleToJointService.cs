@@ -24,7 +24,7 @@ namespace ProcessesApi.V1.UseCase
             _machine.Configure(SoleToJointStates.SelectTenants)
                 .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksFailed, () => true)
                 .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksPassed, () => false);
-                // TODO: Implement Eligibility Checks
+            // TODO: Implement Eligibility Checks
 
         }
 
