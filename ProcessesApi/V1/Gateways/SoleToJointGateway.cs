@@ -7,6 +7,9 @@ using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Factories;
 using Hackney.Shared.Tenure.Infrastructure;
 using Microsoft.Extensions.Logging;
+using Hackney.Shared.Person.Infrastructure;
+using Hackney.Shared.Person.Factories;
+using Hackney.Shared.Person;
 
 namespace ProcessesApi.V1.Gateways
 {
@@ -30,23 +33,48 @@ namespace ProcessesApi.V1.Gateways
             return result?.ToDomain();
         }
 
-        public async Task<bool> CheckEligibility(Guid tenureId, Guid incomingTenantId)
+        private async Task<Person> GetPersonById(Guid id)
         {
-            var tenure = await GetTenureById(tenureId).ConfigureAwait(false);
-            if(tenure is null)
+            _logger.LogDebug($"Calling IDynamoDBContext.LoadAsync for Person ID: {id}");
+
+            var result = await _dynamoDbContext.LoadAsync<PersonDbEntity>(id).ConfigureAwait(false);
+            return result?.ToDomain();
+        }
+
+        public async Task<bool> CheckEligibility(Guid tenureId, Guid proposedTenantId)
+        {
+            var currentTenure = await GetTenureById(tenureId).ConfigureAwait(false);
+
+            if (currentTenure is null)
                 return false; // TODO: Confirm whether should raise error 
-            var tenantInformation = tenure.HouseholdMembers.ToListOrEmpty().Find(x => x.Id == incomingTenantId);
+
+            var tenantInformation = currentTenure.HouseholdMembers.ToListOrEmpty().Find(x => x.Id == proposedTenantId);
 
             if (tenantInformation.PersonTenureType != PersonTenureType.Tenant
-                || tenure.HouseholdMembers.Count(x => x.IsResponsible) > 1
-                || tenure.TenureType.Code != TenureTypes.Secure.Code
-                || !tenure.IsActive
+                || currentTenure.TenureType.Code != TenureTypes.Secure.Code
+                || !currentTenure.IsActive
                 || tenantInformation.DateOfBirth.AddYears(18) > DateTime.UtcNow)
             {
                 return false;
             }
             else
             {
+                var proposedTenant = await GetPersonById(proposedTenantId).ConfigureAwait(false);
+
+                foreach (var x in proposedTenant.Tenures)
+                {
+                    var personTenure = await GetTenureById(x.Id).ConfigureAwait(false);
+
+                    if (personTenure.TenureType.Code != TenureTypes.Secure.Code)
+                        return false;
+
+                    var personHouseholdMemberRecord = personTenure.HouseholdMembers.ToListOrEmpty().Find(x => x.Id == proposedTenantId);
+                    if (personHouseholdMemberRecord is null)
+                        break;
+                    if (personTenure.HouseholdMembers.Count(x => x.IsResponsible) > 1)
+                        return false;
+                }
+
                 return true;
             }
         }
