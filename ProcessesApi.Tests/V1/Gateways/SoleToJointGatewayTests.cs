@@ -8,16 +8,13 @@ using Hackney.Shared.Tenure.Factories;
 using Hackney.Shared.Tenure.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Moq;
-using ProcessesApi.V1.Helpers;
+using ProcessesApi.V1.Gateways;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace ProcessesApi.Tests.V1.Helpers
+namespace ProcessesApi.Tests.V1.Gateways
 {
     public class EligibilityFailureTestCase
     {
@@ -31,21 +28,21 @@ namespace ProcessesApi.Tests.V1.Helpers
     }
 
     [Collection("AppTest collection")]
-    public class SoleToJointHelperTests : IDisposable
+    public class SoleToJointGatewayTests : IDisposable
     {
         private readonly Fixture _fixture = new Fixture();
         private readonly IDynamoDbFixture _dbFixture;
         private IDynamoDBContext _dynamoDb => _dbFixture.DynamoDbContext;
-        private SoleToJointHelper _classUnderTest;
+        private SoleToJointGateway _classUnderTest;
         private readonly List<Action> _cleanup = new List<Action>();
-        private readonly Mock<ILogger<SoleToJointHelper>> _logger;
+        private readonly Mock<ILogger<SoleToJointGateway>> _logger;
 
 
-        public SoleToJointHelperTests(MockWebApplicationFactory<Startup> appFactory)
+        public SoleToJointGatewayTests(MockWebApplicationFactory<Startup> appFactory)
         {
             _dbFixture = appFactory.DynamoDbFixture;
-            _logger = new Mock<ILogger<SoleToJointHelper>>();
-            _classUnderTest = new SoleToJointHelper(_dynamoDb, _logger.Object);
+            _logger = new Mock<ILogger<SoleToJointGateway>>();
+            _classUnderTest = new SoleToJointGateway(_dynamoDb, _logger.Object);
         }
 
         public void Dispose()
@@ -106,7 +103,6 @@ namespace ProcessesApi.Tests.V1.Helpers
 
         private async Task ShouldNotBeEligible(TenureInformation tenure, Guid tenantId)
         {
-
             await InsertDatatoDynamoDB(tenure.ToDatabase()).ConfigureAwait(false);
             // Act
             var response = await _classUnderTest.CheckEligibility(tenure.Id, tenantId).ConfigureAwait(false);

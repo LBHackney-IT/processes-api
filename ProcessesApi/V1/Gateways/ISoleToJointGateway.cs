@@ -1,9 +1,9 @@
 using System;
 using System.Threading.Tasks;
 
-namespace ProcessesApi.V1.Helpers
+namespace ProcessesApi.V1.Gateways
 {
-    public interface ISoleToJointHelper
+    public interface ISoleToJointGateway
     {
         Task<bool> CheckEligibility(Guid tenureId, Guid incomingTenantId);
     }

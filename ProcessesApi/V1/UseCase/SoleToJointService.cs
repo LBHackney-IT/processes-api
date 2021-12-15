@@ -30,8 +30,8 @@ namespace ProcessesApi.V1.UseCase
 
         private void AddIncomingTenantId(UpdateProcessState processRequest)
         {
-            //TOD: When doing a POST request from the FE they should created a relatedEntities object with all neccesary values
-            //Once Frontend work is completed the IF statement below should be removed.
+            //TODO: When doing a POST request from the FE they should created a relatedEntities object with all neccesary values
+            // Once Frontend work is completed the IF statement below should be removed.
             if (_soleToJointProcess.RelatedEntities == null)
                 _soleToJointProcess.RelatedEntities = new List<Guid>();
             _soleToJointProcess.RelatedEntities.Add(Guid.Parse(processRequest.FormData["incomingTenantId"].ToString()));

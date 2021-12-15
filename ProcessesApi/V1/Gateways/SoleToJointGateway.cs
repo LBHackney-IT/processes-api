@@ -8,14 +8,14 @@ using Hackney.Shared.Tenure.Factories;
 using Hackney.Shared.Tenure.Infrastructure;
 using Microsoft.Extensions.Logging;
 
-namespace ProcessesApi.V1.Helpers
+namespace ProcessesApi.V1.Gateways
 {
-    public class SoleToJointHelper : ISoleToJointHelper
+    public class SoleToJointGateway : ISoleToJointGateway
     {
         private readonly IDynamoDBContext _dynamoDbContext;
-        private readonly ILogger<SoleToJointHelper> _logger;
+        private readonly ILogger<SoleToJointGateway> _logger;
 
-        public SoleToJointHelper(IDynamoDBContext dynamoDbContext, ILogger<SoleToJointHelper> logger)
+        public SoleToJointGateway(IDynamoDBContext dynamoDbContext, ILogger<SoleToJointGateway> logger)
         {
             _dynamoDbContext = dynamoDbContext;
             _logger = logger;
@@ -33,6 +33,8 @@ namespace ProcessesApi.V1.Helpers
         public async Task<bool> CheckEligibility(Guid tenureId, Guid incomingTenantId)
         {
             var tenure = await GetTenureById(tenureId).ConfigureAwait(false);
+            if(tenure is null)
+                return false; // TODO: Confirm whether should raise error 
             var tenantInformation = tenure.HouseholdMembers.ToListOrEmpty().Find(x => x.Id == incomingTenantId);
 
             if (tenantInformation.PersonTenureType != PersonTenureType.Tenant
