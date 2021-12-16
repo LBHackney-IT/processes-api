@@ -42,7 +42,8 @@ namespace ProcessesApi.Tests.V1.Gateways
         private const string ApiName = "Income";
         private const string IncomeApiUrlKey = "IncomeApiUrl";
         private const string IncomeApiTokenKey = "IncomeApiToken";
-        private static string Route => $"{IncomeApiRoute}/agreements/{_proposedTenantExistingTenureId}";
+        private static string paymentAgreementRoute => $"{IncomeApiRoute}/agreements/{_proposedTenantExistingTenureId}";
+        private static string tenanciesRoute => $"{IncomeApiRoute}/tenancies/{_proposedTenantExistingTenureId}";
 
         public SoleToJointGatewayTests(MockWebApplicationFactory<Startup> appFactory)
         {
@@ -279,25 +280,52 @@ namespace ProcessesApi.Tests.V1.Gateways
         }
 
         [Fact]
-        public async Task SaveAndCheckEligibilityFailsIfTenantHasLivePaymentAgreements()
+        public async Task CheckEligibilityFailsIfTenantHasLivePaymentAgreements()
         {
             (var proposedTenant, var tenure) = await CreateEligibleTenureAndProposedTenant().ConfigureAwait(false);
 
-            var tenureWithArrears = (proposedTenant.Tenures.ToListOrEmpty()).FirstOrDefault();
-            tenureWithArrears.EndDate = DateTime.Now.AddDays(10).ToString();
+            var personTenures = proposedTenant.Tenures.ToListOrEmpty();
+            personTenures.FirstOrDefault().EndDate = DateTime.Now.AddDays(10).ToString();
+            proposedTenant.Tenures = personTenures;
+
             var paymentAgreement = _fixture.Build<PaymentAgreement>()
-                                           .With(x => x.TenancyRef, tenureWithArrears.Id.ToString())
-                                           .With(x => x.CurrentState, "live")
+                                           .With(x => x.TenancyRef, _proposedTenantExistingTenureId.ToString())
+                                           .With(x => x.Amount, 50)
                                            .Create();
 
-            _mockApiGateway.Setup(x => x.GetByIdAsync<PaymentAgreement>(Route, _proposedTenantExistingTenureId, It.IsAny<Guid>())).ReturnsAsync(paymentAgreement);
+            _mockApiGateway.Setup(x => x.GetByIdAsync<PaymentAgreement>(paymentAgreementRoute, _proposedTenantExistingTenureId, It.IsAny<Guid>())).ReturnsAsync(paymentAgreement);
 
             // Act
             var response = await SaveAndCheckEligibility(tenure, proposedTenant).ConfigureAwait(false);
             // Assert
             response.Should().BeFalse();
-            _mockApiGateway.Verify(x => x.GetByIdAsync<PaymentAgreement>(Route, _proposedTenantExistingTenureId, It.IsAny<Guid>()), Times.Once);
+            _mockApiGateway.Verify(x => x.GetByIdAsync<PaymentAgreement>(paymentAgreementRoute, _proposedTenantExistingTenureId, It.IsAny<Guid>()), Times.Once);
             _logger.VerifyExact(LogLevel.Debug, $"Calling Income API for payment agreeement with Tenure ID: {_proposedTenantExistingTenureId}", Times.AtLeastOnce());
+        }
+
+        [Fact]
+        public async Task CheckEligibilityFailsIfTenantHasAnActiveNoticeOfSeekingPossession()
+        {
+            (var proposedTenant, var tenure) = await CreateEligibleTenureAndProposedTenant().ConfigureAwait(false);
+
+            var personTenures = proposedTenant.Tenures.ToListOrEmpty();
+            personTenures.FirstOrDefault().EndDate = DateTime.Now.AddDays(10).ToString();
+            proposedTenant.Tenures = personTenures;
+
+            var tenancyWithNosp = _fixture.Build<Tenancy>()
+                                    .With(x => x.nosp, _fixture.Build<NoticeOfSeekingPossession>()
+                                                                .With(x => x.active, true)
+                                                                .Create())
+                                    .Create();
+
+            _mockApiGateway.Setup(x => x.GetByIdAsync<Tenancy>(tenanciesRoute, _proposedTenantExistingTenureId, It.IsAny<Guid>())).ReturnsAsync(tenancyWithNosp);
+
+            // Act
+            var response = await SaveAndCheckEligibility(tenure, proposedTenant).ConfigureAwait(false);
+            // Assert
+            response.Should().BeFalse();
+            _mockApiGateway.Verify(x => x.GetByIdAsync<Tenancy>(tenanciesRoute, _proposedTenantExistingTenureId, It.IsAny<Guid>()), Times.Once);
+            _logger.VerifyExact(LogLevel.Debug, $"Calling Income API with tenancy ID: {_proposedTenantExistingTenureId}", Times.AtLeastOnce());
         }
     }
 }

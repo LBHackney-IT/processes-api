@@ -57,6 +57,14 @@ namespace ProcessesApi.V1.Gateways
             return await _apiGateway.GetByIdAsync<PaymentAgreement>(route, tenureId, correlationId);
         }
 
+        [LogCall]
+        private async Task<Tenancy> GetTenancyById(Guid id, Guid correlationId)
+        {
+            _logger.LogDebug($"Calling Income API with tenancy ID: {id}");
+            var route = $"{_apiGateway.ApiRoute}/tenancies/{id}";
+            return await _apiGateway.GetByIdAsync<Tenancy>(route, id, correlationId);
+        }
+
         public async Task<bool> CheckPersonTenureRecord(Guid tenureId, Guid proposedTenantId)
         {
             var tenure = await GetTenureById(tenureId).ConfigureAwait(false);
@@ -77,12 +85,21 @@ namespace ProcessesApi.V1.Gateways
             else
             {
                 var paymentAgreement = await GetPaymentAgreementByTenureId(tenureId, Guid.NewGuid()).ConfigureAwait(false); // TODO: Confirm what correlation ID to use
-                if (paymentAgreement is null)
-                    return true;
-                if (paymentAgreement.CurrentState == "live")
+                if (paymentAgreement != null && paymentAgreement.Amount > 0)
+                {
                     return false;
+                }
+                else
+                {
+                    var tenancy = await GetTenancyById(tenureId, Guid.NewGuid()).ConfigureAwait(false); // TODO: Confirm what correlation ID to use
+                    if (tenancy is null)
+                        return true; // throw error?
 
-                return true;
+                    if (tenancy.nosp.active)
+                        return false;
+                    return true;
+                }
+
             }
         }
 
