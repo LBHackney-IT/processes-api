@@ -65,6 +65,26 @@ namespace ProcessesApi.V1.Gateways
             return await _apiGateway.GetByIdAsync<Tenancy>(route, id, correlationId);
         }
 
+        public async Task<bool> CheckTenureFinanceRecords(Guid tenureId)
+        {
+            var paymentAgreement = await GetPaymentAgreementByTenureId(tenureId, Guid.NewGuid()).ConfigureAwait(false); // TODO: Confirm what correlation ID to use
+            if (paymentAgreement != null && paymentAgreement.Amount > 0)
+            {
+                return false;
+            }
+            else
+            {
+                var tenancy = await GetTenancyById(tenureId, Guid.NewGuid()).ConfigureAwait(false); // TODO: Confirm what correlation ID to use
+                if (tenancy is null)
+                    return true; // throw error?
+
+                if (tenancy.nosp.active)
+                    return false;
+                return true;
+            }
+
+        }
+
         public async Task<bool> CheckPersonTenureRecord(Guid tenureId, Guid proposedTenantId)
         {
             var tenure = await GetTenureById(tenureId).ConfigureAwait(false);
@@ -76,37 +96,19 @@ namespace ProcessesApi.V1.Gateways
                 return true;// throw error?
 
             if (tenure.TenureType.Code != TenureTypes.Secure.Code ||
-                 (tenure.HouseholdMembers.Count(x => x.IsResponsible) > 1
-                 && personHouseholdMemberRecord.IsResponsible)
-                )
+                (tenure.HouseholdMembers.Count(x => x.IsResponsible) > 1 && personHouseholdMemberRecord.IsResponsible))
             {
                 return false;
             }
             else
             {
-                var paymentAgreement = await GetPaymentAgreementByTenureId(tenureId, Guid.NewGuid()).ConfigureAwait(false); // TODO: Confirm what correlation ID to use
-                if (paymentAgreement != null && paymentAgreement.Amount > 0)
-                {
-                    return false;
-                }
-                else
-                {
-                    var tenancy = await GetTenancyById(tenureId, Guid.NewGuid()).ConfigureAwait(false); // TODO: Confirm what correlation ID to use
-                    if (tenancy is null)
-                        return true; // throw error?
-
-                    if (tenancy.nosp.active)
-                        return false;
-                    return true;
-                }
-
+                return await CheckTenureFinanceRecords(tenureId).ConfigureAwait(false);
             }
         }
 
         public async Task<bool> CheckEligibility(Guid tenureId, Guid proposedTenantId)
         {
             var currentTenure = await GetTenureById(tenureId).ConfigureAwait(false);
-
             if (currentTenure is null)
                 return false; // TODO: Confirm whether should raise error 
 
@@ -129,7 +131,6 @@ namespace ProcessesApi.V1.Gateways
                     if (!isEligible)
                         return false;
                 }
-
                 return true;
             }
         }
