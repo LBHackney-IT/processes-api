@@ -70,7 +70,10 @@ namespace ProcessesApi.Tests.V1.Gateways
         {
             var proposedTenant = _fixture.Build<Person>()
                                          .With(x => x.VersionNumber, (int?) null)
-                                         .With(x => x.Tenures, new List<TenureDetails>())
+                                         .With(x => x.Tenures, new List<TenureDetails>
+                                         {
+                                             _fixture.Build<TenureDetails>().With(x => x.EndDate, DateTime.Now.AddDays(-10).ToString()).Create()
+                                         })
                                          .Create();
             var tenure = _fixture.Build<TenureInformation>()
                         .With(x => x.HouseholdMembers,
@@ -88,29 +91,32 @@ namespace ProcessesApi.Tests.V1.Gateways
             return (proposedTenant, tenure);
         }
 
+        private async Task<bool> CheckEligibility(TenureInformation tenure, Person proposedTenant)
+        {
+            await _dbFixture.SaveEntityAsync(tenure.ToDatabase()).ConfigureAwait(false);
+            await _dbFixture.SaveEntityAsync(proposedTenant.ToDatabase()).ConfigureAwait(false);
+            // Act
+            var response = await _classUnderTest.CheckEligibility(tenure.Id, proposedTenant.Id).ConfigureAwait(false);
+            return response;
+        }
+        private async Task ShouldNotBeEligible(TenureInformation tenure, Person proposedTenant)
+        {
+            // Act
+            var response = await CheckEligibility(tenure, proposedTenant).ConfigureAwait(false);
+            // Assert
+            response.Should().BeFalse();
+            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Tenure ID: {tenure.Id}", Times.AtLeastOnce());
+        }
+
         [Fact]
         public async Task CheckEligibiltyReturnsTrueIfAllConditionsAreMet()
         {
             // Arrange
             (var proposedTenant, var tenure) = CreateEligibleTenureAndProposedTenant();
-            await _dbFixture.SaveEntityAsync(tenure.ToDatabase()).ConfigureAwait(false);
-            await _dbFixture.SaveEntityAsync(proposedTenant.ToDatabase()).ConfigureAwait(false);
-            // Act
-            var response = await _classUnderTest.CheckEligibility(tenure.Id, proposedTenant.Id).ConfigureAwait(false);
+            var response = await CheckEligibility(tenure, proposedTenant).ConfigureAwait(false);
             // Assert
             response.Should().BeTrue();
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Tenure ID: {tenure.Id}", Times.Once());
-        }
-
-        private async Task ShouldNotBeEligible(TenureInformation tenure, Person proposedTenant)
-        {
-            await _dbFixture.SaveEntityAsync(tenure.ToDatabase()).ConfigureAwait(false);
-            await _dbFixture.SaveEntityAsync(proposedTenant.ToDatabase()).ConfigureAwait(false);
-            // Act
-            var response = await _classUnderTest.CheckEligibility(tenure.Id, proposedTenant.Id).ConfigureAwait(false);
-            // Assert
-            response.Should().BeFalse();
-            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Tenure ID: {tenure.Id}", Times.AtLeastOnce());
         }
 
         [Fact]
@@ -155,57 +161,75 @@ namespace ProcessesApi.Tests.V1.Gateways
             await ShouldNotBeEligible(tenure, proposedTenant).ConfigureAwait(false);
         }
 
-        [Fact] // TODO: Repeat test with non-active tenures & if is not responsible in joint tenure
-        public async Task CheckEligibiltyReturnsFalseIfTheProposedTenantIsPartOfAJointTenancy()
-        {
-            // Arrange
-            (var proposedTenant, var tenure) = CreateEligibleTenureAndProposedTenant();
-
-            var jointTenureDetails = _fixture.Create<TenureDetails>();
-            var updatedTenures = proposedTenant.Tenures.ToListOrEmpty();
-            updatedTenures.Add(jointTenureDetails);
-            proposedTenant.Tenures = updatedTenures;
-
-            var jointTenure = _fixture.Build<TenureInformation>()
-                .With(x => x.VersionNumber, (int?) null)
-                .With(x => x.Id, jointTenureDetails.Id)
-                .With(x => x.HouseholdMembers, _fixture.Build<HouseholdMembers>()
-                                                .With(x => x.IsResponsible, true)
-                                                .With(x => x.Id, proposedTenant.Id)
-                                                .CreateMany())
-                .Create();
-            await _dbFixture.SaveEntityAsync(jointTenure.ToDatabase()).ConfigureAwait(false);
-            // Act & assert
-            await ShouldNotBeEligible(tenure, proposedTenant).ConfigureAwait(false);
-            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Person ID: {proposedTenant.Id}", Times.Once());
-        }
-
-        [Fact] // TODO: Repeat test with non-active tenures
+        [Fact]
         public async Task CheckEligibiltyReturnsFalseIfTheProposedTenantIsAHouseholdMemberOfAnExistingNonSecureTenure()
         {
             // Arrange
             (var proposedTenant, var tenure) = CreateEligibleTenureAndProposedTenant();
 
-            var existingTenureDetails = _fixture.Create<TenureDetails>();
+            var nonSecureTenureDetails = _fixture.Create<TenureDetails>();
             var updatedTenures = proposedTenant.Tenures.ToListOrEmpty();
-            updatedTenures.Add(existingTenureDetails);
+            updatedTenures.Add(nonSecureTenureDetails);
             proposedTenant.Tenures = updatedTenures;
 
-            var existingTenure = _fixture.Build<TenureInformation>()
+            var nonSecureTenure = _fixture.Build<TenureInformation>()
                 .With(x => x.VersionNumber, (int?) null)
-                .With(x => x.Id, existingTenureDetails.Id)
+                .With(x => x.Id, nonSecureTenureDetails.Id)
                 .With(x => x.TenureType, TenureTypes.NonSecure)
                 .With(x => x.HouseholdMembers, new List<HouseholdMembers>
                                                 {
                                                     _fixture.Build<HouseholdMembers>()
                                                     .With(x => x.Id, proposedTenant.Id)
-                                                    .With(x => x.PersonTenureType, PersonTenureType.HouseholdMember)
                                                     .Create()
                                                 })
                 .Create();
-            await _dbFixture.SaveEntityAsync(existingTenure.ToDatabase()).ConfigureAwait(false);
+            await _dbFixture.SaveEntityAsync(nonSecureTenure.ToDatabase()).ConfigureAwait(false);
             // Act & assert
             await ShouldNotBeEligible(tenure, proposedTenant).ConfigureAwait(false);
+            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Person ID: {proposedTenant.Id}", Times.Once());
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task CheckEligibiltyFailsIfTheProposedTenantIsResponsibleInAnActiveJointTenancy(bool isResponsible)
+        {
+            // Arrange
+            (var proposedTenant, var tenure) = CreateEligibleTenureAndProposedTenant();
+
+            var jointTenureDetails = _fixture.Build<TenureDetails>()
+                                             .With(x => x.EndDate, DateTime.Now.AddYears(10).ToString())
+                                             .Create();
+            var updatedTenures = proposedTenant.Tenures.ToListOrEmpty();
+            updatedTenures.Add(jointTenureDetails);
+            proposedTenant.Tenures = updatedTenures;
+
+            var householdMembers = new List<HouseholdMembers>{
+                                                                _fixture.Build<HouseholdMembers>()
+                                                                       .With(x => x.IsResponsible, true)
+                                                                       .Create(),
+                                                                _fixture.Build<HouseholdMembers>()
+                                                                       .With(x => x.IsResponsible, true)
+                                                                       .Create(),
+                                                                _fixture.Build<HouseholdMembers>()
+                                                                        .With(x => x.Id, proposedTenant.Id)
+                                                                        .With(x => x.IsResponsible, isResponsible)
+                                                                        .Create()
+                                                            };
+
+            var jointTenure = _fixture.Build<TenureInformation>()
+                .With(x => x.VersionNumber, (int?) null)
+                .With(x => x.Id, jointTenureDetails.Id)
+                .With(x => x.HouseholdMembers, householdMembers)
+                .With(x => x.TenureType, TenureTypes.Secure)
+                .Create();
+
+            await _dbFixture.SaveEntityAsync(jointTenure.ToDatabase()).ConfigureAwait(false);
+            // Act
+            var response = await CheckEligibility(tenure, proposedTenant).ConfigureAwait(false);
+            // Assert
+            response.Should().Be(!isResponsible);
+            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Tenure ID: {tenure.Id}", Times.AtLeastOnce());
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Person ID: {proposedTenant.Id}", Times.Once());
         }
     }

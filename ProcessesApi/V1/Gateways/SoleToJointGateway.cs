@@ -61,7 +61,7 @@ namespace ProcessesApi.V1.Gateways
             {
                 var proposedTenant = await GetPersonById(proposedTenantId).ConfigureAwait(false);
 
-                foreach (var x in proposedTenant.Tenures)
+                foreach (var x in proposedTenant.Tenures.Where(x => x.IsActive))
                 {
                     var personTenure = await GetTenureById(x.Id).ConfigureAwait(false);
 
@@ -70,8 +70,8 @@ namespace ProcessesApi.V1.Gateways
 
                     var personHouseholdMemberRecord = personTenure.HouseholdMembers.ToListOrEmpty().Find(x => x.Id == proposedTenantId);
                     if (personHouseholdMemberRecord is null)
-                        break;
-                    if (personTenure.HouseholdMembers.Count(x => x.IsResponsible) > 1)
+                        continue;
+                    if (personTenure.HouseholdMembers.Count(x => x.IsResponsible) > 1 && personHouseholdMemberRecord.IsResponsible)
                         return false;
                 }
 
