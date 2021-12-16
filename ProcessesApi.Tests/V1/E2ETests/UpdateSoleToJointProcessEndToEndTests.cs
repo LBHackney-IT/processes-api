@@ -124,7 +124,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
 
             var incomingTenantId = Guid.NewGuid();
             var queryObject = _fixture.Build<UpdateProcessQueryObject>()
-                            .With(x => x.FormData, new Dictionary<string, object> { { "incomingTenantId", incomingTenantId } })
+                            .With(x => x.FormData, new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId } })
                             .Create();
             var uri = new Uri($"api/v1/process/{originalEntity.ProcessName}/{originalEntity.Id}/{SoleToJointTriggers.CheckEligibility}", UriKind.Relative);
 

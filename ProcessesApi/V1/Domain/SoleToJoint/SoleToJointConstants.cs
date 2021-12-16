@@ -29,4 +29,9 @@ namespace ProcessesApi.V1.Domain
         public const string CheckTenancyBreach = "CheckTenancyBreach";
     }
 
+    public static class SoleToJointFormDataKeys
+    {
+        public const string IncomingTenantId = "incomingTenantId";
+    }
+
 }

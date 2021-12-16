@@ -57,6 +57,7 @@ namespace ProcessesApi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddCors();
+            services.AddApiGateway();
 
             services
                 .AddMvc()

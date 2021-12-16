@@ -34,7 +34,7 @@ namespace ProcessesApi.V1.UseCase
             // Once Frontend work is completed the IF statement below should be removed.
             if (_soleToJointProcess.RelatedEntities == null)
                 _soleToJointProcess.RelatedEntities = new List<Guid>();
-            _soleToJointProcess.RelatedEntities.Add(Guid.Parse(processRequest.FormData["incomingTenantId"].ToString()));
+            _soleToJointProcess.RelatedEntities.Add(Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()));
         }
 
         private void SetUpStateActions()
