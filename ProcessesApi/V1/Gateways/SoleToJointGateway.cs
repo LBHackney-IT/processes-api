@@ -60,28 +60,28 @@ namespace ProcessesApi.V1.Gateways
         public async Task<bool> CheckPersonTenureRecord(Guid tenureId, Guid proposedTenantId)
         {
             var tenure = await GetTenureById(tenureId).ConfigureAwait(false);
-            if(tenure is null)
-                 return true;// throw error?
+            if (tenure is null)
+                return true;// throw error?
 
             var personHouseholdMemberRecord = tenure.HouseholdMembers.ToListOrEmpty().Find(x => x.Id == proposedTenantId);
             if (personHouseholdMemberRecord is null)
                 return true;// throw error?
-            
-            if ( tenure.TenureType.Code != TenureTypes.Secure.Code ||
+
+            if (tenure.TenureType.Code != TenureTypes.Secure.Code ||
                  (tenure.HouseholdMembers.Count(x => x.IsResponsible) > 1
                  && personHouseholdMemberRecord.IsResponsible)
                 )
             {
                 return false;
-            } 
+            }
             else
             {
                 var paymentAgreement = await GetPaymentAgreementByTenureId(tenureId, Guid.NewGuid()).ConfigureAwait(false); // TODO: Confirm what correlation ID to use
-                if(paymentAgreement is null)
+                if (paymentAgreement is null)
                     return true;
-                if(paymentAgreement.CurrentState == "live")
+                if (paymentAgreement.CurrentState == "live")
                     return false;
-                    
+
                 return true;
             }
         }
@@ -109,7 +109,7 @@ namespace ProcessesApi.V1.Gateways
                 foreach (var x in proposedTenant.Tenures.Where(x => x.IsActive))
                 {
                     var isEligible = await CheckPersonTenureRecord(x.Id, proposedTenantId).ConfigureAwait(false);
-                    if(!isEligible)
+                    if (!isEligible)
                         return false;
                 }
 

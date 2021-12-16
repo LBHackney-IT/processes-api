@@ -47,9 +47,9 @@ namespace ProcessesApi.Tests.V1.Gateways
         public SoleToJointGatewayTests(MockWebApplicationFactory<Startup> appFactory)
         {
             _dbFixture = appFactory.DynamoDbFixture;
-            
+
             _logger = new Mock<ILogger<SoleToJointGateway>>();
-            
+
             _mockApiGateway = new Mock<IApiGateway>();
             _mockApiGateway.SetupGet(x => x.ApiName).Returns(ApiName);
             _mockApiGateway.SetupGet(x => x.ApiRoute).Returns(IncomeApiRoute);
@@ -82,15 +82,15 @@ namespace ProcessesApi.Tests.V1.Gateways
             _mockApiGateway.Verify(x => x.Initialise(ApiName, IncomeApiUrlKey, IncomeApiTokenKey, null),
                                    Times.Once);
         }
-        
+
         private async Task<(Person, TenureInformation)> CreateEligibleTenureAndProposedTenant(bool proposedTenantHasExistingActiveTenures = false)
         {
             var proposedTenantId = Guid.NewGuid();
-            var proposedTenantExistingTenure =  _fixture.Build<TenureInformation>()
+            var proposedTenantExistingTenure = _fixture.Build<TenureInformation>()
                         .With(x => x.Id, _proposedTenantExistingTenureId)
                         .With(x => x.TenureType, TenureTypes.Secure)
-                        .With(x => x.EndOfTenureDate, DateTime.Now.AddDays(proposedTenantHasExistingActiveTenures ? 10 : -10) )
-                        .With(x => x.HouseholdMembers, 
+                        .With(x => x.EndOfTenureDate, DateTime.Now.AddDays(proposedTenantHasExistingActiveTenures ? 10 : -10))
+                        .With(x => x.HouseholdMembers,
                                     new List<HouseholdMembers> {
                                         _fixture.Build<HouseholdMembers>()
                                         .With(x => x.Id, proposedTenantId)
@@ -99,7 +99,7 @@ namespace ProcessesApi.Tests.V1.Gateways
                         .With(x => x.VersionNumber, (int?) null)
                         .Create();
             await _dynamoDb.SaveAsync(proposedTenantExistingTenure.ToDatabase()).ConfigureAwait(false);
-            _cleanup.Add(() => _dynamoDb.DeleteAsync<TenureInformationDb>(proposedTenantExistingTenure.Id, new DynamoDBContextConfig{ SkipVersionCheck = true }));
+            _cleanup.Add(() => _dynamoDb.DeleteAsync<TenureInformationDb>(proposedTenantExistingTenure.Id, new DynamoDBContextConfig { SkipVersionCheck = true }));
 
             var proposedTenant = _fixture.Build<Person>()
                                          .With(x => x.VersionNumber, (int?) null)
@@ -137,7 +137,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             var response = await _classUnderTest.CheckEligibility(tenure.Id, proposedTenant.Id).ConfigureAwait(false);
             return response;
         }
-        
+
         [Fact]
         public async Task CheckEligibiltyReturnsTrueIfAllConditionsAreMet()
         {
@@ -289,7 +289,7 @@ namespace ProcessesApi.Tests.V1.Gateways
                                            .With(x => x.TenancyRef, tenureWithArrears.Id.ToString())
                                            .With(x => x.CurrentState, "live")
                                            .Create();
-            
+
             _mockApiGateway.Setup(x => x.GetByIdAsync<PaymentAgreement>(Route, _proposedTenantExistingTenureId, It.IsAny<Guid>())).ReturnsAsync(paymentAgreement);
 
             // Act
