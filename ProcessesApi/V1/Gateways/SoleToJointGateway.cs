@@ -77,10 +77,11 @@ namespace ProcessesApi.V1.Gateways
             {
                 var tenancy = await GetTenancyById(tenureId, Guid.NewGuid()).ConfigureAwait(false); // TODO: Confirm what correlation ID to use
                 if (tenancy is null)
-                    return true; // throw error?
+                    return true;
 
                 if (tenancy.nosp.active)
                     return false;
+
                 return true;
             }
 
@@ -127,7 +128,7 @@ namespace ProcessesApi.V1.Gateways
                 var proposedTenant = await GetPersonById(proposedTenantId).ConfigureAwait(false);
                 if (proposedTenant is null)
                     throw new RecordNotFoundException(typeof(Person), proposedTenantId);
-                
+
                 foreach (var x in proposedTenant.Tenures.Where(x => x.IsActive))
                 {
                     var isEligible = await CheckPersonTenureRecord(x.Id, proposedTenantId).ConfigureAwait(false);
