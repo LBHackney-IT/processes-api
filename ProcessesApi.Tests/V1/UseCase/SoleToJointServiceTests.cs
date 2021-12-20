@@ -96,7 +96,7 @@ namespace ProcessesApi.Tests.V1.UseCase
                 process.Id,
                 process.TargetId,
                 SoleToJointTriggers.CheckEligibility,
-                new Dictionary<string, object> { { "incomingTenantId", incomingTenantId } },
+                new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId } },
                 _fixture.Create<List<Guid>>(),
                 process.RelatedEntities
             );

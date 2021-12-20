@@ -1,5 +1,4 @@
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Helper;
 using ProcessesApi.V1.UseCase.Interfaces;
 using Stateless;
 using System;
@@ -23,18 +22,19 @@ namespace ProcessesApi.V1.UseCase
             _machine.Configure(SoleToJointStates.ApplicationInitialised)
                 .Permit(SoleToJointTriggers.StartApplication, SoleToJointStates.SelectTenants);
             _machine.Configure(SoleToJointStates.SelectTenants)
-                .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksFailed, () => !_soleToJointProcess.IsEligible())
-                .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksPassed, () => _soleToJointProcess.IsEligible());
+                .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksFailed, () => true)
+                .PermitIf(SoleToJointTriggers.CheckEligibility, SoleToJointStates.AutomatedChecksPassed, () => false);
+            // TODO: Implement Eligibility Checks
 
         }
 
         private void AddIncomingTenantId(UpdateProcessState processRequest)
         {
-            //TOD: When doing a POST request from the FE they should created a relatedEntities object with all neccesary values
-            //Once Frontend work is completed the IF statement below should be removed.
+            //TODO: When doing a POST request from the FE they should created a relatedEntities object with all neccesary values
+            // Once Frontend work is completed the IF statement below should be removed.
             if (_soleToJointProcess.RelatedEntities == null)
                 _soleToJointProcess.RelatedEntities = new List<Guid>();
-            _soleToJointProcess.RelatedEntities.Add(Guid.Parse(processRequest.FormData["incomingTenantId"].ToString()));
+            _soleToJointProcess.RelatedEntities.Add(Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()));
         }
 
         private void SetUpStateActions()
