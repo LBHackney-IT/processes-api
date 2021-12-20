@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using ProcessesApi.V1.Domain.Finance;
 using ProcessesApi.V1.Gateways;
+using ProcessesApi.V1.Gateways.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -172,6 +173,33 @@ namespace ProcessesApi.Tests.V1.Gateways
             // Assert
             response.Should().BeTrue();
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Tenure ID: {tenure.Id}", Times.Once());
+        }
+
+        [Fact]
+        public async Task CheckEligibilityThrowsErrorIfTheTargetTenureIsNotFound()
+        {
+            // Arrange
+            (var proposedTenant, var tenure) = CreateEligibleTenureAndProposedTenant();
+            await _dbFixture.SaveEntityAsync(proposedTenant.ToDatabase()).ConfigureAwait(false);
+            // Act
+            Func<Task<bool>> func = async () => await _classUnderTest.CheckEligibility(tenure.Id, proposedTenant.Id).ConfigureAwait(false);
+            // Assert
+            func.Should().Throw<RecordNotFoundException>().WithMessage($"The ID supplied ({tenure.Id}) does not exist for entity type {typeof(TenureInformation)}.");
+            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Tenure ID: {tenure.Id}", Times.Once());
+        }
+
+        [Fact]
+        public async Task CheckEligibilityThrowsErrorIfTheProposedTenantIsNotFound()
+        {
+            // Arrange
+            (var proposedTenant, var tenure) = CreateEligibleTenureAndProposedTenant();
+            await _dbFixture.SaveEntityAsync(tenure.ToDatabase()).ConfigureAwait(false);
+            // Act
+            Func<Task<bool>> func = async () => await _classUnderTest.CheckEligibility(tenure.Id, proposedTenant.Id).ConfigureAwait(false);
+            // Assert
+            func.Should().Throw<RecordNotFoundException>().WithMessage($"The ID supplied ({proposedTenant.Id}) does not exist for entity type {typeof(Person)}.");
+            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Tenure ID: {tenure.Id}", Times.Once());
+            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Person ID: {proposedTenant.Id}", Times.Once());
         }
 
         [Fact]

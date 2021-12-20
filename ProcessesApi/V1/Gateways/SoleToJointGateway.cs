@@ -12,6 +12,7 @@ using Hackney.Shared.Person.Factories;
 using Hackney.Shared.Person;
 using Hackney.Core.Http;
 using ProcessesApi.V1.Domain.Finance;
+using ProcessesApi.V1.Gateways.Exceptions;
 
 namespace ProcessesApi.V1.Gateways
 {
@@ -89,11 +90,11 @@ namespace ProcessesApi.V1.Gateways
         {
             var tenure = await GetTenureById(tenureId).ConfigureAwait(false);
             if (tenure is null)
-                return true;// throw error?
+                return true; // skips this tenure if it doesn't exist
 
             var personHouseholdMemberRecord = tenure.HouseholdMembers.ToListOrEmpty().Find(x => x.Id == proposedTenantId);
             if (personHouseholdMemberRecord is null)
-                return true;// throw error?
+                return true; // skips this tenure if the person isn't listed as a household member
 
             if (tenure.TenureType.Code != TenureTypes.Secure.Code ||
                 (tenure.HouseholdMembers.Count(x => x.IsResponsible) > 1 && personHouseholdMemberRecord.IsResponsible))
@@ -110,7 +111,7 @@ namespace ProcessesApi.V1.Gateways
         {
             var currentTenure = await GetTenureById(tenureId).ConfigureAwait(false);
             if (currentTenure is null)
-                return false; // TODO: Confirm whether should raise error 
+                throw new RecordNotFoundException(typeof(TenureInformation), tenureId);
 
             var tenantInformation = currentTenure.HouseholdMembers.ToListOrEmpty().Find(x => x.Id == proposedTenantId);
 
@@ -124,7 +125,9 @@ namespace ProcessesApi.V1.Gateways
             else
             {
                 var proposedTenant = await GetPersonById(proposedTenantId).ConfigureAwait(false);
-
+                if (proposedTenant is null)
+                    throw new RecordNotFoundException(typeof(Person), proposedTenantId);
+                
                 foreach (var x in proposedTenant.Tenures.Where(x => x.IsActive))
                 {
                     var isEligible = await CheckPersonTenureRecord(x.Id, proposedTenantId).ConfigureAwait(false);
