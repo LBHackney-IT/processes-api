@@ -2,7 +2,9 @@ using Amazon.DynamoDBv2.DataModel;
 using AutoFixture;
 using FluentAssertions;
 using Hackney.Core.Testing.DynamoDb;
+using Moq;
 using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.UseCase;
 using System;
@@ -18,6 +20,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         public SoleToJointService _classUnderTest;
         public Fixture _fixture = new Fixture();
         private readonly IDynamoDbFixture _dbFixture;
+        private Mock<ISoleToJointGateway> _mockSTJGateway;
         private IDynamoDBContext _dynamoDb => _dbFixture.DynamoDbContext;
         private readonly List<Action> _cleanup = new List<Action>();
         public void Dispose()
@@ -41,7 +44,8 @@ namespace ProcessesApi.Tests.V1.UseCase
         public SoleToJointServiceTests(MockWebApplicationFactory<Startup> appFactory)
         {
             _dbFixture = appFactory.DynamoDbFixture;
-            _classUnderTest = new SoleToJointService();
+            _mockSTJGateway = new Mock<ISoleToJointGateway>();
+            _classUnderTest = new SoleToJointService(_mockSTJGateway.Object);
         }
 
         private async Task InsertDatatoDynamoDB(ProcessesDb entity)

@@ -1,6 +1,9 @@
 using AutoFixture;
 using FluentAssertions;
 using Hackney.Core.Testing.DynamoDb;
+using Hackney.Shared.Tenure.Domain;
+using Hackney.Shared.Tenure.Factories;
+using Hackney.Shared.Tenure.Infrastructure;
 using Newtonsoft.Json;
 using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
@@ -31,6 +34,25 @@ namespace ProcessesApi.Tests.V1.E2ETests
             _dbFixture = appFactory.DynamoDbFixture;
             _httpClient = appFactory.Client;
         }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        private bool _disposed;
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing && !_disposed)
+            {
+                foreach (var action in _cleanupActions)
+                    action();
+
+                _disposed = true;
+            }
+        }
+
         private UpdateProcessQueryObject ConstructQuery()
         {
             var originalEntity = _fixture.Build<UpdateProcessQueryObject>()
@@ -60,22 +82,30 @@ namespace ProcessesApi.Tests.V1.E2ETests
             await _dbFixture.SaveEntityAsync(originalEntity.ToDatabase()).ConfigureAwait(false);
         }
 
-        public void Dispose()
+        private async Task<(Process, TenureInformation, Guid)> ConstructAndSaveTestData()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+            var tenant = _fixture.Create<HouseholdMembers>();
+            var tenure = _fixture.Build<TenureInformation>()
+                                 .With(x => x.HouseholdMembers, new List<HouseholdMembers>{ tenant })
+                                 .With(x => x.VersionNumber, (int?) null)
+                                 .Create();
+            var process = _fixture.Build<Process>()
+                            .With(x => x.VersionNumber, (int?) null)
+                            .With(x => x.CurrentState,
+                                    _fixture.Build<ProcessState>()
+                                            .With(x => x.CreatedAt, DateTime.UtcNow)
+                                            .With(x => x.UpdatedAt, DateTime.UtcNow)
+                                            .With(x => x.State, SoleToJointStates.SelectTenants)
+                                            .With(x => x.PermittedTriggers, (new[] { SoleToJointTriggers.CheckEligibility }).ToList())
+                                            .Create())
+                            .Without(x => x.PreviousStates)
+                            .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
+                            .Create();
+            
+            await _dbFixture.SaveEntityAsync<ProcessesDb>(process.ToDatabase()).ConfigureAwait(false);
+            await _dbFixture.SaveEntityAsync<TenureInformationDb>(tenure.ToDatabase()).ConfigureAwait(false);
 
-        private bool _disposed;
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing && !_disposed)
-            {
-                foreach (var action in _cleanupActions)
-                    action();
-
-                _disposed = true;
-            }
+            return(process, tenure, tenant.Id);
         }
 
         [Fact(Skip = "To be completed when adding another state")]
@@ -118,15 +148,13 @@ namespace ProcessesApi.Tests.V1.E2ETests
         public async Task AddTenantToRelatedEntitiesOnCheckEligibilityTrigger()
         {
             // Arrange
-            var originalEntity = ConstructTestEntity();
-            await SaveTestData(originalEntity).ConfigureAwait(false);
+            (var originalProcess, var tenure, var incomingTenantId) = await ConstructAndSaveTestData().ConfigureAwait(false);
             var ifMatch = 0;
 
-            var incomingTenantId = Guid.NewGuid();
             var queryObject = _fixture.Build<UpdateProcessQueryObject>()
                             .With(x => x.FormData, new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId } })
                             .Create();
-            var uri = new Uri($"api/v1/process/{originalEntity.ProcessName}/{originalEntity.Id}/{SoleToJointTriggers.CheckEligibility}", UriKind.Relative);
+            var uri = new Uri($"api/v1/process/{originalProcess.ProcessName}/{originalProcess.Id}/{SoleToJointTriggers.CheckEligibility}", UriKind.Relative);
 
             var message = new HttpRequestMessage(HttpMethod.Patch, uri);
             message.Content = new StringContent(JsonConvert.SerializeObject(queryObject), Encoding.UTF8, "application/json");
@@ -139,7 +167,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(originalEntity.Id).ConfigureAwait(false);
+            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(originalProcess.Id).ConfigureAwait(false);
             dbRecord.RelatedEntities.Should().Contain(incomingTenantId);
             // Cleanup
             message.Dispose();
