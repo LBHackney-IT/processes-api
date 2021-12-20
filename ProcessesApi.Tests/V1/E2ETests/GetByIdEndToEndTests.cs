@@ -35,7 +35,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
                         .With(x => x.CurrentState,
                                 _fixture.Build<ProcessState>()
                                         .With(x => x.State, SoleToJointStates.ApplicationInitialised)
-                                        .With(x => x.PermittedTriggers, (new[] { SoleToJointTriggers.StartApplication }).ToList())
+                                        .With(x => x.PermittedTriggers, (new[] { SoleToJointInternalTriggers.StartApplication }).ToList())
                                         .Create())
                         .Without(x => x.PreviousStates)
                         .With(x => x.VersionNumber, (int?) null)

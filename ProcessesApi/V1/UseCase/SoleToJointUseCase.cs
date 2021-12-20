@@ -24,7 +24,7 @@ namespace ProcessesApi.V1.UseCase
 
             Process process;
 
-            if (processTrigger != SoleToJointTriggers.StartApplication)
+            if (processTrigger != SoleToJointInternalTriggers.StartApplication)
             {
                 process = await _processGateway.GetProcessById(id).ConfigureAwait(false);
             }

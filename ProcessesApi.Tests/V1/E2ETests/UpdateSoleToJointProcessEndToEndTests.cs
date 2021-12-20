@@ -69,7 +69,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
                                                            .With(x => x.CreatedAt, DateTime.UtcNow)
                                                            .With(x => x.UpdatedAt, DateTime.UtcNow)
                                                            .With(x => x.State, SoleToJointStates.SelectTenants)
-                                                           .With(x => x.PermittedTriggers, (new[] { SoleToJointTriggers.CheckEligibility }).ToList())
+                                                           .With(x => x.PermittedTriggers, (new[] { SoleToJointPermittedTriggers.CheckEligibility }).ToList())
                                                            .Create())
                                         .Without(x => x.PreviousStates)
                                         .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
@@ -86,7 +86,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
         {
             var tenant = _fixture.Create<HouseholdMembers>();
             var tenure = _fixture.Build<TenureInformation>()
-                                 .With(x => x.HouseholdMembers, new List<HouseholdMembers>{ tenant })
+                                 .With(x => x.HouseholdMembers, new List<HouseholdMembers> { tenant })
                                  .With(x => x.VersionNumber, (int?) null)
                                  .Create();
             var process = _fixture.Build<Process>()
@@ -96,16 +96,16 @@ namespace ProcessesApi.Tests.V1.E2ETests
                                             .With(x => x.CreatedAt, DateTime.UtcNow)
                                             .With(x => x.UpdatedAt, DateTime.UtcNow)
                                             .With(x => x.State, SoleToJointStates.SelectTenants)
-                                            .With(x => x.PermittedTriggers, (new[] { SoleToJointTriggers.CheckEligibility }).ToList())
+                                            .With(x => x.PermittedTriggers, (new[] { SoleToJointPermittedTriggers.CheckEligibility }).ToList())
                                             .Create())
                             .Without(x => x.PreviousStates)
                             .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
                             .Create();
-            
+
             await _dbFixture.SaveEntityAsync<ProcessesDb>(process.ToDatabase()).ConfigureAwait(false);
             await _dbFixture.SaveEntityAsync<TenureInformationDb>(tenure.ToDatabase()).ConfigureAwait(false);
 
-            return(process, tenure, tenant.Id);
+            return (process, tenure, tenant.Id);
         }
 
         [Fact(Skip = "To be completed when adding another state")]
@@ -120,7 +120,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
             var query = _fixture.Build<UpdateProcessQuery>()
                                 .With(x => x.Id, originalEntity.Id)
                                 .With(x => x.ProcessName, originalEntity.ProcessName)
-                                .With(x => x.ProcessTrigger, SoleToJointTriggers.CheckEligibility)
+                                .With(x => x.ProcessTrigger, SoleToJointPermittedTriggers.CheckEligibility)
                                 .Create();
             var uri = new Uri($"api/v1/process/{query.ProcessName}/{query.Id}/{query.ProcessTrigger}", UriKind.Relative);
 
@@ -154,7 +154,7 @@ namespace ProcessesApi.Tests.V1.E2ETests
             var queryObject = _fixture.Build<UpdateProcessQueryObject>()
                             .With(x => x.FormData, new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId } })
                             .Create();
-            var uri = new Uri($"api/v1/process/{originalProcess.ProcessName}/{originalProcess.Id}/{SoleToJointTriggers.CheckEligibility}", UriKind.Relative);
+            var uri = new Uri($"api/v1/process/{originalProcess.ProcessName}/{originalProcess.Id}/{SoleToJointPermittedTriggers.CheckEligibility}", UriKind.Relative);
 
             var message = new HttpRequestMessage(HttpMethod.Patch, uri);
             message.Content = new StringContent(JsonConvert.SerializeObject(queryObject), Encoding.UTF8, "application/json");

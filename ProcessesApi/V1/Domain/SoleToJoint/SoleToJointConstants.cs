@@ -20,13 +20,11 @@ namespace ProcessesApi.V1.Domain
         public const string CheckTenancyBreach = "CheckTenancyBreach";
     }
 
-    public static class SoleToJointTriggers
+    public static class SoleToJointInternalTriggers
     {
         public const string StartApplication = "StartApplication";
-        public const string CheckEligibility = "CheckEligibility";
-        public const string CheckManualEligibility = "CheckManualEligibility";
-        public const string RequestDocuments = "RequestDocuments";
-        public const string CheckTenancyBreach = "CheckTenancyBreach";
+        public const string EligibiltyPassed = "EligibiltyPassed";
+        public const string EligibiltyFailed = "EligibiltyFailed";
     }
 
     public static class SoleToJointFormDataKeys

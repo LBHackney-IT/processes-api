@@ -29,10 +29,10 @@ namespace ProcessesApi.V1.Domain
             VersionNumber = versionNumber;
         }
 
-        public Task AddState(ProcessState state)
+        public Task AddState(ProcessState updatedState)
         {
             if (CurrentState != null) PreviousStates.Add(CurrentState);
-            CurrentState = state;
+            CurrentState = updatedState;
 
             return Task.CompletedTask;
         }

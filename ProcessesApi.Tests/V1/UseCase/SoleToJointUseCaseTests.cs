@@ -45,7 +45,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             var processId = Guid.NewGuid();
             // Act
             var response = await _classUnderTest.Execute(
-                processId, SoleToJointTriggers.StartApplication,
+                processId, SoleToJointInternalTriggers.StartApplication,
                 createProcessQuery.TargetId, createProcessQuery.RelatedEntities, createProcessQuery.FormData,
                 createProcessQuery.Documents, processName).ConfigureAwait(false);
             // Assert
@@ -68,7 +68,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             _mockGateway.Setup(x => x.SaveProcess(It.IsAny<Process>())).ThrowsAsync(exception);
 
             Func<Task<Process>> func = async () => await _classUnderTest.Execute(
-                process.Id, SoleToJointTriggers.StartApplication,
+                process.Id, SoleToJointInternalTriggers.StartApplication,
                 process.TargetId, process.RelatedEntities, createProcessQuery.FormData,
                 createProcessQuery.Documents, process.ProcessName).ConfigureAwait(false);
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
@@ -83,7 +83,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             _mockGateway.Setup(x => x.GetProcessById(process.Id)).ReturnsAsync(process);
             // Act
             var response = await _classUnderTest.Execute(
-                process.Id, SoleToJointTriggers.CheckEligibility,
+                process.Id, SoleToJointPermittedTriggers.CheckEligibility,
                 process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
                 updateProcessQuery.Documents, process.ProcessName).ConfigureAwait(false);
 
@@ -107,7 +107,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             _mockGateway.Setup(x => x.GetProcessById(It.IsAny<Guid>())).ThrowsAsync(exception);
 
             Func<Task<Process>> func = async () => await _classUnderTest.Execute(
-                process.Id, SoleToJointTriggers.CheckEligibility,
+                process.Id, SoleToJointPermittedTriggers.CheckEligibility,
                 process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
                 updateProcessQuery.Documents, process.ProcessName).ConfigureAwait(false);
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);

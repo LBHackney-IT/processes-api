@@ -81,7 +81,7 @@ namespace ProcessesApi.V1.Controllers
                 case ProcessNamesConstants.SoleToJoint:
                     var soleToJointResult = await _soleToJointUseCase.Execute(
                                                                       Guid.NewGuid(),
-                                                                      SoleToJointTriggers.StartApplication,
+                                                                      SoleToJointInternalTriggers.StartApplication,
                                                                       request.TargetId,
                                                                       request.RelatedEntities,
                                                                       request.FormData,
