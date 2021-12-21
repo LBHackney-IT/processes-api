@@ -112,7 +112,7 @@ namespace ProcessesApi.V1.Gateways
         {
             var currentTenure = await GetTenureById(tenureId).ConfigureAwait(false);
             if (currentTenure is null)
-                throw new RecordNotFoundException(typeof(TenureInformation), tenureId);
+                throw new TenureNotFoundException(tenureId);
 
             var tenantInformation = currentTenure.HouseholdMembers.ToListOrEmpty().Find(x => x.Id == proposedTenantId);
 
@@ -127,7 +127,7 @@ namespace ProcessesApi.V1.Gateways
             {
                 var proposedTenant = await GetPersonById(proposedTenantId).ConfigureAwait(false);
                 if (proposedTenant is null)
-                    throw new RecordNotFoundException(typeof(Person), proposedTenantId);
+                    throw new PersonNotFoundException(proposedTenantId);
 
                 foreach (var x in proposedTenant.Tenures.Where(x => x.IsActive))
                 {

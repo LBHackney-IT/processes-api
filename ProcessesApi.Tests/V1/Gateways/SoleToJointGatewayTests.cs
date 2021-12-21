@@ -184,7 +184,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             // Act
             Func<Task<bool>> func = async () => await _classUnderTest.CheckEligibility(tenure.Id, proposedTenant.Id).ConfigureAwait(false);
             // Assert
-            func.Should().Throw<RecordNotFoundException>().WithMessage($"The ID supplied ({tenure.Id}) does not exist for entity type {typeof(TenureInformation)}.");
+            func.Should().Throw<TenureNotFoundException>().WithMessage($"Tenure with id {tenure.Id} not found.");
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Tenure ID: {tenure.Id}", Times.Once());
         }
 
@@ -197,7 +197,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             // Act
             Func<Task<bool>> func = async () => await _classUnderTest.CheckEligibility(tenure.Id, proposedTenant.Id).ConfigureAwait(false);
             // Assert
-            func.Should().Throw<RecordNotFoundException>().WithMessage($"The ID supplied ({proposedTenant.Id}) does not exist for entity type {typeof(Person)}.");
+            func.Should().Throw<PersonNotFoundException>().WithMessage($"Person with id {proposedTenant.Id} not found.");
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Tenure ID: {tenure.Id}", Times.Once());
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Person ID: {proposedTenant.Id}", Times.Once());
         }
