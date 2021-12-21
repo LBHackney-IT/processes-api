@@ -16,7 +16,8 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
     public class GetProcessByIdSteps : BaseSteps
     {
         public GetProcessByIdSteps(HttpClient httpClient) : base(httpClient)
-        { }
+        {
+        }
 
         public async Task WhenTheProcessIsRequested(string processName, string id)
         {

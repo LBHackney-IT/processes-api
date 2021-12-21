@@ -3,8 +3,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2.DataModel;
 using AutoFixture;
-using Hackney.Core.Testing.DynamoDb;
 using ProcessesApi.V1.Boundary.Constants;
+using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure;
@@ -16,13 +16,11 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public readonly Fixture _fixture = new Fixture();
         public readonly IDynamoDBContext _dbContext;
 
-        private readonly Random _random = new Random();
-
         public Process Process { get; private set; }
-
-        public string ProcessId { get; set; }
-        public string ProcessName { get; set; }
+        public string ProcessId { get; private set; }
+        public string ProcessName { get; private set; }
         public string InvalidProcessId { get; private set; }
+        public CreateProcess CreateProcessRequest { get; private set; }
 
         public ProcessFixture(IDynamoDBContext context)
         {
@@ -85,6 +83,21 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             ProcessId = process.Id.ToString();
             ProcessName = process.ProcessName;
             InvalidProcessId = "abcdefg";
+        }
+
+        public void GivenANewSoleToJointProcessRequest()
+        {
+            CreateProcessRequest = _fixture.Build<CreateProcess>()
+                                .Create();
+            ProcessName = ProcessNamesConstants.SoleToJoint;
+        }
+
+        public void GivenANewSoleToJointProcessRequestWithValidationErrors()
+        {
+            CreateProcessRequest = _fixture.Build<CreateProcess>()
+                            .With(x => x.TargetId, Guid.Empty)
+                            .Create();
+            ProcessName = ProcessNamesConstants.SoleToJoint;
         }
     }
 }
