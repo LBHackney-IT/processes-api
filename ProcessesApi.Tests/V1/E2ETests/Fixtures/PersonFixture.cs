@@ -40,11 +40,21 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             }
         }
 
-        public async Task AndGivenAPersonExists(Guid id)
+        public async Task AndGivenAPersonExistsWithTenures(Guid personId, List<Guid> tenureIds)
         {
+            var personTenureDetails = new List<TenureDetails>();
+
+            tenureIds.ForEach(id =>
+            {
+                personTenureDetails.Add(_fixture.Build<TenureDetails>()
+                                        .With(x => x.Id, id)
+                                        .With(x => x.EndDate, DateTime.Now.AddDays(10).ToString())
+                                        .Create());
+            });
+
             var person = _fixture.Build<Person>()
-                        .With(x => x.Id, id)
-                        .With(x => x.Tenures, new List<TenureDetails>())
+                        .With(x => x.Id, personId)
+                        .With(x => x.Tenures, personTenureDetails)
                         .With(x => x.VersionNumber, (int?) null)
                         .Create();
             await _dbContext.SaveAsync<PersonDbEntity>(person.ToDatabase()).ConfigureAwait(false);

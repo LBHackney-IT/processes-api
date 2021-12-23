@@ -69,7 +69,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             var incomingTenantId = Guid.Parse(requestBody.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString());
             dbRecord.RelatedEntities.Should().Contain(incomingTenantId);
 
-            // dbRecord.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(requestBody.FormData);
+            dbRecord.CurrentState.ProcessData.FormData.Should().HaveSameCount(requestBody.FormData); // workaround for comparing
             dbRecord.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(requestBody.Documents);
             // TODO when implementing next state: Add check for permittedTriggers
         }

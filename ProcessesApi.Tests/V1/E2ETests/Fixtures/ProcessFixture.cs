@@ -1,5 +1,5 @@
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2.DataModel;
 using AutoFixture;
@@ -24,10 +24,12 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public UpdateProcessQuery UpdateProcessRequest { get; private set; }
         public UpdateProcessQueryObject UpdateProcessRequestObject { get; private set; }
         public Guid IncomingTenantId { get; private set; }
+        public List<Guid> PersonTenures { get; private set; }
 
         public ProcessFixture(IDynamoDBContext context)
         {
             _dbContext = context;
+            PersonTenures = new List<Guid> { Guid.NewGuid() };
         }
 
         public void Dispose()

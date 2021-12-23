@@ -5,13 +5,13 @@ using System;
 
 namespace ProcessesApi.Tests.V1.E2E.Fixtures
 {
-    public class IncomeApiFixture : BaseApiFixture<Tenancy>
+    public class IncomeApiAgreementsFixture : BaseApiFixture<PaymentAgreement>
     {
         private readonly Fixture _fixture = new Fixture();
-        public static string TheApiRoute => "http://localhost:5678/api/v1/";
-        public static string TheApiToken => "sdjkhfgsdkjfgsdjfgh";
+        public static string TheApiRoute => "http://localhost:5000/api/v1/agreements/";
+        public static string TheApiToken => "abcdefghijklmnopqrstuvwxyz";
 
-        public IncomeApiFixture()
+        public IncomeApiAgreementsFixture()
             : base(TheApiRoute, TheApiToken)
         {
             // These config values will be needed by the code under test.
@@ -27,17 +27,17 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             }
         }
 
-        public Tenancy GivenTheTenancyExists(Guid id)
+        public void AndGivenAPaymentAgreementDoesNotExistForTenancy(Guid tenancyId)
         {
-            ResponseObject = _fixture.Build<Tenancy>()
-                                      .With(x => x.TenancyRef, id.ToString())
-                                      .Create();
-            return ResponseObject;
         }
 
-        public void GivenTheTenancyDoesNotExist(Guid id)
+        public PaymentAgreement AndGivenAPaymentAgreementExistsForTenancy(Guid tenancyId)
         {
-            // Nothing to do here
+            var requests = Responses;
+            return _fixture.Build<PaymentAgreement>()
+                            .With(x => x.TenancyRef, tenancyId.ToString())
+                            .With(x => x.Amount, 0)
+                            .Create();
         }
     }
 }

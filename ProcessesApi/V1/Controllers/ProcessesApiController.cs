@@ -121,7 +121,6 @@ namespace ProcessesApi.V1.Controllers
         public async Task<IActionResult> UpdateProcess([FromBody] UpdateProcessQueryObject requestObject, [FromRoute] UpdateProcessQuery query)
         {
             _contextWrapper.GetContextRequestHeaders(HttpContext);
-            //TO DO: Complete ifMatch stuff
             var ifMatch = GetIfMatchFromHeader();
             try
             {

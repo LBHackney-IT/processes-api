@@ -39,7 +39,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             }
         }
 
-        public async Task AndGivenATenureExists(Guid tenureId, Guid tenantId)
+        public async Task AndGivenATenureExists(Guid tenureId, Guid tenantId, bool isTenant)
         {
             var tenure = _fixture.Build<TenureInformation>()
                         .With(x => x.Id, tenureId)
@@ -47,7 +47,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                                 new List<HouseholdMembers> {
                                     _fixture.Build<HouseholdMembers>()
                                     .With(x => x.Id, tenantId)
-                                    .With(x => x.PersonTenureType, PersonTenureType.Tenant)
+                                    .With(x => x.PersonTenureType, isTenant? PersonTenureType.Tenant : PersonTenureType.HouseholdMember)
                                     .With(x => x.DateOfBirth, DateTime.Now.AddYears(-18))
                                     .Create()
                                 })
