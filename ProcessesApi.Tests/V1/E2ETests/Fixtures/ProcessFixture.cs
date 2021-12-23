@@ -21,6 +21,9 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public string ProcessName { get; private set; }
         public string InvalidProcessId { get; private set; }
         public CreateProcess CreateProcessRequest { get; private set; }
+        public UpdateProcessQuery UpdateProcessRequest { get; private set; }
+        public UpdateProcessQueryObject UpdateProcessRequestObject { get; private set; }
+        public Guid IncomingTenantId { get; private set; }
 
         public ProcessFixture(IDynamoDBContext context)
         {
@@ -61,6 +64,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             Process = process;
             ProcessId = process.Id.ToString();
             ProcessName = process.ProcessName;
+            IncomingTenantId = Guid.NewGuid();
         }
 
         public void GivenASoleToJointProcessDoesNotExist()
@@ -98,6 +102,13 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                             .With(x => x.TargetId, Guid.Empty)
                             .Create();
             ProcessName = ProcessNamesConstants.SoleToJoint;
+        }
+
+        public void GivenAnUpdateSoleToJointProcessRequest()
+        {
+            UpdateProcessRequest = _fixture.Create<UpdateProcessQuery>();
+            UpdateProcessRequestObject = _fixture.Create<UpdateProcessQueryObject>();
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.IncomingTenantId, IncomingTenantId);
         }
     }
 }
