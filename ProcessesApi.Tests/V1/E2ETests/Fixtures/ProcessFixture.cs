@@ -47,46 +47,31 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             }
         }
 
-        public async Task GivenASoleToJointProcessExists()
+        private void createProcess()
         {
             var process = _fixture.Build<Process>()
                         .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
                         .With(x => x.CurrentState,
                                 _fixture.Build<ProcessState>()
-                                        .With(x => x.State, SoleToJointStates.ApplicationInitialised)
-                                        .With(x => x.PermittedTriggers, (new[] { SoleToJointInternalTriggers.StartApplication }).ToList())
+                                        .With(x => x.State, SoleToJointStates.SelectTenants)
                                         .Create())
-                        .Without(x => x.PreviousStates)
                         .With(x => x.VersionNumber, (int?) null)
                         .Create();
-            await _dbContext.SaveAsync<ProcessesDb>(process.ToDatabase()).ConfigureAwait(false);
-
             Process = process;
             ProcessId = process.Id.ToString();
             ProcessName = process.ProcessName;
             IncomingTenantId = Guid.NewGuid();
         }
 
-        public void GivenASoleToJointProcessDoesNotExist()
+        public async Task GivenASoleToJointProcessExists()
         {
+            createProcess();
+            await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
         }
 
-        public async Task GivenAnInvalidProcessId()
+        public void GivenASoleToJointProcessDoesNotExist()
         {
-            var process = _fixture.Build<Process>()
-            .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
-            .With(x => x.CurrentState,
-                    _fixture.Build<ProcessState>()
-                            .With(x => x.State, SoleToJointStates.ApplicationInitialised)
-                            .With(x => x.PermittedTriggers, (new[] { SoleToJointInternalTriggers.StartApplication }).ToList())
-                            .Create())
-            .Without(x => x.PreviousStates)
-            .With(x => x.VersionNumber, (int?) null)
-            .Create();
-            await _dbContext.SaveAsync<ProcessesDb>(process.ToDatabase()).ConfigureAwait(false);
-            ProcessId = process.Id.ToString();
-            ProcessName = process.ProcessName;
-            InvalidProcessId = "abcdefg";
+            createProcess();
         }
 
         public void GivenANewSoleToJointProcessRequest()
@@ -104,11 +89,21 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             ProcessName = ProcessNamesConstants.SoleToJoint;
         }
 
-        public void GivenAnUpdateSoleToJointProcessRequest()
+        public void AndGivenAnUpdateSoleToJointProcessRequest()
         {
-            UpdateProcessRequest = _fixture.Create<UpdateProcessQuery>();
+            UpdateProcessRequest = new UpdateProcessQuery
+            {
+                Id = Process.Id,
+                ProcessName = Process.ProcessName,
+                ProcessTrigger = SoleToJointPermittedTriggers.CheckEligibility
+            };
             UpdateProcessRequestObject = _fixture.Create<UpdateProcessQueryObject>();
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.IncomingTenantId, IncomingTenantId);
+        }
+        public void AndGivenAnUpdateSoleToJointProcessRequestWithValidationErrors()
+        {
+            AndGivenAnUpdateSoleToJointProcessRequest();
+            UpdateProcessRequestObject.Documents.Add(Guid.Empty);
         }
     }
 }

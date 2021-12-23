@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2.DataModel;
 using AutoFixture;
 using Hackney.Shared.Person;
+using Hackney.Shared.Person.Domain;
 using Hackney.Shared.Person.Factories;
 using Hackney.Shared.Person.Infrastructure;
 using ProcessesApi.V1.Factories;
@@ -38,15 +40,20 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             }
         }
 
-        public async Task GivenAPersonExists(Guid id)
+        public async Task AndGivenAPersonExists(Guid id)
         {
             var person = _fixture.Build<Person>()
                         .With(x => x.Id, id)
+                        .With(x => x.Tenures, new List<TenureDetails>())
                         .With(x => x.VersionNumber, (int?) null)
                         .Create();
             await _dbContext.SaveAsync<PersonDbEntity>(person.ToDatabase()).ConfigureAwait(false);
 
             Person = person;
+        }
+
+        public void AndGivenAPersonDoesNotExist()
+        {
         }
 
     }

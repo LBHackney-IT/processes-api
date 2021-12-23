@@ -60,14 +60,5 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .Then(t => _steps.ThenNotFoundIsReturned())
                 .BDDfy();
         }
-
-        [Fact]
-        public void GetProcessByInvalidIdReturnsBadRequestResponse()
-        {
-            this.Given(g => _processFixture.GivenAnInvalidProcessId())
-                .When(w => _steps.WhenTheProcessIsRequested(_processFixture.ProcessName, _processFixture.InvalidProcessId))
-                .Then(t => _steps.ThenBadRequestIsReturned())
-                .BDDfy();
-        }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2.DataModel;
 using AutoFixture;
@@ -38,15 +39,30 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             }
         }
 
-        public async Task GivenATenureExists(Guid id)
+        public async Task AndGivenATenureExists(Guid tenureId, Guid tenantId)
         {
             var tenure = _fixture.Build<TenureInformation>()
-                        .With(x => x.Id, id)
+                        .With(x => x.Id, tenureId)
+                        .With(x => x.HouseholdMembers,
+                                new List<HouseholdMembers> {
+                                    _fixture.Build<HouseholdMembers>()
+                                    .With(x => x.Id, tenantId)
+                                    .With(x => x.PersonTenureType, PersonTenureType.Tenant)
+                                    .With(x => x.DateOfBirth, DateTime.Now.AddYears(-18))
+                                    .Create()
+                                })
+                        .With(x => x.TenureType, TenureTypes.Secure)
+                        .With(x => x.EndOfTenureDate, (DateTime?) null)
                         .With(x => x.VersionNumber, (int?) null)
                         .Create();
+
             await _dbContext.SaveAsync<TenureInformationDb>(tenure.ToDatabase()).ConfigureAwait(false);
 
             Tenure = tenure;
+        }
+
+        public void AndGivenATenureDoesNotExist()
+        {
         }
 
     }

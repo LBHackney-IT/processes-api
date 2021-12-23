@@ -86,7 +86,8 @@ namespace ProcessesApi.V1.Controllers
                                                                       request.RelatedEntities,
                                                                       request.FormData,
                                                                       request.Documents,
-                                                                      processName)
+                                                                      processName,
+                                                                      null)
                                                                      .ConfigureAwait(false);
 
                     return Created(new Uri($"api/v1/processes/{processName}/{soleToJointResult.Id}", UriKind.Relative), soleToJointResult);
@@ -124,7 +125,14 @@ namespace ProcessesApi.V1.Controllers
             var ifMatch = GetIfMatchFromHeader();
             try
             {
-                var soleToJointResult = await _soleToJointUseCase.Execute(query.Id, query.ProcessTrigger, null, null, requestObject.FormData, requestObject.Documents, query.ProcessName);
+                var soleToJointResult = await _soleToJointUseCase.Execute(query.Id,
+                                                                          query.ProcessTrigger,
+                                                                          null,
+                                                                          null,
+                                                                          requestObject.FormData,
+                                                                          requestObject.Documents,
+                                                                          query.ProcessName,
+                                                                          ifMatch);
                 if (soleToJointResult == null) return NotFound(query.Id);
                 return NoContent();
             }

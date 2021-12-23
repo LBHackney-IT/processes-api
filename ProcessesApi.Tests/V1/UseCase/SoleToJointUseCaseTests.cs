@@ -33,6 +33,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             return _fixture.Build<Process>()
                     .With(x => x.CurrentState, (ProcessState) null)
                     .With(x => x.PreviousStates, new List<ProcessState>())
+                    .With(x => x.VersionNumber, 0)
                     .Create();
         }
 
@@ -47,7 +48,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             var response = await _classUnderTest.Execute(
                 processId, SoleToJointInternalTriggers.StartApplication,
                 createProcessQuery.TargetId, createProcessQuery.RelatedEntities, createProcessQuery.FormData,
-                createProcessQuery.Documents, processName).ConfigureAwait(false);
+                createProcessQuery.Documents, processName, null).ConfigureAwait(false);
             // Assert
             _mockSTJService.Verify(x => x.Process(It.IsAny<UpdateProcessState>(), It.IsAny<Process>()), Times.Once);
             _mockGateway.Verify(x => x.SaveProcess(It.IsAny<Process>()), Times.Once);
@@ -70,7 +71,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             Func<Task<Process>> func = async () => await _classUnderTest.Execute(
                 process.Id, SoleToJointInternalTriggers.StartApplication,
                 process.TargetId, process.RelatedEntities, createProcessQuery.FormData,
-                createProcessQuery.Documents, process.ProcessName).ConfigureAwait(false);
+                createProcessQuery.Documents, process.ProcessName, null).ConfigureAwait(false);
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }
 
@@ -85,7 +86,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             var response = await _classUnderTest.Execute(
                 process.Id, SoleToJointPermittedTriggers.CheckEligibility,
                 process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
-                updateProcessQuery.Documents, process.ProcessName).ConfigureAwait(false);
+                updateProcessQuery.Documents, process.ProcessName, 0).ConfigureAwait(false);
 
             // Assert
             _mockSTJService.Verify(x => x.Process(It.IsAny<UpdateProcessState>(), It.IsAny<Process>()), Times.Once);
@@ -109,7 +110,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             Func<Task<Process>> func = async () => await _classUnderTest.Execute(
                 process.Id, SoleToJointPermittedTriggers.CheckEligibility,
                 process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
-                updateProcessQuery.Documents, process.ProcessName).ConfigureAwait(false);
+                updateProcessQuery.Documents, process.ProcessName, 0).ConfigureAwait(false);
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }
     }
