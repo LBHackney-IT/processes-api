@@ -39,7 +39,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             }
         }
 
-        public async Task AndGivenATenureExists(Guid tenureId, Guid tenantId, bool isTenant)
+        private async Task GivenATenureExists(Guid tenureId, Guid tenantId, bool isTenant, bool isSecure)
         {
             var tenure = _fixture.Build<TenureInformation>()
                         .With(x => x.Id, tenureId)
@@ -51,7 +51,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                                     .With(x => x.DateOfBirth, DateTime.Now.AddYears(-18))
                                     .Create()
                                 })
-                        .With(x => x.TenureType, TenureTypes.Secure)
+                        .With(x => x.TenureType, isSecure ? TenureTypes.Secure : TenureTypes.NonSecure)
                         .With(x => x.EndOfTenureDate, (DateTime?) null)
                         .With(x => x.VersionNumber, (int?) null)
                         .Create();
@@ -59,6 +59,16 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             await _dbContext.SaveAsync<TenureInformationDb>(tenure.ToDatabase()).ConfigureAwait(false);
 
             Tenure = tenure;
+        }
+
+        public async Task AndGivenATenureExists(Guid tenureId, Guid tenantId, bool isTenant)
+        {
+            await GivenATenureExists(tenureId, tenantId, isTenant: isTenant, isSecure: true).ConfigureAwait(false);
+        }
+
+        public async Task AndGivenANonSecureTenureExists(Guid tenureId, Guid tenantId, bool isTenant)
+        {
+            await GivenATenureExists(tenureId, tenantId, isTenant: isTenant, isSecure: false).ConfigureAwait(false);
         }
 
         public void AndGivenATenureDoesNotExist()
