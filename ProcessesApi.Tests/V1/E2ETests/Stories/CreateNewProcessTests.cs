@@ -60,5 +60,14 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .Then(t => _steps.ThenBadRequestIsReturned())
                 .BDDfy();
         }
+
+        [Fact]
+        public void CreateNewProcessReturnsBadRequestWhenTheProcessIsNotSupported()
+        {
+            this.Given(g => _processFixture.GivenANewSoleToJointProcessRequestWithANotSupportedProcess())
+                .When(w => _steps.WhenACreateProcessRequestIsMade(_processFixture.CreateProcessRequest, _processFixture.ProcessName))
+                .Then(t => _steps.ThenBadRequestIsReturned())
+                .BDDfy();
+        }
     }
 }

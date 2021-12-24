@@ -22,6 +22,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request.Validation;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Infrastructure;
@@ -150,6 +151,7 @@ namespace ProcessesApi
 
             RegisterGateways(services);
             RegisterUseCases(services);
+            RegisterProcessServices(services);
 
             ConfigureHackneyCoreDI(services);
 
@@ -161,7 +163,23 @@ namespace ProcessesApi
                 .AddHttpContextWrapper();
         }
 
-
+        private static void RegisterProcessServices(IServiceCollection services)
+        {
+            services.AddTransient<SoleToJointService>();
+            services.AddTransient<TestService>();
+            services.AddTransient<Func<string, IProcessService>>(serviceProvider => processName =>
+                {
+                    switch (processName)
+                    {
+                        case ProcessNamesConstants.SoleToJoint:
+                            return serviceProvider.GetService<SoleToJointService>();
+                        case ProcessNamesConstants.Test:
+                            return serviceProvider.GetService<TestService>();
+                        default:
+                            throw new KeyNotFoundException();
+                    }
+                });
+        }
 
         private static void RegisterGateways(IServiceCollection services)
         {
@@ -173,8 +191,7 @@ namespace ProcessesApi
         private static void RegisterUseCases(IServiceCollection services)
         {
             services.AddScoped<IGetByIdUseCase, GetProcessByIdUseCase>();
-            services.AddScoped<ISoleToJointUseCase, SoleToJointUseCase>();
-            services.AddScoped<ISoleToJointService, SoleToJointService>();
+            services.AddScoped<IProcessUseCase, ProcessUseCase>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -12,6 +12,7 @@ using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure.Exceptions;
 using ProcessesApi.V1.UseCase.Interfaces;
 using System;
+using System.Collections.Generic;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
@@ -24,14 +25,15 @@ namespace ProcessesApi.V1.Controllers
     public class ProcessesApiController : BaseController
     {
         private readonly IGetByIdUseCase _getByIdUseCase;
-        private readonly ISoleToJointUseCase _soleToJointUseCase;
+        private readonly IProcessUseCase _processUseCase;
+
         private readonly IHttpContextWrapper _contextWrapper;
 
 
-        public ProcessesApiController(IGetByIdUseCase getByIdUseCase, ISoleToJointUseCase soleToJointUseCase, IHttpContextWrapper contextWrapper)
+        public ProcessesApiController(IGetByIdUseCase getByIdUseCase, IProcessUseCase processUseCase, IHttpContextWrapper contextWrapper)
         {
             _getByIdUseCase = getByIdUseCase;
-            _soleToJointUseCase = soleToJointUseCase;
+            _processUseCase = processUseCase;
             _contextWrapper = contextWrapper;
         }
 
@@ -76,32 +78,30 @@ namespace ProcessesApi.V1.Controllers
         [Route("{processName}")]
         public async Task<IActionResult> CreateNewProcess([FromBody] CreateProcess request, [FromRoute] string processName)
         {
-            switch (processName)
+            try
             {
-                case ProcessNamesConstants.SoleToJoint:
-                    var soleToJointResult = await _soleToJointUseCase.Execute(
-                                                                      Guid.NewGuid(),
-                                                                      SoleToJointInternalTriggers.StartApplication,
-                                                                      request.TargetId,
-                                                                      request.RelatedEntities,
-                                                                      request.FormData,
-                                                                      request.Documents,
-                                                                      processName,
-                                                                      null)
-                                                                     .ConfigureAwait(false);
-
-                    return Created(new Uri($"api/v1/processes/{processName}/{soleToJointResult.Id}", UriKind.Relative), soleToJointResult);
-                default:
-                    var error = new ErrorResponse
-                    {
-                        ErrorCode = 1,
-                        ProcessId = Guid.Empty,
-                        ErrorMessage = "Process type does not exist",
-                        ProcessName = processName
-                    };
-                    return new BadRequestObjectResult(error);
+                var result = await _processUseCase.Execute(Guid.NewGuid(),
+                                                           ProcessInternalTriggers.StartApplication,
+                                                           request.TargetId,
+                                                           request.RelatedEntities,
+                                                           request.FormData,
+                                                           request.Documents,
+                                                           processName,
+                                                           null)
+                                                    .ConfigureAwait(false);
+                return Created(new Uri($"api/v1/processes/{processName}/{result.Id}", UriKind.Relative), result);
             }
-
+            catch (KeyNotFoundException)
+            {
+                var error = new ErrorResponse
+                {
+                    ErrorCode = 1,
+                    ProcessId = Guid.Empty,
+                    ErrorMessage = "Process type does not exist",
+                    ProcessName = processName
+                };
+                return new BadRequestObjectResult(error);
+            }
         }
 
         /// <summary>
@@ -122,22 +122,35 @@ namespace ProcessesApi.V1.Controllers
         {
             _contextWrapper.GetContextRequestHeaders(HttpContext);
             var ifMatch = GetIfMatchFromHeader();
+
             try
             {
-                var soleToJointResult = await _soleToJointUseCase.Execute(query.Id,
-                                                                          query.ProcessTrigger,
-                                                                          null,
-                                                                          null,
-                                                                          requestObject.FormData,
-                                                                          requestObject.Documents,
-                                                                          query.ProcessName,
-                                                                          ifMatch);
-                if (soleToJointResult == null) return NotFound(query.Id);
+                var result = await _processUseCase.Execute(query.Id,
+                                                           query.ProcessTrigger,
+                                                           null,
+                                                           null,
+                                                           requestObject.FormData,
+                                                           requestObject.Documents,
+                                                           query.ProcessName,
+                                                           ifMatch)
+                                                    .ConfigureAwait(false);
+                if (result == null) return NotFound(query.Id);
                 return NoContent();
             }
             catch (VersionNumberConflictException vncErr)
             {
                 return Conflict(vncErr.Message);
+            }
+            catch (KeyNotFoundException)
+            {
+                var error = new ErrorResponse
+                {
+                    ErrorCode = 1,
+                    ProcessId = Guid.Empty,
+                    ErrorMessage = "Process type does not exist",
+                    ProcessName = query.ProcessName
+                };
+                return new BadRequestObjectResult(error);
             }
         }
 

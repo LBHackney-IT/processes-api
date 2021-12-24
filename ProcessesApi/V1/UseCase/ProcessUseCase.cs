@@ -8,15 +8,15 @@ using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.UseCase
 {
-    public class SoleToJointUseCase : ISoleToJointUseCase
+    public class ProcessUseCase : IProcessUseCase
     {
         private readonly IProcessesGateway _processGateway;
-        private readonly ISoleToJointService _soleToJointService;
+        private readonly Func<string, IProcessService> _processDelegate;
 
-        public SoleToJointUseCase(IProcessesGateway processGateway, ISoleToJointService soleToJointService)
+        public ProcessUseCase(IProcessesGateway processGateway, Func<string, IProcessService> processDelegate)
         {
             _processGateway = processGateway;
-            _soleToJointService = soleToJointService;
+            _processDelegate = processDelegate;
         }
 
         public async Task<Process> Execute(Guid id, string processTrigger, Guid? targetId, List<Guid> relatedEntities, Dictionary<string, object> formData, List<Guid> documents, string processName, int? ifMatch)
@@ -30,7 +30,7 @@ namespace ProcessesApi.V1.UseCase
 
             Process process;
 
-            if (processTrigger != SoleToJointInternalTriggers.StartApplication)
+            if (processTrigger != ProcessInternalTriggers.StartApplication)
             {
                 process = await _processGateway.GetProcessById(id).ConfigureAwait(false);
                 if (process is null) return null;
@@ -42,7 +42,8 @@ namespace ProcessesApi.V1.UseCase
                 process = Process.Create(id, new List<ProcessState>(), null, targetId.Value, relatedEntities, processName, null);
             }
 
-            await _soleToJointService.Process(triggerObject, process).ConfigureAwait(false);
+            var processService = _processDelegate(processName);
+            await processService.Process(triggerObject, process).ConfigureAwait(false);
 
             await _processGateway.SaveProcess(process).ConfigureAwait(false);
 

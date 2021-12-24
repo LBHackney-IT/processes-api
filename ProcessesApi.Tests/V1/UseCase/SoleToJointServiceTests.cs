@@ -66,7 +66,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             (
                 process.Id,
                 process.TargetId,
-                SoleToJointInternalTriggers.StartApplication,
+                ProcessInternalTriggers.StartApplication,
                 _fixture.Create<Dictionary<string, object>>(),
                 _fixture.Create<List<Guid>>(),
                 process.RelatedEntities

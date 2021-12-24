@@ -91,6 +91,13 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             ProcessName = ProcessNamesConstants.SoleToJoint;
         }
 
+        public void GivenANewSoleToJointProcessRequestWithANotSupportedProcess()
+        {
+            CreateProcessRequest = _fixture.Create<CreateProcess>();
+            ProcessName = "unsupported process";
+
+        }
+
         public void AndGivenAnUpdateSoleToJointProcessRequest()
         {
             UpdateProcessRequest = new UpdateProcessQuery
@@ -106,6 +113,12 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             AndGivenAnUpdateSoleToJointProcessRequest();
             UpdateProcessRequestObject.Documents.Add(Guid.Empty);
+        }
+
+        public void AndGivenAnUpdateSoleToJointProcessRequestWithsAnUnSupportedProcess()
+        {
+            AndGivenAnUpdateSoleToJointProcessRequest();
+            UpdateProcessRequest.ProcessName = "unsupported process";
         }
     }
 }

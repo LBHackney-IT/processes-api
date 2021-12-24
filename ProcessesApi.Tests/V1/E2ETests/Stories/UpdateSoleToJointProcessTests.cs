@@ -64,15 +64,23 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         }
 
         [Fact]
-        public void CreateNewProcessReturnsBadRequestWhenThereAreValidationErrors()
+        public void UpdateProcessReturnsBadRequestWhenThereAreValidationErrors()
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists())
-                .And(a => _tenureFixture.AndGivenATenureDoesNotExist())
-                .And(a => _personFixture.AndGivenAPersonExistsWithTenures(_processFixture.IncomingTenantId, _processFixture.PersonTenures))
-                .And(a => _processFixture.AndGivenAnUpdateSoleToJointProcessRequestWithValidationErrors())
+                .And(g => _processFixture.AndGivenAnUpdateSoleToJointProcessRequestWithValidationErrors())
             .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
             .Then(t => _steps.ThenBadRequestIsReturned())
             .BDDfy();
+        }
+
+        [Fact]
+        public void UpdateProcessReturnsBadRequestWhenTheProcessIsNotSupported()
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists())
+                    .And(g => _processFixture.AndGivenAnUpdateSoleToJointProcessRequestWithsAnUnSupportedProcess())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(t => _steps.ThenBadRequestIsReturned())
+                .BDDfy();
         }
 
         [Fact]

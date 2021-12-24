@@ -15,17 +15,18 @@ using Xunit;
 namespace ProcessesApi.Tests.V1.UseCase
 {
     [Collection("LogCall collection")]
-    public class SoleToJointUseCaseTests
+    public class ProcessUseCaseTests
     {
         private Mock<IProcessesGateway> _mockGateway;
-        private SoleToJointUseCase _classUnderTest;
-        private Mock<ISoleToJointService> _mockSTJService;
+        private ProcessUseCase _classUnderTest;
+        private Mock<IProcessService> _mockProcessService;
         private readonly Fixture _fixture = new Fixture();
-        public SoleToJointUseCaseTests()
+        public ProcessUseCaseTests()
         {
             _mockGateway = new Mock<IProcessesGateway>();
-            _mockSTJService = new Mock<ISoleToJointService>();
-            _classUnderTest = new SoleToJointUseCase(_mockGateway.Object, _mockSTJService.Object);
+            _mockProcessService = new Mock<IProcessService>();
+            Func<string, IProcessService> _mockProcessesDelegate = (processName) => { return _mockProcessService.Object; };
+            _classUnderTest = new ProcessUseCase(_mockGateway.Object, _mockProcessesDelegate);
         }
 
         private Process CreateProcessInInitialState()
@@ -46,11 +47,11 @@ namespace ProcessesApi.Tests.V1.UseCase
             var processId = Guid.NewGuid();
             // Act
             var response = await _classUnderTest.Execute(
-                processId, SoleToJointInternalTriggers.StartApplication,
+                processId, ProcessInternalTriggers.StartApplication,
                 createProcessQuery.TargetId, createProcessQuery.RelatedEntities, createProcessQuery.FormData,
                 createProcessQuery.Documents, processName, null).ConfigureAwait(false);
             // Assert
-            _mockSTJService.Verify(x => x.Process(It.IsAny<UpdateProcessState>(), It.IsAny<Process>()), Times.Once);
+            _mockProcessService.Verify(x => x.Process(It.IsAny<UpdateProcessState>(), It.IsAny<Process>()), Times.Once);
             _mockGateway.Verify(x => x.SaveProcess(It.IsAny<Process>()), Times.Once);
 
             response.Id.Should().Be(processId);
@@ -63,15 +64,14 @@ namespace ProcessesApi.Tests.V1.UseCase
         public void CreateNewProcessExceptionIsThrown()
         {
             var createProcessQuery = _fixture.Create<CreateProcess>();
-            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, createProcessQuery.TargetId, createProcessQuery.RelatedEntities, ProcessNamesConstants.SoleToJoint, null);
 
             var exception = new ApplicationException("Test Exception");
             _mockGateway.Setup(x => x.SaveProcess(It.IsAny<Process>())).ThrowsAsync(exception);
 
             Func<Task<Process>> func = async () => await _classUnderTest.Execute(
-                process.Id, SoleToJointInternalTriggers.StartApplication,
-                process.TargetId, process.RelatedEntities, createProcessQuery.FormData,
-                createProcessQuery.Documents, process.ProcessName, null).ConfigureAwait(false);
+                Guid.NewGuid(), ProcessInternalTriggers.StartApplication,
+                createProcessQuery.TargetId, createProcessQuery.RelatedEntities, createProcessQuery.FormData,
+                createProcessQuery.Documents, ProcessNamesConstants.SoleToJoint, null).ConfigureAwait(false);
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }
 
@@ -89,7 +89,7 @@ namespace ProcessesApi.Tests.V1.UseCase
                 updateProcessQuery.Documents, process.ProcessName, 0).ConfigureAwait(false);
 
             // Assert
-            _mockSTJService.Verify(x => x.Process(It.IsAny<UpdateProcessState>(), It.IsAny<Process>()), Times.Once);
+            _mockProcessService.Verify(x => x.Process(It.IsAny<UpdateProcessState>(), It.IsAny<Process>()), Times.Once);
             _mockGateway.Verify(x => x.SaveProcess(It.IsAny<Process>()), Times.Once);
 
             response.Id.Should().Be(process.Id);

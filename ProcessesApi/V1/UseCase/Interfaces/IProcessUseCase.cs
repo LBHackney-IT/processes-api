@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.UseCase.Interfaces
 {
-    public interface ISoleToJointUseCase
+    public interface IProcessUseCase
     {
         Task<Process> Execute(Guid id,
                               string processTrigger,

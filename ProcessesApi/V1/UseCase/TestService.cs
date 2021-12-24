@@ -9,11 +9,11 @@ using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.UseCase
 {
-    public class SoleToJointService : ProcessService
+    public class TestService : ProcessService
     {
         private ISoleToJointGateway _soleToJointGateway;
 
-        public SoleToJointService(ISoleToJointGateway gateway)
+        public TestService(ISoleToJointGateway gateway)
         {
             _soleToJointGateway = gateway;
             _permittedTriggers = typeof(SoleToJointPermittedTriggers)
