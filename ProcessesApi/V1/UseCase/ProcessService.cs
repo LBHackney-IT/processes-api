@@ -4,6 +4,7 @@ using Stateless;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.UseCase
@@ -13,7 +14,12 @@ namespace ProcessesApi.V1.UseCase
         protected StateMachine<string, string> _machine;
         protected ProcessState _currentState;
         protected Process _process;
-        protected List<string> _permittedTriggers;
+        protected Type _permittedTriggersConstants;
+        protected List<string> _permittedTriggers => _permittedTriggersConstants
+                                                    .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+                                                    .Where(fi => fi.IsLiteral && !fi.IsInitOnly && fi.FieldType == typeof(string))
+                                                    .Select(x => (string) x.GetRawConstantValue())
+                                                    .ToList();
 
         public ProcessService()
         {
