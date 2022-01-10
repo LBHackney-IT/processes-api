@@ -51,11 +51,11 @@ namespace ProcessesApi.V1.Gateways
         }
 
         [LogCall]
-        private async Task<PaymentAgreement> GetPaymentAgreementByTenureId(Guid tenureId, Guid correlationId)
+        private async Task<PaymentAgreements> GetPaymentAgreementsByTenureId(Guid tenureId, Guid correlationId)
         {
             _logger.LogDebug($"Calling Income API for payment agreeement with Tenure ID: {tenureId}");
             var route = $"{_apiGateway.ApiRoute}/agreements/{tenureId}";
-            return await _apiGateway.GetByIdAsync<PaymentAgreement>(route, tenureId, correlationId);
+            return await _apiGateway.GetByIdAsync<PaymentAgreements>(route, tenureId, correlationId);
         }
 
         [LogCall]
@@ -68,8 +68,8 @@ namespace ProcessesApi.V1.Gateways
 
         public async Task<bool> CheckTenureFinanceRecords(Guid tenureId)
         {
-            var paymentAgreement = await GetPaymentAgreementByTenureId(tenureId, Guid.NewGuid()).ConfigureAwait(false); // TODO: Confirm what correlation ID to use
-            if (paymentAgreement != null && paymentAgreement.Amount > 0)
+            var paymentAgreements = await GetPaymentAgreementsByTenureId(tenureId, Guid.NewGuid()).ConfigureAwait(false); // TODO: Confirm what correlation ID to use
+            if (paymentAgreements.Agreements.Count > 0 && paymentAgreements.Agreements.Count(x => x.Amount > 0) > 0)
             {
                 return false;
             }
