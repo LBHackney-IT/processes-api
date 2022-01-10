@@ -33,11 +33,11 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public PaymentAgreement AndGivenAPaymentAgreementExistsForTenancy(Guid tenancyId)
         {
-            var requests = Responses;
-            return _fixture.Build<PaymentAgreement>()
+            ResponseObject = _fixture.Build<PaymentAgreement>()
                             .With(x => x.TenancyRef, tenancyId.ToString())
                             .With(x => x.Amount, 0)
                             .Create();
+            return ResponseObject;
         }
     }
 }

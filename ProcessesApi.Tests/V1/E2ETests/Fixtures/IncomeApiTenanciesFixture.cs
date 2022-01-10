@@ -28,18 +28,20 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         }
         public Tenancy AndGivenTheTenancyHasAnInactiveNoticeOfSeekingPossession(Guid tenancyId)
         {
-            return _fixture.Build<Tenancy>()
+            ResponseObject = _fixture.Build<Tenancy>()
                             .With(x => x.TenancyRef, tenancyId.ToString())
                             .With(x => x.nosp, new NoticeOfSeekingPossession { active = false })
                             .Create();
+            return ResponseObject;
         }
 
         public Tenancy AndGivenTheTenancyHasAnActiveNoticeOfSeekingPossession(Guid tenancyId)
         {
-            return _fixture.Build<Tenancy>()
+            ResponseObject = _fixture.Build<Tenancy>()
                             .With(x => x.TenancyRef, tenancyId.ToString())
                             .With(x => x.nosp, new NoticeOfSeekingPossession { active = true })
                             .Create();
+            return ResponseObject;
         }
 
         public void AndGivenTheTenancyDoesNotExist()
