@@ -69,7 +69,7 @@ namespace ProcessesApi.V1.Gateways
         public async Task<bool> CheckTenureFinanceRecords(Guid tenureId)
         {
             var paymentAgreements = await GetPaymentAgreementsByTenureId(tenureId, Guid.NewGuid()).ConfigureAwait(false); // TODO: Confirm what correlation ID to use
-            if (paymentAgreements.Agreements.Count > 0 && paymentAgreements.Agreements.Count(x => x.Amount > 0) > 0)
+            if (paymentAgreements != null && paymentAgreements.Agreements.Count(x => x.Amount > 0) > 0)
             {
                 return false;
             }

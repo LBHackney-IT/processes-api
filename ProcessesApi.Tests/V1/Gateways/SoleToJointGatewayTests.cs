@@ -318,17 +318,24 @@ namespace ProcessesApi.Tests.V1.Gateways
 
             proposedTenant = AddActiveTenureToPersonRecord(proposedTenant);
 
-            var paymentAgreement = _fixture.Build<PaymentAgreement>()
-                                           .With(x => x.TenancyRef, _proposedTenantExistingTenureId.ToString())
-                                           .With(x => x.Amount, 50)
-                                           .Create();
-            _mockApiGateway.Setup(x => x.GetByIdAsync<PaymentAgreement>(paymentAgreementRoute, _proposedTenantExistingTenureId, It.IsAny<Guid>())).ReturnsAsync(paymentAgreement);
+            var paymentAgreements = new PaymentAgreements
+            {
+                Agreements = new List<PaymentAgreement>
+                {
+                    _fixture.Build<PaymentAgreement>()
+                        .With(x => x.TenancyRef, _proposedTenantExistingTenureId.ToString())
+                        .With(x => x.Amount, 50)
+                        .Create()
+                }
+            };
+            
+            _mockApiGateway.Setup(x => x.GetByIdAsync<PaymentAgreements>(paymentAgreementRoute, _proposedTenantExistingTenureId, It.IsAny<Guid>())).ReturnsAsync(paymentAgreements);
 
             // Act
             var response = await SaveAndCheckEligibility(tenure, proposedTenant).ConfigureAwait(false);
             // Assert
             response.Should().BeFalse();
-            _mockApiGateway.Verify(x => x.GetByIdAsync<PaymentAgreement>(paymentAgreementRoute, _proposedTenantExistingTenureId, It.IsAny<Guid>()), Times.Once);
+            _mockApiGateway.Verify(x => x.GetByIdAsync<PaymentAgreements>(paymentAgreementRoute, _proposedTenantExistingTenureId, It.IsAny<Guid>()), Times.Once);
             _logger.VerifyExact(LogLevel.Debug, $"Calling Income API for payment agreeement with Tenure ID: {_proposedTenantExistingTenureId}", Times.AtLeastOnce());
         }
 
