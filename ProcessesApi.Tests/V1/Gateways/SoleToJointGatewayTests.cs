@@ -328,7 +328,7 @@ namespace ProcessesApi.Tests.V1.Gateways
                         .Create()
                 }
             };
-            
+
             _mockApiGateway.Setup(x => x.GetByIdAsync<PaymentAgreements>(paymentAgreementRoute, _proposedTenantExistingTenureId, It.IsAny<Guid>())).ReturnsAsync(paymentAgreements);
 
             // Act
