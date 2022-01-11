@@ -1,6 +1,6 @@
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Gateways;
-using ProcessesApi.V1.Infrastructure.Exceptions;
+using ProcessesApi.V1.UseCase.Exceptions;
 using ProcessesApi.V1.UseCase.Interfaces;
 using System;
 using System.Collections.Generic;

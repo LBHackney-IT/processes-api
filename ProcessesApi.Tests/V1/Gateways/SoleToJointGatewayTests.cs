@@ -160,7 +160,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         [Fact]
         public void ConstructorTestInitialisesApiGateway()
         {
-            _mockApiGateway.Verify(x => x.Initialise(ApiName, IncomeApiUrlKey, IncomeApiTokenKey, null),
+            _mockApiGateway.Verify(x => x.Initialise(ApiName, IncomeApiUrlKey, IncomeApiTokenKey, null, true),
                                    Times.Once);
         }
 

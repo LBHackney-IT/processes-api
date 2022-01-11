@@ -6,6 +6,7 @@ using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.UseCase;
+using ProcessesApi.V1.UseCase.Exceptions;
 using ProcessesApi.V1.UseCase.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -96,6 +97,22 @@ namespace ProcessesApi.Tests.V1.UseCase
             response.TargetId.Should().Be(process.TargetId);
             response.ProcessName.Should().Be(process.ProcessName);
             response.RelatedEntities.Should().BeEquivalentTo(process.RelatedEntities);
+        }
+
+        [Fact]
+        public void UpdateProcessThrowsErrorOnVersionConflict()
+        {
+            // Arrange
+            var process = CreateProcessInInitialState();
+            var updateProcessQuery = _fixture.Create<UpdateProcessQueryObject>();
+            _mockGateway.Setup(x => x.GetProcessById(process.Id)).ReturnsAsync(process);
+            var suppliedVersion = 1;
+            // Act
+            Func<Task<Process>> func = async () => await _classUnderTest.Execute(
+                process.Id, SoleToJointPermittedTriggers.CheckEligibility,
+                process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
+                updateProcessQuery.Documents, process.ProcessName, suppliedVersion).ConfigureAwait(false);
+            func.Should().Throw<VersionNumberConflictException>().WithMessage($"The version number supplied ({suppliedVersion}) does not match the current value on the entity ({0}).");
         }
 
         [Fact]

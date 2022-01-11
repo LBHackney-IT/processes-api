@@ -61,7 +61,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             Tenure = tenure;
         }
 
-        public async Task AndGivenATenureExists(Guid tenureId, Guid tenantId, bool isTenant)
+        public async Task AndGivenASecureTenureExists(Guid tenureId, Guid tenantId, bool isTenant)
         {
             await GivenATenureExists(tenureId, tenantId, isTenant: isTenant, isSecure: true).ConfigureAwait(false);
         }

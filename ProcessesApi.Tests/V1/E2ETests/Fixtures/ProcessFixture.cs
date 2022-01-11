@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2.DataModel;
 using AutoFixture;
@@ -63,6 +64,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             ProcessId = process.Id.ToString();
             ProcessName = process.ProcessName;
             IncomingTenantId = Guid.NewGuid();
+            PersonTenures = _fixture.CreateMany<Guid>().ToList();
         }
 
         public async Task GivenASoleToJointProcessExists()

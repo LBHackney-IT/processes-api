@@ -8,8 +8,8 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
     public class IncomeApiTenanciesFixture : BaseApiFixture<Tenancy>
     {
         private readonly Fixture _fixture = new Fixture();
-        public static string TheApiRoute => "http://localhost:5000/api/v1/tenancies/";
-        public static string TheApiToken => "abcdefghijklmnopqrstuvwxyz";
+        public static string TheApiRoute => "http://localhost:5678/api/v1/tenancies/";
+        public static string TheApiToken => "dksfghjskueygfakseygfaskjgfsdjkgfdkjsgfdkjgf";
 
         public IncomeApiTenanciesFixture()
             : base(TheApiRoute, TheApiToken)
@@ -46,6 +46,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void AndGivenTheTenancyDoesNotExist()
         {
+            ResponseObject = null;
         }
     }
 }

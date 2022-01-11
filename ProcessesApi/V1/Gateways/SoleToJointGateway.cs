@@ -30,7 +30,7 @@ namespace ProcessesApi.V1.Gateways
             _dynamoDbContext = dynamoDbContext;
             _logger = logger;
             _apiGateway = apiGateway;
-            _apiGateway.Initialise(ApiName, IncomeApiUrl, IncomeApiToken);
+            _apiGateway.Initialise(ApiName, IncomeApiUrl, IncomeApiToken, null, useApiKey: true);
         }
 
         [LogCall]

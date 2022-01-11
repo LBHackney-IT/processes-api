@@ -9,7 +9,7 @@ using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Boundary.Response;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
-using ProcessesApi.V1.Infrastructure.Exceptions;
+using ProcessesApi.V1.UseCase.Exceptions;
 using ProcessesApi.V1.UseCase.Interfaces;
 using System;
 using System.Net.Http.Headers;
