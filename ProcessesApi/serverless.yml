@@ -19,7 +19,7 @@ functions:
     handler: ProcessesApi::ProcessesApi.LambdaEntryPoint::FunctionHandlerAsync
     role: lambdaExecutionRole
     environment:
-      IncomeApiUrl: ${ssm:/manage-arrears/${self:provider.stage}/income-api-url}
+      IncomeApiUrl: ${ssm:/housing-tl/${self:provider.stage}/income-api-url}
       IncomeApiKey: ${ssm:/manage-arrears/${self:provider.stage}/income-api-key}
     events:
       - http:
