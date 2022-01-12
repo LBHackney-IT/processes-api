@@ -1,5 +1,5 @@
-using Amazon.DynamoDBv2.DataModel;
 using FluentAssertions;
+using Hackney.Core.Testing.DynamoDb;
 using Hackney.Core.Testing.Shared.E2E;
 using Newtonsoft.Json;
 using ProcessesApi.V1.Boundary.Constants;
@@ -17,8 +17,10 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 {
     public class UpdateSoleToJointProcessSteps : BaseSteps
     {
-        public UpdateSoleToJointProcessSteps(HttpClient httpClient) : base(httpClient)
+        private readonly IDynamoDbFixture _dbFixture;
+        public UpdateSoleToJointProcessSteps(HttpClient httpClient, IDynamoDbFixture dbFixture) : base(httpClient)
         {
+            _dbFixture = dbFixture;
         }
 
         public async Task WhenAnUpdateProcessRequestIsMade(UpdateProcessQuery request, UpdateProcessQueryObject requestBody, int? ifMatch)
@@ -60,34 +62,37 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             _lastResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         }
 
-        public async Task ThenTheProcessDataIsUpdated(UpdateProcessQuery request, UpdateProcessQueryObject requestBody, IDynamoDBContext dynamoDbContext)
+        public async Task ThenTheProcessDataIsUpdated(UpdateProcessQuery request, UpdateProcessQueryObject requestBody)
         {
             _lastResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-            var dbRecord = await dynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
+            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
 
             var incomingTenantId = Guid.Parse(requestBody.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString());
             dbRecord.RelatedEntities.Should().Contain(incomingTenantId);
 
             dbRecord.CurrentState.ProcessData.FormData.Should().HaveSameCount(requestBody.FormData); // workaround for comparing
             dbRecord.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(requestBody.Documents);
-            // TODO when implementing next state: Add check for permittedTriggers
         }
 
-        public async Task AndTheProcessStateIsUpdatedToEligibilityChecksPassed(UpdateProcessQuery request, UpdateProcessQueryObject requestBody, IDynamoDBContext dynamoDbContext)
+        public async Task AndTheProcessStateIsUpdatedToEligibilityChecksPassed(UpdateProcessQuery request, UpdateProcessQueryObject requestBody)
         {
-            var dbRecord = await dynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
+            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
 
             dbRecord.CurrentState.State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
             dbRecord.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
+            // Cleanup
+            await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
         }
 
-        public async Task AndTheProcessStateIsUpdatedToEligibilityChecksFailed(UpdateProcessQuery request, UpdateProcessQueryObject requestBody, IDynamoDBContext dynamoDbContext)
+        public async Task AndTheProcessStateIsUpdatedToEligibilityChecksFailed(UpdateProcessQuery request, UpdateProcessQueryObject requestBody)
         {
-            var dbRecord = await dynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
+            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
 
             dbRecord.CurrentState.State.Should().Be(SoleToJointStates.AutomatedChecksFailed);
             dbRecord.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
+            // Cleanup
+            await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
         }
     }
 }

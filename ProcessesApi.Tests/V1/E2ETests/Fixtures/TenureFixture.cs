@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Amazon.DynamoDBv2.DataModel;
 using AutoFixture;
+using Hackney.Core.Testing.DynamoDb;
 using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Factories;
 using Hackney.Shared.Tenure.Infrastructure;
@@ -13,13 +13,12 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
     public class TenureFixture : IDisposable
     {
         public readonly Fixture _fixture = new Fixture();
-        public readonly IDynamoDBContext _dbContext;
-
+        private readonly IDynamoDbFixture _dbFixture;
         public TenureInformation Tenure { get; private set; }
 
-        public TenureFixture(IDynamoDBContext context)
+        public TenureFixture(IDynamoDbFixture dbFixture)
         {
-            _dbContext = context;
+            _dbFixture = dbFixture;
         }
 
         public void Dispose()
@@ -34,7 +33,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             if (disposing && !_disposed)
             {
                 if (Tenure != null)
-                    _dbContext.DeleteAsync<TenureInformationDb>(Tenure.Id).GetAwaiter().GetResult();
+                    _dbFixture.DynamoDbContext.DeleteAsync<TenureInformationDb>(Tenure.Id).GetAwaiter().GetResult();
                 _disposed = true;
             }
         }
@@ -56,8 +55,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                         .With(x => x.VersionNumber, (int?) null)
                         .Create();
 
-            await _dbContext.SaveAsync<TenureInformationDb>(tenure.ToDatabase()).ConfigureAwait(false);
-
+            await _dbFixture.SaveEntityAsync<TenureInformationDb>(tenure.ToDatabase()).ConfigureAwait(false);
             Tenure = tenure;
         }
 

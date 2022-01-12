@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Amazon.DynamoDBv2.DataModel;
 using AutoFixture;
+using Hackney.Core.Testing.DynamoDb;
 using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
@@ -15,21 +15,19 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
     public class ProcessFixture : IDisposable
     {
         public readonly Fixture _fixture = new Fixture();
-        public readonly IDynamoDBContext _dbContext;
-
+        private readonly IDynamoDbFixture _dbFixture;
         public Process Process { get; private set; }
         public string ProcessId { get; private set; }
         public string ProcessName { get; private set; }
-        public string InvalidProcessId { get; private set; }
         public CreateProcess CreateProcessRequest { get; private set; }
         public UpdateProcessQuery UpdateProcessRequest { get; private set; }
         public UpdateProcessQueryObject UpdateProcessRequestObject { get; private set; }
         public Guid IncomingTenantId { get; private set; }
         public List<Guid> PersonTenures { get; private set; }
 
-        public ProcessFixture(IDynamoDBContext context)
+        public ProcessFixture(IDynamoDbFixture dbFixture)
         {
-            _dbContext = context;
+            _dbFixture = dbFixture;
             PersonTenures = new List<Guid> { Guid.NewGuid() };
         }
 
@@ -45,7 +43,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             if (disposing && !_disposed)
             {
                 if (Process != null)
-                    _dbContext.DeleteAsync<ProcessesDb>(Process.Id).GetAwaiter().GetResult();
+                    _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(Process.Id).GetAwaiter().GetResult();
                 _disposed = true;
             }
         }
@@ -70,7 +68,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public async Task GivenASoleToJointProcessExists()
         {
             createProcess();
-            await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
+            await _dbFixture.SaveEntityAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
         }
 
         public void GivenASoleToJointProcessDoesNotExist()

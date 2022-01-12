@@ -1,4 +1,3 @@
-using Amazon.DynamoDBv2.DataModel;
 using FluentAssertions;
 using Hackney.Core.Testing.Shared.E2E;
 using Newtonsoft.Json;
@@ -13,13 +12,17 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Hackney.Core.Testing.DynamoDb;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {
     public class CreateNewSoleToJointProcessSteps : BaseSteps
     {
-        public CreateNewSoleToJointProcessSteps(HttpClient httpClient) : base(httpClient)
+        private readonly IDynamoDbFixture _dbFixture;
+
+        public CreateNewSoleToJointProcessSteps(HttpClient httpClient, IDynamoDbFixture dbFixture) : base(httpClient)
         {
+            _dbFixture = dbFixture;
         }
 
         public async Task WhenACreateProcessRequestIsMade(CreateProcess request, string processName)
@@ -33,14 +36,14 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             _lastResponse = await _httpClient.SendAsync(message).ConfigureAwait(false);
         }
 
-        public async Task ThenTheProcessIsCreated(CreateProcess request, IDynamoDBContext dynamoDbContext)
+        public async Task ThenTheProcessIsCreated(CreateProcess request)
         {
             _lastResponse.StatusCode.Should().Be(HttpStatusCode.Created);
             var responseContent = await _lastResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
             var apiProcess = JsonConvert.DeserializeObject<ProcessResponse>(responseContent);
 
             apiProcess.Id.Should().NotBeEmpty();
-            var dbRecord = await dynamoDbContext.LoadAsync<ProcessesDb>(apiProcess.Id).ConfigureAwait(false);
+            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(apiProcess.Id).ConfigureAwait(false);
 
             dbRecord.TargetId.Should().Be(request.TargetId);
             dbRecord.RelatedEntities.Should().BeEquivalentTo(request.RelatedEntities);
@@ -57,7 +60,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             dbRecord.PreviousStates.Should().BeEmpty();
 
             // Cleanup
-            await dynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
+            await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
         }
 
         public void ThenBadRequestIsReturned()

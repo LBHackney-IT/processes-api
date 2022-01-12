@@ -21,7 +21,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         public GetProcessByIdTests(MockWebApplicationFactory<Startup> appFactory)
         {
             _dbFixture = appFactory.DynamoDbFixture;
-            _processFixture = new ProcessFixture(_dbFixture.DynamoDbContext);
+            _processFixture = new ProcessFixture(appFactory.DynamoDbFixture);
             _steps = new GetProcessByIdSteps(appFactory.Client);
         }
 
