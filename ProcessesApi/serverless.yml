@@ -20,7 +20,7 @@ functions:
     role: lambdaExecutionRole
     environment:
       IncomeApiUrl: ${ssm:/housing-tl/${self:provider.stage}/income-api-url}
-      IncomeApiKey: ${ssm:/manage-arrears/${self:provider.stage}/income-api-key}
+      IncomeApiToken: ${ssm:/manage-arrears/${self:provider.stage}/income-api-key}
     events:
       - http:
           path: /{proxy+}
