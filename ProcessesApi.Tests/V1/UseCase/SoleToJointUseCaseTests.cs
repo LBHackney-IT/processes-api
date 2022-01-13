@@ -6,6 +6,7 @@ using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.UseCase;
+using ProcessesApi.V1.UseCase.Exceptions;
 using ProcessesApi.V1.UseCase.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -33,6 +34,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             return _fixture.Build<Process>()
                     .With(x => x.CurrentState, (ProcessState) null)
                     .With(x => x.PreviousStates, new List<ProcessState>())
+                    .With(x => x.VersionNumber, 0)
                     .Create();
         }
 
@@ -45,9 +47,9 @@ namespace ProcessesApi.Tests.V1.UseCase
             var processId = Guid.NewGuid();
             // Act
             var response = await _classUnderTest.Execute(
-                processId, SoleToJointTriggers.StartApplication,
+                processId, SoleToJointInternalTriggers.StartApplication,
                 createProcessQuery.TargetId, createProcessQuery.RelatedEntities, createProcessQuery.FormData,
-                createProcessQuery.Documents, processName).ConfigureAwait(false);
+                createProcessQuery.Documents, processName, null).ConfigureAwait(false);
             // Assert
             _mockSTJService.Verify(x => x.Process(It.IsAny<UpdateProcessState>(), It.IsAny<Process>()), Times.Once);
             _mockGateway.Verify(x => x.SaveProcess(It.IsAny<Process>()), Times.Once);
@@ -68,9 +70,9 @@ namespace ProcessesApi.Tests.V1.UseCase
             _mockGateway.Setup(x => x.SaveProcess(It.IsAny<Process>())).ThrowsAsync(exception);
 
             Func<Task<Process>> func = async () => await _classUnderTest.Execute(
-                process.Id, SoleToJointTriggers.StartApplication,
+                process.Id, SoleToJointInternalTriggers.StartApplication,
                 process.TargetId, process.RelatedEntities, createProcessQuery.FormData,
-                createProcessQuery.Documents, process.ProcessName).ConfigureAwait(false);
+                createProcessQuery.Documents, process.ProcessName, null).ConfigureAwait(false);
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }
 
@@ -83,9 +85,9 @@ namespace ProcessesApi.Tests.V1.UseCase
             _mockGateway.Setup(x => x.GetProcessById(process.Id)).ReturnsAsync(process);
             // Act
             var response = await _classUnderTest.Execute(
-                process.Id, SoleToJointTriggers.CheckEligibility,
+                process.Id, SoleToJointPermittedTriggers.CheckEligibility,
                 process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
-                updateProcessQuery.Documents, process.ProcessName).ConfigureAwait(false);
+                updateProcessQuery.Documents, process.ProcessName, 0).ConfigureAwait(false);
 
             // Assert
             _mockSTJService.Verify(x => x.Process(It.IsAny<UpdateProcessState>(), It.IsAny<Process>()), Times.Once);
@@ -98,6 +100,22 @@ namespace ProcessesApi.Tests.V1.UseCase
         }
 
         [Fact]
+        public void UpdateProcessThrowsErrorOnVersionConflict()
+        {
+            // Arrange
+            var process = CreateProcessInInitialState();
+            var updateProcessQuery = _fixture.Create<UpdateProcessQueryObject>();
+            _mockGateway.Setup(x => x.GetProcessById(process.Id)).ReturnsAsync(process);
+            var suppliedVersion = 1;
+            // Act
+            Func<Task<Process>> func = async () => await _classUnderTest.Execute(
+                process.Id, SoleToJointPermittedTriggers.CheckEligibility,
+                process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
+                updateProcessQuery.Documents, process.ProcessName, suppliedVersion).ConfigureAwait(false);
+            func.Should().Throw<VersionNumberConflictException>().WithMessage($"The version number supplied ({suppliedVersion}) does not match the current value on the entity ({0}).");
+        }
+
+        [Fact]
         public void UpdateProcessExceptionIsThrown()
         {
             var process = CreateProcessInInitialState();
@@ -107,9 +125,9 @@ namespace ProcessesApi.Tests.V1.UseCase
             _mockGateway.Setup(x => x.GetProcessById(It.IsAny<Guid>())).ThrowsAsync(exception);
 
             Func<Task<Process>> func = async () => await _classUnderTest.Execute(
-                process.Id, SoleToJointTriggers.CheckEligibility,
+                process.Id, SoleToJointPermittedTriggers.CheckEligibility,
                 process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
-                updateProcessQuery.Documents, process.ProcessName).ConfigureAwait(false);
+                updateProcessQuery.Documents, process.ProcessName, 0).ConfigureAwait(false);
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }
     }

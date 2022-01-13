@@ -160,7 +160,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         [Fact]
         public void ConstructorTestInitialisesApiGateway()
         {
-            _mockApiGateway.Verify(x => x.Initialise(ApiName, IncomeApiUrlKey, IncomeApiTokenKey, null),
+            _mockApiGateway.Verify(x => x.Initialise(ApiName, IncomeApiUrlKey, IncomeApiTokenKey, null, true),
                                    Times.Once);
         }
 
@@ -184,7 +184,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             // Act
             Func<Task<bool>> func = async () => await _classUnderTest.CheckEligibility(tenure.Id, proposedTenant.Id).ConfigureAwait(false);
             // Assert
-            func.Should().Throw<RecordNotFoundException>().WithMessage($"The ID supplied ({tenure.Id}) does not exist for entity type {typeof(TenureInformation)}.");
+            func.Should().Throw<TenureNotFoundException>().WithMessage($"Tenure with id {tenure.Id} not found.");
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Tenure ID: {tenure.Id}", Times.Once());
         }
 
@@ -197,7 +197,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             // Act
             Func<Task<bool>> func = async () => await _classUnderTest.CheckEligibility(tenure.Id, proposedTenant.Id).ConfigureAwait(false);
             // Assert
-            func.Should().Throw<RecordNotFoundException>().WithMessage($"The ID supplied ({proposedTenant.Id}) does not exist for entity type {typeof(Person)}.");
+            func.Should().Throw<PersonNotFoundException>().WithMessage($"Person with id {proposedTenant.Id} not found.");
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Tenure ID: {tenure.Id}", Times.Once());
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Person ID: {proposedTenant.Id}", Times.Once());
         }
@@ -318,17 +318,24 @@ namespace ProcessesApi.Tests.V1.Gateways
 
             proposedTenant = AddActiveTenureToPersonRecord(proposedTenant);
 
-            var paymentAgreement = _fixture.Build<PaymentAgreement>()
-                                           .With(x => x.TenancyRef, _proposedTenantExistingTenureId.ToString())
-                                           .With(x => x.Amount, 50)
-                                           .Create();
-            _mockApiGateway.Setup(x => x.GetByIdAsync<PaymentAgreement>(paymentAgreementRoute, _proposedTenantExistingTenureId, It.IsAny<Guid>())).ReturnsAsync(paymentAgreement);
+            var paymentAgreements = new PaymentAgreements
+            {
+                Agreements = new List<PaymentAgreement>
+                {
+                    _fixture.Build<PaymentAgreement>()
+                        .With(x => x.TenancyRef, _proposedTenantExistingTenureId.ToString())
+                        .With(x => x.Amount, 50)
+                        .Create()
+                }
+            };
+
+            _mockApiGateway.Setup(x => x.GetByIdAsync<PaymentAgreements>(paymentAgreementRoute, _proposedTenantExistingTenureId, It.IsAny<Guid>())).ReturnsAsync(paymentAgreements);
 
             // Act
             var response = await SaveAndCheckEligibility(tenure, proposedTenant).ConfigureAwait(false);
             // Assert
             response.Should().BeFalse();
-            _mockApiGateway.Verify(x => x.GetByIdAsync<PaymentAgreement>(paymentAgreementRoute, _proposedTenantExistingTenureId, It.IsAny<Guid>()), Times.Once);
+            _mockApiGateway.Verify(x => x.GetByIdAsync<PaymentAgreements>(paymentAgreementRoute, _proposedTenantExistingTenureId, It.IsAny<Guid>()), Times.Once);
             _logger.VerifyExact(LogLevel.Debug, $"Calling Income API for payment agreeement with Tenure ID: {_proposedTenantExistingTenureId}", Times.AtLeastOnce());
         }
 

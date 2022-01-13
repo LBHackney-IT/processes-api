@@ -2,11 +2,14 @@ using Amazon.DynamoDBv2.DataModel;
 using AutoFixture;
 using FluentAssertions;
 using Hackney.Core.Testing.DynamoDb;
+using Moq;
 using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.UseCase;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -18,6 +21,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         public SoleToJointService _classUnderTest;
         public Fixture _fixture = new Fixture();
         private readonly IDynamoDbFixture _dbFixture;
+        private Mock<ISoleToJointGateway> _mockSTJGateway;
         private IDynamoDBContext _dynamoDb => _dbFixture.DynamoDbContext;
         private readonly List<Action> _cleanup = new List<Action>();
         public void Dispose()
@@ -41,7 +45,8 @@ namespace ProcessesApi.Tests.V1.UseCase
         public SoleToJointServiceTests(MockWebApplicationFactory<Startup> appFactory)
         {
             _dbFixture = appFactory.DynamoDbFixture;
-            _classUnderTest = new SoleToJointService();
+            _mockSTJGateway = new Mock<ISoleToJointGateway>();
+            _classUnderTest = new SoleToJointService(_mockSTJGateway.Object);
         }
 
         private async Task InsertDatatoDynamoDB(ProcessesDb entity)
@@ -61,7 +66,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             (
                 process.Id,
                 process.TargetId,
-                SoleToJointTriggers.StartApplication,
+                SoleToJointInternalTriggers.StartApplication,
                 _fixture.Create<Dictionary<string, object>>(),
                 _fixture.Create<List<Guid>>(),
                 process.RelatedEntities
@@ -95,7 +100,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             (
                 process.Id,
                 process.TargetId,
-                SoleToJointTriggers.CheckEligibility,
+                SoleToJointPermittedTriggers.CheckEligibility,
                 new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId } },
                 _fixture.Create<List<Guid>>(),
                 process.RelatedEntities
@@ -105,6 +110,76 @@ namespace ProcessesApi.Tests.V1.UseCase
 
             // Assert
             process.RelatedEntities.Should().Contain(incomingTenantId);
+        }
+
+        [Fact]
+        public async Task CurrentStateIsUpdatedToAutomatedChecksFailedWhenCheckEligibilityReturnsFalse()
+        {
+            // Arrange
+            var process = _fixture.Build<Process>()
+                                .With(x => x.CurrentState,
+                                    _fixture.Build<ProcessState>()
+                                        .With(x => x.State, SoleToJointStates.SelectTenants)
+                                        .Create()
+                                )
+                                .Create();
+
+            var incomingTenantId = Guid.NewGuid();
+            var triggerObject = UpdateProcessState.Create
+            (
+                process.Id,
+                process.TargetId,
+                SoleToJointPermittedTriggers.CheckEligibility,
+                new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId } },
+                _fixture.Create<List<Guid>>(),
+                process.RelatedEntities
+            );
+
+            _mockSTJGateway.Setup(x => x.CheckEligibility(process.TargetId, incomingTenantId)).ReturnsAsync(false);
+            // Act
+            await _classUnderTest.Process(triggerObject, process).ConfigureAwait(false);
+
+            // Assert
+            process.CurrentState.State.Should().Be(SoleToJointStates.AutomatedChecksFailed);
+            process.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(triggerObject.FormData);
+            process.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(triggerObject.Documents);
+            process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
+            _mockSTJGateway.Verify(x => x.CheckEligibility(process.TargetId, incomingTenantId), Times.Once());
+        }
+
+        [Fact]
+        public async Task ProcessStateIsUpdatedToAutomatedChecksPassedWhenCheckEligibilityReturnsTrue()
+        {
+            // Arrange
+            var process = _fixture.Build<Process>()
+                                .With(x => x.CurrentState,
+                                    _fixture.Build<ProcessState>()
+                                        .With(x => x.State, SoleToJointStates.SelectTenants)
+                                        .Create()
+                                )
+                                .Create();
+
+            var incomingTenantId = Guid.NewGuid();
+            var triggerObject = UpdateProcessState.Create
+            (
+                process.Id,
+                process.TargetId,
+                SoleToJointPermittedTriggers.CheckEligibility,
+                new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId } },
+                _fixture.Create<List<Guid>>(),
+                process.RelatedEntities
+            );
+
+            _mockSTJGateway.Setup(x => x.CheckEligibility(process.TargetId, incomingTenantId)).ReturnsAsync(true);
+            // Act
+            await _classUnderTest.Process(triggerObject, process).ConfigureAwait(false);
+
+            // Assert
+            process.CurrentState.State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
+            process.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(triggerObject.FormData);
+            process.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(triggerObject.Documents);
+            process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
+            _mockSTJGateway.Verify(x => x.CheckEligibility(process.TargetId, incomingTenantId), Times.Once());
         }
     }
 }

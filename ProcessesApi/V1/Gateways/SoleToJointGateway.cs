@@ -30,7 +30,7 @@ namespace ProcessesApi.V1.Gateways
             _dynamoDbContext = dynamoDbContext;
             _logger = logger;
             _apiGateway = apiGateway;
-            _apiGateway.Initialise(ApiName, IncomeApiUrl, IncomeApiToken);
+            _apiGateway.Initialise(ApiName, IncomeApiUrl, IncomeApiToken, null, useApiKey: true);
         }
 
         [LogCall]
@@ -51,11 +51,11 @@ namespace ProcessesApi.V1.Gateways
         }
 
         [LogCall]
-        private async Task<PaymentAgreement> GetPaymentAgreementByTenureId(Guid tenureId, Guid correlationId)
+        private async Task<PaymentAgreements> GetPaymentAgreementsByTenureId(Guid tenureId, Guid correlationId)
         {
             _logger.LogDebug($"Calling Income API for payment agreeement with Tenure ID: {tenureId}");
             var route = $"{_apiGateway.ApiRoute}/agreements/{tenureId}";
-            return await _apiGateway.GetByIdAsync<PaymentAgreement>(route, tenureId, correlationId);
+            return await _apiGateway.GetByIdAsync<PaymentAgreements>(route, tenureId, correlationId);
         }
 
         [LogCall]
@@ -68,8 +68,8 @@ namespace ProcessesApi.V1.Gateways
 
         public async Task<bool> CheckTenureFinanceRecords(Guid tenureId)
         {
-            var paymentAgreement = await GetPaymentAgreementByTenureId(tenureId, Guid.NewGuid()).ConfigureAwait(false); // TODO: Confirm what correlation ID to use
-            if (paymentAgreement != null && paymentAgreement.Amount > 0)
+            var paymentAgreements = await GetPaymentAgreementsByTenureId(tenureId, Guid.NewGuid()).ConfigureAwait(false); // TODO: Confirm what correlation ID to use
+            if (paymentAgreements != null && paymentAgreements.Agreements.Count(x => x.Amount > 0) > 0)
             {
                 return false;
             }
@@ -112,7 +112,7 @@ namespace ProcessesApi.V1.Gateways
         {
             var currentTenure = await GetTenureById(tenureId).ConfigureAwait(false);
             if (currentTenure is null)
-                throw new RecordNotFoundException(typeof(TenureInformation), tenureId);
+                throw new TenureNotFoundException(tenureId);
 
             var tenantInformation = currentTenure.HouseholdMembers.ToListOrEmpty().Find(x => x.Id == proposedTenantId);
 
@@ -127,7 +127,7 @@ namespace ProcessesApi.V1.Gateways
             {
                 var proposedTenant = await GetPersonById(proposedTenantId).ConfigureAwait(false);
                 if (proposedTenant is null)
-                    throw new RecordNotFoundException(typeof(Person), proposedTenantId);
+                    throw new PersonNotFoundException(proposedTenantId);
 
                 foreach (var x in proposedTenant.Tenures.Where(x => x.IsActive))
                 {
