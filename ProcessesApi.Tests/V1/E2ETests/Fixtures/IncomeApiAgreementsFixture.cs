@@ -2,14 +2,15 @@ using AutoFixture;
 using Hackney.Core.Testing.Shared.E2E;
 using ProcessesApi.V1.Domain.Finance;
 using System;
+using System.Collections.Generic;
 
 namespace ProcessesApi.Tests.V1.E2E.Fixtures
 {
-    public class IncomeApiAgreementsFixture : BaseApiFixture<PaymentAgreement>
+    public class IncomeApiAgreementsFixture : BaseApiFixture<PaymentAgreements>
     {
         private readonly Fixture _fixture = new Fixture();
-        public static string TheApiRoute => "http://localhost:5000/api/v1/agreements/";
-        public static string TheApiToken => "abcdefghijklmnopqrstuvwxyz";
+        public static string TheApiRoute => "http://localhost:5678/api/v1/agreements/";
+        public static string TheApiToken => "dksfghjskueygfakseygfaskjgfsdjkgfdkjsgfdkjgf";
 
         public IncomeApiAgreementsFixture()
             : base(TheApiRoute, TheApiToken)
@@ -27,17 +28,29 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             }
         }
 
-        public void AndGivenAPaymentAgreementDoesNotExistForTenancy(Guid tenancyId)
+        public PaymentAgreements AndGivenAPaymentAgreementDoesNotExistForTenancy(Guid tenancyId)
         {
+            ResponseObject = new PaymentAgreements
+            {
+                Agreements = new List<PaymentAgreement>()
+            };
+            return ResponseObject;
         }
 
-        public PaymentAgreement AndGivenAPaymentAgreementExistsForTenancy(Guid tenancyId)
+        public PaymentAgreements AndGivenAPaymentAgreementExistsForTenancy(Guid tenancyId)
         {
-            var requests = Responses;
-            return _fixture.Build<PaymentAgreement>()
+            ResponseObject = new PaymentAgreements
+            {
+                Agreements = new List<PaymentAgreement>
+                {
+                    _fixture.Build<PaymentAgreement>()
                             .With(x => x.TenancyRef, tenancyId.ToString())
-                            .With(x => x.Amount, 0)
-                            .Create();
+                            .With(x => x.Amount, 10)
+                            .Create()
+                }
+            };
+
+            return ResponseObject;
         }
     }
 }

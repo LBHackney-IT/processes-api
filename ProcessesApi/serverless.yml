@@ -18,6 +18,9 @@ functions:
     name: ${self:service}-${self:provider.stage}
     handler: ProcessesApi::ProcessesApi.LambdaEntryPoint::FunctionHandlerAsync
     role: lambdaExecutionRole
+    environment:
+      IncomeApiUrl: ${ssm:/housing-tl/${self:provider.stage}/income-api-url}
+      IncomeApiToken: ${ssm:/manage-arrears/${self:provider.stage}/income-api-key}
     events:
       - http:
           path: /{proxy+}
@@ -101,6 +104,27 @@ resources:
                           - Ref: 'AWS::Region'
                           - Ref: 'AWS::AccountId'
                           - 'table/Processes'
+                - Effect: Allow
+                  Action:
+                    - "dynamodb:BatchGet*"
+                    - "dynamodb:DescribeStream"
+                    - "dynamodb:DescribeTable"
+                    - "dynamodb:Get*"
+                    - "dynamodb:Query"
+                    - "dynamodb:Scan"
+                  Resource:
+                    - 'Fn::Join':
+                        - ':'
+                        - - 'arn:aws:dynamodb'
+                          - Ref: 'AWS::Region'
+                          - Ref: 'AWS::AccountId'
+                          - 'table/TenureInformation'
+                    - 'Fn::Join':
+                        - ':'
+                        - - 'arn:aws:dynamodb'
+                          - Ref: 'AWS::Region'
+                          - Ref: 'AWS::AccountId'
+                          - 'table/Persons'
           - PolicyName: manageLogs
             PolicyDocument:
               Version: '2012-10-17'

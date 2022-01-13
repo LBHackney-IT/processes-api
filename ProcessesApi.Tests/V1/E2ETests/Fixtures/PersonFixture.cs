@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Amazon.DynamoDBv2.DataModel;
+using Hackney.Core.Testing.DynamoDb;
 using AutoFixture;
 using Hackney.Shared.Person;
 using Hackney.Shared.Person.Domain;
@@ -14,13 +14,13 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
     public class PersonFixture : IDisposable
     {
         public readonly Fixture _fixture = new Fixture();
-        public readonly IDynamoDBContext _dbContext;
+        private readonly IDynamoDbFixture _dbFixture;
 
         public Person Person { get; private set; }
 
-        public PersonFixture(IDynamoDBContext context)
+        public PersonFixture(IDynamoDbFixture dbFixture)
         {
-            _dbContext = context;
+            _dbFixture = dbFixture;
         }
 
         public void Dispose()
@@ -35,7 +35,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             if (disposing && !_disposed)
             {
                 if (Person != null)
-                    _dbContext.DeleteAsync<PersonDbEntity>(Person.Id).GetAwaiter().GetResult();
+                    _dbFixture.DynamoDbContext.DeleteAsync<PersonDbEntity>(Person.Id);
                 _disposed = true;
             }
         }
@@ -57,7 +57,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                         .With(x => x.Tenures, personTenureDetails)
                         .With(x => x.VersionNumber, (int?) null)
                         .Create();
-            await _dbContext.SaveAsync<PersonDbEntity>(person.ToDatabase()).ConfigureAwait(false);
+            await _dbFixture.SaveEntityAsync<PersonDbEntity>(person.ToDatabase()).ConfigureAwait(false);
 
             Person = person;
         }
