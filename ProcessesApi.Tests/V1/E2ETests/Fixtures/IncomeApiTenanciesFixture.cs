@@ -26,19 +26,19 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                 base.Dispose(disposing);
             }
         }
-        public Tenancy AndGivenTheTenancyHasAnInactiveNoticeOfSeekingPossession(Guid tenancyId)
+        public Tenancy AndGivenTheTenancyHasAnInactiveNoticeOfSeekingPossession(string tenancyRef)
         {
             ResponseObject = _fixture.Build<Tenancy>()
-                            .With(x => x.TenancyRef, tenancyId.ToString())
+                            .With(x => x.TenancyRef, tenancyRef)
                             .With(x => x.nosp, new NoticeOfSeekingPossession { active = false })
                             .Create();
             return ResponseObject;
         }
 
-        public Tenancy AndGivenTheTenancyHasAnActiveNoticeOfSeekingPossession(Guid tenancyId)
+        public Tenancy AndGivenTheTenancyHasAnActiveNoticeOfSeekingPossession(string tenancyRef)
         {
             ResponseObject = _fixture.Build<Tenancy>()
-                            .With(x => x.TenancyRef, tenancyId.ToString())
+                            .With(x => x.TenancyRef, tenancyRef)
                             .With(x => x.nosp, new NoticeOfSeekingPossession { active = true })
                             .Create();
             return ResponseObject;
