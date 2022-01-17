@@ -52,6 +52,12 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                                 })
                         .With(x => x.TenureType, isSecure ? TenureTypes.Secure : TenureTypes.NonSecure)
                         .With(x => x.EndOfTenureDate, (DateTime?) null)
+                        .With(x => x.LegacyReferences,
+                                    new List<LegacyReference> {
+                                        _fixture.Build<LegacyReference>()
+                                                .With(x => x.Name, "uh_tag_ref")
+                                                .Create()
+                                    })
                         .With(x => x.VersionNumber, (int?) null)
                         .Create();
 

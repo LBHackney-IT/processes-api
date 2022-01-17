@@ -28,7 +28,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             }
         }
 
-        public PaymentAgreements AndGivenAPaymentAgreementDoesNotExistForTenancy(Guid tenancyId)
+        public PaymentAgreements AndGivenAPaymentAgreementDoesNotExistForTenancy(Guid tenancyRef)
         {
             ResponseObject = new PaymentAgreements
             {
@@ -37,14 +37,14 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             return ResponseObject;
         }
 
-        public PaymentAgreements AndGivenAPaymentAgreementExistsForTenancy(Guid tenancyId)
+        public PaymentAgreements AndGivenAPaymentAgreementExistsForTenancy(Guid tenancyRef)
         {
             ResponseObject = new PaymentAgreements
             {
                 Agreements = new List<PaymentAgreement>
                 {
                     _fixture.Build<PaymentAgreement>()
-                            .With(x => x.TenancyRef, tenancyId.ToString())
+                            .With(x => x.TenancyRef, tenancyRef.ToString())
                             .With(x => x.Amount, 10)
                             .Create()
                 }

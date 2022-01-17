@@ -51,31 +51,31 @@ namespace ProcessesApi.V1.Gateways
         }
 
         [LogCall]
-        private async Task<PaymentAgreements> GetPaymentAgreementsByTenureId(Guid tenureId, Guid correlationId)
+        private async Task<PaymentAgreements> GetPaymentAgreementsByTenancyReference(string tenureRef, Guid correlationId)
         {
-            _logger.LogDebug($"Calling Income API for payment agreeement with Tenure ID: {tenureId}");
-            var route = $"{_apiGateway.ApiRoute}/agreements/{tenureId}";
-            return await _apiGateway.GetByIdAsync<PaymentAgreements>(route, tenureId, correlationId);
+            _logger.LogDebug($"Calling Income API for payment agreeement with tenancy ref: {tenureRef}");
+            var route = $"{_apiGateway.ApiRoute}/agreements/{tenureRef}";
+            return await _apiGateway.GetByIdAsync<PaymentAgreements>(route, tenureRef, correlationId);
         }
 
         [LogCall]
-        private async Task<Tenancy> GetTenancyById(Guid id, Guid correlationId)
+        private async Task<Tenancy> GetTenancyByReference(string tenureRef, Guid correlationId)
         {
-            _logger.LogDebug($"Calling Income API with tenancy ID: {id}");
-            var route = $"{_apiGateway.ApiRoute}/tenancies/{id}";
-            return await _apiGateway.GetByIdAsync<Tenancy>(route, id, correlationId);
+            _logger.LogDebug($"Calling Income API with tenancy ref: {tenureRef}");
+            var route = $"{_apiGateway.ApiRoute}/tenancies/{tenureRef}";
+            return await _apiGateway.GetByIdAsync<Tenancy>(route, tenureRef, correlationId);
         }
 
-        public async Task<bool> CheckTenureFinanceRecords(Guid tenureId)
+        public async Task<bool> CheckTenureFinanceRecords(string tenureRef)
         {
-            var paymentAgreements = await GetPaymentAgreementsByTenureId(tenureId, Guid.NewGuid()).ConfigureAwait(false); // TODO: Confirm what correlation ID to use
+            var paymentAgreements = await GetPaymentAgreementsByTenancyReference(tenureRef, Guid.NewGuid()).ConfigureAwait(false); // TODO: Confirm what correlation ID to use
             if (paymentAgreements != null && paymentAgreements.Agreements.Count(x => x.Amount > 0) > 0)
             {
                 return false;
             }
             else
             {
-                var tenancy = await GetTenancyById(tenureId, Guid.NewGuid()).ConfigureAwait(false); // TODO: Confirm what correlation ID to use
+                var tenancy = await GetTenancyByReference(tenureRef, Guid.NewGuid()).ConfigureAwait(false); // TODO: Confirm what correlation ID to use
                 if (tenancy is null)
                     return true;
 
@@ -84,7 +84,12 @@ namespace ProcessesApi.V1.Gateways
 
                 return true;
             }
+        }
 
+        private string GetLegacyTagRef(TenureInformation tenure)
+        {
+            var reference = tenure.LegacyReferences.FirstOrDefault(x => x.Name == "uh_tag_ref");
+            return reference?.Value;
         }
 
         public async Task<bool> CheckPersonTenureRecord(Guid tenureId, Guid proposedTenantId)
@@ -104,7 +109,11 @@ namespace ProcessesApi.V1.Gateways
             }
             else
             {
-                return await CheckTenureFinanceRecords(tenureId).ConfigureAwait(false);
+                var uhRef = GetLegacyTagRef(tenure);
+                if (uhRef != null)
+                    return await CheckTenureFinanceRecords(uhRef).ConfigureAwait(false);
+                else
+                    return true;
             }
         }
 

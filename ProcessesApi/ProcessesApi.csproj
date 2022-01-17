@@ -21,7 +21,7 @@
     <PackageReference Include="AWSXRayRecorder.Handlers.AwsSdk" Version="2.8.2" />
     <PackageReference Include="Hackney.Core.DynamoDb" Version="1.30.0" />
     <PackageReference Include="Hackney.Core.HealthCheck" Version="1.30.0" />
-    <PackageReference Include="Hackney.Core.Http" Version="1.66.0" />
+    <PackageReference Include="Hackney.Core.Http" Version="1.67.0-preview0001" />
     <PackageReference Include="Hackney.Core.JWT" Version="1.49.0" />
     <PackageReference Include="Hackney.Core.Logging" Version="1.30.0" />
     <PackageReference Include="Hackney.Core.Middleware" Version="1.30.0" />
