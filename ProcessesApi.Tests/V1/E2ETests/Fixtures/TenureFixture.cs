@@ -15,6 +15,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public readonly Fixture _fixture = new Fixture();
         private readonly IDynamoDbFixture _dbFixture;
         public TenureInformation Tenure { get; private set; }
+        public string tenancyRef { get; private set; }
 
         public TenureFixture(IDynamoDbFixture dbFixture)
         {
@@ -40,6 +41,8 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         private async Task GivenATenureExists(Guid tenureId, Guid tenantId, bool isTenant, bool isSecure)
         {
+            var tenancyRef = _fixture.Create<String>();
+
             var tenure = _fixture.Build<TenureInformation>()
                         .With(x => x.Id, tenureId)
                         .With(x => x.HouseholdMembers,
@@ -52,6 +55,14 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                                 })
                         .With(x => x.TenureType, isSecure ? TenureTypes.Secure : TenureTypes.NonSecure)
                         .With(x => x.EndOfTenureDate, (DateTime?) null)
+                        .With(x => x.LegacyReferences,
+                                    new List<LegacyReference> {
+                                        new LegacyReference
+                                        {
+                                            Name = "uh_tag_ref",
+                                            Value = tenancyRef
+                                        }
+                                    })
                         .With(x => x.VersionNumber, (int?) null)
                         .Create();
 
