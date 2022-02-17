@@ -5,15 +5,15 @@ namespace ProcessesApi.V1.Domain
 {
     public class ProcessData
     {
-        public object FormData { get; set; }
+        public Dictionary<string, object> FormData { get; set; }
         public List<Guid> Documents { get; set; }
-        public ProcessData(object formData, List<Guid> documents)
+        public ProcessData(Dictionary<string, object> formData, List<Guid> documents)
         {
             FormData = formData;
             Documents = documents;
         }
 
-        public static ProcessData Create(object formData, List<Guid> documents)
+        public static ProcessData Create(Dictionary<string, object> formData, List<Guid> documents)
         {
             return new ProcessData(formData, documents);
         }

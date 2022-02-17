@@ -11,7 +11,6 @@ using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Infrastructure;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -71,8 +70,8 @@ namespace ProcessesApi.Tests.V1.Gateways
         public async Task GetProcessByIdReturnsTheProcessIfItExists()
         {
             var entity = _fixture.Build<Process>()
-                                .With(x => x.VersionNumber, (int?) null)
-                                .Create();
+                        .With(x => x.VersionNumber, (int?) null)
+                        .Create();
             await InsertDatatoDynamoDB(entity.ToDatabase()).ConfigureAwait(false);
             var response = await _classUnderTest.GetProcessById(entity.Id).ConfigureAwait(false);
             response.Should().BeEquivalentTo(entity, config => config.Excluding(y => y.VersionNumber));
@@ -99,72 +98,46 @@ namespace ProcessesApi.Tests.V1.Gateways
         }
 
         [Fact]
-        public async Task CreateNewProcessSucessfullySavesProcess()
+        public async Task SaveProcessSucessfullySavesNewProcessToDatabase()
         {
             // Arrange
-            var processObject = _fixture.Build<Process>()
-                                        .With(x => x.VersionNumber, (int?) null)
-                                        .With(x => x.CurrentState,
-                                                   _fixture.Build<ProcessState>()
-                                                           .With(x => x.CreatedAt, DateTime.UtcNow)
-                                                           .With(x => x.UpdatedAt, DateTime.UtcNow)
-                                                           .With(x => x.State, SoleToJointStates.ApplicationInitialised)
-                                                           .With(x => x.PermittedTriggers, (new[] { SoleToJointTriggers.StartApplication }).ToList())
-                                                           .Create())
-                                        .Without(x => x.PreviousStates)
-                                        .Create();
+            var process = _fixture.Build<Process>()
+                        .With(x => x.VersionNumber, (int?) null)
+                        .Create();
             // Act
-            var process = await _classUnderTest.SaveProcess(processObject).ConfigureAwait(false);
+            await _classUnderTest.SaveProcess(process).ConfigureAwait(false);
             // Assert
             var processDb = await _dynamoDb.LoadAsync<ProcessesDb>(process.Id).ConfigureAwait(false);
-            processDb.Should().BeEquivalentTo(processObject.ToDatabase(), config => config.Excluding(x => x.VersionNumber)
-                                                                                   .Excluding(z => z.CurrentState.CreatedAt)
-                                                                                   .Excluding(a => a.CurrentState.UpdatedAt));
+            processDb.Should().BeEquivalentTo(process, config => config.Excluding(x => x.VersionNumber));
             processDb.VersionNumber.Should().Be(0);
-            processDb.CurrentState.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
-            processDb.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
-
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync for id {process.Id}", Times.Once());
 
             _cleanup.Add(async () => await _dynamoDb.DeleteAsync<ProcessesDb>(process.Id).ConfigureAwait(false));
         }
 
         [Fact]
-        public async Task UpdateProcessSuccessfullySavesProcess()
+        public async Task SaveProcessSuccessfullyOverwritesExistingProcess()
         {
             // Arrange
             var originalProcess = _fixture.Build<Process>()
-                                        .With(x => x.VersionNumber, (int?) null)
-                                        .With(x => x.CurrentState,
-                                                   _fixture.Build<ProcessState>()
-                                                           .With(x => x.CreatedAt, DateTime.UtcNow)
-                                                           .With(x => x.UpdatedAt, DateTime.UtcNow)
-                                                           .With(x => x.State, SoleToJointStates.ApplicationInitialised)
-                                                           .With(x => x.PermittedTriggers, (new[] { SoleToJointTriggers.StartApplication }).ToList())
-                                                           .Create())
-                                        .Without(x => x.PreviousStates)
-                                        .Create();
+                                    .With(x => x.VersionNumber, (int?) null)
+                                    .Create();
             await InsertDatatoDynamoDB(originalProcess.ToDatabase()).ConfigureAwait(false);
 
             var updateObject = _fixture.Build<Process>()
-                                       .With(x => x.Id, originalProcess.Id)
-                                       .With(x => x.VersionNumber, 0)
-                                       .With(x => x.CurrentState,
-                                                  _fixture.Build<ProcessState>()
-                                                          .With(x => x.CreatedAt, DateTime.UtcNow)
-                                                          .With(x => x.UpdatedAt, DateTime.UtcNow)
-                                                          .With(x => x.State, SoleToJointStates.SelectTenants)
-                                                          .With(x => x.PermittedTriggers, (new[] { SoleToJointTriggers.CheckEligibility }).ToList())
-                                                          .Create())
-                                       .Without(x => x.PreviousStates)
-                                       .Create();
+                                    .With(x => x.Id, originalProcess.Id)
+                                    .With(x => x.VersionNumber, 0)
+                                    .Create();
+
             // Act
             var updatedProcess = await _classUnderTest.SaveProcess(updateObject).ConfigureAwait(false);
             // Assert
-            updatedProcess.Should().BeEquivalentTo(updateObject, c => c.Excluding(y => y.VersionNumber));
+            updatedProcess.Should().BeEquivalentTo(updateObject, c => c.Excluding(x => x.VersionNumber));
             updatedProcess.VersionNumber.Should().Be(1);
 
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync for id {updateObject.Id}", Times.Once());
+
+            _cleanup.Add(async () => await _dynamoDb.DeleteAsync<ProcessesDb>(originalProcess.Id).ConfigureAwait(false));
         }
     }
 }

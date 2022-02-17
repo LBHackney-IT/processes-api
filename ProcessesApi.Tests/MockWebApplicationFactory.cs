@@ -21,6 +21,18 @@ namespace ProcessesApi.Tests
                     Name = "Processes",
                     KeyName = "id",
                     KeyType = ScalarAttributeType.S,
+                },
+                new TableDef
+                {
+                    Name = "TenureInformation",
+                    KeyName = "id",
+                    KeyType = ScalarAttributeType.S,
+                },
+                new TableDef
+                {
+                    Name = "Persons",
+                    KeyName = "id",
+                    KeyType = ScalarAttributeType.S,
                 }
             };
 

@@ -9,7 +9,7 @@ using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Boundary.Response;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
-using ProcessesApi.V1.Infrastructure.Exceptions;
+using ProcessesApi.V1.UseCase.Exceptions;
 using ProcessesApi.V1.UseCase.Interfaces;
 using System;
 using System.Net.Http.Headers;
@@ -81,12 +81,13 @@ namespace ProcessesApi.V1.Controllers
                 case ProcessNamesConstants.SoleToJoint:
                     var soleToJointResult = await _soleToJointUseCase.Execute(
                                                                       Guid.NewGuid(),
-                                                                      SoleToJointTriggers.StartApplication,
+                                                                      SoleToJointInternalTriggers.StartApplication,
                                                                       request.TargetId,
                                                                       request.RelatedEntities,
                                                                       request.FormData,
                                                                       request.Documents,
-                                                                      processName)
+                                                                      processName,
+                                                                      null)
                                                                      .ConfigureAwait(false);
 
                     return Created(new Uri($"api/v1/processes/{processName}/{soleToJointResult.Id}", UriKind.Relative), soleToJointResult);
@@ -120,11 +121,17 @@ namespace ProcessesApi.V1.Controllers
         public async Task<IActionResult> UpdateProcess([FromBody] UpdateProcessQueryObject requestObject, [FromRoute] UpdateProcessQuery query)
         {
             _contextWrapper.GetContextRequestHeaders(HttpContext);
-            //TO DO: Complete ifMatch stuff
             var ifMatch = GetIfMatchFromHeader();
             try
             {
-                var soleToJointResult = await _soleToJointUseCase.Execute(query.Id, query.ProcessTrigger, null, null, requestObject.FormData, requestObject.Documents, query.ProcessName);
+                var soleToJointResult = await _soleToJointUseCase.Execute(query.Id,
+                                                                          query.ProcessTrigger,
+                                                                          null,
+                                                                          null,
+                                                                          requestObject.FormData,
+                                                                          requestObject.Documents,
+                                                                          query.ProcessName,
+                                                                          ifMatch);
                 if (soleToJointResult == null) return NotFound(query.Id);
                 return NoContent();
             }

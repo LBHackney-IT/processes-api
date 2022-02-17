@@ -9,7 +9,9 @@ namespace ProcessesApi.V1.Boundary.Request.Validation
         {
             RuleFor(x => x.TargetId).NotNull()
                             .NotEqual(Guid.Empty);
-            RuleForEach(x => x.RelatedEntities).NotNull()
+            // Uncomment when frontend has added relatedEntities as part of the CreateProcess Request
+            //RuleFor(x => x.RelatedEntities).NotNull();
+            RuleForEach(x => x.RelatedEntities)
                             .NotEqual(Guid.Empty);
             RuleForEach(x => x.Documents).NotNull()
                             .NotEqual(Guid.Empty);

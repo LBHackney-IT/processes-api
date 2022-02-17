@@ -51,12 +51,14 @@ namespace ProcessesApi
 
         public IConfiguration Configuration { get; }
         private static List<ApiVersionDescription> _apiVersions { get; set; }
-        private const string ApiName = "Processes API";
+        private const string ApiName = "processes";
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddCors();
+            services.AddHttpClient();
+            services.AddApiGateway();
 
             services
                 .AddMvc()
@@ -165,6 +167,7 @@ namespace ProcessesApi
         {
 
             services.AddScoped<IProcessesGateway, ProcessesGateway>();
+            services.AddScoped<ISoleToJointGateway, SoleToJointGateway>();
         }
 
         private static void RegisterUseCases(IServiceCollection services)

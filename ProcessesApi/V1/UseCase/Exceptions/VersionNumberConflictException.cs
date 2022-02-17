@@ -1,6 +1,6 @@
 using System;
 
-namespace ProcessesApi.V1.Infrastructure.Exceptions
+namespace ProcessesApi.V1.UseCase.Exceptions
 {
     public class VersionNumberConflictException : Exception
     {

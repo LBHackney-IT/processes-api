@@ -7,7 +7,7 @@ namespace ProcessesApi.V1.Boundary.Request
     {
         public Guid TargetId { get; set; }
         public List<Guid> RelatedEntities { get; set; }
-        public object FormData { get; set; }
+        public Dictionary<string, object> FormData { get; set; }
         public List<Guid> Documents { get; set; }
     }
 }

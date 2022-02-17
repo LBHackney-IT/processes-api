@@ -22,8 +22,7 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         public void RequestShouldErrorWithEmptyDocumentIDs()
         {
             //Arrange
-            var formData = _fixture.Build<object>().Create();
-            var model = new ProcessData(formData, new List<Guid> { Guid.Empty });
+            var model = new ProcessData(new Dictionary<string, object>(), new List<Guid> { Guid.Empty });
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert
@@ -33,8 +32,7 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         public void RequestShouldNotErrorWithValidDocumentIDs()
         {
             //Arrange
-            var formData = _fixture.Build<object>().Create();
-            var model = new ProcessData(formData, new List<Guid> { Guid.NewGuid() });
+            var model = new ProcessData(new Dictionary<string, object>(), new List<Guid> { Guid.NewGuid() });
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert
