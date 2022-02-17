@@ -12,6 +12,7 @@ provider:
 
 plugins:
   - serverless-associate-waf
+  - '@serverless/safeguards-plugin'
 
 package:
   artifact: ./bin/release/netcoreapp3.1/processes-api.zip
@@ -194,6 +195,10 @@ resources:
           Expression: rate(5 minutes)
           DurationInSeconds: 0
 custom:
+  safeguards:
+    - title: Require authorizer
+      safeguard: require-authorizer
+      path: ./policies
   associateWaf:
     name: ProcessApiWafAcl
     version: V2
