@@ -10,6 +10,7 @@ using Hackney.Core.Logging;
 using Hackney.Core.Middleware.CorrelationId;
 using Hackney.Core.Middleware.Exception;
 using Hackney.Core.Middleware.Logging;
+using Hackney.Core.Sns;
 using Hackney.Core.Validation.AspNet;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -23,6 +24,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using ProcessesApi.V1.Boundary.Request.Validation;
+using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.UseCase;
@@ -145,11 +147,15 @@ namespace ProcessesApi
             AWSXRayRecorder.RegisterLogger(LoggingOptions.SystemDiagnostics);
 
             services.ConfigureDynamoDB();
+            services.ConfigureSns();
             services.AddLogCallAspect();
 
 
             RegisterGateways(services);
             RegisterUseCases(services);
+            services.AddSingleton<IConfiguration>(Configuration);
+
+            services.AddScoped<ISnsFactory, ProcessesSnsFactory>();
 
             ConfigureHackneyCoreDI(services);
 
@@ -157,7 +163,8 @@ namespace ProcessesApi
 
         private static void ConfigureHackneyCoreDI(IServiceCollection services)
         {
-            services.AddTokenFactory()
+            services.AddSnsGateway()
+                .AddTokenFactory()
                 .AddHttpContextWrapper();
         }
 

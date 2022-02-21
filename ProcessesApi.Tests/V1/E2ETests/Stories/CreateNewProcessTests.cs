@@ -1,4 +1,5 @@
 using System;
+using Hackney.Core.Testing.Sns;
 using ProcessesApi.Tests.V1.E2E.Fixtures;
 using ProcessesApi.Tests.V1.E2E.Steps;
 using TestStack.BDDfy;
@@ -14,11 +15,13 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
     public class CreateNewProcessTests : IDisposable
     {
         private readonly ProcessFixture _processFixture;
+        private readonly ISnsFixture _snsFixture;
         private readonly CreateNewSoleToJointProcessSteps _steps;
 
-        public CreateNewProcessTests(MockWebApplicationFactory<Startup> appFactory)
+        public CreateNewProcessTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
-            _processFixture = new ProcessFixture(appFactory.DynamoDbFixture);
+            _snsFixture = appFactory.SnsFixture;
+            _processFixture = new ProcessFixture(appFactory.DynamoDbFixture, _snsFixture.SimpleNotificationService);
             _steps = new CreateNewSoleToJointProcessSteps(appFactory.Client, appFactory.DynamoDbFixture);
         }
 

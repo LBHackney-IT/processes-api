@@ -45,7 +45,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         private static string paymentAgreementRoute => $"{IncomeApiRoute}/agreements/{_proposedTenantExistingTenureTenancyRef}";
         private static string tenanciesRoute => $"{IncomeApiRoute}/tenancies/{_proposedTenantExistingTenureTenancyRef}";
 
-        public SoleToJointGatewayTests(MockWebApplicationFactory<Startup> appFactory)
+        public SoleToJointGatewayTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
             _dbFixture = appFactory.DynamoDbFixture;
 

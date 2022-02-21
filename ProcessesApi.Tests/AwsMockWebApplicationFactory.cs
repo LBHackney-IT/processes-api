@@ -1,6 +1,8 @@
 using Amazon.DynamoDBv2;
 using Hackney.Core.DynamoDb;
+using Hackney.Core.Sns;
 using Hackney.Core.Testing.DynamoDb;
+using Hackney.Core.Testing.Sns;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
@@ -11,7 +13,7 @@ using System.Net.Http;
 
 namespace ProcessesApi.Tests
 {
-    public class MockWebApplicationFactory<TStartup>
+    public class AwsMockWebApplicationFactory<TStartup>
         : WebApplicationFactory<TStartup> where TStartup : class
     {
         private readonly List<TableDef> _tables = new List<TableDef>
@@ -38,11 +40,16 @@ namespace ProcessesApi.Tests
 
         public IDynamoDbFixture DynamoDbFixture { get; private set; }
         public HttpClient Client { get; private set; }
+        public ISnsFixture SnsFixture { get; private set; }
 
-        public MockWebApplicationFactory()
+
+        public AwsMockWebApplicationFactory()
         {
             EnsureEnvVarConfigured("DynamoDb_LocalMode", "true");
             EnsureEnvVarConfigured("DynamoDb_LocalServiceUrl", "http://localhost:8000");
+
+            //EnsureEnvVarConfigured("Sns_LocalMode", "true");
+            //EnsureEnvVarConfigured("Localstack_SnsServiceUrl", "http://localhost:4566");
 
             Client = CreateClient();
         }
@@ -50,15 +57,14 @@ namespace ProcessesApi.Tests
         private bool _disposed = false;
         protected override void Dispose(bool disposing)
         {
-            if (disposing && _disposed)
+            if (disposing && !_disposed)
             {
-                if (DynamoDbFixture != null)
+                if (null != DynamoDbFixture)
                     DynamoDbFixture.Dispose();
-                if (Client != null)
+                if (null != SnsFixture)
+                    SnsFixture.Dispose();
+                if (null != Client)
                     Client.Dispose();
-
-                base.Dispose(disposing);
-
                 _disposed = true;
             }
         }
@@ -77,11 +83,17 @@ namespace ProcessesApi.Tests
             {
                 services.ConfigureDynamoDB();
                 services.ConfigureDynamoDbFixture();
+                services.ConfigureSns();
+                services.ConfigureSnsFixture();
+
 
                 var serviceProvider = services.BuildServiceProvider();
-                DynamoDbFixture = serviceProvider.GetRequiredService<IDynamoDbFixture>();
 
+                DynamoDbFixture = serviceProvider.GetRequiredService<IDynamoDbFixture>();
                 DynamoDbFixture.EnsureTablesExist(_tables);
+
+                SnsFixture = serviceProvider.GetRequiredService<ISnsFixture>();
+                SnsFixture.CreateSnsTopic<EntityEventSns>("processes", "PROCESS_SNS_ARN");
             });
         }
     }

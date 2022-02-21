@@ -27,7 +27,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         private readonly Mock<ILogger<ProcessesGateway>> _logger;
 
 
-        public ProcessesGatewayTests(MockWebApplicationFactory<Startup> appFactory)
+        public ProcessesGatewayTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
             _dbFixture = appFactory.DynamoDbFixture;
             _logger = new Mock<ILogger<ProcessesGateway>>();
