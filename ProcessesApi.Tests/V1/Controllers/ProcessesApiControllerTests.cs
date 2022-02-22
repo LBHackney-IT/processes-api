@@ -165,7 +165,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, request.TargetId, request.RelatedEntities, processName, null);
 
             _mockSoleToJointUseCase.Setup(x => x.Execute(It.IsAny<Guid>(), SoleToJointInternalTriggers.StartApplication,
-             request.TargetId, request.RelatedEntities, request.FormData, request.Documents, processName, It.IsAny<int?>(),It.IsAny<Token>()))
+             request.TargetId, request.RelatedEntities, request.FormData, request.Documents, processName, It.IsAny<int?>(), It.IsAny<Token>()))
              .ReturnsAsync(processResponse);
 
             // Act

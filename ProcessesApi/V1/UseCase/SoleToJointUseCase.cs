@@ -20,7 +20,7 @@ namespace ProcessesApi.V1.UseCase
 
         public SoleToJointUseCase(IProcessesGateway processGateway, ISoleToJointService soleToJointService,
                                   ISnsGateway snsGateway, ISnsFactory snsFactory)
-                                    
+
         {
             _processGateway = processGateway;
             _soleToJointService = soleToJointService;
