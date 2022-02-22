@@ -21,7 +21,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         public CreateNewProcessTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
             _snsFixture = appFactory.SnsFixture;
-            _processFixture = new ProcessFixture(appFactory.DynamoDbFixture, _snsFixture.SimpleNotificationService);
+            _processFixture = new ProcessFixture(appFactory.DynamoDbFixture, appFactory.SnsFixture.SimpleNotificationService);
             _steps = new CreateNewSoleToJointProcessSteps(appFactory.Client, appFactory.DynamoDbFixture);
         }
 

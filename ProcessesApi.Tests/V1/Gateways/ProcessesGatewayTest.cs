@@ -31,7 +31,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         {
             _dbFixture = appFactory.DynamoDbFixture;
             _logger = new Mock<ILogger<ProcessesGateway>>();
-            _classUnderTest = new ProcessesGateway(_dynamoDb, _logger.Object);
+            _classUnderTest = new ProcessesGateway(_dbFixture.DynamoDbContext, _logger.Object);
         }
 
         public void Dispose()

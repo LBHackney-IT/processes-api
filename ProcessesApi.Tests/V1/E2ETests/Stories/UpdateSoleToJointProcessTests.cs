@@ -28,7 +28,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         {
             _dbFixture = appFactory.DynamoDbFixture;
             _snsFixture = appFactory.SnsFixture;
-            _processFixture = new ProcessFixture(appFactory.DynamoDbFixture, _snsFixture.SimpleNotificationService);
+            _processFixture = new ProcessFixture(appFactory.DynamoDbFixture, appFactory.SnsFixture.SimpleNotificationService);
             _personFixture = new PersonFixture(appFactory.DynamoDbFixture);
             _tenureFixture = new TenureFixture(appFactory.DynamoDbFixture);
             _agreementsApiFixture = new IncomeApiAgreementsFixture();

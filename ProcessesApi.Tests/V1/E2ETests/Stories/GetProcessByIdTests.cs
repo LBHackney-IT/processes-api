@@ -24,7 +24,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         {
             _dbFixture = appFactory.DynamoDbFixture;
             _snsFixture = appFactory.SnsFixture;
-            _processFixture = new ProcessFixture(appFactory.DynamoDbFixture, _snsFixture.SimpleNotificationService);
+            _processFixture = new ProcessFixture(appFactory.DynamoDbFixture, appFactory.SnsFixture.SimpleNotificationService);
             _steps = new GetProcessByIdSteps(appFactory.Client);
         }
 

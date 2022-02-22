@@ -10,6 +10,7 @@ using Hackney.Core.Logging;
 using Hackney.Core.Middleware.CorrelationId;
 using Hackney.Core.Middleware.Exception;
 using Hackney.Core.Middleware.Logging;
+using Hackney.Core.Middleware;
 using Hackney.Core.Sns;
 using Hackney.Core.Validation.AspNet;
 using Microsoft.AspNetCore.Builder;
@@ -207,6 +208,8 @@ namespace ProcessesApi
             app.UseLoggingScope();
             app.UseCustomExceptionHandler(logger);
             app.UseXRay("processes-api");
+            app.EnableRequestBodyRewind();
+
 
 
             //Get All ApiVersions,
