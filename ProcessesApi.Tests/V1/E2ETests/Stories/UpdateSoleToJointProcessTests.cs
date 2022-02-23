@@ -28,13 +28,13 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         {
             _dbFixture = appFactory.DynamoDbFixture;
             _snsFixture = appFactory.SnsFixture;
-            _processFixture = new ProcessFixture(appFactory.DynamoDbFixture, appFactory.SnsFixture.SimpleNotificationService);
-            _personFixture = new PersonFixture(appFactory.DynamoDbFixture);
-            _tenureFixture = new TenureFixture(appFactory.DynamoDbFixture);
+            _processFixture = new ProcessFixture(_dbFixture.DynamoDbContext, _snsFixture.SimpleNotificationService);
+            _personFixture = new PersonFixture(_dbFixture.DynamoDbContext);
+            _tenureFixture = new TenureFixture(_dbFixture.DynamoDbContext);
             _agreementsApiFixture = new IncomeApiAgreementsFixture();
             _tenanciesApiFixture = new IncomeApiTenanciesFixture();
 
-            _steps = new UpdateSoleToJointProcessSteps(appFactory.Client, appFactory.DynamoDbFixture);
+            _steps = new UpdateSoleToJointProcessSteps(appFactory.Client, _dbFixture);
         }
 
         public void Dispose()

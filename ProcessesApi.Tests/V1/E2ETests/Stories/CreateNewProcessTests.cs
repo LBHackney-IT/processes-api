@@ -1,4 +1,5 @@
 using System;
+using Hackney.Core.Testing.DynamoDb;
 using Hackney.Core.Testing.Sns;
 using ProcessesApi.Tests.V1.E2E.Fixtures;
 using ProcessesApi.Tests.V1.E2E.Steps;
@@ -16,13 +17,15 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
     {
         private readonly ProcessFixture _processFixture;
         private readonly ISnsFixture _snsFixture;
+        private readonly IDynamoDbFixture _dbFixture;
         private readonly CreateNewSoleToJointProcessSteps _steps;
 
         public CreateNewProcessTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
+            _dbFixture = appFactory.DynamoDbFixture;
             _snsFixture = appFactory.SnsFixture;
-            _processFixture = new ProcessFixture(appFactory.DynamoDbFixture, appFactory.SnsFixture.SimpleNotificationService);
-            _steps = new CreateNewSoleToJointProcessSteps(appFactory.Client, appFactory.DynamoDbFixture);
+            _processFixture = new ProcessFixture(_dbFixture.DynamoDbContext, _snsFixture.SimpleNotificationService);
+            _steps = new CreateNewSoleToJointProcessSteps(appFactory.Client,_dbFixture);
         }
 
         public void Dispose()
