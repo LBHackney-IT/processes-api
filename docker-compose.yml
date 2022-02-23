@@ -14,7 +14,7 @@ services:
       - DynamoDb_LocalMode=true
       - DynamoDb_LocalServiceUrl=http://dynamodb-database:8000
       - Sns_LocalMode=true
-      - Localstack_SnsServiceUrl=http://localstack-processes-api:4566
+      - Localstack_SnsServiceUrl=http://localstack:4566
       - AWS_REGION=eu-west-2
       - AWS_ACCESS_KEY_ID=local
       - AWS_SECRET_ACCESS_KEY=local
@@ -34,13 +34,13 @@ services:
       - DynamoDb_LocalMode=true
       - DynamoDb_LocalServiceUrl=http://dynamodb-database:8000
       - Sns_LocalMode=true
-      - Localstack_SnsServiceUrl=http://localstack-processes-api:4566
+      - Localstack_SnsServiceUrl=http://localstack:4566
       - AWS_REGION=eu-west-2
       - AWS_ACCESS_KEY_ID=local
       - AWS_SECRET_ACCESS_KEY=local
     links:
       - dynamodb-database
-      - localstack-processes-api
+      - localstack
 
 
   dynamodb-database:
@@ -48,7 +48,7 @@ services:
     ports:
       - 8000:8000
 
-  localstack-processes-api:
+  localstack:
     image: localstack/localstack    
     hostname: awslocal    
     ports:
