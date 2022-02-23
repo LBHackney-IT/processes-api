@@ -40,7 +40,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=local
     links:
       - dynamodb-database
-      - localstack
+      - localstack-processes-api
 
 
   dynamodb-database:
@@ -48,8 +48,7 @@ services:
     ports:
       - 8000:8000
 
-  localstack:
-    container_name: "${LOCALSTACK_DOCKER_NAME-localstack_main}"
+  localstack-processes-api:
     image: localstack/localstack    
     hostname: awslocal    
     ports:
