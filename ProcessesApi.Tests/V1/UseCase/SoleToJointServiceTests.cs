@@ -150,7 +150,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             // Assert
             CurrentStateShouldContainCorrectData(process,
                                                  SoleToJointStates.AutomatedChecksFailed,
-                                                 new List<string>(),
+                                                 new List<string>() { SoleToJointPermittedTriggers.CancelProcess },
                                                  triggerObject);
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
             _mockSTJGateway.Verify(x => x.CheckEligibility(process.TargetId, incomingTenantId), Times.Once());
@@ -227,6 +227,29 @@ namespace ProcessesApi.Tests.V1.UseCase
                                                  new List<string>() { SoleToJointPermittedTriggers.CancelProcess },
                                                  triggerObject);
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
+        }
+
+        [Theory]
+        [InlineData(SoleToJointStates.AutomatedChecksFailed)]
+        [InlineData(SoleToJointStates.ManualChecksFailed)]
+        public async Task ProcessStateIsUpdatedToCloseProcess(string fromState)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(fromState);
+
+            var formData = _manualEligibilityPassData;
+            var triggerObject = CreateProcessTrigger(process,
+                                                     SoleToJointPermittedTriggers.CancelProcess,
+                                                     new Dictionary<string, object>());
+            // Act
+            await _classUnderTest.Process(triggerObject, process).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(process,
+                                                 SoleToJointStates.ProcessClosed,
+                                                 new List<string>(),
+                                                 triggerObject);
+            process.PreviousStates.LastOrDefault().State.Should().Be(fromState);
         }
     }
 }

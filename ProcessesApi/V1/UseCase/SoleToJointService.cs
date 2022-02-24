@@ -60,6 +60,8 @@ namespace ProcessesApi.V1.UseCase
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckEligibility, async (x) => await CheckEligibility(x).ConfigureAwait(false))
                     .Permit(SoleToJointInternalTriggers.EligibiltyFailed, SoleToJointStates.AutomatedChecksFailed)
                     .Permit(SoleToJointInternalTriggers.EligibiltyPassed, SoleToJointStates.AutomatedChecksPassed);
+            _machine.Configure(SoleToJointStates.AutomatedChecksFailed)
+                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessClosed);
             _machine.Configure(SoleToJointStates.AutomatedChecksPassed)
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckManualEligibility, async (x) => await CheckManualEligibility(x).ConfigureAwait(false))
                     .Permit(SoleToJointInternalTriggers.ManualEligibilityPassed, SoleToJointStates.ManualChecksPassed)
