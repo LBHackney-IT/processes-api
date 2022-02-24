@@ -25,7 +25,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
             _dbFixture = appFactory.DynamoDbFixture;
             _snsFixture = appFactory.SnsFixture;
             _processFixture = new ProcessFixture(_dbFixture.DynamoDbContext, _snsFixture.SimpleNotificationService);
-            _steps = new CreateNewSoleToJointProcessSteps(appFactory.Client,_dbFixture);
+            _steps = new CreateNewSoleToJointProcessSteps(appFactory.Client, _dbFixture);
         }
 
         public void Dispose()
