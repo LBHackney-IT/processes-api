@@ -25,11 +25,11 @@ namespace ProcessesApi.Tests.V1.UseCase
         private IDynamoDBContext _dynamoDb => _dbFixture.DynamoDbContext;
         private Dictionary<string, object> _manualEligibilityPassData => new Dictionary<string, object>
         {
-            { SoleToJointFormDataKeys.BR11, true },
-            { SoleToJointFormDataKeys.BR12, false },
-            { SoleToJointFormDataKeys.BR13, false },
-            { SoleToJointFormDataKeys.BR15, false },
-            { SoleToJointFormDataKeys.BR16, false }
+            { SoleToJointFormDataKeys.BR11, "true" },
+            { SoleToJointFormDataKeys.BR12, "false" },
+            { SoleToJointFormDataKeys.BR13, "false" },
+            { SoleToJointFormDataKeys.BR15, "false" },
+            { SoleToJointFormDataKeys.BR16, "false" }
         };
 
         private readonly List<Action> _cleanup = new List<Action>();
@@ -143,6 +143,7 @@ namespace ProcessesApi.Tests.V1.UseCase
                                                      new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId } });
 
             _mockSTJGateway.Setup(x => x.CheckEligibility(process.TargetId, incomingTenantId)).ReturnsAsync(false);
+            
             // Act
             await _classUnderTest.Process(triggerObject, process).ConfigureAwait(false);
 
@@ -166,19 +167,20 @@ namespace ProcessesApi.Tests.V1.UseCase
                                                      SoleToJointPermittedTriggers.CheckEligibility,
                                                      new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId } });
             _mockSTJGateway.Setup(x => x.CheckEligibility(process.TargetId, incomingTenantId)).ReturnsAsync(true);
+            
             // Act
             await _classUnderTest.Process(triggerObject, process).ConfigureAwait(false);
 
             // Assert
             CurrentStateShouldContainCorrectData(process,
                                                  SoleToJointStates.AutomatedChecksPassed,
-                                                 new List<string>(),
+                                                 new List<string>() { SoleToJointPermittedTriggers.CheckManualEligibility } ,
                                                  triggerObject);
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
             _mockSTJGateway.Verify(x => x.CheckEligibility(process.TargetId, incomingTenantId), Times.Once());
         }
 
-        [Fact(Skip = "Not implemented")]
+        [Fact]
         public async Task ProcessStateIsUpdatedToManualChecksPassed()
         {
             // Arrange
@@ -194,7 +196,35 @@ namespace ProcessesApi.Tests.V1.UseCase
             // Assert
             CurrentStateShouldContainCorrectData(process,
                                                  SoleToJointStates.ManualChecksPassed,
-                                                 new List<string>(),
+                                                 new List<string>(), // TODO: Update when next state is implemented
+                                                 triggerObject);
+            process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
+        }
+
+        [Theory]
+        [InlineData(SoleToJointFormDataKeys.BR11, "false")]
+        [InlineData(SoleToJointFormDataKeys.BR12, "true")]
+        [InlineData(SoleToJointFormDataKeys.BR13, "true")]
+        [InlineData(SoleToJointFormDataKeys.BR15, "true")]
+        [InlineData(SoleToJointFormDataKeys.BR16, "true")]
+        public async Task ProcessStateIsUpdatedToManualChecksFailed(string eligibilityCheckId, string value)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SoleToJointStates.AutomatedChecksPassed);
+
+            var eligibiltyFormData = _manualEligibilityPassData;
+            eligibiltyFormData[eligibilityCheckId] = value;
+
+            var triggerObject = CreateProcessTrigger(process,
+                                                     SoleToJointPermittedTriggers.CheckManualEligibility,
+                                                     eligibiltyFormData);
+            // Act
+            await _classUnderTest.Process(triggerObject, process).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(process,
+                                                 SoleToJointStates.ManualChecksFailed,
+                                                 new List<string>() { SoleToJointPermittedTriggers.CancelProcess },
                                                  triggerObject);
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
         }

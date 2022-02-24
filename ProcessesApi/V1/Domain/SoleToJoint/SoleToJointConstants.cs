@@ -6,6 +6,7 @@ namespace ProcessesApi.V1.Domain
         public const string SelectTenants = "SelectTenants";
         public const string AutomatedChecksFailed = "AutomatedChecksFailed";
         public const string AutomatedChecksPassed = "AutomatedChecksPassed";
+        public const string ProcessClosed = "ProcessClosed";
         public const string ManualChecksFailed = "ManualChecksFailed";
         public const string ManualChecksPassed = "ManualChecksPassed";
         public const string ConfirmAppointmentScheduled = "ConfirmAppointmentScheduled";
@@ -25,8 +26,8 @@ namespace ProcessesApi.V1.Domain
         public const string StartApplication = "StartApplication";
         public const string EligibiltyPassed = "EligibiltyPassed";
         public const string EligibiltyFailed = "EligibiltyFailed";
-        public const string ManualChecksFailed = "ManualChecksFailed";
-        public const string ManualChecksPassed = "ManualChecksPassed";
+        public const string ManualEligibilityFailed = "ManualEligibilityFailed";
+        public const string ManualEligibilityPassed = "ManualEligibilityPassed";
     }
 
     public static class SoleToJointFormDataKeys

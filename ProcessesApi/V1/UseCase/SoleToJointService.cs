@@ -35,14 +35,37 @@ namespace ProcessesApi.V1.UseCase
             await _machine.FireAsync(res, processRequest, _soleToJointProcess);
         }
 
+        private async Task CheckManualEligibility(StateMachine<string, string>.Transition x)
+        {
+            var processRequest = x.Parameters[0] as UpdateProcessState;
+            var eligibilityFormData = processRequest.FormData;
+            
+            var isEligible = eligibilityFormData[SoleToJointFormDataKeys.BR11].ToString() == "true"
+                             && eligibilityFormData[SoleToJointFormDataKeys.BR12].ToString() == "false"
+                             && eligibilityFormData[SoleToJointFormDataKeys.BR13].ToString() == "false"
+                             && eligibilityFormData[SoleToJointFormDataKeys.BR15].ToString() == "false"
+                             && eligibilityFormData[SoleToJointFormDataKeys.BR16].ToString() == "false";
+
+            processRequest.Trigger = isEligible ? SoleToJointInternalTriggers.ManualEligibilityPassed : SoleToJointInternalTriggers.ManualEligibilityFailed;
+
+            var res = _machine.SetTriggerParameters<UpdateProcessState, Process>(processRequest.Trigger);
+            await _machine.FireAsync(res, processRequest, _soleToJointProcess); 
+        }
+
         private void SetUpStates()
         {
             _machine.Configure(SoleToJointStates.ApplicationInitialised)
-                .Permit(SoleToJointInternalTriggers.StartApplication, SoleToJointStates.SelectTenants);
+                    .Permit(SoleToJointInternalTriggers.StartApplication, SoleToJointStates.SelectTenants);
             _machine.Configure(SoleToJointStates.SelectTenants)
-                .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckEligibility, async (x) => await CheckEligibility(x).ConfigureAwait(false))
-                .Permit(SoleToJointInternalTriggers.EligibiltyFailed, SoleToJointStates.AutomatedChecksFailed)
-                .Permit(SoleToJointInternalTriggers.EligibiltyPassed, SoleToJointStates.AutomatedChecksPassed);
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckEligibility, async (x) => await CheckEligibility(x).ConfigureAwait(false))
+                    .Permit(SoleToJointInternalTriggers.EligibiltyFailed, SoleToJointStates.AutomatedChecksFailed)
+                    .Permit(SoleToJointInternalTriggers.EligibiltyPassed, SoleToJointStates.AutomatedChecksPassed);
+            _machine.Configure(SoleToJointStates.AutomatedChecksPassed)
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckManualEligibility, async (x) => await CheckManualEligibility(x).ConfigureAwait(false))
+                    .Permit(SoleToJointInternalTriggers.ManualEligibilityPassed, SoleToJointStates.ManualChecksPassed)
+                    .Permit(SoleToJointInternalTriggers.ManualEligibilityFailed, SoleToJointStates.ManualChecksFailed);
+            _machine.Configure(SoleToJointStates.ManualChecksFailed)
+                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessClosed);
         }
 
         private void AddIncomingTenantId(UpdateProcessState processRequest)
@@ -59,6 +82,9 @@ namespace ProcessesApi.V1.UseCase
             Configure(SoleToJointStates.SelectTenants, Assignment.Create("tenants"), null);
             Configure(SoleToJointStates.AutomatedChecksFailed, Assignment.Create("tenants"), AddIncomingTenantId);
             Configure(SoleToJointStates.AutomatedChecksPassed, Assignment.Create("tenants"), AddIncomingTenantId);
+            Configure(SoleToJointStates.ProcessClosed, Assignment.Create("tenants"), null);
+            Configure(SoleToJointStates.ManualChecksPassed, Assignment.Create("tenants"), null);
+            Configure(SoleToJointStates.ManualChecksFailed, Assignment.Create("tenants"), null);
         }
 
         private void Configure(string state, Assignment assignment, Action<UpdateProcessState> func)
