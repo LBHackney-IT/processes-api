@@ -129,6 +129,7 @@ commands:
           command: |
             cd ./ProcessesApi/
             npm i serverless-associate-waf
+            npm i @serverless/safeguards-plugin --save-dev
             sls deploy --stage <<parameters.stage>> --conceal
 
 jobs:
@@ -264,7 +265,9 @@ workflows:
   check-and-deploy-staging-and-production:
       jobs:
       - build-and-test:
-          context: api-nuget-token-context
+          context:
+            - api-nuget-token-context
+            - SonarCloud
           filters:
             branches:
               only: release
