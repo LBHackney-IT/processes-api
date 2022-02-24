@@ -143,7 +143,7 @@ namespace ProcessesApi.Tests.V1.UseCase
                                                      new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId } });
 
             _mockSTJGateway.Setup(x => x.CheckEligibility(process.TargetId, incomingTenantId)).ReturnsAsync(false);
-            
+
             // Act
             await _classUnderTest.Process(triggerObject, process).ConfigureAwait(false);
 
@@ -167,14 +167,14 @@ namespace ProcessesApi.Tests.V1.UseCase
                                                      SoleToJointPermittedTriggers.CheckEligibility,
                                                      new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId } });
             _mockSTJGateway.Setup(x => x.CheckEligibility(process.TargetId, incomingTenantId)).ReturnsAsync(true);
-            
+
             // Act
             await _classUnderTest.Process(triggerObject, process).ConfigureAwait(false);
 
             // Assert
             CurrentStateShouldContainCorrectData(process,
                                                  SoleToJointStates.AutomatedChecksPassed,
-                                                 new List<string>() { SoleToJointPermittedTriggers.CheckManualEligibility } ,
+                                                 new List<string>() { SoleToJointPermittedTriggers.CheckManualEligibility },
                                                  triggerObject);
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
             _mockSTJGateway.Verify(x => x.CheckEligibility(process.TargetId, incomingTenantId), Times.Once());

@@ -15,8 +15,8 @@ namespace ProcessesApi.V1.Domain
     public static class SoleToJointPermittedTriggers
     {
         public const string CheckEligibility = "CheckEligibility";
-        public const string CheckManualEligibility = "CheckManualEligibility";
         public const string CancelProcess = "CancelProcess";
+        public const string CheckManualEligibility = "CheckManualEligibility";
         public const string RequestDocuments = "RequestDocuments";
         public const string CheckTenancyBreach = "CheckTenancyBreach";
     }

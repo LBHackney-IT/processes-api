@@ -39,7 +39,7 @@ namespace ProcessesApi.V1.UseCase
         {
             var processRequest = x.Parameters[0] as UpdateProcessState;
             var eligibilityFormData = processRequest.FormData;
-            
+
             var isEligible = eligibilityFormData[SoleToJointFormDataKeys.BR11].ToString() == "true"
                              && eligibilityFormData[SoleToJointFormDataKeys.BR12].ToString() == "false"
                              && eligibilityFormData[SoleToJointFormDataKeys.BR13].ToString() == "false"
@@ -49,7 +49,7 @@ namespace ProcessesApi.V1.UseCase
             processRequest.Trigger = isEligible ? SoleToJointInternalTriggers.ManualEligibilityPassed : SoleToJointInternalTriggers.ManualEligibilityFailed;
 
             var res = _machine.SetTriggerParameters<UpdateProcessState, Process>(processRequest.Trigger);
-            await _machine.FireAsync(res, processRequest, _soleToJointProcess); 
+            await _machine.FireAsync(res, processRequest, _soleToJointProcess);
         }
 
         private void SetUpStates()

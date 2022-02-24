@@ -4,6 +4,7 @@ using ProcessesApi.Tests.V1.E2E.Fixtures;
 using ProcessesApi.Tests.V1.E2E.Steps;
 using TestStack.BDDfy;
 using Xunit;
+using ProcessesApi.V1.Domain;
 
 namespace ProcessesApi.Tests.V1.E2E.Stories
 {
@@ -46,7 +47,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [Fact]
         public void GetProcessByValidIdReturnsOKResponseWithETagHeaders()
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists())
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.ApplicationInitialised))
                 .When(w => _steps.WhenTheProcessIsRequested(_processFixture.ProcessName, _processFixture.ProcessId))
                 .Then(t => _steps.ThenTheProcessIsReturned(_processFixture.Process))
                 .BDDfy();

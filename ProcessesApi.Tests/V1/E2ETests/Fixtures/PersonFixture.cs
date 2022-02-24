@@ -40,7 +40,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             }
         }
 
-        public async Task AndGivenAPersonExistsWithTenures(Guid personId, List<Guid> tenureIds)
+        public async Task GivenAPersonExistsWithTenures(Guid personId, List<Guid> tenureIds)
         {
             var personTenureDetails = new List<TenureDetails>();
 
@@ -62,7 +62,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             Person = person;
         }
 
-        public void AndGivenAPersonDoesNotExist()
+        public void GivenAPersonDoesNotExist()
         {
         }
 
