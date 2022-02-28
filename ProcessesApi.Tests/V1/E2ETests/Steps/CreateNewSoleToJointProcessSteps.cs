@@ -84,10 +84,10 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                 actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
                 actual.EntityId.Should().Be(dbRecord.Id);
 
-                //var expected = dbRecord.ToDomain();
-                //var actualNewData = JsonConvert.DeserializeObject<Process>(actual.EventData.NewData.ToString());
-                //actualNewData.Should().BeEquivalentTo(expected);
-                //actual.EventData.OldData.Should().BeNull();
+                var expected = dbRecord.ToDomain();
+                var actualNewData = JsonConvert.DeserializeObject<Process>(actual.EventData.NewData.ToString());
+                actualNewData.Should().BeEquivalentTo(expected);
+                actual.EventData.OldData.Should().BeNull();
 
                 actual.EventType.Should().Be(ProcessStartedEventConstants.EVENTTYPE);
                 actual.Id.Should().NotBeEmpty();
