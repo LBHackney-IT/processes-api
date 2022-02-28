@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Amazon.DynamoDBv2.DataModel;
+using Amazon.SimpleNotificationService;
+using Amazon.SimpleNotificationService.Model;
 using AutoFixture;
 using Hackney.Core.Testing.DynamoDb;
 using ProcessesApi.V1.Boundary.Constants;
@@ -15,9 +18,10 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
     public class ProcessFixture : IDisposable
     {
         public readonly Fixture _fixture = new Fixture();
-        private readonly IDynamoDbFixture _dbFixture;
+        public readonly IDynamoDBContext _dbContext;
+        private readonly IAmazonSimpleNotificationService _amazonSimpleNotificationService;
         public Process Process { get; private set; }
-        public string ProcessId { get; private set; }
+        public Guid ProcessId { get; private set; }
         public string ProcessName { get; private set; }
         public CreateProcess CreateProcessRequest { get; private set; }
         public UpdateProcessQuery UpdateProcessRequest { get; private set; }
@@ -25,10 +29,12 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public Guid IncomingTenantId { get; private set; }
         public List<Guid> PersonTenures { get; private set; }
 
-        public ProcessFixture(IDynamoDbFixture dbFixture)
+        public ProcessFixture(IDynamoDBContext context, IAmazonSimpleNotificationService amazonSimpleNotificationService)
         {
-            _dbFixture = dbFixture;
+            _dbContext = context;
             PersonTenures = new List<Guid> { Guid.NewGuid() };
+            _amazonSimpleNotificationService = amazonSimpleNotificationService;
+
         }
 
         public void Dispose()
@@ -43,7 +49,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             if (disposing && !_disposed)
             {
                 if (Process != null)
-                    _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(Process.Id).GetAwaiter().GetResult();
+                    _dbContext.DeleteAsync<ProcessesDb>(Process.Id).GetAwaiter().GetResult();
                 _disposed = true;
             }
         }
@@ -59,7 +65,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                         .With(x => x.VersionNumber, (int?) null)
                         .Create();
             Process = process;
-            ProcessId = process.Id.ToString();
+            ProcessId = process.Id;
             ProcessName = process.ProcessName;
             IncomingTenantId = Guid.NewGuid();
             PersonTenures = _fixture.CreateMany<Guid>().ToList();
@@ -68,7 +74,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public async Task GivenASoleToJointProcessExists()
         {
             createProcess();
-            await _dbFixture.SaveEntityAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
+            await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
         }
 
         public void GivenASoleToJointProcessDoesNotExist()
@@ -80,6 +86,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             CreateProcessRequest = _fixture.Build<CreateProcess>()
                                 .Create();
+            CreateSnsTopic();
             ProcessName = ProcessNamesConstants.SoleToJoint;
         }
 
@@ -88,6 +95,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             CreateProcessRequest = _fixture.Build<CreateProcess>()
                             .With(x => x.TargetId, Guid.Empty)
                             .Create();
+            CreateSnsTopic();
             ProcessName = ProcessNamesConstants.SoleToJoint;
         }
 
@@ -106,6 +114,21 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             AndGivenAnUpdateSoleToJointProcessRequest();
             UpdateProcessRequestObject.Documents.Add(Guid.Empty);
+        }
+
+        private void CreateSnsTopic()
+        {
+            var snsAttrs = new Dictionary<string, string>();
+            snsAttrs.Add("fifo_topic", "true");
+            snsAttrs.Add("content_based_deduplication", "true");
+
+            var response = _amazonSimpleNotificationService.CreateTopicAsync(new CreateTopicRequest
+            {
+                Name = "processes",
+                Attributes = snsAttrs
+            }).Result;
+
+            Environment.SetEnvironmentVariable("PROCESS_SNS_ARN", response.TopicArn);
         }
     }
 }
