@@ -229,6 +229,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
         }
 
+        // List all states where CancelProcess can be triggered from
         [Theory]
         [InlineData(SoleToJointStates.AutomatedChecksFailed)]
         [InlineData(SoleToJointStates.ManualChecksFailed)]

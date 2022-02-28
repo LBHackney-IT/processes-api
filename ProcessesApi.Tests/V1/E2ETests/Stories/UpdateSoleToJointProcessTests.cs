@@ -82,7 +82,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [Fact]
         public void InternalServerErrorIsReturnedWhenTenureDoesNotExist()
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.ApplicationInitialised))
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.SelectTenants))
                     .And(a => _tenureFixture.GivenATenureDoesNotExist())
                     .And(a => _personFixture.GivenAPersonExistsWithTenures(_processFixture.IncomingTenantId, _processFixture.PersonTenures))
                     .And(a => _processFixture.GivenACheckEligibilityRequest())
@@ -94,7 +94,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [Fact]
         public void InternalServerErrorIsReturnedWhenProposedTenantDoesNotExist()
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.ApplicationInitialised))
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.SelectTenants))
                     .And(a => _tenureFixture.GivenASecureTenureExists(_processFixture.Process.TargetId, _processFixture.IncomingTenantId, true))
                     .And(a => _personFixture.GivenAPersonDoesNotExist())
                     .And(a => _processFixture.GivenACheckEligibilityRequest())
@@ -153,7 +153,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         public void ProcessStateIsUpdatedToManualChecksPassed()
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.AutomatedChecksPassed))
-                    .And(a => _processFixture.GivenACheckManualEligibilityRequest(null, null))
+                    .And(a => _processFixture.GivenAPassingCheckManualEligibilityRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToManualChecksPassed(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
@@ -164,7 +164,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         public void ProcessStateIsUpdatedToManualChecksFailed()
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.AutomatedChecksPassed))
-                    .And(a => _processFixture.GivenACheckManualEligibilityRequest(SoleToJointFormDataKeys.BR11, "false"))
+                    .And(a => _processFixture.GivenAFailingCheckManualEligibilityRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToManualChecksFailed(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))

@@ -40,11 +40,11 @@ namespace ProcessesApi.V1.UseCase
             var processRequest = x.Parameters[0] as UpdateProcessState;
             var eligibilityFormData = processRequest.FormData;
 
-            var isEligible = eligibilityFormData[SoleToJointFormDataKeys.BR11].ToString() == "true"
-                             && eligibilityFormData[SoleToJointFormDataKeys.BR12].ToString() == "false"
-                             && eligibilityFormData[SoleToJointFormDataKeys.BR13].ToString() == "false"
-                             && eligibilityFormData[SoleToJointFormDataKeys.BR15].ToString() == "false"
-                             && eligibilityFormData[SoleToJointFormDataKeys.BR16].ToString() == "false";
+            var isEligible = eligibilityFormData[SoleToJointFormDataKeys.BR11].ToString().ToLower() == "true"
+                             && eligibilityFormData[SoleToJointFormDataKeys.BR12].ToString().ToLower() == "false"
+                             && eligibilityFormData[SoleToJointFormDataKeys.BR13].ToString().ToLower() == "false"
+                             && eligibilityFormData[SoleToJointFormDataKeys.BR15].ToString().ToLower() == "false"
+                             && eligibilityFormData[SoleToJointFormDataKeys.BR16].ToString().ToLower() == "false";
 
             processRequest.Trigger = isEligible ? SoleToJointInternalTriggers.ManualEligibilityPassed : SoleToJointInternalTriggers.ManualEligibilityFailed;
 

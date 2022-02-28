@@ -62,6 +62,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             ProcessId = process.Id.ToString();
             ProcessName = process.ProcessName;
             IncomingTenantId = Guid.NewGuid();
+            
             PersonTenures = _fixture.CreateMany<Guid>().ToList();
         }
 
@@ -108,19 +109,29 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.IncomingTenantId, IncomingTenantId);
         }
 
-        public void GivenACheckManualEligibilityRequest(string eligibilityCheckId, string value)
+        public void GivenACheckManualEligibilityRequest(bool isEligible)
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckManualEligibility);
+            
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
-                { SoleToJointFormDataKeys.BR11, "true" },
+                { SoleToJointFormDataKeys.BR11, isEligible.ToString() },
                 { SoleToJointFormDataKeys.BR12, "false" },
                 { SoleToJointFormDataKeys.BR13, "false" },
                 { SoleToJointFormDataKeys.BR15, "false" },
-                { SoleToJointFormDataKeys.BR16, "false" }
+                { SoleToJointFormDataKeys.BR16, "false" },
             };
-            if (eligibilityCheckId != null)
-                UpdateProcessRequestObject.FormData[eligibilityCheckId] = value;
+        }
+
+        public void GivenAFailingCheckManualEligibilityRequest()
+        {
+            GivenACheckManualEligibilityRequest(false);
+        }
+
+
+        public void GivenAPassingCheckManualEligibilityRequest()
+        {
+            GivenACheckManualEligibilityRequest(true);
         }
 
         public void GivenAnUpdateSoleToJointProcessRequestWithValidationErrors()
