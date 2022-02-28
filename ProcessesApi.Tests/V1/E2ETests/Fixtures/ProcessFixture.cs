@@ -21,7 +21,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public readonly IDynamoDBContext _dbContext;
         private readonly IAmazonSimpleNotificationService _amazonSimpleNotificationService;
         public Process Process { get; private set; }
-        public string ProcessId { get; private set; }
+        public Guid ProcessId { get; private set; }
         public string ProcessName { get; private set; }
         public CreateProcess CreateProcessRequest { get; private set; }
         public UpdateProcessQuery UpdateProcessRequest { get; private set; }
@@ -65,7 +65,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                         .With(x => x.VersionNumber, (int?) null)
                         .Create();
             Process = process;
-            ProcessId = process.Id.ToString();
+            ProcessId = process.Id;
             ProcessName = process.ProcessName;
             IncomingTenantId = Guid.NewGuid();
             PersonTenures = _fixture.CreateMany<Guid>().ToList();
