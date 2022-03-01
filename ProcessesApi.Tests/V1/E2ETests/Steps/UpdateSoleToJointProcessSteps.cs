@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Hackney.Core.Sns;
 using Hackney.Core.Testing.Sns;
+using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
 using ProcessesApi.V1.Boundary.Response;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure.JWT;
@@ -30,7 +31,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
         public async Task WhenAnUpdateProcessRequestIsMade(UpdateProcessQuery request, UpdateProcessQueryObject requestBody, int? ifMatch)
         {
-            var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMTUwMTgxMTYwOTIwOTg2NzYxMTMiLCJlbWFpbCI6ImUyZS10ZXN0aW5nQGRldmVsb3BtZW50LmNvbSIsImlzcyI6IkhhY2tuZXkiLCJuYW1lIjoiVGVzdGVyIiwiZ3JvdXBzIjpbImUyZS10ZXN0aW5nIl0sImlhdCI6MTYyMzA1ODIzMn0.SooWAr-NUZLwW8brgiGpi2jZdWjyZBwp4GJikn0PvEw";
+            var token = TestToken.Value;
             var uri = new Uri($"api/v1/process/{request.ProcessName}/{request.Id}/{request.ProcessTrigger}", UriKind.Relative);
             var message = new HttpRequestMessage(HttpMethod.Patch, uri);
 
@@ -145,8 +146,8 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                 actual.SourceSystem.Should().Be(ProcessStoppedEventConstants.SOURCE_SYSTEM);
                 actual.Version.Should().Be(ProcessStoppedEventConstants.V1_VERSION);
 
-                actual.User.Email.Should().Be("e2e-testing@development.com");
-                actual.User.Name.Should().Be("Tester");
+                actual.User.Email.Should().Be(TestToken.UserEmail);
+                actual.User.Name.Should().Be(TestToken.UserName);
             };
 
             var snsVerifier = snsFixture.GetSnsEventVerifier<EntityEventSns>();
