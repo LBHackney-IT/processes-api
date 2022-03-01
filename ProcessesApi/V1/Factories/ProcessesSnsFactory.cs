@@ -44,7 +44,11 @@ namespace ProcessesApi.V1.Factories
                 {
                     NewData = "Automatic eligibility check failed - process closed."
                 },
-                User = new User { Name = token.Name, Email = token.Email }
+                User = new User
+                {
+                    Name = token.Name,
+                    Email = token.Email
+                }
             };
         }
     }
