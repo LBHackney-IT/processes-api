@@ -30,7 +30,7 @@ namespace ProcessesApi.V1.Domain
         public const string ManualEligibilityPassed = "ManualEligibilityPassed";
     }
 
-    // NOTE: Form data key values must not be capitalised or E2E tests will fail
+    // NOTE: Form data key values must be camelCase to avoid issues with Json Serialiser in E2E tests
     public static class SoleToJointFormDataKeys
     {
         public const string IncomingTenantId = "incomingTenantId";
