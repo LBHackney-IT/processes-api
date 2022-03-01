@@ -26,7 +26,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                 base.Dispose(disposing);
             }
         }
-        public Tenancy AndGivenTheTenancyHasAnInactiveNoticeOfSeekingPossession(string tenancyRef)
+        public Tenancy GivenTheTenancyHasAnInactiveNoticeOfSeekingPossession(string tenancyRef)
         {
             ResponseObject = _fixture.Build<Tenancy>()
                             .With(x => x.TenancyRef, tenancyRef)
@@ -35,7 +35,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             return ResponseObject;
         }
 
-        public Tenancy AndGivenTheTenancyHasAnActiveNoticeOfSeekingPossession(string tenancyRef)
+        public Tenancy GivenTheTenancyHasAnActiveNoticeOfSeekingPossession(string tenancyRef)
         {
             ResponseObject = _fixture.Build<Tenancy>()
                             .With(x => x.TenancyRef, tenancyRef)
@@ -44,7 +44,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             return ResponseObject;
         }
 
-        public void AndGivenTheTenancyDoesNotExist()
+        public void GivenTheTenancyDoesNotExist()
         {
             ResponseObject = null;
         }

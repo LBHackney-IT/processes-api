@@ -6,7 +6,6 @@ using Amazon.DynamoDBv2.DataModel;
 using Amazon.SimpleNotificationService;
 using Amazon.SimpleNotificationService.Model;
 using AutoFixture;
-using Hackney.Core.Testing.DynamoDb;
 using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
@@ -54,13 +53,13 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             }
         }
 
-        private void createProcess()
+        private void createProcess(string state)
         {
             var process = _fixture.Build<Process>()
                         .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
                         .With(x => x.CurrentState,
                                 _fixture.Build<ProcessState>()
-                                        .With(x => x.State, SoleToJointStates.SelectTenants)
+                                        .With(x => x.State, state)
                                         .Create())
                         .With(x => x.VersionNumber, (int?) null)
                         .Create();
@@ -71,15 +70,15 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             PersonTenures = _fixture.CreateMany<Guid>().ToList();
         }
 
-        public async Task GivenASoleToJointProcessExists()
+        public async Task GivenASoleToJointProcessExists(string state)
         {
-            createProcess();
+            createProcess(state);
             await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
         }
 
         public void GivenASoleToJointProcessDoesNotExist()
         {
-            createProcess();
+            createProcess(SoleToJointStates.ApplicationInitialised);
         }
 
         public void GivenANewSoleToJointProcessRequest()
@@ -99,20 +98,51 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             ProcessName = ProcessNamesConstants.SoleToJoint;
         }
 
-        public void AndGivenAnUpdateSoleToJointProcessRequest()
+        public void GivenAnUpdateSoleToJointProcessRequest(string trigger)
         {
             UpdateProcessRequest = new UpdateProcessQuery
             {
                 Id = Process.Id,
                 ProcessName = Process.ProcessName,
-                ProcessTrigger = SoleToJointPermittedTriggers.CheckEligibility
+                ProcessTrigger = trigger
             };
             UpdateProcessRequestObject = _fixture.Create<UpdateProcessQueryObject>();
+        }
+
+        public void GivenACheckEligibilityRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckEligibility);
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.IncomingTenantId, IncomingTenantId);
         }
-        public void AndGivenAnUpdateSoleToJointProcessRequestWithValidationErrors()
+
+        public void GivenACheckManualEligibilityRequest(bool isEligible)
         {
-            AndGivenAnUpdateSoleToJointProcessRequest();
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckManualEligibility);
+
+            UpdateProcessRequestObject.FormData = new Dictionary<string, object>
+            {
+                { SoleToJointFormDataKeys.BR11, isEligible.ToString() },
+                { SoleToJointFormDataKeys.BR12, "false" },
+                { SoleToJointFormDataKeys.BR13, "false" },
+                { SoleToJointFormDataKeys.BR15, "false" },
+                { SoleToJointFormDataKeys.BR16, "false" },
+            };
+        }
+
+        public void GivenAFailingCheckManualEligibilityRequest()
+        {
+            GivenACheckManualEligibilityRequest(false);
+        }
+
+
+        public void GivenAPassingCheckManualEligibilityRequest()
+        {
+            GivenACheckManualEligibilityRequest(true);
+        }
+
+        public void GivenAnUpdateSoleToJointProcessRequestWithValidationErrors()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckEligibility);
             UpdateProcessRequestObject.Documents.Add(Guid.Empty);
         }
 

@@ -73,14 +73,19 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
             var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
 
-            var incomingTenantId = Guid.Parse(requestBody.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString());
-            dbRecord.RelatedEntities.Should().Contain(incomingTenantId);
-
             dbRecord.CurrentState.ProcessData.FormData.Should().HaveSameCount(requestBody.FormData); // workaround for comparing
             dbRecord.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(requestBody.Documents);
         }
 
-        public async Task AndTheProcessStateIsUpdatedToEligibilityChecksPassed(UpdateProcessQuery request, UpdateProcessQueryObject requestBody)
+        public async Task ThenTheIncomingTenantIdIsAddedToRelatedEntities(UpdateProcessQuery request, UpdateProcessQueryObject requestBody)
+        {
+            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
+
+            var incomingTenantId = Guid.Parse(requestBody.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString());
+            dbRecord.RelatedEntities.Should().Contain(incomingTenantId);
+        }
+
+        public async Task ThenTheProcessStateIsUpdatedToEligibilityChecksPassed(UpdateProcessQuery request, UpdateProcessQueryObject requestBody)
         {
             var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
 
@@ -90,7 +95,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
         }
 
-        public async Task AndTheProcessStateIsUpdatedToEligibilityChecksFailed(UpdateProcessQuery request, UpdateProcessQueryObject requestBody)
+        public async Task ThenTheProcessStateIsUpdatedToEligibilityChecksFailed(UpdateProcessQuery request, UpdateProcessQueryObject requestBody)
         {
             var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
 
@@ -100,7 +105,27 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
         }
 
-        public async Task AndTheProcessStoppedEventIsRaised(ISnsFixture snsFixture)
+        public async Task ThenTheProcessStateIsUpdatedToManualChecksPassed(UpdateProcessQuery request, UpdateProcessQueryObject requestBody)
+        {
+            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
+
+            dbRecord.CurrentState.State.Should().Be(SoleToJointStates.ManualChecksPassed);
+            dbRecord.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
+            // Cleanup
+            await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheProcessStateIsUpdatedToManualChecksFailed(UpdateProcessQuery request, UpdateProcessQueryObject requestBody)
+        {
+            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
+
+            dbRecord.CurrentState.State.Should().Be(SoleToJointStates.ManualChecksFailed);
+            dbRecord.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
+            // Cleanup
+            await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheProcessStoppedEventIsRaised(ISnsFixture snsFixture)
         {
             var responseContent = await _lastResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
             var apiProcess = JsonConvert.DeserializeObject<ProcessResponse>(responseContent);
