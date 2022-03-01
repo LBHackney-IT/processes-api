@@ -62,7 +62,6 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             ProcessId = process.Id.ToString();
             ProcessName = process.ProcessName;
             IncomingTenantId = Guid.NewGuid();
-            
             PersonTenures = _fixture.CreateMany<Guid>().ToList();
         }
 
@@ -112,7 +111,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public void GivenACheckManualEligibilityRequest(bool isEligible)
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckManualEligibility);
-            
+
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
                 { SoleToJointFormDataKeys.BR11, isEligible.ToString() },
