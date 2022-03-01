@@ -61,13 +61,13 @@ namespace ProcessesApi.V1.UseCase
                     .Permit(SoleToJointInternalTriggers.EligibiltyFailed, SoleToJointStates.AutomatedChecksFailed)
                     .Permit(SoleToJointInternalTriggers.EligibiltyPassed, SoleToJointStates.AutomatedChecksPassed);
             _machine.Configure(SoleToJointStates.AutomatedChecksFailed)
-                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessClosed);
+                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessCancelled);
             _machine.Configure(SoleToJointStates.AutomatedChecksPassed)
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckManualEligibility, async (x) => await CheckManualEligibility(x).ConfigureAwait(false))
                     .Permit(SoleToJointInternalTriggers.ManualEligibilityPassed, SoleToJointStates.ManualChecksPassed)
                     .Permit(SoleToJointInternalTriggers.ManualEligibilityFailed, SoleToJointStates.ManualChecksFailed);
             _machine.Configure(SoleToJointStates.ManualChecksFailed)
-                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessClosed);
+                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessCancelled);
         }
 
         private void AddIncomingTenantId(UpdateProcessState processRequest)
@@ -84,7 +84,7 @@ namespace ProcessesApi.V1.UseCase
             Configure(SoleToJointStates.SelectTenants, Assignment.Create("tenants"), null);
             Configure(SoleToJointStates.AutomatedChecksFailed, Assignment.Create("tenants"), AddIncomingTenantId);
             Configure(SoleToJointStates.AutomatedChecksPassed, Assignment.Create("tenants"), AddIncomingTenantId);
-            Configure(SoleToJointStates.ProcessClosed, Assignment.Create("tenants"), null);
+            Configure(SoleToJointStates.ProcessCancelled, Assignment.Create("tenants"), null);
             Configure(SoleToJointStates.ManualChecksPassed, Assignment.Create("tenants"), null);
             Configure(SoleToJointStates.ManualChecksFailed, Assignment.Create("tenants"), null);
         }

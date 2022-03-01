@@ -6,7 +6,7 @@ namespace ProcessesApi.V1.Domain
         public const string SelectTenants = "SelectTenants";
         public const string AutomatedChecksFailed = "AutomatedChecksFailed";
         public const string AutomatedChecksPassed = "AutomatedChecksPassed";
-        public const string ProcessClosed = "ProcessClosed";
+        public const string ProcessCancelled = "ProcessCancelled";
         public const string ManualChecksFailed = "ManualChecksFailed";
         public const string ManualChecksPassed = "ManualChecksPassed";
         public const string ConfirmAppointmentScheduled = "ConfirmAppointmentScheduled";

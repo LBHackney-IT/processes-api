@@ -246,7 +246,7 @@ namespace ProcessesApi.Tests.V1.UseCase
 
             // Assert
             CurrentStateShouldContainCorrectData(process,
-                                                 SoleToJointStates.ProcessClosed,
+                                                 SoleToJointStates.ProcessCancelled,
                                                  new List<string>(),
                                                  triggerObject);
             process.PreviousStates.LastOrDefault().State.Should().Be(fromState);
