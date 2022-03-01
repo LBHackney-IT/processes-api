@@ -7,5 +7,7 @@ namespace ProcessesApi.V1.Factories
     public interface ISnsFactory
     {
         EntityEventSns ProcessStarted(Process process, Token token);
+
+        EntityEventSns ProcessStopped(Process process, Token token);
     }
 }

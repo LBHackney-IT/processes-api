@@ -12,6 +12,11 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Hackney.Core.Sns;
+using Hackney.Core.Testing.Sns;
+using ProcessesApi.V1.Boundary.Response;
+using ProcessesApi.V1.Factories;
+using ProcessesApi.V1.Infrastructure.JWT;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {
@@ -93,6 +98,39 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             dbRecord.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
             // Cleanup
             await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
+        }
+
+        public async Task AndTheProcessStoppedEventIsRaised(ISnsFixture snsFixture)
+        {
+            var responseContent = await _lastResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var apiProcess = JsonConvert.DeserializeObject<ProcessResponse>(responseContent);
+
+            apiProcess.Id.Should().NotBeEmpty();
+            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(apiProcess.Id).ConfigureAwait(false);
+
+            Action<EntityEventSns> verifyFunc = (actual) =>
+            {
+                actual.Id.Should().NotBeEmpty();
+                actual.CorrelationId.Should().NotBeEmpty();
+                actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
+                actual.EntityId.Should().Be(dbRecord.Id);
+
+                actual.EventData.NewData.Should().NotBeNull();
+                actual.EventData.OldData.Should().BeNull();
+
+                actual.EventType.Should().Be(ProcessStoppedEventConstants.EVENTTYPE);
+                actual.SourceDomain.Should().Be(ProcessStoppedEventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(ProcessStoppedEventConstants.SOURCE_SYSTEM);
+                actual.Version.Should().Be(ProcessStoppedEventConstants.V1_VERSION);
+
+                actual.User.Email.Should().Be("e2e-testing@development.com");
+                actual.User.Name.Should().Be("Tester");
+            };
+
+            var snsVerifer = snsFixture.GetSnsEventVerifier<EntityEventSns>();
+            var snsResult = await snsVerifer.VerifySnsEventRaised(verifyFunc);
+            if (!snsResult && snsVerifer.LastException != null)
+                throw snsVerifer.LastException;
         }
     }
 }
