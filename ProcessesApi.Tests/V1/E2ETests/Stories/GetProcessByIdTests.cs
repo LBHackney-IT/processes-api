@@ -5,6 +5,7 @@ using ProcessesApi.Tests.V1.E2E.Steps;
 using TestStack.BDDfy;
 using Xunit;
 using ProcessesApi.V1.Domain;
+using Hackney.Core.Testing.Sns;
 
 namespace ProcessesApi.Tests.V1.E2E.Stories
 {
@@ -16,13 +17,15 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
     public class GetProcessByIdTests : IDisposable
     {
         private readonly IDynamoDbFixture _dbFixture;
+        private readonly ISnsFixture _snsFixture;
         private readonly ProcessFixture _processFixture;
         private readonly GetProcessByIdSteps _steps;
 
-        public GetProcessByIdTests(MockWebApplicationFactory<Startup> appFactory)
+        public GetProcessByIdTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
             _dbFixture = appFactory.DynamoDbFixture;
-            _processFixture = new ProcessFixture(appFactory.DynamoDbFixture);
+            _snsFixture = appFactory.SnsFixture;
+            _processFixture = new ProcessFixture(_dbFixture.DynamoDbContext, _snsFixture.SimpleNotificationService);
             _steps = new GetProcessByIdSteps(appFactory.Client);
         }
 

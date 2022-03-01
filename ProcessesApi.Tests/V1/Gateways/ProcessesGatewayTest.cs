@@ -27,11 +27,11 @@ namespace ProcessesApi.Tests.V1.Gateways
         private readonly Mock<ILogger<ProcessesGateway>> _logger;
 
 
-        public ProcessesGatewayTests(MockWebApplicationFactory<Startup> appFactory)
+        public ProcessesGatewayTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
             _dbFixture = appFactory.DynamoDbFixture;
             _logger = new Mock<ILogger<ProcessesGateway>>();
-            _classUnderTest = new ProcessesGateway(_dynamoDb, _logger.Object);
+            _classUnderTest = new ProcessesGateway(_dbFixture.DynamoDbContext, _logger.Object);
         }
 
         public void Dispose()

@@ -5,7 +5,6 @@ using Hackney.Core.Testing.DynamoDb;
 using Moq;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Gateways;
-using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.UseCase;
 using System;
 using System.Collections.Generic;
@@ -52,7 +51,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             }
         }
 
-        public SoleToJointServiceTests(MockWebApplicationFactory<Startup> appFactory)
+        public SoleToJointServiceTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
             _dbFixture = appFactory.DynamoDbFixture;
             _mockSTJGateway = new Mock<ISoleToJointGateway>();

@@ -1,4 +1,5 @@
 using Hackney.Core.Http;
+using Hackney.Core.JWT;
 using Hackney.Core.Logging;
 using Hackney.Core.Middleware;
 using Microsoft.AspNetCore.Http;
@@ -26,13 +27,16 @@ namespace ProcessesApi.V1.Controllers
         private readonly IGetByIdUseCase _getByIdUseCase;
         private readonly ISoleToJointUseCase _soleToJointUseCase;
         private readonly IHttpContextWrapper _contextWrapper;
+        private readonly ITokenFactory _tokenFactory;
 
 
-        public ProcessesApiController(IGetByIdUseCase getByIdUseCase, ISoleToJointUseCase soleToJointUseCase, IHttpContextWrapper contextWrapper)
+        public ProcessesApiController(IGetByIdUseCase getByIdUseCase, ISoleToJointUseCase soleToJointUseCase,
+                                      IHttpContextWrapper contextWrapper, ITokenFactory tokenFactory)
         {
             _getByIdUseCase = getByIdUseCase;
             _soleToJointUseCase = soleToJointUseCase;
             _contextWrapper = contextWrapper;
+            _tokenFactory = tokenFactory;
         }
 
         /// <summary>
@@ -76,6 +80,7 @@ namespace ProcessesApi.V1.Controllers
         [Route("{processName}")]
         public async Task<IActionResult> CreateNewProcess([FromBody] CreateProcess request, [FromRoute] string processName)
         {
+            var token = _tokenFactory.Create(_contextWrapper.GetContextRequestHeaders(HttpContext));
             switch (processName)
             {
                 case ProcessNamesConstants.SoleToJoint:
@@ -87,7 +92,8 @@ namespace ProcessesApi.V1.Controllers
                                                                       request.FormData,
                                                                       request.Documents,
                                                                       processName,
-                                                                      null)
+                                                                      null,
+                                                                      token)
                                                                      .ConfigureAwait(false);
 
                     return Created(new Uri($"api/v1/processes/{processName}/{soleToJointResult.Id}", UriKind.Relative), soleToJointResult);
@@ -120,6 +126,7 @@ namespace ProcessesApi.V1.Controllers
         [Route("{processName}/{id}/{processTrigger}")]
         public async Task<IActionResult> UpdateProcess([FromBody] UpdateProcessQueryObject requestObject, [FromRoute] UpdateProcessQuery query)
         {
+            var token = _tokenFactory.Create(_contextWrapper.GetContextRequestHeaders(HttpContext));
             _contextWrapper.GetContextRequestHeaders(HttpContext);
             var ifMatch = GetIfMatchFromHeader();
             try
@@ -131,7 +138,8 @@ namespace ProcessesApi.V1.Controllers
                                                                           requestObject.FormData,
                                                                           requestObject.Documents,
                                                                           query.ProcessName,
-                                                                          ifMatch);
+                                                                          ifMatch,
+                                                                          token);
                 if (soleToJointResult == null) return NotFound(query.Id);
                 return NoContent();
             }

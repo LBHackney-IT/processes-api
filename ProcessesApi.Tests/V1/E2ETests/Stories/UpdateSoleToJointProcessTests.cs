@@ -5,6 +5,7 @@ using ProcessesApi.Tests.V1.E2E.Steps;
 using TestStack.BDDfy;
 using Xunit;
 using ProcessesApi.V1.Domain;
+using Hackney.Core.Testing.Sns;
 
 namespace ProcessesApi.Tests.V1.E2E.Stories
 {
@@ -16,6 +17,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
     public class UpdateSoleToJointProcessTests : IDisposable
     {
         private readonly IDynamoDbFixture _dbFixture;
+        private readonly ISnsFixture _snsFixture;
         private readonly ProcessFixture _processFixture;
         private readonly PersonFixture _personFixture;
         private readonly TenureFixture _tenureFixture;
@@ -23,17 +25,17 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         private readonly IncomeApiTenanciesFixture _tenanciesApiFixture;
         private readonly UpdateSoleToJointProcessSteps _steps;
 
-        public UpdateSoleToJointProcessTests(MockWebApplicationFactory<Startup> appFactory)
+        public UpdateSoleToJointProcessTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
             _dbFixture = appFactory.DynamoDbFixture;
-
-            _processFixture = new ProcessFixture(appFactory.DynamoDbFixture);
-            _personFixture = new PersonFixture(appFactory.DynamoDbFixture);
-            _tenureFixture = new TenureFixture(appFactory.DynamoDbFixture);
+            _snsFixture = appFactory.SnsFixture;
+            _processFixture = new ProcessFixture(_dbFixture.DynamoDbContext, _snsFixture.SimpleNotificationService);
+            _personFixture = new PersonFixture(_dbFixture.DynamoDbContext);
+            _tenureFixture = new TenureFixture(_dbFixture.DynamoDbContext);
             _agreementsApiFixture = new IncomeApiAgreementsFixture();
             _tenanciesApiFixture = new IncomeApiTenanciesFixture();
 
-            _steps = new UpdateSoleToJointProcessSteps(appFactory.Client, appFactory.DynamoDbFixture);
+            _steps = new UpdateSoleToJointProcessSteps(appFactory.Client, _dbFixture);
         }
 
         public void Dispose()
