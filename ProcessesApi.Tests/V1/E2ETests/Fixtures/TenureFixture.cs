@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2.DataModel;
 using AutoFixture;
-using Hackney.Core.Testing.DynamoDb;
 using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Factories;
 using Hackney.Shared.Tenure.Infrastructure;
@@ -71,17 +70,17 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             Tenure = tenure;
         }
 
-        public async Task AndGivenASecureTenureExists(Guid tenureId, Guid tenantId, bool isTenant)
+        public async Task GivenASecureTenureExists(Guid tenureId, Guid tenantId, bool isTenant)
         {
             await GivenATenureExists(tenureId, tenantId, isTenant: isTenant, isSecure: true).ConfigureAwait(false);
         }
 
-        public async Task AndGivenANonSecureTenureExists(Guid tenureId, Guid tenantId, bool isTenant)
+        public async Task GivenANonSecureTenureExists(Guid tenureId, Guid tenantId, bool isTenant)
         {
             await GivenATenureExists(tenureId, tenantId, isTenant: isTenant, isSecure: false).ConfigureAwait(false);
         }
 
-        public void AndGivenATenureDoesNotExist()
+        public void GivenATenureDoesNotExist()
         {
         }
 

@@ -28,7 +28,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             }
         }
 
-        public PaymentAgreements AndGivenAPaymentAgreementDoesNotExist()
+        public PaymentAgreements GivenAPaymentAgreementDoesNotExist()
         {
             ResponseObject = new PaymentAgreements
             {
@@ -37,7 +37,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             return ResponseObject;
         }
 
-        public PaymentAgreements AndGivenAPaymentAgreementExistsForTenancy(string tenancyRef)
+        public PaymentAgreements GivenAPaymentAgreementExistsForTenancy(string tenancyRef)
         {
             ResponseObject = new PaymentAgreements
             {
