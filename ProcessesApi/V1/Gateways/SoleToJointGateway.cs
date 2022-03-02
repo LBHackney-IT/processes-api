@@ -112,7 +112,7 @@ namespace ProcessesApi.V1.Gateways
 
         private bool BR19(Person proposedTenant)
         {
-            return !proposedTenant.IsAMinor ?? true; // Assuming is not a minor if no DOB?
+            return !proposedTenant.IsAMinor ?? false;
         }
 
         private bool BR9(Person proposedTenant)
