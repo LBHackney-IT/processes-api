@@ -6,6 +6,7 @@ using Moq;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.UseCase;
+using ProcessesApi.V1.UseCase.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -197,6 +198,25 @@ namespace ProcessesApi.Tests.V1.UseCase
         }
 
         [Fact]
+        public void ThrowsFormDataNotFoundExceptionOnCheckEligibilityTrigger()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SoleToJointStates.SelectTenants);
+
+            var tenantId = Guid.NewGuid();
+            var formData = new Dictionary<string, object> { { SoleToJointFormDataKeys.TenantId, tenantId } };
+
+            var triggerObject = CreateProcessTrigger(process,
+                                                     SoleToJointPermittedTriggers.CheckEligibility,
+                                                     formData);
+            var expectedErrorMessage = $"The form data keys supplied ({SoleToJointFormDataKeys.TenantId}) do not include the expected values ({SoleToJointFormDataKeys.IncomingTenantId}).";
+            // Act
+            Func<Task> func = async () => await _classUnderTest.Process(triggerObject, process).ConfigureAwait(false);
+            // Assert
+            func.Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
+        }
+
+        [Fact]
         public async Task ProcessStateIsUpdatedToManualChecksPassed()
         {
             // Arrange
@@ -243,6 +263,30 @@ namespace ProcessesApi.Tests.V1.UseCase
                                                  new List<string>() { SoleToJointPermittedTriggers.CancelProcess },
                                                  triggerObject);
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
+        }
+
+        [Fact]
+        public void ThrowsFormDataNotFoundExceptionOnCheckManualEligibilityTrigger()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SoleToJointStates.AutomatedChecksPassed);
+
+            var formData = new Dictionary<string, object>
+            {
+                { SoleToJointFormDataKeys.BR12, true },
+                { SoleToJointFormDataKeys.BR13, true },
+                { SoleToJointFormDataKeys.BR15, true },
+                { SoleToJointFormDataKeys.BR16, true },
+            };
+
+            var triggerObject = CreateProcessTrigger(process,
+                                                     SoleToJointPermittedTriggers.CheckManualEligibility,
+                                                     formData);
+            var expectedErrorMessage = $"The form data keys supplied ({String.Join(", ", formData.Keys.ToList())}) do not include the expected values ({SoleToJointFormDataKeys.BR11}).";
+            // Act
+            Func<Task> func = async () => await _classUnderTest.Process(triggerObject, process).ConfigureAwait(false);
+            // Assert
+            func.Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
         }
 
         // List all states where CancelProcess can be triggered from
