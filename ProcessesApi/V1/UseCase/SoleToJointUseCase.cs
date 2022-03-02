@@ -55,7 +55,7 @@ namespace ProcessesApi.V1.UseCase
                 await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
             }
 
-            await _soleToJointService.Process(triggerObject, process).ConfigureAwait(false);
+            await _soleToJointService.Process(triggerObject, process, token).ConfigureAwait(false);
 
             await _processGateway.SaveProcess(process).ConfigureAwait(false);
 

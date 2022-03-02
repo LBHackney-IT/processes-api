@@ -7,6 +7,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Hackney.Core.JWT;
+using Hackney.Core.Sns;
+using ProcessesApi.V1.Factories;
 
 namespace ProcessesApi.V1.UseCase
 {
@@ -15,11 +18,17 @@ namespace ProcessesApi.V1.UseCase
         private StateMachine<string, string> _machine;
         private ProcessState _currentState;
         private Process _soleToJointProcess;
-        private ISoleToJointGateway _soleToJointGateway;
 
-        public SoleToJointService(ISoleToJointGateway gateway)
+        private readonly ISoleToJointGateway _soleToJointGateway;
+        private readonly ISnsFactory _snsFactory;
+        private readonly ISnsGateway _snsGateway;
+        private Token _token;
+
+        public SoleToJointService(ISoleToJointGateway gateway, ISnsFactory snsFactory, ISnsGateway snsGateway)
         {
             _soleToJointGateway = gateway;
+            _snsFactory = snsFactory;
+            _snsGateway = snsGateway;
         }
 
         private async Task CheckEligibility(StateMachine<string, string>.Transition x)
@@ -82,33 +91,73 @@ namespace ProcessesApi.V1.UseCase
         private void SetUpStateActions()
         {
             Configure(SoleToJointStates.SelectTenants, Assignment.Create("tenants"), null);
-            Configure(SoleToJointStates.AutomatedChecksFailed, Assignment.Create("tenants"), AddIncomingTenantId);
+            ConfigureAsync(SoleToJointStates.AutomatedChecksFailed, Assignment.Create("tenants"), OnAutomatedCheckFailed);
             Configure(SoleToJointStates.AutomatedChecksPassed, Assignment.Create("tenants"), AddIncomingTenantId);
             Configure(SoleToJointStates.ProcessCancelled, Assignment.Create("tenants"), null);
             Configure(SoleToJointStates.ManualChecksPassed, Assignment.Create("tenants"), null);
             Configure(SoleToJointStates.ManualChecksFailed, Assignment.Create("tenants"), null);
         }
 
+        private async Task OnAutomatedCheckFailed(UpdateProcessState processRequest)
+        {
+            AddIncomingTenantId(processRequest);
+
+            var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
+            var processSnsMessage = _snsFactory.ProcessClosed(
+                _soleToJointProcess, _token,
+                "Automatic eligibility check failed - process closed.");
+
+            await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
+        }
+
         private void Configure(string state, Assignment assignment, Action<UpdateProcessState> func)
         {
             _machine.Configure(state)
-                .OnEntry((x) =>
+                .OnEntry(x =>
                 {
                     var processRequest = x.Parameters[0] as UpdateProcessState;
-                    var soleToJointPermittedTriggers = typeof(SoleToJointPermittedTriggers)
-                            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
-                            .Where(fi => fi.IsLiteral && !fi.IsInitOnly && fi.FieldType == typeof(string))
-                            .Select(x => (string) x.GetRawConstantValue())
-                            .ToList();
+                    SwitchProcessState(assignment, processRequest);
 
-                    _currentState = ProcessState.Create(_machine.State, _machine.PermittedTriggers.Where(x => soleToJointPermittedTriggers.Contains(x)).ToList(), assignment, ProcessData.Create(processRequest.FormData, processRequest.Documents), DateTime.UtcNow, DateTime.UtcNow);
                     func?.Invoke(processRequest);
                 });
         }
 
-        public async Task Process(UpdateProcessState processRequest, Process soleToJointProcess)
+        private void ConfigureAsync(string state, Assignment assignment, Func<UpdateProcessState, Task> func)
+        {
+            _machine.Configure(state)
+                .OnEntryAsync(async x =>
+                {
+                    var processRequest = x.Parameters[0] as UpdateProcessState;
+                    SwitchProcessState(assignment, processRequest);
+
+                    if (func != null)
+                    {
+                        await func.Invoke(processRequest).ConfigureAwait(false);
+                    }
+                });
+        }
+
+        private void SwitchProcessState(Assignment assignment, UpdateProcessState processRequest)
+        {
+            var soleToJointPermittedTriggers = typeof(SoleToJointPermittedTriggers)
+                .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+                .Where(fi => fi.IsLiteral && !fi.IsInitOnly && fi.FieldType == typeof(string))
+                .Select(x => (string) x.GetRawConstantValue())
+                .ToList();
+
+            _currentState = ProcessState.Create(
+                _machine.State,
+                _machine.PermittedTriggers
+                    .Where(trigger => soleToJointPermittedTriggers.Contains(trigger)).ToList(),
+                assignment,
+                ProcessData.Create(processRequest.FormData, processRequest.Documents),
+                DateTime.UtcNow, DateTime.UtcNow);
+        }
+
+        public async Task Process(UpdateProcessState processRequest, Process soleToJointProcess, Token token)
         {
             _soleToJointProcess = soleToJointProcess;
+            _token = token;
 
             var state = soleToJointProcess.CurrentState is null ? SoleToJointStates.ApplicationInitialised : soleToJointProcess.CurrentState.State;
 
