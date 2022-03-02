@@ -5,6 +5,6 @@ namespace ProcessesApi.V1.Gateways
 {
     public interface ISoleToJointGateway
     {
-        Task<bool> CheckEligibility(Guid tenureId, Guid incomingTenantId);
+        Task<bool> CheckEligibility(Guid tenureId, Guid proposedTenantId, Guid tenantId);
     }
 }

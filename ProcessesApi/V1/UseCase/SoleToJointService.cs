@@ -26,7 +26,8 @@ namespace ProcessesApi.V1.UseCase
         {
             var processRequest = x.Parameters[0] as UpdateProcessState;
             var isEligible = await _soleToJointGateway.CheckEligibility(_soleToJointProcess.TargetId,
-                                                                        Guid.Parse(processRequest.FormData["incomingTenantId"].ToString()))
+                                                                        Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()),
+                                                                        Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.TenantId].ToString()))
                                         .ConfigureAwait(false);
 
             processRequest.Trigger = isEligible ? SoleToJointInternalTriggers.EligibiltyPassed : SoleToJointInternalTriggers.EligibiltyFailed;

@@ -114,15 +114,20 @@ namespace ProcessesApi.Tests.V1.UseCase
         }
 
         [Fact]
-        public async Task AddTenantToRelatedEntitiesOnCheckEligibilityTrigger()
+        public async Task AddIncomingTenantToRelatedEntitiesOnCheckEligibilityTrigger()
         {
             // Arrange
             var process = CreateProcessWithCurrentState(SoleToJointStates.SelectTenants);
 
             var incomingTenantId = Guid.NewGuid();
+            var tenantId = Guid.NewGuid();
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.CheckEligibility,
-                                                     new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId } });
+                                                     new Dictionary<string, object>
+                                                    {
+                                                        { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId },
+                                                        { SoleToJointFormDataKeys.TenantId, tenantId },
+                                                    });
             // Act
             await _classUnderTest.Process(triggerObject, process).ConfigureAwait(false);
 
@@ -137,12 +142,17 @@ namespace ProcessesApi.Tests.V1.UseCase
             var process = CreateProcessWithCurrentState(SoleToJointStates.SelectTenants);
 
             var incomingTenantId = Guid.NewGuid();
+            var tenantId = Guid.NewGuid();
+            var formData = new Dictionary<string, object>
+            {
+                { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId },
+                { SoleToJointFormDataKeys.TenantId, tenantId },
+            };
+
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.CheckEligibility,
-                                                     new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId } });
-
-            _mockSTJGateway.Setup(x => x.CheckEligibility(process.TargetId, incomingTenantId)).ReturnsAsync(false);
-
+                                                     formData);
+            _mockSTJGateway.Setup(x => x.CheckEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(false);
             // Act
             await _classUnderTest.Process(triggerObject, process).ConfigureAwait(false);
 
@@ -152,7 +162,7 @@ namespace ProcessesApi.Tests.V1.UseCase
                                                  new List<string>() { SoleToJointPermittedTriggers.CancelProcess },
                                                  triggerObject);
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
-            _mockSTJGateway.Verify(x => x.CheckEligibility(process.TargetId, incomingTenantId), Times.Once());
+            _mockSTJGateway.Verify(x => x.CheckEligibility(process.TargetId, incomingTenantId, tenantId), Times.Once());
         }
 
         [Fact]
@@ -162,10 +172,17 @@ namespace ProcessesApi.Tests.V1.UseCase
             var process = CreateProcessWithCurrentState(SoleToJointStates.SelectTenants);
 
             var incomingTenantId = Guid.NewGuid();
+            var tenantId = Guid.NewGuid();
+            var formData = new Dictionary<string, object>
+            {
+                { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId },
+                { SoleToJointFormDataKeys.TenantId, tenantId },
+            };
+
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.CheckEligibility,
-                                                     new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId } });
-            _mockSTJGateway.Setup(x => x.CheckEligibility(process.TargetId, incomingTenantId)).ReturnsAsync(true);
+                                                     formData);
+            _mockSTJGateway.Setup(x => x.CheckEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(true);
 
             // Act
             await _classUnderTest.Process(triggerObject, process).ConfigureAwait(false);
@@ -176,7 +193,7 @@ namespace ProcessesApi.Tests.V1.UseCase
                                                  new List<string>() { SoleToJointPermittedTriggers.CheckManualEligibility },
                                                  triggerObject);
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
-            _mockSTJGateway.Verify(x => x.CheckEligibility(process.TargetId, incomingTenantId), Times.Once());
+            _mockSTJGateway.Verify(x => x.CheckEligibility(process.TargetId, incomingTenantId, tenantId), Times.Once());
         }
 
         [Fact]
