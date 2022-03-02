@@ -13,6 +13,11 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Hackney.Core.Testing.DynamoDb;
+using ProcessesApi.Tests.V1.E2E.Fixtures;
+using Hackney.Core.Testing.Sns;
+using Hackney.Core.Sns;
+using ProcessesApi.V1.Infrastructure.JWT;
+using ProcessesApi.V1.Factories;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {
@@ -27,9 +32,11 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
         public async Task WhenACreateProcessRequestIsMade(CreateProcess request, string processName)
         {
+            var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMTUwMTgxMTYwOTIwOTg2NzYxMTMiLCJlbWFpbCI6ImUyZS10ZXN0aW5nQGRldmVsb3BtZW50LmNvbSIsImlzcyI6IkhhY2tuZXkiLCJuYW1lIjoiVGVzdGVyIiwiZ3JvdXBzIjpbImUyZS10ZXN0aW5nIl0sImlhdCI6MTYyMzA1ODIzMn0.SooWAr-NUZLwW8brgiGpi2jZdWjyZBwp4GJikn0PvEw";
             var uri = new Uri($"api/v1/process/{processName}/", UriKind.Relative);
             var message = new HttpRequestMessage(HttpMethod.Post, uri);
             message.Content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
+            message.Headers.Add("Authorization", token);
             message.Method = HttpMethod.Post;
 
             // Act
@@ -61,6 +68,40 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
             // Cleanup
             await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
+        }
+
+        public async Task ThenProcessStartedEventIsRaised(ProcessFixture processFixture, ISnsFixture snsFixture)
+        {
+            var responseContent = await _lastResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var apiProcess = JsonConvert.DeserializeObject<ProcessResponse>(responseContent);
+
+            apiProcess.Id.Should().NotBeEmpty();
+            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(apiProcess.Id).ConfigureAwait(false);
+
+            Action<EntityEventSns> verifyFunc = (actual) =>
+            {
+                actual.CorrelationId.Should().NotBeEmpty();
+                actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
+                actual.EntityId.Should().Be(dbRecord.Id);
+
+                var expected = dbRecord.ToDomain();
+                var actualNewData = JsonConvert.DeserializeObject<Process>(actual.EventData.NewData.ToString());
+                actualNewData.Should().BeEquivalentTo(expected);
+                actual.EventData.OldData.Should().BeNull();
+
+                actual.EventType.Should().Be(ProcessStartedEventConstants.EVENTTYPE);
+                actual.Id.Should().NotBeEmpty();
+                actual.SourceDomain.Should().Be(ProcessStartedEventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(ProcessStartedEventConstants.SOURCE_SYSTEM);
+                actual.User.Email.Should().Be("e2e-testing@development.com");
+                actual.User.Name.Should().Be("Tester");
+                actual.Version.Should().Be(ProcessStartedEventConstants.V1_VERSION);
+            };
+
+            var snsVerifer = snsFixture.GetSnsEventVerifier<EntityEventSns>();
+            var snsResult = await snsVerifer.VerifySnsEventRaised(verifyFunc);
+            if (!snsResult && snsVerifer.LastException != null)
+                throw snsVerifer.LastException;
         }
 
         public void ThenBadRequestIsReturned()

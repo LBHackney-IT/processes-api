@@ -4,6 +4,8 @@ using ProcessesApi.Tests.V1.E2E.Fixtures;
 using ProcessesApi.Tests.V1.E2E.Steps;
 using TestStack.BDDfy;
 using Xunit;
+using ProcessesApi.V1.Domain;
+using Hackney.Core.Testing.Sns;
 
 namespace ProcessesApi.Tests.V1.E2E.Stories
 {
@@ -15,6 +17,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
     public class UpdateSoleToJointProcessTests : IDisposable
     {
         private readonly IDynamoDbFixture _dbFixture;
+        private readonly ISnsFixture _snsFixture;
         private readonly ProcessFixture _processFixture;
         private readonly PersonFixture _personFixture;
         private readonly TenureFixture _tenureFixture;
@@ -22,17 +25,17 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         private readonly IncomeApiTenanciesFixture _tenanciesApiFixture;
         private readonly UpdateSoleToJointProcessSteps _steps;
 
-        public UpdateSoleToJointProcessTests(MockWebApplicationFactory<Startup> appFactory)
+        public UpdateSoleToJointProcessTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
             _dbFixture = appFactory.DynamoDbFixture;
-
-            _processFixture = new ProcessFixture(appFactory.DynamoDbFixture);
-            _personFixture = new PersonFixture(appFactory.DynamoDbFixture);
-            _tenureFixture = new TenureFixture(appFactory.DynamoDbFixture);
+            _snsFixture = appFactory.SnsFixture;
+            _processFixture = new ProcessFixture(_dbFixture.DynamoDbContext, _snsFixture.SimpleNotificationService);
+            _personFixture = new PersonFixture(_dbFixture.DynamoDbContext);
+            _tenureFixture = new TenureFixture(_dbFixture.DynamoDbContext);
             _agreementsApiFixture = new IncomeApiAgreementsFixture();
             _tenanciesApiFixture = new IncomeApiTenanciesFixture();
 
-            _steps = new UpdateSoleToJointProcessSteps(appFactory.Client, appFactory.DynamoDbFixture);
+            _steps = new UpdateSoleToJointProcessSteps(appFactory.Client, _dbFixture);
         }
 
         public void Dispose()
@@ -60,7 +63,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         public void UpdateProcessReturnsNotFoundWhenProcessDoesNotExist()
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessDoesNotExist())
-                    .And(a => _processFixture.AndGivenAnUpdateSoleToJointProcessRequest())
+                    .And(a => _processFixture.GivenACheckEligibilityRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(t => _steps.ThenNotFoundIsReturned())
                 .BDDfy();
@@ -69,10 +72,10 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [Fact]
         public void UpdateProcessReturnsBadRequestWhenThereAreValidationErrors()
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists())
-                .And(a => _tenureFixture.AndGivenATenureDoesNotExist())
-                .And(a => _personFixture.AndGivenAPersonExistsWithTenures(_processFixture.IncomingTenantId, _processFixture.PersonTenures))
-                .And(a => _processFixture.AndGivenAnUpdateSoleToJointProcessRequestWithValidationErrors())
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.ApplicationInitialised))
+                .And(a => _tenureFixture.GivenATenureDoesNotExist())
+                .And(a => _personFixture.GivenAPersonExistsWithTenures(_processFixture.IncomingTenantId, _processFixture.PersonTenures))
+                .And(a => _processFixture.GivenAnUpdateSoleToJointProcessRequestWithValidationErrors())
             .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
             .Then(t => _steps.ThenBadRequestIsReturned())
             .BDDfy();
@@ -81,10 +84,10 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [Fact]
         public void InternalServerErrorIsReturnedWhenTenureDoesNotExist()
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists())
-                    .And(a => _tenureFixture.AndGivenATenureDoesNotExist())
-                    .And(a => _personFixture.AndGivenAPersonExistsWithTenures(_processFixture.IncomingTenantId, _processFixture.PersonTenures))
-                    .And(a => _processFixture.AndGivenAnUpdateSoleToJointProcessRequest())
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.SelectTenants))
+                    .And(a => _tenureFixture.GivenATenureDoesNotExist())
+                    .And(a => _personFixture.GivenAPersonExistsWithTenures(_processFixture.IncomingTenantId, _processFixture.PersonTenures))
+                    .And(a => _processFixture.GivenACheckEligibilityRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(t => _steps.ThenInternalServerErrorIsReturned())
                 .BDDfy();
@@ -93,10 +96,10 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [Fact]
         public void InternalServerErrorIsReturnedWhenProposedTenantDoesNotExist()
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists())
-                    .And(a => _tenureFixture.AndGivenASecureTenureExists(_processFixture.Process.TargetId, _processFixture.IncomingTenantId, true))
-                    .And(a => _personFixture.AndGivenAPersonDoesNotExist())
-                    .And(a => _processFixture.AndGivenAnUpdateSoleToJointProcessRequest())
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.SelectTenants))
+                    .And(a => _tenureFixture.GivenASecureTenureExists(_processFixture.Process.TargetId, _processFixture.IncomingTenantId, true))
+                    .And(a => _personFixture.GivenAPersonDoesNotExist())
+                    .And(a => _processFixture.GivenACheckEligibilityRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(t => _steps.ThenInternalServerErrorIsReturned())
                 .BDDfy();
@@ -107,8 +110,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [InlineData(null)]
         public void UpdateProcessReturnsConflictExceptionWhenTheIncorrectVersionNumberIsInIfMatchHeader(int? ifMatch)
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists())
-                    .And(a => _processFixture.AndGivenAnUpdateSoleToJointProcessRequest())
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.ApplicationInitialised))
+                    .And(a => _processFixture.GivenACheckEligibilityRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, ifMatch))
                 .Then(t => _steps.ThenVersionConflictExceptionIsReturned(ifMatch))
                 .BDDfy();
@@ -117,32 +120,56 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [Fact]
         public void ProcessStateIsUpdatedToEligibilityChecksPassed()
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists())
-                    .And(a => _tenureFixture.AndGivenASecureTenureExists(_processFixture.Process.TargetId, _processFixture.IncomingTenantId, true))
-                    .And(a => _tenureFixture.AndGivenASecureTenureExists(_processFixture.PersonTenures[0], _processFixture.IncomingTenantId, false))
-                    .And(a => _personFixture.AndGivenAPersonExistsWithTenures(_processFixture.IncomingTenantId, _processFixture.PersonTenures))
-                    .And(a => _agreementsApiFixture.AndGivenAPaymentAgreementDoesNotExist())
-                    .And(a => _tenanciesApiFixture.AndGivenTheTenancyHasAnInactiveNoticeOfSeekingPossession(_tenureFixture.tenancyRef))
-                    .And(a => _processFixture.AndGivenAnUpdateSoleToJointProcessRequest())
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.SelectTenants))
+                    .And(a => _tenureFixture.GivenASecureTenureExists(_processFixture.Process.TargetId, _processFixture.IncomingTenantId, true))
+                    .And(a => _tenureFixture.GivenASecureTenureExists(_processFixture.PersonTenures[0], _processFixture.IncomingTenantId, false))
+                    .And(a => _personFixture.GivenAPersonExistsWithTenures(_processFixture.IncomingTenantId, _processFixture.PersonTenures))
+                    .And(a => _agreementsApiFixture.GivenAPaymentAgreementDoesNotExist())
+                    .And(a => _tenanciesApiFixture.GivenTheTenancyHasAnInactiveNoticeOfSeekingPossession(_tenureFixture.tenancyRef))
+                    .And(a => _processFixture.GivenACheckEligibilityRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
-                    .And(a => _steps.AndTheProcessStateIsUpdatedToEligibilityChecksPassed(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheIncomingTenantIdIsAddedToRelatedEntities(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheProcessStateIsUpdatedToEligibilityChecksPassed(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                 .BDDfy();
         }
 
         [Fact]
         public void ProcessStateIsUpdatedToEligibilityChecksFailed()
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists())
-                    .And(a => _tenureFixture.AndGivenASecureTenureExists(_processFixture.Process.TargetId, _processFixture.IncomingTenantId, true))
-                    .And(a => _tenureFixture.AndGivenASecureTenureExists(_processFixture.PersonTenures[0], _processFixture.IncomingTenantId, false))
-                    .And(a => _personFixture.AndGivenAPersonExistsWithTenures(_processFixture.IncomingTenantId, _processFixture.PersonTenures))
-                    .And(a => _agreementsApiFixture.AndGivenAPaymentAgreementDoesNotExist())
-                    .And(a => _tenanciesApiFixture.AndGivenTheTenancyHasAnActiveNoticeOfSeekingPossession(_tenureFixture.tenancyRef))
-                    .And(a => _processFixture.AndGivenAnUpdateSoleToJointProcessRequest())
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.SelectTenants))
+                    .And(a => _tenureFixture.GivenASecureTenureExists(_processFixture.Process.TargetId, _processFixture.IncomingTenantId, true))
+                    .And(a => _tenureFixture.GivenASecureTenureExists(_processFixture.PersonTenures[0], _processFixture.IncomingTenantId, false))
+                    .And(a => _personFixture.GivenAPersonExistsWithTenures(_processFixture.IncomingTenantId, _processFixture.PersonTenures))
+                    .And(a => _agreementsApiFixture.GivenAPaymentAgreementDoesNotExist())
+                    .And(a => _tenanciesApiFixture.GivenTheTenancyHasAnActiveNoticeOfSeekingPossession(_tenureFixture.tenancyRef))
+                    .And(a => _processFixture.GivenACheckEligibilityRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
-                    .And(a => _steps.AndTheProcessStateIsUpdatedToEligibilityChecksFailed(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheIncomingTenantIdIsAddedToRelatedEntities(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheProcessStateIsUpdatedToEligibilityChecksFailed(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                .BDDfy();
+        }
+
+        [Fact]
+        public void ProcessStateIsUpdatedToManualChecksPassed()
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.AutomatedChecksPassed))
+                    .And(a => _processFixture.GivenAPassingCheckManualEligibilityRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheProcessStateIsUpdatedToManualChecksPassed(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                .BDDfy();
+        }
+
+        [Fact]
+        public void ProcessStateIsUpdatedToManualChecksFailed()
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.AutomatedChecksPassed))
+                    .And(a => _processFixture.GivenAFailingCheckManualEligibilityRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheProcessStateIsUpdatedToManualChecksFailed(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                 .BDDfy();
         }
     }

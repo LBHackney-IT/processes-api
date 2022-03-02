@@ -1,4 +1,6 @@
 using System;
+using Hackney.Core.Testing.DynamoDb;
+using Hackney.Core.Testing.Sns;
 using ProcessesApi.Tests.V1.E2E.Fixtures;
 using ProcessesApi.Tests.V1.E2E.Steps;
 using TestStack.BDDfy;
@@ -14,12 +16,16 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
     public class CreateNewProcessTests : IDisposable
     {
         private readonly ProcessFixture _processFixture;
+        private readonly ISnsFixture _snsFixture;
+        private readonly IDynamoDbFixture _dbFixture;
         private readonly CreateNewSoleToJointProcessSteps _steps;
 
-        public CreateNewProcessTests(MockWebApplicationFactory<Startup> appFactory)
+        public CreateNewProcessTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
-            _processFixture = new ProcessFixture(appFactory.DynamoDbFixture);
-            _steps = new CreateNewSoleToJointProcessSteps(appFactory.Client, appFactory.DynamoDbFixture);
+            _dbFixture = appFactory.DynamoDbFixture;
+            _snsFixture = appFactory.SnsFixture;
+            _processFixture = new ProcessFixture(_dbFixture.DynamoDbContext, _snsFixture.SimpleNotificationService);
+            _steps = new CreateNewSoleToJointProcessSteps(appFactory.Client, _dbFixture);
         }
 
         public void Dispose()
@@ -46,6 +52,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
             this.Given(g => _processFixture.GivenANewSoleToJointProcessRequest())
                 .When(w => _steps.WhenACreateProcessRequestIsMade(_processFixture.CreateProcessRequest, _processFixture.ProcessName))
                 .Then(t => _steps.ThenTheProcessIsCreated(_processFixture.CreateProcessRequest))
+                .Then(t => _steps.ThenProcessStartedEventIsRaised(_processFixture, _snsFixture))
                 .BDDfy();
         }
 

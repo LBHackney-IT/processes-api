@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Amazon.DynamoDBv2.DataModel;
 using AutoFixture;
-using Hackney.Core.Testing.DynamoDb;
 using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Factories;
 using Hackney.Shared.Tenure.Infrastructure;
@@ -13,13 +13,13 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
     public class TenureFixture : IDisposable
     {
         public readonly Fixture _fixture = new Fixture();
-        private readonly IDynamoDbFixture _dbFixture;
+        public readonly IDynamoDBContext _dbContext;
         public TenureInformation Tenure { get; private set; }
         public string tenancyRef { get; private set; }
 
-        public TenureFixture(IDynamoDbFixture dbFixture)
+        public TenureFixture(IDynamoDBContext dbContext)
         {
-            _dbFixture = dbFixture;
+            _dbContext = dbContext;
         }
 
         public void Dispose()
@@ -34,7 +34,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             if (disposing && !_disposed)
             {
                 if (Tenure != null)
-                    _dbFixture.DynamoDbContext.DeleteAsync<TenureInformationDb>(Tenure.Id).GetAwaiter().GetResult();
+                    _dbContext.DeleteAsync<TenureInformationDb>(Tenure.Id).GetAwaiter().GetResult();
                 _disposed = true;
             }
         }
@@ -66,21 +66,21 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                         .With(x => x.VersionNumber, (int?) null)
                         .Create();
 
-            await _dbFixture.SaveEntityAsync<TenureInformationDb>(tenure.ToDatabase()).ConfigureAwait(false);
+            await _dbContext.SaveAsync<TenureInformationDb>(tenure.ToDatabase()).ConfigureAwait(false);
             Tenure = tenure;
         }
 
-        public async Task AndGivenASecureTenureExists(Guid tenureId, Guid tenantId, bool isTenant)
+        public async Task GivenASecureTenureExists(Guid tenureId, Guid tenantId, bool isTenant)
         {
             await GivenATenureExists(tenureId, tenantId, isTenant: isTenant, isSecure: true).ConfigureAwait(false);
         }
 
-        public async Task AndGivenANonSecureTenureExists(Guid tenureId, Guid tenantId, bool isTenant)
+        public async Task GivenANonSecureTenureExists(Guid tenureId, Guid tenantId, bool isTenant)
         {
             await GivenATenureExists(tenureId, tenantId, isTenant: isTenant, isSecure: false).ConfigureAwait(false);
         }
 
-        public void AndGivenATenureDoesNotExist()
+        public void GivenATenureDoesNotExist()
         {
         }
 

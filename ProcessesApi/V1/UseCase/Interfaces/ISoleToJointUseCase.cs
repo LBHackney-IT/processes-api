@@ -1,3 +1,4 @@
+using Hackney.Core.JWT;
 using ProcessesApi.V1.Domain;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,7 @@ namespace ProcessesApi.V1.UseCase.Interfaces
                               Dictionary<string, object> formData,
                               List<Guid> documents,
                               string processName,
-                              int? ifMatch);
+                              int? ifMatch,
+                              Token token);
     }
 }
