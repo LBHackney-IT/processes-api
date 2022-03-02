@@ -28,7 +28,7 @@ namespace ProcessesApi.V1.Factories
             };
         }
 
-        public EntityEventSns ProcessStopped(Process process, Token token)
+        public EntityEventSns ProcessStopped(Process process, Token token, string description)
         {
             return new EntityEventSns
             {
@@ -42,7 +42,7 @@ namespace ProcessesApi.V1.Factories
                 SourceSystem = ProcessStoppedEventConstants.SOURCE_SYSTEM,
                 EventData = new EventData
                 {
-                    NewData = "Automatic eligibility check failed - process closed."
+                    NewData = description
                 },
                 User = new User
                 {

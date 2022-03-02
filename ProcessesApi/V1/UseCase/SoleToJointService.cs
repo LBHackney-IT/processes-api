@@ -102,8 +102,10 @@ namespace ProcessesApi.V1.UseCase
         {
             AddIncomingTenantId(processRequest);
 
-            var processSnsMessage = _snsFactory.ProcessStopped(_soleToJointProcess, _token);
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
+            var processSnsMessage = _snsFactory.ProcessStopped(
+                _soleToJointProcess, _token,
+                "Automatic eligibility check failed - process closed.");
 
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
