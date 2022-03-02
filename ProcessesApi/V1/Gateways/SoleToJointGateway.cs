@@ -68,27 +68,42 @@ namespace ProcessesApi.V1.Gateways
             return await _apiGateway.GetByIdAsync<Tenancy>(route, tenancyRef, correlationId);
         }
 
+        /// <summary>
+        /// Passes if the tenant is marked as a named tenure holder (tenure type is tenant)
+        /// </summary>
         private bool BR2(Guid tenantId, TenureInformation tenure)
         {
             var currentTenantDetails = tenure.HouseholdMembers.FirstOrDefault(x => x.Id == tenantId);
             return currentTenantDetails.PersonTenureType == PersonTenureType.Tenant;
         }
 
+        /// <summary>
+        /// Passes if the tenant is not already part of a joint tenancy (there is not more than one responsible person)
+        /// </summary>
         private bool BR3(TenureInformation tenure)
         {
             return tenure.HouseholdMembers.Count(x => x.IsResponsible) <= 1;
         }
 
+        /// <summary>
+        /// Passes if the tenure is secure
+        /// </summary>
         private bool BR4(TenureInformation tenure)
         {
             return tenure.TenureType.Code == TenureTypes.Secure.Code;
         }
 
+        /// <summary>
+        /// Passes if the tenure is active
+        /// </summary>
         private bool BR6(TenureInformation tenure)
         {
             return tenure.IsActive;
         }
 
+        /// <summary>
+        /// Passes if there are no active payment agreeements on the tenure
+        /// </summary>
         private async Task<bool> BR7(TenureInformation tenure)
         {
             var tenancyRef = tenure.LegacyReferences.FirstOrDefault(x => x.Name == "uh_tag_ref");
@@ -100,6 +115,9 @@ namespace ProcessesApi.V1.Gateways
             return paymentAgreements == null || !paymentAgreements.Agreements.Any(x => x.Amount > 0);
         }
 
+        /// <summary>
+        /// Passes if there is no active NOSP (notice of seeking possession) on the tenure
+        /// </summary>
         private async Task<bool> BR8(TenureInformation tenure)
         {
             var tenancyRef = tenure.LegacyReferences.FirstOrDefault(x => x.Name == "uh_tag_ref");
@@ -110,11 +128,17 @@ namespace ProcessesApi.V1.Gateways
             return tenancy == null || !tenancy.nosp.active;
         }
 
+        /// <summary>
+        /// Passes if the proposed tenant is not a minor
+        /// </summary>
         private bool BR19(Person proposedTenant)
         {
             return !proposedTenant.IsAMinor ?? false;
         }
 
+        /// <summary>
+        /// Passes if the proposed tenant does not have any active tenures that are not non-secure
+        /// </summary>
         private bool BR9(Person proposedTenant)
         {
             return !proposedTenant.Tenures.Any(x => x.IsActive && x.Type != TenureTypes.NonSecure.Code);
