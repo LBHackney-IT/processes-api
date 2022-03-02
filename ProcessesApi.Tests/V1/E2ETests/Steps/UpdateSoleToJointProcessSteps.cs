@@ -129,7 +129,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
         }
 
-        public async Task ThenTheProcessStoppedEventIsRaised(ISnsFixture snsFixture, Guid processId)
+        public async Task ThenTheProcessClosedEventIsRaised(ISnsFixture snsFixture, Guid processId)
         {
             Action<EntityEventSns> verifyFunc = actual =>
             {
@@ -141,10 +141,10 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                 actual.EventData.NewData.Should().NotBeNull();
                 actual.EventData.OldData.Should().BeNull();
 
-                actual.EventType.Should().Be(ProcessStoppedEventConstants.EVENTTYPE);
-                actual.SourceDomain.Should().Be(ProcessStoppedEventConstants.SOURCE_DOMAIN);
-                actual.SourceSystem.Should().Be(ProcessStoppedEventConstants.SOURCE_SYSTEM);
-                actual.Version.Should().Be(ProcessStoppedEventConstants.V1_VERSION);
+                actual.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
+                actual.SourceDomain.Should().Be(ProcessClosedEventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(ProcessClosedEventConstants.SOURCE_SYSTEM);
+                actual.Version.Should().Be(ProcessClosedEventConstants.V1_VERSION);
 
                 actual.User.Email.Should().Be(TestToken.UserEmail);
                 actual.User.Name.Should().Be(TestToken.UserName);

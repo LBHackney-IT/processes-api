@@ -263,7 +263,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         }
 
         [Fact]
-        public async Task ProcessStoppedEventIsRaisedWhenAutomaticEligibilityChecksFail()
+        public async Task ProcessClosedEventIsRaisedWhenAutomaticEligibilityChecksFail()
         {
             // Arrange
             var process = CreateProcessWithCurrentState(SoleToJointStates.SelectTenants);
@@ -286,7 +286,7 @@ namespace ProcessesApi.Tests.V1.UseCase
 
             // Assert
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            snsEvent.EventType.Should().Be(ProcessStoppedEventConstants.EVENTTYPE);
+            snsEvent.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
         }
     }
 }

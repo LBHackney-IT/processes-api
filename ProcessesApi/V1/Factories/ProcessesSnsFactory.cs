@@ -28,7 +28,7 @@ namespace ProcessesApi.V1.Factories
             };
         }
 
-        public EntityEventSns ProcessStopped(Process process, Token token, string description)
+        public EntityEventSns ProcessClosed(Process process, Token token, string description)
         {
             return new EntityEventSns
             {
@@ -36,10 +36,10 @@ namespace ProcessesApi.V1.Factories
                 DateTime = DateTime.UtcNow,
                 EntityId = process.Id,
                 Id = Guid.NewGuid(),
-                EventType = ProcessStoppedEventConstants.EVENTTYPE,
-                Version = ProcessStoppedEventConstants.V1_VERSION,
-                SourceDomain = ProcessStoppedEventConstants.SOURCE_DOMAIN,
-                SourceSystem = ProcessStoppedEventConstants.SOURCE_SYSTEM,
+                EventType = ProcessClosedEventConstants.EVENTTYPE,
+                Version = ProcessClosedEventConstants.V1_VERSION,
+                SourceDomain = ProcessClosedEventConstants.SOURCE_DOMAIN,
+                SourceSystem = ProcessClosedEventConstants.SOURCE_SYSTEM,
                 EventData = new EventData
                 {
                     NewData = description
