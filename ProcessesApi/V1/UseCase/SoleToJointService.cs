@@ -153,7 +153,7 @@ namespace ProcessesApi.V1.UseCase
                 ProcessData.Create(processRequest.FormData, processRequest.Documents),
                 DateTime.UtcNow, DateTime.UtcNow);
         }
-        
+
         private async Task PublishProcessClosedEvent(string description)
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
@@ -161,7 +161,7 @@ namespace ProcessesApi.V1.UseCase
 
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
-        
+
         public async Task Process(UpdateProcessState processRequest, Process soleToJointProcess, Token token)
         {
             _soleToJointProcess = soleToJointProcess;

@@ -287,7 +287,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             snsEvent.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
         }
-        
+
         [Fact]
         public async Task ProcessClosedEventIsRaisedWhenManualEligibilityChecksFail()
         {
@@ -300,7 +300,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             var triggerObject = CreateProcessTrigger(process,
                 SoleToJointPermittedTriggers.CheckManualEligibility,
                 eligibilityFormData);
-            
+
             var snsEvent = new EntityEventSns();
             _mockSnsGateway
                 .Setup(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()))
