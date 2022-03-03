@@ -95,19 +95,19 @@ namespace ProcessesApi.V1.UseCase
             Configure(SoleToJointStates.AutomatedChecksPassed, Assignment.Create("tenants"), AddIncomingTenantId);
             Configure(SoleToJointStates.ProcessCancelled, Assignment.Create("tenants"), null);
             Configure(SoleToJointStates.ManualChecksPassed, Assignment.Create("tenants"), null);
-            Configure(SoleToJointStates.ManualChecksFailed, Assignment.Create("tenants"), null);
+            ConfigureAsync(SoleToJointStates.ManualChecksFailed, Assignment.Create("tenants"), OnManualCheckFailed);
         }
 
         private async Task OnAutomatedCheckFailed(UpdateProcessState processRequest)
         {
             AddIncomingTenantId(processRequest);
 
-            var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = _snsFactory.ProcessClosed(
-                _soleToJointProcess, _token,
-                "Automatic eligibility check failed - process closed.");
+            await PublishProcessClosedEvent("Automatic eligibility check failed - process closed.");
+        }
 
-            await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
+        private async Task OnManualCheckFailed(UpdateProcessState processRequest)
+        {
+            await PublishProcessClosedEvent("Manual Eligibility Check failed - process closed.");
         }
 
         private void Configure(string state, Assignment assignment, Action<UpdateProcessState> func)
@@ -152,6 +152,14 @@ namespace ProcessesApi.V1.UseCase
                 assignment,
                 ProcessData.Create(processRequest.FormData, processRequest.Documents),
                 DateTime.UtcNow, DateTime.UtcNow);
+        }
+
+        private async Task PublishProcessClosedEvent(string description)
+        {
+            var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
+            var processSnsMessage = _snsFactory.ProcessClosed(_soleToJointProcess, _token, description);
+
+            await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
 
         public async Task Process(UpdateProcessState processRequest, Process soleToJointProcess, Token token)

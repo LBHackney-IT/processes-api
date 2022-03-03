@@ -50,7 +50,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                                     _fixture.Build<HouseholdMembers>()
                                     .With(x => x.Id, tenantId)
                                     .With(x => x.PersonTenureType, isTenant? PersonTenureType.Tenant : PersonTenureType.HouseholdMember)
-                                    .With(x => x.DateOfBirth, DateTime.Now.AddYears(-18))
+                                    .With(x => x.DateOfBirth, DateTime.UtcNow.AddYears(-18))
                                     .Create()
                                 })
                         .With(x => x.TenureType, isSecure ? TenureTypes.Secure : TenureTypes.NonSecure)

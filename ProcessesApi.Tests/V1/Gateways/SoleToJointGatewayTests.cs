@@ -93,7 +93,7 @@ namespace ProcessesApi.Tests.V1.Gateways
                                     _fixture.Build<HouseholdMembers>()
                                     .With(x => x.Id, proposedTenantId)
                                     .With(x => x.PersonTenureType, PersonTenureType.Tenant)
-                                    .With(x => x.DateOfBirth, DateTime.Now.AddYears(-18))
+                                    .With(x => x.DateOfBirth, DateTime.UtcNow.AddYears(-18))
                                     .Create()
                                 })
                         .With(x => x.TenureType, TenureTypes.Secure)

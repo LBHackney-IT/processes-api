@@ -35,7 +35,6 @@ namespace ProcessesApi.Tests.V1.UseCase
             { SoleToJointFormDataKeys.BR16, "false" }
         };
 
-
         private Mock<ISoleToJointGateway> _mockSTJGateway;
         private Mock<ISnsGateway> _mockSnsGateway;
 
@@ -277,6 +276,32 @@ namespace ProcessesApi.Tests.V1.UseCase
             var snsEvent = new EntityEventSns();
 
             _mockSTJGateway.Setup(x => x.CheckEligibility(process.TargetId, incomingTenantId)).ReturnsAsync(false);
+            _mockSnsGateway
+                .Setup(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Callback<EntityEventSns, string, string>((ev, s1, s2) => snsEvent = ev);
+
+            // Act
+            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
+
+            // Assert
+            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            snsEvent.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
+        }
+
+        [Fact]
+        public async Task ProcessClosedEventIsRaisedWhenManualEligibilityChecksFail()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SoleToJointStates.AutomatedChecksPassed);
+
+            var eligibilityFormData = _manualEligibilityPassData;
+            eligibilityFormData[SoleToJointFormDataKeys.BR11] = "false";
+
+            var triggerObject = CreateProcessTrigger(process,
+                SoleToJointPermittedTriggers.CheckManualEligibility,
+                eligibilityFormData);
+
+            var snsEvent = new EntityEventSns();
             _mockSnsGateway
                 .Setup(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()))
                 .Callback<EntityEventSns, string, string>((ev, s1, s2) => snsEvent = ev);
