@@ -16,6 +16,7 @@ using Hackney.Core.Testing.DynamoDb;
 using ProcessesApi.Tests.V1.E2E.Fixtures;
 using Hackney.Core.Testing.Sns;
 using Hackney.Core.Sns;
+using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
 using ProcessesApi.V1.Infrastructure.JWT;
 using ProcessesApi.V1.Factories;
 
@@ -32,7 +33,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
         public async Task WhenACreateProcessRequestIsMade(CreateProcess request, string processName)
         {
-            var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMTUwMTgxMTYwOTIwOTg2NzYxMTMiLCJlbWFpbCI6ImUyZS10ZXN0aW5nQGRldmVsb3BtZW50LmNvbSIsImlzcyI6IkhhY2tuZXkiLCJuYW1lIjoiVGVzdGVyIiwiZ3JvdXBzIjpbImUyZS10ZXN0aW5nIl0sImlhdCI6MTYyMzA1ODIzMn0.SooWAr-NUZLwW8brgiGpi2jZdWjyZBwp4GJikn0PvEw";
+            var token = TestToken.Value;
             var uri = new Uri($"api/v1/process/{processName}/", UriKind.Relative);
             var message = new HttpRequestMessage(HttpMethod.Post, uri);
             message.Content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
@@ -93,8 +94,8 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                 actual.Id.Should().NotBeEmpty();
                 actual.SourceDomain.Should().Be(ProcessStartedEventConstants.SOURCE_DOMAIN);
                 actual.SourceSystem.Should().Be(ProcessStartedEventConstants.SOURCE_SYSTEM);
-                actual.User.Email.Should().Be("e2e-testing@development.com");
-                actual.User.Name.Should().Be("Tester");
+                actual.User.Email.Should().Be(TestToken.UserEmail);
+                actual.User.Name.Should().Be(TestToken.UserName);
                 actual.Version.Should().Be(ProcessStartedEventConstants.V1_VERSION);
             };
 

@@ -86,7 +86,7 @@ namespace ProcessesApi.Tests.V1.Gateways
                                          .With(x => x.VersionNumber, (int?) null)
                                          .With(x => x.Id, proposedTenantId)
                                          .With(x => x.Tenures, new List<TenureDetails>())
-                                         .With(x => x.DateOfBirth, DateTime.Now.AddYears(-18))
+                                         .With(x => x.DateOfBirth, DateTime.UtcNow.AddYears(-18))
                                          .Create();
             var proposedTenantHouseholdMember = _fixture.Build<HouseholdMembers>()
                                             .With(x => x.Id, proposedTenantId)
@@ -141,7 +141,7 @@ namespace ProcessesApi.Tests.V1.Gateways
 
             var tenures = proposedTenant.Tenures.Append(_fixture.Build<TenureDetails>()
                                                                 .With(x => x.Type, TenureTypes.NonSecure.Code)
-                                                                .With(x => x.EndDate, DateTime.Now.AddDays(100).ToString())
+                                                                .With(x => x.EndDate, DateTime.UtcNow.AddDays(100).ToString())
                                                                 .Create());
             proposedTenant.Tenures = tenures;
             // Act
@@ -235,7 +235,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         {
             // Arrange
             (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
-            tenure.EndOfTenureDate = DateTime.Now.AddDays(-10);
+            tenure.EndOfTenureDate = DateTime.UtcNow.AddDays(-10);
             // Act
             var response = await SaveAndCheckEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
             // Assert
@@ -300,7 +300,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         {
             // Arrange
             (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
-            proposedTenant.DateOfBirth = DateTime.Now;
+            proposedTenant.DateOfBirth = DateTime.UtcNow;
             // Act
             var response = await SaveAndCheckEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
             // Assert
@@ -318,7 +318,7 @@ namespace ProcessesApi.Tests.V1.Gateways
 
             var tenures = proposedTenant.Tenures.Append(_fixture.Build<TenureDetails>()
                                                                 .With(x => x.Type, TenureTypes.Freehold.Code)
-                                                                .With(x => x.EndDate, DateTime.Now.AddDays(100).ToString())
+                                                                .With(x => x.EndDate, DateTime.UtcNow.AddDays(100).ToString())
                                                                 .Create());
             proposedTenant.Tenures = tenures;
             // Act

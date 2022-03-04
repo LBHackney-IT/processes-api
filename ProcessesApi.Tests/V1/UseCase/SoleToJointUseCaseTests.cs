@@ -60,7 +60,7 @@ namespace ProcessesApi.Tests.V1.UseCase
                 createProcessQuery.TargetId, createProcessQuery.RelatedEntities, createProcessQuery.FormData,
                 createProcessQuery.Documents, processName, null, token).ConfigureAwait(false);
             // Assert
-            _mockSTJService.Verify(x => x.Process(It.IsAny<UpdateProcessState>(), It.IsAny<Process>()), Times.Once);
+            _mockSTJService.Verify(x => x.Process(It.IsAny<UpdateProcessState>(), It.IsAny<Process>(), token), Times.Once);
             _mockGateway.Verify(x => x.SaveProcess(It.IsAny<Process>()), Times.Once);
 
             response.Id.Should().Be(processId);
@@ -105,7 +105,7 @@ namespace ProcessesApi.Tests.V1.UseCase
                 updateProcessQuery.Documents, process.ProcessName, 0, token).ConfigureAwait(false);
 
             // Assert
-            _mockSTJService.Verify(x => x.Process(It.IsAny<UpdateProcessState>(), It.IsAny<Process>()), Times.Once);
+            _mockSTJService.Verify(x => x.Process(It.IsAny<UpdateProcessState>(), It.IsAny<Process>(), token), Times.Once);
             _mockGateway.Verify(x => x.SaveProcess(It.IsAny<Process>()), Times.Once);
 
             response.Id.Should().Be(process.Id);

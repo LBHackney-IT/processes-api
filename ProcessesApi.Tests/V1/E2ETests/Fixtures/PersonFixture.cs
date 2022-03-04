@@ -45,7 +45,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             var person = _fixture.Build<Person>()
                         .With(x => x.Id, personId)
                         .With(x => x.Tenures, new List<TenureDetails>())
-                        .With(x => x.DateOfBirth, DateTime.Now.AddYears(-20))
+                        .With(x => x.DateOfBirth, DateTime.UtcNow.AddYears(-20))
                         .With(x => x.VersionNumber, (int?) null)
                         .Create();
             await _dbContext.SaveAsync<PersonDbEntity>(person.ToDatabase()).ConfigureAwait(false);
