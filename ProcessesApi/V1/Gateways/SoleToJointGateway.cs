@@ -13,11 +13,13 @@ using Hackney.Shared.Person;
 using Hackney.Core.Http;
 using ProcessesApi.V1.Domain.Finance;
 using ProcessesApi.V1.Gateways.Exceptions;
+using System.Collections.Generic;
 
 namespace ProcessesApi.V1.Gateways
 {
     public class SoleToJointGateway : ISoleToJointGateway
     {
+        public Dictionary<string, bool> EligibilityResults { get; private set; }
         private readonly IDynamoDBContext _dynamoDbContext;
         private readonly ILogger<SoleToJointGateway> _logger;
         private const string ApiName = "Income";
@@ -51,101 +53,118 @@ namespace ProcessesApi.V1.Gateways
         }
 
         [LogCall]
-        private async Task<PaymentAgreements> GetPaymentAgreementsByTenancyReference(string tenureRef, Guid correlationId)
+        private async Task<PaymentAgreements> GetPaymentAgreementsByTenancyReference(string tenancyRef, Guid correlationId)
         {
-            _logger.LogDebug($"Calling Income API for payment agreeement with tenancy ref: {tenureRef}");
-            var route = $"{_apiGateway.ApiRoute}/agreements/{tenureRef}";
-            return await _apiGateway.GetByIdAsync<PaymentAgreements>(route, tenureRef, correlationId);
+            _logger.LogDebug($"Calling Income API for payment agreement with tenancy ref: {tenancyRef}");
+            var route = $"{_apiGateway.ApiRoute}/agreements/{tenancyRef}";
+            return await _apiGateway.GetByIdAsync<PaymentAgreements>(route, tenancyRef, correlationId);
         }
 
         [LogCall]
-        private async Task<Tenancy> GetTenancyByReference(string tenureRef, Guid correlationId)
+        private async Task<Tenancy> GetTenancyByReference(string tenancyRef, Guid correlationId)
         {
-            _logger.LogDebug($"Calling Income API with tenancy ref: {tenureRef}");
-            var route = $"{_apiGateway.ApiRoute}/tenancies/{tenureRef}";
-            return await _apiGateway.GetByIdAsync<Tenancy>(route, tenureRef, correlationId);
+            _logger.LogDebug($"Calling Income API with tenancy ref: {tenancyRef}");
+            var route = $"{_apiGateway.ApiRoute}/tenancies/{tenancyRef}";
+            return await _apiGateway.GetByIdAsync<Tenancy>(route, tenancyRef, correlationId);
         }
 
-        public async Task<bool> CheckTenureFinanceRecords(string tenureRef)
+        /// <summary>
+        /// Passes if the tenant is marked as a named tenure holder (tenure type is tenant)
+        /// </summary>
+        private bool BR2(Guid tenantId, TenureInformation tenure)
         {
-            var paymentAgreements = await GetPaymentAgreementsByTenancyReference(tenureRef, Guid.NewGuid()).ConfigureAwait(false); // TODO: Confirm what correlation ID to use
-            if (paymentAgreements != null && paymentAgreements.Agreements.Count(x => x.Amount > 0) > 0)
-            {
-                return false;
-            }
-            else
-            {
-                var tenancy = await GetTenancyByReference(tenureRef, Guid.NewGuid()).ConfigureAwait(false); // TODO: Confirm what correlation ID to use
-                if (tenancy is null)
-                    return true;
-
-                if (tenancy.nosp.active)
-                    return false;
-
-                return true;
-            }
+            var currentTenantDetails = tenure.HouseholdMembers.FirstOrDefault(x => x.Id == tenantId);
+            return currentTenantDetails.PersonTenureType == PersonTenureType.Tenant;
         }
 
-        private string GetLegacyTagRef(TenureInformation tenure)
+        /// <summary>
+        /// Passes if the tenant is not already part of a joint tenancy (there is not more than one responsible person)
+        /// </summary>
+        private bool BR3(TenureInformation tenure)
         {
-            var reference = tenure.LegacyReferences.FirstOrDefault(x => x.Name == "uh_tag_ref");
-            return reference?.Value;
+            return tenure.HouseholdMembers.Count(x => x.IsResponsible) <= 1;
         }
 
-        public async Task<bool> CheckPersonTenureRecord(Guid tenureId, Guid proposedTenantId)
+        /// <summary>
+        /// Passes if the tenure is secure
+        /// </summary>
+        private bool BR4(TenureInformation tenure)
+        {
+            return tenure.TenureType.Code == TenureTypes.Secure.Code;
+        }
+
+        /// <summary>
+        /// Passes if the tenure is active
+        /// </summary>
+        private bool BR6(TenureInformation tenure)
+        {
+            return tenure.IsActive;
+        }
+
+        /// <summary>
+        /// Passes if there are no active payment agreeements on the tenure
+        /// </summary>
+        private async Task<bool> BR7(TenureInformation tenure)
+        {
+            var tenancyRef = tenure.LegacyReferences.FirstOrDefault(x => x.Name == "uh_tag_ref");
+
+            if (tenancyRef is null) return true;
+            var paymentAgreements = await GetPaymentAgreementsByTenancyReference(tenancyRef.Value, Guid.NewGuid())
+                                        .ConfigureAwait(false);
+
+            return paymentAgreements == null || !paymentAgreements.Agreements.Any(x => x.Amount > 0);
+        }
+
+        /// <summary>
+        /// Passes if there is no active NOSP (notice of seeking possession) on the tenure
+        /// </summary>
+        private async Task<bool> BR8(TenureInformation tenure)
+        {
+            var tenancyRef = tenure.LegacyReferences.FirstOrDefault(x => x.Name == "uh_tag_ref");
+            if (tenancyRef is null) return true;
+            var tenancy = await GetTenancyByReference(tenancyRef.Value, Guid.NewGuid())
+                                .ConfigureAwait(false);
+
+            return tenancy == null || !tenancy.nosp.active;
+        }
+
+        /// <summary>
+        /// Passes if the proposed tenant is not a minor
+        /// </summary>
+        private bool BR19(Person proposedTenant)
+        {
+            return !proposedTenant.IsAMinor ?? false;
+        }
+
+        /// <summary>
+        /// Passes if the proposed tenant does not have any active tenures that are not non-secure
+        /// </summary>
+        private bool BR9(Person proposedTenant)
+        {
+            return !proposedTenant.Tenures.Any(x => x.IsActive && x.Type != TenureTypes.NonSecure.Code);
+        }
+
+        public async Task<bool> CheckEligibility(Guid tenureId, Guid proposedTenantId, Guid tenantId)
         {
             var tenure = await GetTenureById(tenureId).ConfigureAwait(false);
-            if (tenure is null)
-                return true; // skips this tenure if it doesn't exist
+            if (tenure is null) throw new TenureNotFoundException(tenureId);
 
-            var personHouseholdMemberRecord = tenure.HouseholdMembers.ToListOrEmpty().Find(x => x.Id == proposedTenantId);
-            if (personHouseholdMemberRecord is null)
-                return true; // skips this tenure if the person isn't listed as a household member
+            var proposedTenant = await GetPersonById(proposedTenantId).ConfigureAwait(false);
+            if (proposedTenant is null) throw new PersonNotFoundException(proposedTenantId);
 
-            if (tenure.TenureType.Code != TenureTypes.Secure.Code ||
-                (tenure.HouseholdMembers.Count(x => x.IsResponsible) > 1 && personHouseholdMemberRecord.IsResponsible))
+            EligibilityResults = new Dictionary<string, bool>()
             {
-                return false;
-            }
-            else
-            {
-                var uhRef = GetLegacyTagRef(tenure);
-                if (uhRef != null)
-                    return await CheckTenureFinanceRecords(uhRef).ConfigureAwait(false);
-                else
-                    return true;
-            }
-        }
+                { "BR2", BR2(tenantId, tenure) },
+                { "BR3", BR3(tenure) },
+                { "BR4", BR4(tenure) },
+                { "BR6", BR6(tenure) },
+                { "BR7", await BR7(tenure).ConfigureAwait(false) },
+                { "BR8", await BR8(tenure).ConfigureAwait(false) },
+                { "BR19", BR19(proposedTenant) },
+                { "BR9", BR9(proposedTenant) }
+            };
 
-        public async Task<bool> CheckEligibility(Guid tenureId, Guid proposedTenantId)
-        {
-            var currentTenure = await GetTenureById(tenureId).ConfigureAwait(false);
-            if (currentTenure is null)
-                throw new TenureNotFoundException(tenureId);
-
-            var tenantInformation = currentTenure.HouseholdMembers.ToListOrEmpty().Find(x => x.Id == proposedTenantId);
-
-            if (tenantInformation.PersonTenureType != PersonTenureType.Tenant
-                || currentTenure.TenureType.Code != TenureTypes.Secure.Code
-                || !currentTenure.IsActive
-                || tenantInformation.DateOfBirth.AddYears(18) > DateTime.UtcNow)
-            {
-                return false;
-            }
-            else
-            {
-                var proposedTenant = await GetPersonById(proposedTenantId).ConfigureAwait(false);
-                if (proposedTenant is null)
-                    throw new PersonNotFoundException(proposedTenantId);
-
-                foreach (var x in proposedTenant.Tenures.Where(x => x.IsActive))
-                {
-                    var isEligible = await CheckPersonTenureRecord(x.Id, proposedTenantId).ConfigureAwait(false);
-                    if (!isEligible)
-                        return false;
-                }
-                return true;
-            }
+            return !EligibilityResults.Any(x => x.Value == false);
         }
 
     }

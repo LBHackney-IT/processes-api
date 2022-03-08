@@ -1,5 +1,6 @@
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Gateways;
+using ProcessesApi.V1.UseCase.Exceptions;
 using ProcessesApi.V1.UseCase.Interfaces;
 using Stateless;
 using System;
@@ -34,14 +35,27 @@ namespace ProcessesApi.V1.UseCase
         private async Task CheckEligibility(StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as UpdateProcessState;
-            var isEligible = await _soleToJointGateway.CheckEligibility(_soleToJointProcess.TargetId,
-                                                                        Guid.Parse(processRequest.FormData["incomingTenantId"].ToString()))
-                                        .ConfigureAwait(false);
+            try
+            {
+                var isEligible = await _soleToJointGateway.CheckEligibility(_soleToJointProcess.TargetId,
+                                                                            Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()),
+                                                                            Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.TenantId].ToString()))
+                                            .ConfigureAwait(false);
 
-            processRequest.Trigger = isEligible ? SoleToJointInternalTriggers.EligibiltyPassed : SoleToJointInternalTriggers.EligibiltyFailed;
+                processRequest.Trigger = isEligible ? SoleToJointInternalTriggers.EligibiltyPassed : SoleToJointInternalTriggers.EligibiltyFailed;
 
-            var res = _machine.SetTriggerParameters<UpdateProcessState, Process>(processRequest.Trigger);
-            await _machine.FireAsync(res, processRequest, _soleToJointProcess);
+                var res = _machine.SetTriggerParameters<UpdateProcessState, Process>(processRequest.Trigger);
+                await _machine.FireAsync(res, processRequest, _soleToJointProcess);
+            }
+            catch (KeyNotFoundException)
+            {
+                var expectedFormDataKeys = new List<string>
+                {
+                    SoleToJointFormDataKeys.IncomingTenantId,
+                    SoleToJointFormDataKeys.TenantId
+                };
+                throw new FormDataNotFoundException(processRequest.FormData.Keys.ToList(), expectedFormDataKeys);
+            }
         }
 
         private async Task CheckManualEligibility(StateMachine<string, string>.Transition x)
@@ -49,16 +63,31 @@ namespace ProcessesApi.V1.UseCase
             var processRequest = x.Parameters[0] as UpdateProcessState;
             var eligibilityFormData = processRequest.FormData;
 
-            var isEligible = eligibilityFormData[SoleToJointFormDataKeys.BR11].ToString().ToLower() == "true"
-                             && eligibilityFormData[SoleToJointFormDataKeys.BR12].ToString().ToLower() == "false"
-                             && eligibilityFormData[SoleToJointFormDataKeys.BR13].ToString().ToLower() == "false"
-                             && eligibilityFormData[SoleToJointFormDataKeys.BR15].ToString().ToLower() == "false"
-                             && eligibilityFormData[SoleToJointFormDataKeys.BR16].ToString().ToLower() == "false";
+            try
+            {
+                var isEligible = eligibilityFormData[SoleToJointFormDataKeys.BR11].ToString().ToLower() == "true"
+                                 && eligibilityFormData[SoleToJointFormDataKeys.BR12].ToString().ToLower() == "false"
+                                 && eligibilityFormData[SoleToJointFormDataKeys.BR13].ToString().ToLower() == "false"
+                                 && eligibilityFormData[SoleToJointFormDataKeys.BR15].ToString().ToLower() == "false"
+                                 && eligibilityFormData[SoleToJointFormDataKeys.BR16].ToString().ToLower() == "false";
 
-            processRequest.Trigger = isEligible ? SoleToJointInternalTriggers.ManualEligibilityPassed : SoleToJointInternalTriggers.ManualEligibilityFailed;
+                processRequest.Trigger = isEligible ? SoleToJointInternalTriggers.ManualEligibilityPassed : SoleToJointInternalTriggers.ManualEligibilityFailed;
 
-            var res = _machine.SetTriggerParameters<UpdateProcessState, Process>(processRequest.Trigger);
-            await _machine.FireAsync(res, processRequest, _soleToJointProcess);
+                var res = _machine.SetTriggerParameters<UpdateProcessState, Process>(processRequest.Trigger);
+                await _machine.FireAsync(res, processRequest, _soleToJointProcess);
+            }
+            catch (KeyNotFoundException)
+            {
+                var expectedFormDataKeys = new List<string>
+                {
+                    SoleToJointFormDataKeys.BR11,
+                    SoleToJointFormDataKeys.BR12,
+                    SoleToJointFormDataKeys.BR13,
+                    SoleToJointFormDataKeys.BR15,
+                    SoleToJointFormDataKeys.BR16
+                };
+                throw new FormDataNotFoundException(eligibilityFormData.Keys.ToList(), expectedFormDataKeys);
+            }
         }
 
         private void SetUpStates()

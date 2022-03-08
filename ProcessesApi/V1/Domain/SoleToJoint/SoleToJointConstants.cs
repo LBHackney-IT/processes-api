@@ -34,6 +34,7 @@ namespace ProcessesApi.V1.Domain
     public static class SoleToJointFormDataKeys
     {
         public const string IncomingTenantId = "incomingTenantId";
+        public const string TenantId = "tenantId";
         public const string BR11 = "br11";
         public const string BR12 = "br12";
         public const string BR13 = "br13";

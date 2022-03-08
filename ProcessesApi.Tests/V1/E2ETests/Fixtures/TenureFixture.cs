@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2.DataModel;
 using AutoFixture;
@@ -82,6 +83,15 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenATenureDoesNotExist()
         {
+        }
+
+        public void GivenAPersonIsAddedAsAHouseholdMember(Guid personId)
+        {
+            var householdMember = _fixture.Build<HouseholdMembers>()
+                                          .With(x => x.Id, personId)
+                                          .With(x => x.IsResponsible, false)
+                                          .Create();
+            Tenure.HouseholdMembers = Tenure.HouseholdMembers.Append(householdMember);
         }
 
     }

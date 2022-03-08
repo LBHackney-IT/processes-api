@@ -6,6 +6,7 @@ using Moq;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.UseCase;
+using ProcessesApi.V1.UseCase.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -123,15 +124,20 @@ namespace ProcessesApi.Tests.V1.UseCase
         }
 
         [Fact]
-        public async Task AddTenantToRelatedEntitiesOnCheckEligibilityTrigger()
+        public async Task AddIncomingTenantToRelatedEntitiesOnCheckEligibilityTrigger()
         {
             // Arrange
             var process = CreateProcessWithCurrentState(SoleToJointStates.SelectTenants);
 
             var incomingTenantId = Guid.NewGuid();
+            var tenantId = Guid.NewGuid();
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.CheckEligibility,
-                                                     new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId } });
+                                                     new Dictionary<string, object>
+                                                    {
+                                                        { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId },
+                                                        { SoleToJointFormDataKeys.TenantId, tenantId },
+                                                    });
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 
@@ -146,12 +152,17 @@ namespace ProcessesApi.Tests.V1.UseCase
             var process = CreateProcessWithCurrentState(SoleToJointStates.SelectTenants);
 
             var incomingTenantId = Guid.NewGuid();
+            var tenantId = Guid.NewGuid();
+            var formData = new Dictionary<string, object>
+            {
+                { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId },
+                { SoleToJointFormDataKeys.TenantId, tenantId },
+            };
+
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.CheckEligibility,
-                                                     new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId } });
-
-            _mockSTJGateway.Setup(x => x.CheckEligibility(process.TargetId, incomingTenantId)).ReturnsAsync(false);
-
+                                                     formData);
+            _mockSTJGateway.Setup(x => x.CheckEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(false);
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 
@@ -161,7 +172,7 @@ namespace ProcessesApi.Tests.V1.UseCase
                                                  new List<string>() { SoleToJointPermittedTriggers.CancelProcess },
                                                  triggerObject);
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
-            _mockSTJGateway.Verify(x => x.CheckEligibility(process.TargetId, incomingTenantId), Times.Once());
+            _mockSTJGateway.Verify(x => x.CheckEligibility(process.TargetId, incomingTenantId, tenantId), Times.Once());
         }
 
         [Fact]
@@ -171,10 +182,17 @@ namespace ProcessesApi.Tests.V1.UseCase
             var process = CreateProcessWithCurrentState(SoleToJointStates.SelectTenants);
 
             var incomingTenantId = Guid.NewGuid();
+            var tenantId = Guid.NewGuid();
+            var formData = new Dictionary<string, object>
+            {
+                { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId },
+                { SoleToJointFormDataKeys.TenantId, tenantId },
+            };
+
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.CheckEligibility,
-                                                     new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId } });
-            _mockSTJGateway.Setup(x => x.CheckEligibility(process.TargetId, incomingTenantId)).ReturnsAsync(true);
+                                                     formData);
+            _mockSTJGateway.Setup(x => x.CheckEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(true);
 
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
@@ -185,7 +203,26 @@ namespace ProcessesApi.Tests.V1.UseCase
                                                  new List<string>() { SoleToJointPermittedTriggers.CheckManualEligibility },
                                                  triggerObject);
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
-            _mockSTJGateway.Verify(x => x.CheckEligibility(process.TargetId, incomingTenantId), Times.Once());
+            _mockSTJGateway.Verify(x => x.CheckEligibility(process.TargetId, incomingTenantId, tenantId), Times.Once());
+        }
+
+        [Fact]
+        public void ThrowsFormDataNotFoundExceptionOnCheckEligibilityTrigger()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SoleToJointStates.SelectTenants);
+
+            var tenantId = Guid.NewGuid();
+            var formData = new Dictionary<string, object> { { SoleToJointFormDataKeys.TenantId, tenantId } };
+
+            var triggerObject = CreateProcessTrigger(process,
+                                                     SoleToJointPermittedTriggers.CheckEligibility,
+                                                     formData);
+            var expectedErrorMessage = $"The form data keys supplied ({SoleToJointFormDataKeys.TenantId}) do not include the expected values ({SoleToJointFormDataKeys.IncomingTenantId}).";
+            // Act
+            Func<Task> func = async () => await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
+            // Assert
+            func.Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
         }
 
         [Fact]
@@ -237,6 +274,30 @@ namespace ProcessesApi.Tests.V1.UseCase
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
         }
 
+        [Fact]
+        public void ThrowsFormDataNotFoundExceptionOnCheckManualEligibilityTrigger()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SoleToJointStates.AutomatedChecksPassed);
+
+            var formData = new Dictionary<string, object>
+            {
+                { SoleToJointFormDataKeys.BR12, true },
+                { SoleToJointFormDataKeys.BR13, true },
+                { SoleToJointFormDataKeys.BR15, true },
+                { SoleToJointFormDataKeys.BR16, true },
+            };
+
+            var triggerObject = CreateProcessTrigger(process,
+                                                     SoleToJointPermittedTriggers.CheckManualEligibility,
+                                                     formData);
+            var expectedErrorMessage = $"The form data keys supplied ({String.Join(", ", formData.Keys.ToList())}) do not include the expected values ({SoleToJointFormDataKeys.BR11}).";
+            // Act
+            Func<Task> func = async () => await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
+            // Assert
+            func.Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
+        }
+
         // List all states where CancelProcess can be triggered from
         [Theory]
         [InlineData(SoleToJointStates.AutomatedChecksFailed)]
@@ -267,15 +328,20 @@ namespace ProcessesApi.Tests.V1.UseCase
             // Arrange
             var process = CreateProcessWithCurrentState(SoleToJointStates.SelectTenants);
             var incomingTenantId = Guid.NewGuid();
+            var tenantId = Guid.NewGuid();
 
             var triggerObject = CreateProcessTrigger(
                 process,
                 SoleToJointPermittedTriggers.CheckEligibility,
-                new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId } });
+                new Dictionary<string, object>
+                {
+                    { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId },
+                    { SoleToJointFormDataKeys.TenantId, tenantId }
+                });
 
             var snsEvent = new EntityEventSns();
 
-            _mockSTJGateway.Setup(x => x.CheckEligibility(process.TargetId, incomingTenantId)).ReturnsAsync(false);
+            _mockSTJGateway.Setup(x => x.CheckEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(false);
             _mockSnsGateway
                 .Setup(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()))
                 .Callback<EntityEventSns, string, string>((ev, s1, s2) => snsEvent = ev);
