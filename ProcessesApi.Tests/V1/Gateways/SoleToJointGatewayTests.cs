@@ -103,6 +103,12 @@ namespace ProcessesApi.Tests.V1.Gateways
                         .With(x => x.VersionNumber, (int?) null)
                         .Create();
 
+            var personTenures = proposedTenant.Tenures.Append(_fixture.Build<TenureDetails>()
+                                                                      .With(x => x.Id, tenure.Id)
+                                                                      .With(x => x.EndDate, DateTime.UtcNow.AddYears(10).ToString())
+                                                                      .With(x => x.Type, TenureTypes.Secure.Code)
+                                                                      .Create());
+            proposedTenant.Tenures = personTenures;
 
             return (proposedTenant, tenure, tenant.Id, tenancyRef);
         }

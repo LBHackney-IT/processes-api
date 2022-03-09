@@ -137,11 +137,11 @@ namespace ProcessesApi.V1.Gateways
         }
 
         /// <summary>
-        /// Passes if the proposed tenant does not have any active tenures that are not non-secure
+        /// Passes if the proposed tenant does not have any active tenures (other than the selected tenure) that are not non-secure
         /// </summary>
-        private bool BR9(Person proposedTenant)
+        private bool BR9(Person proposedTenant, Guid tenureId)
         {
-            return !proposedTenant.Tenures.Any(x => x.IsActive && x.Type != TenureTypes.NonSecure.Code);
+            return !proposedTenant.Tenures.Any(x => x.IsActive && x.Type != TenureTypes.NonSecure.Code && x.Id != tenureId);
         }
 
         public async Task<bool> CheckEligibility(Guid tenureId, Guid proposedTenantId, Guid tenantId)
@@ -161,7 +161,7 @@ namespace ProcessesApi.V1.Gateways
                 { "BR7", await BR7(tenure).ConfigureAwait(false) },
                 { "BR8", await BR8(tenure).ConfigureAwait(false) },
                 { "BR19", BR19(proposedTenant) },
-                { "BR9", BR9(proposedTenant) }
+                { "BR9", BR9(proposedTenant, tenureId) }
             };
 
             return !EligibilityResults.Any(x => x.Value == false);
