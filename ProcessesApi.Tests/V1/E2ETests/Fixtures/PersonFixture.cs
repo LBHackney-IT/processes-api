@@ -8,6 +8,8 @@ using Hackney.Shared.Person.Factories;
 using Hackney.Shared.Person.Infrastructure;
 using ProcessesApi.V1.Factories;
 using Amazon.DynamoDBv2.DataModel;
+using System.Linq;
+using Hackney.Shared.Tenure.Domain;
 
 namespace ProcessesApi.Tests.V1.E2E.Fixtures
 {
@@ -40,21 +42,12 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             }
         }
 
-        public async Task GivenAPersonExistsWithTenures(Guid personId, List<Guid> tenureIds)
+        public async Task GivenAnAdultPersonExists(Guid personId)
         {
-            var personTenureDetails = new List<TenureDetails>();
-
-            tenureIds.ForEach(id =>
-            {
-                personTenureDetails.Add(_fixture.Build<TenureDetails>()
-                                        .With(x => x.Id, id)
-                                        .With(x => x.EndDate, DateTime.Now.AddDays(10).ToString())
-                                        .Create());
-            });
-
             var person = _fixture.Build<Person>()
                         .With(x => x.Id, personId)
-                        .With(x => x.Tenures, personTenureDetails)
+                        .With(x => x.Tenures, new List<TenureDetails>())
+                        .With(x => x.DateOfBirth, DateTime.UtcNow.AddYears(-20))
                         .With(x => x.VersionNumber, (int?) null)
                         .Create();
             await _dbContext.SaveAsync<PersonDbEntity>(person.ToDatabase()).ConfigureAwait(false);
@@ -64,6 +57,19 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenAPersonDoesNotExist()
         {
+        }
+
+        public async Task GivenAPersonHasAnActiveTenure(Guid tenureId)
+        {
+            var tenures = Person.Tenures.Append(_fixture.Build<TenureDetails>()
+                                                        .With(x => x.Id, tenureId)
+                                                        .With(x => x.EndDate, DateTime.UtcNow.AddYears(10).ToString())
+                                                        .With(x => x.Type, TenureTypes.Secure.Code)
+                                                        .Create());
+            Person.Tenures = tenures;
+            Person.VersionNumber = 0;
+
+            await _dbContext.SaveAsync<PersonDbEntity>(Person.ToDatabase()).ConfigureAwait(false);
         }
 
     }

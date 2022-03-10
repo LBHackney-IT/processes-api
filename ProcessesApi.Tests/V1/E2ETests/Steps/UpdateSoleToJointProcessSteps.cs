@@ -12,6 +12,12 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Hackney.Core.Sns;
+using Hackney.Core.Testing.Sns;
+using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
+using ProcessesApi.V1.Boundary.Response;
+using ProcessesApi.V1.Factories;
+using ProcessesApi.V1.Infrastructure.JWT;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {
@@ -25,9 +31,12 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
         public async Task WhenAnUpdateProcessRequestIsMade(UpdateProcessQuery request, UpdateProcessQueryObject requestBody, int? ifMatch)
         {
+            var token = TestToken.Value;
             var uri = new Uri($"api/v1/process/{request.ProcessName}/{request.Id}/{request.ProcessTrigger}", UriKind.Relative);
             var message = new HttpRequestMessage(HttpMethod.Patch, uri);
+
             message.Content = new StringContent(JsonConvert.SerializeObject(requestBody), Encoding.UTF8, "application/json");
+            message.Headers.Add("Authorization", token);
             message.Headers.TryAddWithoutValidation(HeaderConstants.IfMatch, $"\"{ifMatch}\"");
             message.Method = HttpMethod.Patch;
 
@@ -118,6 +127,33 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             dbRecord.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
             // Cleanup
             await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheProcessClosedEventIsRaised(ISnsFixture snsFixture, Guid processId)
+        {
+            Action<EntityEventSns> verifyFunc = actual =>
+            {
+                actual.Id.Should().NotBeEmpty();
+                actual.CorrelationId.Should().NotBeEmpty();
+                actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
+                actual.EntityId.Should().Be(processId);
+
+                actual.EventData.NewData.Should().NotBeNull();
+                actual.EventData.OldData.Should().BeNull();
+
+                actual.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
+                actual.SourceDomain.Should().Be(ProcessClosedEventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(ProcessClosedEventConstants.SOURCE_SYSTEM);
+                actual.Version.Should().Be(ProcessClosedEventConstants.V1_VERSION);
+
+                actual.User.Email.Should().Be(TestToken.UserEmail);
+                actual.User.Name.Should().Be(TestToken.UserName);
+            };
+
+            var snsVerifier = snsFixture.GetSnsEventVerifier<EntityEventSns>();
+            var snsResult = await snsVerifier.VerifySnsEventRaised(verifyFunc);
+
+            if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
         }
     }
 }

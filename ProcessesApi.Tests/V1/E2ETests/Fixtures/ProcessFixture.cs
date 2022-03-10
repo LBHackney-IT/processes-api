@@ -26,6 +26,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public UpdateProcessQuery UpdateProcessRequest { get; private set; }
         public UpdateProcessQueryObject UpdateProcessRequestObject { get; private set; }
         public Guid IncomingTenantId { get; private set; }
+        public Guid TenantId { get; private set; }
         public List<Guid> PersonTenures { get; private set; }
 
         public ProcessFixture(IDynamoDBContext context, IAmazonSimpleNotificationService amazonSimpleNotificationService)
@@ -67,7 +68,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             ProcessId = process.Id;
             ProcessName = process.ProcessName;
             IncomingTenantId = Guid.NewGuid();
-            PersonTenures = _fixture.CreateMany<Guid>().ToList();
+            TenantId = Guid.NewGuid();
         }
 
         public async Task GivenASoleToJointProcessExists(string state)
@@ -113,6 +114,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckEligibility);
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.IncomingTenantId, IncomingTenantId);
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.TenantId, TenantId);
         }
 
         public void GivenACheckManualEligibilityRequest(bool isEligible)
