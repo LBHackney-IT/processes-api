@@ -58,36 +58,61 @@ namespace ProcessesApi.V1.UseCase
             }
         }
 
-        private async Task CheckManualEligibility(StateMachine<string, string>.Transition x)
+        private async Task ValidateManualCheck(
+            StateMachine<string, string>.Transition transition,
+            string passedTrigger, string failedTrigger,
+            params (string CheckId, string Value)[] expectations)
         {
-            var processRequest = x.Parameters[0] as UpdateProcessState;
-            var eligibilityFormData = processRequest.FormData;
+            var processRequest = (UpdateProcessState) transition.Parameters[0];
+            var formData = processRequest.FormData;
 
             try
             {
-                var isEligible = eligibilityFormData[SoleToJointFormDataKeys.BR11].ToString().ToLower() == "true"
-                                 && eligibilityFormData[SoleToJointFormDataKeys.BR12].ToString().ToLower() == "false"
-                                 && eligibilityFormData[SoleToJointFormDataKeys.BR13].ToString().ToLower() == "false"
-                                 && eligibilityFormData[SoleToJointFormDataKeys.BR15].ToString().ToLower() == "false"
-                                 && eligibilityFormData[SoleToJointFormDataKeys.BR16].ToString().ToLower() == "false";
+                var isCheckPassed = expectations.All(expectation =>
+                    String.Equals(
+                        expectation.Value,
+                        formData[expectation.CheckId].ToString(),
+                        StringComparison.OrdinalIgnoreCase));
 
-                processRequest.Trigger = isEligible ? SoleToJointInternalTriggers.ManualEligibilityPassed : SoleToJointInternalTriggers.ManualEligibilityFailed;
+                processRequest.Trigger = isCheckPassed
+                    ? passedTrigger
+                    : failedTrigger;
 
-                var res = _machine.SetTriggerParameters<UpdateProcessState, Process>(processRequest.Trigger);
-                await _machine.FireAsync(res, processRequest, _soleToJointProcess);
+                var trigger = _machine.SetTriggerParameters<UpdateProcessState, Process>(processRequest.Trigger);
+                await _machine.FireAsync(trigger, processRequest, _soleToJointProcess);
             }
             catch (KeyNotFoundException)
             {
-                var expectedFormDataKeys = new List<string>
-                {
-                    SoleToJointFormDataKeys.BR11,
-                    SoleToJointFormDataKeys.BR12,
-                    SoleToJointFormDataKeys.BR13,
-                    SoleToJointFormDataKeys.BR15,
-                    SoleToJointFormDataKeys.BR16
-                };
-                throw new FormDataNotFoundException(eligibilityFormData.Keys.ToList(), expectedFormDataKeys);
+                var expectedFormDataKeys = expectations.Select(expectation => expectation.CheckId).ToList();
+                throw new FormDataNotFoundException(formData.Keys.ToList(), expectedFormDataKeys);
             }
+        }
+
+        private async Task CheckManualEligibility(StateMachine<string, string>.Transition transition)
+        {
+            await ValidateManualCheck(
+                    transition,
+                    SoleToJointInternalTriggers.ManualEligibilityPassed,
+                    SoleToJointInternalTriggers.ManualEligibilityFailed,
+                    (SoleToJointFormDataKeys.BR11, "true"),
+                    (SoleToJointFormDataKeys.BR12, "false"),
+                    (SoleToJointFormDataKeys.BR13, "false"),
+                    (SoleToJointFormDataKeys.BR15, "false"),
+                    (SoleToJointFormDataKeys.BR16, "false"))
+                .ConfigureAwait(false);
+        }
+
+        private async Task CheckTenancyBreach(StateMachine<string, string>.Transition transition)
+        {
+            await ValidateManualCheck(
+                    transition,
+                    SoleToJointInternalTriggers.BreachChecksPassed,
+                    SoleToJointInternalTriggers.BreachChecksFailed,
+                    (SoleToJointFormDataKeys.BR5, "false"),
+                    (SoleToJointFormDataKeys.BR10, "false"),
+                    (SoleToJointFormDataKeys.BR17, "false"),
+                    (SoleToJointFormDataKeys.BR18, "false"))
+                .ConfigureAwait(false);
         }
 
         private void SetUpStates()
@@ -105,6 +130,12 @@ namespace ProcessesApi.V1.UseCase
                     .Permit(SoleToJointInternalTriggers.ManualEligibilityPassed, SoleToJointStates.ManualChecksPassed)
                     .Permit(SoleToJointInternalTriggers.ManualEligibilityFailed, SoleToJointStates.ManualChecksFailed);
             _machine.Configure(SoleToJointStates.ManualChecksFailed)
+                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessCancelled);
+            _machine.Configure(SoleToJointStates.ManualChecksPassed)
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckTenancyBreach, async (x) => await CheckTenancyBreach(x).ConfigureAwait(false))
+                    .Permit(SoleToJointInternalTriggers.BreachChecksPassed, SoleToJointStates.BreachChecksPassed)
+                    .Permit(SoleToJointInternalTriggers.BreachChecksFailed, SoleToJointStates.BreachChecksFailed);
+            _machine.Configure(SoleToJointStates.BreachChecksFailed)
                     .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessCancelled);
         }
 
@@ -125,6 +156,8 @@ namespace ProcessesApi.V1.UseCase
             Configure(SoleToJointStates.ProcessCancelled, Assignment.Create("tenants"), null);
             Configure(SoleToJointStates.ManualChecksPassed, Assignment.Create("tenants"), null);
             ConfigureAsync(SoleToJointStates.ManualChecksFailed, Assignment.Create("tenants"), OnManualCheckFailed);
+            ConfigureAsync(SoleToJointStates.BreachChecksPassed, Assignment.Create("tenants"), null);
+            ConfigureAsync(SoleToJointStates.BreachChecksFailed, Assignment.Create("tenants"), null);
         }
 
         private async Task OnAutomatedCheckFailed(UpdateProcessState processRequest)

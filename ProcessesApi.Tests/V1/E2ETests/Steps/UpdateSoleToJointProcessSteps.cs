@@ -15,8 +15,6 @@ using System.Threading.Tasks;
 using Hackney.Core.Sns;
 using Hackney.Core.Testing.Sns;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
-using ProcessesApi.V1.Boundary.Response;
-using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure.JWT;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
@@ -24,6 +22,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
     public class UpdateSoleToJointProcessSteps : BaseSteps
     {
         private readonly IDynamoDbFixture _dbFixture;
+
         public UpdateSoleToJointProcessSteps(HttpClient httpClient, IDynamoDbFixture dbFixture) : base(httpClient)
         {
             _dbFixture = dbFixture;
@@ -89,44 +88,34 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             dbRecord.RelatedEntities.Should().Contain(incomingTenantId);
         }
 
-        public async Task ThenTheProcessStateIsUpdatedToEligibilityChecksPassed(UpdateProcessQuery request, UpdateProcessQueryObject requestBody)
+        public async Task ThenTheProcessStateIsUpdatedToEligibilityChecksPassed(UpdateProcessQuery request)
         {
-            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
-
-            dbRecord.CurrentState.State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
-            dbRecord.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
-            // Cleanup
-            await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
+            await CheckProcessState(request.Id, SoleToJointStates.AutomatedChecksPassed, SoleToJointStates.SelectTenants).ConfigureAwait(false);
         }
 
-        public async Task ThenTheProcessStateIsUpdatedToEligibilityChecksFailed(UpdateProcessQuery request, UpdateProcessQueryObject requestBody)
+        public async Task ThenTheProcessStateIsUpdatedToEligibilityChecksFailed(UpdateProcessQuery request)
         {
-            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
-
-            dbRecord.CurrentState.State.Should().Be(SoleToJointStates.AutomatedChecksFailed);
-            dbRecord.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
-            // Cleanup
-            await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
+            await CheckProcessState(request.Id, SoleToJointStates.AutomatedChecksFailed, SoleToJointStates.SelectTenants).ConfigureAwait(false);
         }
 
-        public async Task ThenTheProcessStateIsUpdatedToManualChecksPassed(UpdateProcessQuery request, UpdateProcessQueryObject requestBody)
+        public async Task ThenTheProcessStateIsUpdatedToManualChecksPassed(UpdateProcessQuery request)
         {
-            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
-
-            dbRecord.CurrentState.State.Should().Be(SoleToJointStates.ManualChecksPassed);
-            dbRecord.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
-            // Cleanup
-            await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
+            await CheckProcessState(request.Id, SoleToJointStates.ManualChecksPassed, SoleToJointStates.AutomatedChecksPassed).ConfigureAwait(false);
         }
 
-        public async Task ThenTheProcessStateIsUpdatedToManualChecksFailed(UpdateProcessQuery request, UpdateProcessQueryObject requestBody)
+        public async Task ThenTheProcessStateIsUpdatedToManualChecksFailed(UpdateProcessQuery request)
         {
-            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
+            await CheckProcessState(request.Id, SoleToJointStates.ManualChecksFailed, SoleToJointStates.AutomatedChecksPassed).ConfigureAwait(false);
+        }
 
-            dbRecord.CurrentState.State.Should().Be(SoleToJointStates.ManualChecksFailed);
-            dbRecord.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
-            // Cleanup
-            await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
+        public async Task ThenTheProcessStateIsUpdatedToBreachChecksPassed(UpdateProcessQuery request)
+        {
+            await CheckProcessState(request.Id, SoleToJointStates.BreachChecksPassed, SoleToJointStates.ManualChecksPassed).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheProcessStateIsUpdatedToBreachChecksFailed(UpdateProcessQuery request)
+        {
+            await CheckProcessState(request.Id, SoleToJointStates.BreachChecksFailed, SoleToJointStates.ManualChecksPassed).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessClosedEventIsRaised(ISnsFixture snsFixture, Guid processId)
@@ -154,6 +143,17 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             var snsResult = await snsVerifier.VerifySnsEventRaised(verifyFunc);
 
             if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
+        }
+
+        private async Task CheckProcessState(Guid processId, string currentState, string previousState)
+        {
+            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(processId).ConfigureAwait(false);
+
+            dbRecord.CurrentState.State.Should().Be(currentState);
+            dbRecord.PreviousStates.Last().State.Should().Be(previousState);
+
+            // Cleanup
+            await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
         }
     }
 }
