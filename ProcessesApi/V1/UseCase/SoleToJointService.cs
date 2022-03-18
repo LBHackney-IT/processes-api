@@ -157,7 +157,7 @@ namespace ProcessesApi.V1.UseCase
             Configure(SoleToJointStates.ManualChecksPassed, Assignment.Create("tenants"), null);
             ConfigureAsync(SoleToJointStates.ManualChecksFailed, Assignment.Create("tenants"), OnManualCheckFailed);
             ConfigureAsync(SoleToJointStates.BreachChecksPassed, Assignment.Create("tenants"), null);
-            ConfigureAsync(SoleToJointStates.BreachChecksFailed, Assignment.Create("tenants"), null);
+            ConfigureAsync(SoleToJointStates.BreachChecksFailed, Assignment.Create("tenants"), OnTenancyBreachCheckFailed);
         }
 
         private async Task OnAutomatedCheckFailed(UpdateProcessState processRequest)
@@ -170,6 +170,11 @@ namespace ProcessesApi.V1.UseCase
         private async Task OnManualCheckFailed(UpdateProcessState processRequest)
         {
             await PublishProcessClosedEvent("Manual Eligibility Check failed - process closed.");
+        }
+
+        private async Task OnTenancyBreachCheckFailed(UpdateProcessState processRequest)
+        {
+            await PublishProcessClosedEvent("Tenancy Breach Check failed - process closed.");
         }
 
         private void Configure(string state, Assignment assignment, Action<UpdateProcessState> func)

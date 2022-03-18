@@ -37,7 +37,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             { SoleToJointFormDataKeys.BR16, "false" }
         };
 
-        private Dictionary<string, object> _tenancyBreachPassData = new Dictionary<string, object>
+        private readonly Dictionary<string, object> _tenancyBreachPassData = new Dictionary<string, object>
         {
             { SoleToJointFormDataKeys.BR5, "false" },
             { SoleToJointFormDataKeys.BR10, "false" },
@@ -49,7 +49,8 @@ namespace ProcessesApi.Tests.V1.UseCase
         private Mock<ISnsGateway> _mockSnsGateway;
 
         private readonly List<Action> _cleanup = new List<Action>();
-        private Token _token = new Token();
+        private readonly Token _token = new Token();
+        private EntityEventSns _lastSnsEvent = new EntityEventSns();
 
         public void Dispose()
         {
@@ -58,6 +59,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         }
 
         private bool _disposed;
+
         protected virtual void Dispose(bool disposing)
         {
             if (disposing && !_disposed)
@@ -75,6 +77,10 @@ namespace ProcessesApi.Tests.V1.UseCase
             _mockSTJGateway = new Mock<ISoleToJointGateway>();
             _mockSnsGateway = new Mock<ISnsGateway>();
             _classUnderTest = new SoleToJointService(_mockSTJGateway.Object, new ProcessesSnsFactory(), _mockSnsGateway.Object);
+
+            _mockSnsGateway
+                .Setup(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Callback<EntityEventSns, string, string>((ev, s1, s2) => _lastSnsEvent = ev);
         }
 
         private Process CreateProcessWithCurrentState(string currentState)
@@ -375,17 +381,12 @@ namespace ProcessesApi.Tests.V1.UseCase
                 SoleToJointPermittedTriggers.CheckManualEligibility,
                 eligibilityFormData);
 
-            var snsEvent = new EntityEventSns();
-            _mockSnsGateway
-                .Setup(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()))
-                .Callback<EntityEventSns, string, string>((ev, s1, s2) => snsEvent = ev);
-
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 
             // Assert
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            snsEvent.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
+            _lastSnsEvent.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
         }
 
         #region Tenancy breach checks
@@ -456,6 +457,25 @@ namespace ProcessesApi.Tests.V1.UseCase
             _classUnderTest
                 .Invoking(cut => cut.Process(triggerObject, process, _token))
                 .Should().ThrowAsync<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
+        }
+
+        [Fact]
+        public async Task ProcessClosedEventIsRaisedWhenTenancyBreachChecksFail()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SoleToJointStates.ManualChecksPassed);
+
+            _tenancyBreachPassData[SoleToJointFormDataKeys.BR5] = "true";
+
+            var trigger = CreateProcessTrigger(
+                process, SoleToJointPermittedTriggers.CheckTenancyBreach, _tenancyBreachPassData);
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _lastSnsEvent.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
         }
 
         #endregion
