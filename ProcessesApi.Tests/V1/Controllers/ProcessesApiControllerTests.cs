@@ -30,6 +30,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         private ProcessesApiController _classUnderTest;
         private Mock<IGetByIdUseCase> _mockGetByIdUseCase;
         private Mock<ISoleToJointUseCase> _mockSoleToJointUseCase;
+        private Mock<IUpdateProcessByIdUsecase> _mockUpdateProcessByIdUseCase;
 
         private readonly Mock<ITokenFactory> _mockTokenFactory;
         private readonly Mock<IHttpContextWrapper> _mockContextWrapper;
@@ -44,6 +45,8 @@ namespace ProcessesApi.Tests.V1.Controllers
         {
             _mockGetByIdUseCase = new Mock<IGetByIdUseCase>();
             _mockSoleToJointUseCase = new Mock<ISoleToJointUseCase>();
+            _mockUpdateProcessByIdUseCase = new Mock<IUpdateProcessByIdUsecase>();
+
 
             _mockTokenFactory = new Mock<ITokenFactory>();
             _mockContextWrapper = new Mock<IHttpContextWrapper>();
@@ -51,7 +54,11 @@ namespace ProcessesApi.Tests.V1.Controllers
             _mockHttpResponse = new Mock<HttpResponse>();
 
             _classUnderTest = new ProcessesApiController(_mockGetByIdUseCase.Object, _mockSoleToJointUseCase.Object,
-                                                         _mockContextWrapper.Object, _mockTokenFactory.Object);
+                                                         _mockUpdateProcessByIdUseCase.Object,_mockContextWrapper.Object,
+                                                         _mockTokenFactory.Object)
+            {
+
+            };
 
             // changes to allow reading of raw request body
             _mockHttpRequest.SetupGet(x => x.Body).Returns(new MemoryStream(Encoding.Default.GetBytes(RequestBodyText)));
@@ -92,6 +99,19 @@ namespace ProcessesApi.Tests.V1.Controllers
             var queryObject = _fixture.Create<UpdateProcessQueryObject>();
             var processName = ProcessNamesConstants.SoleToJoint;
             var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), null, processName, null);
+            var query = _fixture.Build<UpdateProcessQuery>()
+                                .With(x => x.ProcessName, processResponse.ProcessName)
+                                .With(x => x.Id, processResponse.Id)
+                                .Create();
+            return (processResponse, query, queryObject);
+        }
+
+        private (Process, UpdateProcessQuery, UpdateProcessByIdQueryObject) ConstructPatchByIdRequest()
+        {
+            var queryObject = _fixture.Create<UpdateProcessByIdQueryObject>();
+            var processName = ProcessNamesConstants.SoleToJoint;
+            var currentProcessState = _fixture.Create<ProcessState>();
+            var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), currentProcessState, Guid.NewGuid(), null, processName, null);
             var query = _fixture.Build<UpdateProcessQuery>()
                                 .With(x => x.ProcessName, processResponse.ProcessName)
                                 .With(x => x.Id, processResponse.Id)
@@ -198,7 +218,7 @@ namespace ProcessesApi.Tests.V1.Controllers
               null, null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
                 .ReturnsAsync(processResponse);
             // Act
-            var response = await _classUnderTest.UpdateProcess(requestObject, request).ConfigureAwait(false);
+            var response = await _classUnderTest.UpdateProcessState(requestObject, request).ConfigureAwait(false);
             // Assert
             response.Should().BeOfType(typeof(NoContentResult));
         }
@@ -212,7 +232,7 @@ namespace ProcessesApi.Tests.V1.Controllers
               null, null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
                 .ReturnsAsync((Process) null);
             // Act
-            var response = await _classUnderTest.UpdateProcess(requestObject, request).ConfigureAwait(false);
+            var response = await _classUnderTest.UpdateProcessState(requestObject, request).ConfigureAwait(false);
             // Assert
             response.Should().BeOfType(typeof(NotFoundObjectResult));
             (response as NotFoundObjectResult).Value.Should().Be(request.Id);
@@ -228,7 +248,7 @@ namespace ProcessesApi.Tests.V1.Controllers
               null, null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
                 .ThrowsAsync(exception);
             // Act
-            Func<Task<IActionResult>> func = async () => await _classUnderTest.UpdateProcess(requestObject, request).ConfigureAwait(false);
+            Func<Task<IActionResult>> func = async () => await _classUnderTest.UpdateProcessState(requestObject, request).ConfigureAwait(false);
             // Assert
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }

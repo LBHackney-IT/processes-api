@@ -4,9 +4,11 @@ using System.Collections.Generic;
 
 namespace ProcessesApi.V1.Boundary.Request
 {
-    public class UpdateProcessQueryObject
+    public class UpdateProcessByIdQueryObject
     {
         public Dictionary<string, object> FormData { get; set; }
         public List<Guid> Documents { get; set; }
+        public Assignment Assignment { get; set; }
+
     }
 }
