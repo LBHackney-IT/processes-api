@@ -183,7 +183,7 @@ namespace ProcessesApi
             services.AddScoped<IGetByIdUseCase, GetProcessByIdUseCase>();
             services.AddScoped<ISoleToJointUseCase, SoleToJointUseCase>();
             services.AddScoped<ISoleToJointService, SoleToJointService>();
-            services.AddScoped<IUpdateProcessByIdUsecase, UpdateProcessUsecase>();
+            services.AddScoped<IUpdateProcessByIdUsecase, UpdateProcessByIdUsecase>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

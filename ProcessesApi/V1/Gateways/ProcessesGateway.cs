@@ -1,11 +1,13 @@
 using Amazon.DynamoDBv2.DataModel;
 using Hackney.Core.Logging;
 using Microsoft.Extensions.Logging;
+using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.UseCase.Exceptions;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.Gateways
@@ -14,6 +16,7 @@ namespace ProcessesApi.V1.Gateways
     {
         private readonly IDynamoDBContext _dynamoDbContext;
         private readonly ILogger<ProcessesGateway> _logger;
+
 
 
         public ProcessesGateway(IDynamoDBContext dynamoDbContext, ILogger<ProcessesGateway> logger)
@@ -42,7 +45,7 @@ namespace ProcessesApi.V1.Gateways
         }
 
         [LogCall]
-        public async Task<Process> SaveProcessById(UpdateProcess query, int? ifMatch)
+        public async Task<Process> SaveProcessById(UpdateProcessQuery query, UpdateProcessByIdRequestObject requestObject, int? ifMatch)
         {
             _logger.LogDebug($"Calling IDynamoDBContext.LoadAsync for ID: {query.Id}");
 
@@ -53,10 +56,10 @@ namespace ProcessesApi.V1.Gateways
             if (ifMatch != currentProcess.VersionNumber)
                 throw new VersionNumberConflictException(ifMatch, currentProcess.VersionNumber);
 
-            var processData = ProcessData.Create(query.FormData, query.Documents);
+            var processData = ProcessData.Create(requestObject.FormData, requestObject.Documents);
             var UpdatedcurrentState = ProcessState.Create(currentProcess.CurrentState.State,
                                                           currentProcess.CurrentState.PermittedTriggers,
-                                                          query.Assignment,
+                                                          requestObject.Assignment,
                                                           processData,
                                                           currentProcess.CurrentState.CreatedAt,
                                                           DateTime.UtcNow);
@@ -72,7 +75,7 @@ namespace ProcessesApi.V1.Gateways
 
             var dbEntity = updateProcess.ToDatabase();
             _logger.LogDebug($"Calling IDynamoDBContext.SaveAsync for id {query.Id}");
-            
+
             await _dynamoDbContext.SaveAsync(dbEntity).ConfigureAwait(false);
             return dbEntity.ToDomain();
         }

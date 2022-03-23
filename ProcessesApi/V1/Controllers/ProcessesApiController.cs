@@ -166,20 +166,13 @@ namespace ProcessesApi.V1.Controllers
         [HttpPatch]
         [LogCall(LogLevel.Information)]
         [Route("{processName}/{id}")]
-        public async Task<IActionResult> UpdateProcessById([FromBody] UpdateProcessByIdQueryObject requestObject, [FromRoute] UpdateProcessQuery query)
+        public async Task<IActionResult> UpdateProcessById([FromBody] UpdateProcessByIdRequestObject requestObject, [FromRoute] UpdateProcessQuery query)
         {
-            var token = _tokenFactory.Create(_contextWrapper.GetContextRequestHeaders(HttpContext));
-            _contextWrapper.GetContextRequestHeaders(HttpContext);
             var ifMatch = GetIfMatchFromHeader();
             try
             {
-                var response = await _updateProcessByIdUsecase.Execute(query.Id,
-                                                                   requestObject.FormData,
-                                                                   requestObject.Documents,
-                                                                   requestObject.Assignment,
-                                                                   query.ProcessName,
-                                                                   ifMatch,
-                                                                   token);
+
+                var response = await _updateProcessByIdUsecase.Execute(query, requestObject, ifMatch);
                 if (response == null) return NotFound(query.Id);
                 return NoContent();
             }

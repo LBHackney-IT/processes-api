@@ -54,7 +54,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             _mockHttpResponse = new Mock<HttpResponse>();
 
             _classUnderTest = new ProcessesApiController(_mockGetByIdUseCase.Object, _mockSoleToJointUseCase.Object,
-                                                         _mockUpdateProcessByIdUseCase.Object,_mockContextWrapper.Object,
+                                                         _mockUpdateProcessByIdUseCase.Object, _mockContextWrapper.Object,
                                                          _mockTokenFactory.Object)
             {
 
@@ -106,9 +106,9 @@ namespace ProcessesApi.Tests.V1.Controllers
             return (processResponse, query, queryObject);
         }
 
-        private (Process, UpdateProcessQuery, UpdateProcessByIdQueryObject) ConstructPatchByIdRequest()
+        private (Process, UpdateProcessQuery, UpdateProcessByIdRequestObject) ConstructPatchByIdRequest()
         {
-            var queryObject = _fixture.Create<UpdateProcessByIdQueryObject>();
+            var queryObject = _fixture.Create<UpdateProcessByIdRequestObject>();
             var processName = ProcessNamesConstants.SoleToJoint;
             var currentProcessState = _fixture.Create<ProcessState>();
             var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), currentProcessState, Guid.NewGuid(), null, processName, null);
@@ -249,6 +249,47 @@ namespace ProcessesApi.Tests.V1.Controllers
                 .ThrowsAsync(exception);
             // Act
             Func<Task<IActionResult>> func = async () => await _classUnderTest.UpdateProcessState(requestObject, request).ConfigureAwait(false);
+            // Assert
+            func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
+        }
+
+        [Fact]
+        public async void UpdateProcessbyIdSuccessfullyReturnsUpdatedStatus()
+        {
+            // Arrange
+            (var processResponse, var request, var requestObject) = ConstructPatchByIdRequest();
+            _mockUpdateProcessByIdUseCase.Setup(x => x.Execute(request, requestObject, It.IsAny<int?>()))
+                                         .ReturnsAsync(processResponse);
+            // Act
+            var response = await _classUnderTest.UpdateProcessById(requestObject, request).ConfigureAwait(false);
+            // Assert
+            response.Should().BeOfType(typeof(NoContentResult));
+        }
+
+        [Fact]
+        public async void UpdateProcessByIdReturnsNotFoundWhenProcessDoesNotExist()
+        {
+            // Arrange
+            (var processResponse, var request, var requestObject) = ConstructPatchByIdRequest();
+            _mockUpdateProcessByIdUseCase.Setup(x => x.Execute(request, requestObject, It.IsAny<int?>()))
+                                         .ReturnsAsync((Process) null);
+            // Act
+            var response = await _classUnderTest.UpdateProcessById(requestObject, request).ConfigureAwait(false);
+            // Assert
+            response.Should().BeOfType(typeof(NotFoundObjectResult));
+            (response as NotFoundObjectResult).Value.Should().Be(request.Id);
+        }
+
+        [Fact]
+        public void UpdateProcessByIdExceptionIsThrown()
+        {
+            // Arrange
+            var exception = new ApplicationException("Test exception");
+            (var processResponse, var request, var requestObject) = ConstructPatchByIdRequest();
+            _mockUpdateProcessByIdUseCase.Setup(x => x.Execute(request, requestObject, It.IsAny<int?>()))
+                                         .ThrowsAsync(exception);
+            // Act
+            Func<Task<IActionResult>> func = async () => await _classUnderTest.UpdateProcessById(requestObject, request).ConfigureAwait(false);
             // Assert
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }

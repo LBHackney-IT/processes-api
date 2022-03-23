@@ -25,6 +25,8 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public CreateProcess CreateProcessRequest { get; private set; }
         public UpdateProcessQuery UpdateProcessRequest { get; private set; }
         public UpdateProcessQueryObject UpdateProcessRequestObject { get; private set; }
+        public UpdateProcessByIdRequestObject UpdateProcessByIdRequestObject { get; private set; }
+
         public Guid IncomingTenantId { get; private set; }
         public Guid TenantId { get; private set; }
         public List<Guid> PersonTenures { get; private set; }
@@ -146,6 +148,14 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckEligibility);
             UpdateProcessRequestObject.Documents.Add(Guid.Empty);
+        }
+
+        public void GivenAnUpdateProcessByIdRequest()
+        {
+            UpdateProcessRequest = _fixture.Build<UpdateProcessQuery>()
+                                           .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
+                                           .Create();
+            UpdateProcessByIdRequestObject = _fixture.Create<UpdateProcessByIdRequestObject>();
         }
 
         private void CreateSnsTopic()
