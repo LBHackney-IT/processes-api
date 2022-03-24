@@ -7,7 +7,7 @@ using System;
 using TestStack.BDDfy;
 using Xunit;
 
-namespace ProcessesApi.Tests.V1.E2ETests.Stories
+namespace ProcessesApi.Tests.V1.E2E.Stories
 {
     [Story(
        AsA = "Internal Hackney user (such as a Housing Officer or Area Housing Manager)",
