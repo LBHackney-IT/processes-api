@@ -25,6 +25,8 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public CreateProcess CreateProcessRequest { get; private set; }
         public UpdateProcessQuery UpdateProcessRequest { get; private set; }
         public UpdateProcessQueryObject UpdateProcessRequestObject { get; private set; }
+
+        public UpdateProcessByIdQuery UpdateProcessByIdRequest { get; private set; }
         public UpdateProcessByIdRequestObject UpdateProcessByIdRequestObject { get; private set; }
 
         public Guid IncomingTenantId { get; private set; }
@@ -150,10 +152,16 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             UpdateProcessRequestObject.Documents.Add(Guid.Empty);
         }
 
-        public void GivenAnUpdateProcessByIdRequest()
+        public void GivenAnUpdateProcessByIdRequestWithValidationErrors()
         {
-            UpdateProcessRequest = _fixture.Build<UpdateProcessQuery>()
+            GivenAnUpdateProcessByIdRequest(ProcessId);
+            UpdateProcessByIdRequestObject.Documents.Add(Guid.Empty);
+        }
+        public void GivenAnUpdateProcessByIdRequest(Guid id)
+        {
+            UpdateProcessByIdRequest = _fixture.Build<UpdateProcessByIdQuery>()
                                            .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
+                                           .With(x => x.Id, id)
                                            .Create();
             UpdateProcessByIdRequestObject = _fixture.Create<UpdateProcessByIdRequestObject>();
         }

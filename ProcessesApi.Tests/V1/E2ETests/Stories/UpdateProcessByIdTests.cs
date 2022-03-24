@@ -49,8 +49,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         public void UpdateProcessByIdReturnsNotFoundWhenProcessDoesNotExist()
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessDoesNotExist())
-                    .And(a => _processFixture.GivenAnUpdateProcessByIdRequest())
-                .When(w => _steps.WhenAnUpdateProcessByIdRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessByIdRequestObject, 0))
+                    .And(a => _processFixture.GivenAnUpdateProcessByIdRequest(_processFixture.ProcessId))
+                .When(w => _steps.WhenAnUpdateProcessByIdRequestIsMade(_processFixture.UpdateProcessByIdRequest, _processFixture.UpdateProcessByIdRequestObject, 0))
                 .Then(t => _steps.ThenNotFoundIsReturned())
                 .BDDfy();
         }
@@ -59,9 +59,9 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         public void UpdateProcessByIdSucceedsWhenProcessDoesExist()
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.ApplicationInitialised))
-                    .And(a => _processFixture.GivenAnUpdateProcessByIdRequest())
-                .When(w => _steps.WhenAnUpdateProcessByIdRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessByIdRequestObject, 0))
-                .Then(t => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessByIdRequestObject))
+                    .And(a => _processFixture.GivenAnUpdateProcessByIdRequest(_processFixture.ProcessId))
+                .When(w => _steps.WhenAnUpdateProcessByIdRequestIsMade(_processFixture.UpdateProcessByIdRequest, _processFixture.UpdateProcessByIdRequestObject, 0))
+                .Then(t => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessByIdRequest, _processFixture.UpdateProcessByIdRequestObject))
                 .BDDfy();
         }
 
@@ -71,8 +71,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         public void ServiceReturnsConflictWhenIncorrectVersionNumber(int? versionNumber)
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.ApplicationInitialised))
-                .And(a => _processFixture.GivenAnUpdateProcessByIdRequest())
-                .When(w => _steps.WhenAnUpdateProcessByIdRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessByIdRequestObject, versionNumber))
+                .And(a => _processFixture.GivenAnUpdateProcessByIdRequest(_processFixture.ProcessId))
+                .When(w => _steps.WhenAnUpdateProcessByIdRequestIsMade(_processFixture.UpdateProcessByIdRequest, _processFixture.UpdateProcessByIdRequestObject, versionNumber))
                 .Then(t => _steps.ThenVersionConflictExceptionIsReturned(versionNumber))
                 .BDDfy();
         }
@@ -80,9 +80,9 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [Fact]
         public void ServiceReturnsBadRequest()
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessDoesNotExist())
-                .And(a => _processFixture.GivenAnUpdateSoleToJointProcessRequestWithValidationErrors())
-                .When(w => _steps.WhenAnUpdateProcessByIdRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessByIdRequestObject, 0))
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.ApplicationInitialised))
+                .And(a => _processFixture.GivenAnUpdateProcessByIdRequestWithValidationErrors())
+                .When(w => _steps.WhenAnUpdateProcessByIdRequestIsMade(_processFixture.UpdateProcessByIdRequest, _processFixture.UpdateProcessByIdRequestObject, 0))
                 .Then(r => _steps.ThenBadRequestIsReturned())
                 .BDDfy();
         }

@@ -152,7 +152,7 @@ namespace ProcessesApi.Tests.V1.Gateways
 
             var updateProcessRequest = _fixture.Create<UpdateProcessByIdRequestObject>();
 
-            var updatedProcessQuery = _fixture.Build<UpdateProcessQuery>()
+            var updatedProcessQuery = _fixture.Build<UpdateProcessByIdQuery>()
                         .With(x => x.Id, originalProcess.Id)
                         .Create();
 
@@ -187,7 +187,7 @@ namespace ProcessesApi.Tests.V1.Gateways
 
             var updateProcessRequest = _fixture.Create<UpdateProcessByIdRequestObject>();
 
-            var updatedProcessQuery = _fixture.Build<UpdateProcessQuery>()
+            var updatedProcessQuery = _fixture.Build<UpdateProcessByIdQuery>()
                         .With(x => x.Id, originalProcess.Id)
                         .Create();
             var suppliedVersion = 1;
@@ -204,7 +204,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         public async Task UpdateProcessByIdReturnsNullIfProcessDoesNotExist()
         {
             var updateProcessRequest = _fixture.Create<UpdateProcessByIdRequestObject>();
-            var updatedProcessQuery = _fixture.Create<UpdateProcessQuery>();
+            var updatedProcessQuery = _fixture.Create<UpdateProcessByIdQuery>();
 
             var response = await _classUnderTest.SaveProcessById(updatedProcessQuery, updateProcessRequest, 0).ConfigureAwait(false);
 

@@ -166,7 +166,7 @@ namespace ProcessesApi.V1.Controllers
         [HttpPatch]
         [LogCall(LogLevel.Information)]
         [Route("{processName}/{id}")]
-        public async Task<IActionResult> UpdateProcessById([FromBody] UpdateProcessByIdRequestObject requestObject, [FromRoute] UpdateProcessQuery query)
+        public async Task<IActionResult> UpdateProcessById([FromBody] UpdateProcessByIdRequestObject requestObject, [FromRoute] UpdateProcessByIdQuery query)
         {
             var ifMatch = GetIfMatchFromHeader();
             try

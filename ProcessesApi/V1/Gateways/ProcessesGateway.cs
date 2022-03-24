@@ -45,7 +45,7 @@ namespace ProcessesApi.V1.Gateways
         }
 
         [LogCall]
-        public async Task<Process> SaveProcessById(UpdateProcessQuery query, UpdateProcessByIdRequestObject requestObject, int? ifMatch)
+        public async Task<Process> SaveProcessById(UpdateProcessByIdQuery query, UpdateProcessByIdRequestObject requestObject, int? ifMatch)
         {
             _logger.LogDebug($"Calling IDynamoDBContext.LoadAsync for ID: {query.Id}");
 

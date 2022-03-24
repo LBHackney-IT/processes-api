@@ -106,13 +106,13 @@ namespace ProcessesApi.Tests.V1.Controllers
             return (processResponse, query, queryObject);
         }
 
-        private (Process, UpdateProcessQuery, UpdateProcessByIdRequestObject) ConstructPatchByIdRequest()
+        private (Process, UpdateProcessByIdQuery, UpdateProcessByIdRequestObject) ConstructPatchByIdRequest()
         {
             var queryObject = _fixture.Create<UpdateProcessByIdRequestObject>();
             var processName = ProcessNamesConstants.SoleToJoint;
             var currentProcessState = _fixture.Create<ProcessState>();
             var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), currentProcessState, Guid.NewGuid(), null, processName, null);
-            var query = _fixture.Build<UpdateProcessQuery>()
+            var query = _fixture.Build<UpdateProcessByIdQuery>()
                                 .With(x => x.ProcessName, processResponse.ProcessName)
                                 .With(x => x.Id, processResponse.Id)
                                 .Create();

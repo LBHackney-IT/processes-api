@@ -27,9 +27,9 @@ namespace ProcessesApi.Tests.V1.UseCase
             _classUnderTest = new UpdateProcessByIdUsecase(_mockGateway.Object);
         }
 
-        private UpdateProcessQuery ConstructQuery(Guid id)
+        private UpdateProcessByIdQuery ConstructQuery(Guid id)
         {
-            return new UpdateProcessQuery() { Id = id };
+            return new UpdateProcessByIdQuery() { Id = id };
         }
 
         private UpdateProcessByIdRequestObject ConstructRequest()
