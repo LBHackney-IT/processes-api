@@ -27,6 +27,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         public Fixture _fixture = new Fixture();
         private readonly IDynamoDbFixture _dbFixture;
         private IDynamoDBContext _dynamoDb => _dbFixture.DynamoDbContext;
+
         private Dictionary<string, object> _manualEligibilityPassData => new Dictionary<string, object>
         {
             { SoleToJointFormDataKeys.BR11, "true" },
@@ -36,11 +37,20 @@ namespace ProcessesApi.Tests.V1.UseCase
             { SoleToJointFormDataKeys.BR16, "false" }
         };
 
+        private readonly Dictionary<string, object> _tenancyBreachPassData = new Dictionary<string, object>
+        {
+            { SoleToJointFormDataKeys.BR5, "false" },
+            { SoleToJointFormDataKeys.BR10, "false" },
+            { SoleToJointFormDataKeys.BR17, "false" },
+            { SoleToJointFormDataKeys.BR18, "false" }
+        };
+
         private Mock<ISoleToJointGateway> _mockSTJGateway;
         private Mock<ISnsGateway> _mockSnsGateway;
 
         private readonly List<Action> _cleanup = new List<Action>();
-        private Token _token = new Token();
+        private readonly Token _token = new Token();
+        private EntityEventSns _lastSnsEvent = new EntityEventSns();
 
         public void Dispose()
         {
@@ -49,6 +59,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         }
 
         private bool _disposed;
+
         protected virtual void Dispose(bool disposing)
         {
             if (disposing && !_disposed)
@@ -66,6 +77,10 @@ namespace ProcessesApi.Tests.V1.UseCase
             _mockSTJGateway = new Mock<ISoleToJointGateway>();
             _mockSnsGateway = new Mock<ISnsGateway>();
             _classUnderTest = new SoleToJointService(_mockSTJGateway.Object, new ProcessesSnsFactory(), _mockSnsGateway.Object);
+
+            _mockSnsGateway
+                .Setup(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Callback<EntityEventSns, string, string>((ev, s1, s2) => _lastSnsEvent = ev);
         }
 
         private Process CreateProcessWithCurrentState(string currentState)
@@ -92,7 +107,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             );
         }
 
-        private void CurrentStateShouldContainCorrectData(Process process, string expectedCurrentState, List<string> expectedTriggers, UpdateProcessState triggerObject)
+        private void CurrentStateShouldContainCorrectData(Process process, UpdateProcessState triggerObject, string expectedCurrentState, List<string> expectedTriggers)
         {
             process.CurrentState.State.Should().Be(expectedCurrentState);
             process.CurrentState.PermittedTriggers.Should().BeEquivalentTo(expectedTriggers);
@@ -117,9 +132,9 @@ namespace ProcessesApi.Tests.V1.UseCase
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
             // Assert
             CurrentStateShouldContainCorrectData(process,
+                                                 triggerObject,
                                                  SoleToJointStates.SelectTenants,
-                                                 new List<string>() { SoleToJointPermittedTriggers.CheckEligibility },
-                                                 triggerObject);
+                                                 new List<string>() { SoleToJointPermittedTriggers.CheckEligibility });
             process.PreviousStates.Should().BeEmpty();
         }
 
@@ -168,9 +183,9 @@ namespace ProcessesApi.Tests.V1.UseCase
 
             // Assert
             CurrentStateShouldContainCorrectData(process,
+                                                 triggerObject,
                                                  SoleToJointStates.AutomatedChecksFailed,
-                                                 new List<string>() { SoleToJointPermittedTriggers.CancelProcess },
-                                                 triggerObject);
+                                                 new List<string>() { SoleToJointPermittedTriggers.CancelProcess });
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
             _mockSTJGateway.Verify(x => x.CheckEligibility(process.TargetId, incomingTenantId, tenantId), Times.Once());
         }
@@ -199,9 +214,9 @@ namespace ProcessesApi.Tests.V1.UseCase
 
             // Assert
             CurrentStateShouldContainCorrectData(process,
+                                                 triggerObject,
                                                  SoleToJointStates.AutomatedChecksPassed,
-                                                 new List<string>() { SoleToJointPermittedTriggers.CheckManualEligibility },
-                                                 triggerObject);
+                                                 new List<string>() { SoleToJointPermittedTriggers.CheckManualEligibility });
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
             _mockSTJGateway.Verify(x => x.CheckEligibility(process.TargetId, incomingTenantId, tenantId), Times.Once());
         }
@@ -240,9 +255,9 @@ namespace ProcessesApi.Tests.V1.UseCase
 
             // Assert
             CurrentStateShouldContainCorrectData(process,
+                                                 triggerObject,
                                                  SoleToJointStates.ManualChecksPassed,
-                                                 new List<string>(), // TODO: Update when next state is implemented
-                                                 triggerObject);
+                                                 new List<string> { "CheckTenancyBreach" });
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
         }
 
@@ -268,9 +283,9 @@ namespace ProcessesApi.Tests.V1.UseCase
 
             // Assert
             CurrentStateShouldContainCorrectData(process,
+                                                 triggerObject,
                                                  SoleToJointStates.ManualChecksFailed,
-                                                 new List<string>() { SoleToJointPermittedTriggers.CancelProcess },
-                                                 triggerObject);
+                                                 new List<string>() { SoleToJointPermittedTriggers.CancelProcess });
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
         }
 
@@ -302,6 +317,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         [Theory]
         [InlineData(SoleToJointStates.AutomatedChecksFailed)]
         [InlineData(SoleToJointStates.ManualChecksFailed)]
+        [InlineData(SoleToJointStates.BreachChecksFailed)]
         public async Task ProcessStateIsUpdatedToCloseProcess(string fromState)
         {
             // Arrange
@@ -316,9 +332,7 @@ namespace ProcessesApi.Tests.V1.UseCase
 
             // Assert
             CurrentStateShouldContainCorrectData(process,
-                                                 SoleToJointStates.ProcessCancelled,
-                                                 new List<string>(),
-                                                 triggerObject);
+                                                 triggerObject, SoleToJointStates.ProcessCancelled, new List<string>());
             process.PreviousStates.LastOrDefault().State.Should().Be(fromState);
         }
 
@@ -367,17 +381,103 @@ namespace ProcessesApi.Tests.V1.UseCase
                 SoleToJointPermittedTriggers.CheckManualEligibility,
                 eligibilityFormData);
 
-            var snsEvent = new EntityEventSns();
-            _mockSnsGateway
-                .Setup(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()))
-                .Callback<EntityEventSns, string, string>((ev, s1, s2) => snsEvent = ev);
-
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 
             // Assert
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            snsEvent.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
+            _lastSnsEvent.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
         }
+
+        #region Tenancy breach checks
+
+        [Fact]
+        public async Task ProcessStateIsUpdatedToBreachChecksPassedWhenBreachCheckSucceed()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SoleToJointStates.ManualChecksPassed);
+            var trigger = CreateProcessTrigger(
+                process, SoleToJointPermittedTriggers.CheckTenancyBreach, _tenancyBreachPassData);
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SoleToJointStates.BreachChecksPassed,
+                new List<string> { /* TODO: VK: Update permitted triggers when implemented */ });
+
+            process.PreviousStates.Last().State.Should().Be(SoleToJointStates.ManualChecksPassed);
+        }
+
+        [Theory]
+        [InlineData(SoleToJointFormDataKeys.BR5, "true")]
+        [InlineData(SoleToJointFormDataKeys.BR10, "true")]
+        [InlineData(SoleToJointFormDataKeys.BR17, "true")]
+        [InlineData(SoleToJointFormDataKeys.BR18, "true")]
+        public async Task ProcessStateIsUpdatedToBreachChecksFailedWhenBreachCheckFail(string checkId, string value)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SoleToJointStates.ManualChecksPassed);
+
+            _tenancyBreachPassData[checkId] = value;
+
+            var trigger = CreateProcessTrigger(
+                process, SoleToJointPermittedTriggers.CheckTenancyBreach, _tenancyBreachPassData);
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SoleToJointStates.BreachChecksFailed,
+                new List<string> { SoleToJointPermittedTriggers.CancelProcess });
+
+            process.PreviousStates.Last().State.Should().Be(SoleToJointStates.ManualChecksPassed);
+        }
+
+        [Theory]
+        [InlineData(SoleToJointFormDataKeys.BR5)]
+        [InlineData(SoleToJointFormDataKeys.BR10)]
+        [InlineData(SoleToJointFormDataKeys.BR17)]
+        [InlineData(SoleToJointFormDataKeys.BR18)]
+        public void ThrowsFormDataNotFoundExceptionOnOnTenancyBreachCheckWhenCheckIsMissed(string checkId)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SoleToJointStates.ManualChecksPassed);
+
+            _tenancyBreachPassData.Remove(checkId);
+
+            var triggerObject = CreateProcessTrigger(
+                process, SoleToJointPermittedTriggers.CheckManualEligibility, _tenancyBreachPassData);
+
+            var expectedErrorMessage = $"The form data keys supplied ({String.Join(", ", _tenancyBreachPassData.Keys.ToList())}) do not include the expected values ({checkId}).";
+
+            // Act & assert
+            _classUnderTest
+                .Invoking(cut => cut.Process(triggerObject, process, _token))
+                .Should().ThrowAsync<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
+        }
+
+        [Fact]
+        public async Task ProcessClosedEventIsRaisedWhenTenancyBreachChecksFail()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SoleToJointStates.ManualChecksPassed);
+
+            _tenancyBreachPassData[SoleToJointFormDataKeys.BR5] = "true";
+
+            var trigger = CreateProcessTrigger(
+                process, SoleToJointPermittedTriggers.CheckTenancyBreach, _tenancyBreachPassData);
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _lastSnsEvent.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
+        }
+
+        #endregion
     }
 }
