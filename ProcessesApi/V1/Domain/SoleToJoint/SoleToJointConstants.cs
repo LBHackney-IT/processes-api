@@ -13,7 +13,7 @@ namespace ProcessesApi.V1.Domain
         public const string ManualChecksPassed = "ManualChecksPassed";
         public const string BreachChecksFailed = "BreachChecksFailed";
         public const string BreachChecksPassed = "BreachChecksPassed";
-        public const string ConfirmAppointmentScheduled = "ConfirmAppointmentScheduled";
+        public const string DocumentsRequestedAppointment = "DocumentsRequestedAppointment";
     }
 
     public static class SoleToJointPermittedTriggers
@@ -23,6 +23,7 @@ namespace ProcessesApi.V1.Domain
         public const string CheckManualEligibility = "CheckManualEligibility";
         public const string RequestDocuments = "RequestDocuments";
         public const string CheckTenancyBreach = "CheckTenancyBreach";
+        public const string RequestDocumentsAppointment = "RequestDocumentsAppointment";
     }
 
     public static class SoleToJointInternalTriggers
@@ -40,8 +41,19 @@ namespace ProcessesApi.V1.Domain
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     public static class SoleToJointFormDataKeys
     {
+        #region Automated eligibility checks
+
+        /// <summary>
+        /// The ID of the proposed tenant
+        /// </summary>
         public const string IncomingTenantId = "incomingTenantId";
+
+        /// <summary>
+        /// The ID of the current tenant
+        /// </summary>
         public const string TenantId = "tenantId";
+
+        #endregion
 
         #region Manual eligibility checks
 
@@ -95,6 +107,8 @@ namespace ProcessesApi.V1.Domain
         public const string BR18 = "br18";
 
         #endregion
+
+        public const string AppointmentDateTime = "appointmentDateTime";
     }
 
 }

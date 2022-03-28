@@ -115,6 +115,15 @@ namespace ProcessesApi.V1.UseCase
                 .ConfigureAwait(false);
         }
 
+        private void AddIncomingTenantId(UpdateProcessState processRequest)
+        {
+            //TODO: When doing a POST request from the FE they should created a relatedEntities object with all neccesary values
+            // Once Frontend work is completed the IF statement below should be removed.
+            if (_soleToJointProcess.RelatedEntities == null)
+                _soleToJointProcess.RelatedEntities = new List<Guid>();
+            _soleToJointProcess.RelatedEntities.Add(Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()));
+        }
+
         private void SetUpStates()
         {
             _machine.Configure(SoleToJointStates.ApplicationInitialised)
@@ -137,16 +146,10 @@ namespace ProcessesApi.V1.UseCase
                     .Permit(SoleToJointInternalTriggers.BreachChecksFailed, SoleToJointStates.BreachChecksFailed);
             _machine.Configure(SoleToJointStates.BreachChecksFailed)
                     .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessCancelled);
+            _machine.Configure(SoleToJointStates.BreachChecksPassed)
+                    .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment);
         }
 
-        private void AddIncomingTenantId(UpdateProcessState processRequest)
-        {
-            //TODO: When doing a POST request from the FE they should created a relatedEntities object with all neccesary values
-            // Once Frontend work is completed the IF statement below should be removed.
-            if (_soleToJointProcess.RelatedEntities == null)
-                _soleToJointProcess.RelatedEntities = new List<Guid>();
-            _soleToJointProcess.RelatedEntities.Add(Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()));
-        }
 
         private void SetUpStateActions()
         {
@@ -158,6 +161,7 @@ namespace ProcessesApi.V1.UseCase
             ConfigureAsync(SoleToJointStates.ManualChecksFailed, Assignment.Create("tenants"), OnManualCheckFailed);
             ConfigureAsync(SoleToJointStates.BreachChecksPassed, Assignment.Create("tenants"), null);
             ConfigureAsync(SoleToJointStates.BreachChecksFailed, Assignment.Create("tenants"), OnTenancyBreachCheckFailed);
+            Configure(SoleToJointStates.DocumentsRequestedAppointment, Assignment.Create("tenants"), OnRequestDocumentsAppointment);
         }
 
         private async Task OnAutomatedCheckFailed(UpdateProcessState processRequest)
@@ -175,6 +179,21 @@ namespace ProcessesApi.V1.UseCase
         private async Task OnTenancyBreachCheckFailed(UpdateProcessState processRequest)
         {
             await PublishProcessClosedEvent("Tenancy Breach Check failed - process closed.");
+        }
+
+        private void OnRequestDocumentsAppointment(UpdateProcessState processRequest)
+        {
+            var appointmentDetails = processRequest.FormData[SoleToJointFormDataKeys.AppointmentDateTime];
+            if (appointmentDetails is null) throw new FormDataNotFoundException(processRequest.FormData.Keys.ToList(), new List<string>() { SoleToJointFormDataKeys.AppointmentDateTime });
+
+            if (DateTime.TryParse(appointmentDetails.ToString(), out DateTime appointmentDateTime))
+            {
+                // Do nothing
+            }
+            else
+            {
+                throw new FormDataFormatException("appointment datetime", appointmentDetails);
+            }
         }
 
         private void Configure(string state, Assignment assignment, Action<UpdateProcessState> func)
