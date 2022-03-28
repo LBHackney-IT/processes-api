@@ -7,20 +7,20 @@ using Xunit;
 
 namespace ProcessesApi.Tests.V1.Boundary.Validation
 {
-    public class UpdateProcessQueryObjectValidatorTests
+    public class UpdateProcessRequestObjectValidatorTests
     {
-        private readonly UpdateProcessQueryObjectValidator _classUnderTest;
+        private readonly UpdateProcessRequestObjectValidator _classUnderTest;
 
-        public UpdateProcessQueryObjectValidatorTests()
+        public UpdateProcessRequestObjectValidatorTests()
         {
-            _classUnderTest = new UpdateProcessQueryObjectValidator();
+            _classUnderTest = new UpdateProcessRequestObjectValidator();
         }
 
         [Fact]
         public void RequestShouldErrorWithEmptyDocumentIDs()
         {
             //Arrange
-            var model = new UpdateProcessQueryObject() { Documents = new List<Guid> { Guid.Empty } };
+            var model = new UpdateProcessRequestObject() { Documents = new List<Guid> { Guid.Empty } };
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert
@@ -30,7 +30,7 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         public void RequestShouldNotErrorWithValidDocumentIDs()
         {
             //Arrange
-            var model = new UpdateProcessQueryObject() { Documents = new List<Guid> { Guid.NewGuid() } };
+            var model = new UpdateProcessRequestObject() { Documents = new List<Guid> { Guid.NewGuid() } };
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert

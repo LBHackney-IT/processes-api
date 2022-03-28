@@ -22,7 +22,7 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
             _dbFixture = dbFixture;
         }
 
-        public async Task WhenAnUpdateProcessByIdRequestIsMade(UpdateProcessByIdQuery request, UpdateProcessByIdRequestObject requestBody, int? ifMatch)
+        public async Task WhenAnUpdateProcessByIdRequestIsMade(ProcessQuery request, UpdateProcessByIdRequestObject requestBody, int? ifMatch)
         {
             var token = TestToken.Value;
             var uri = new Uri($"api/v1/process/{request.ProcessName}/{request.Id}", UriKind.Relative);
@@ -64,7 +64,7 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
             _lastResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         }
 
-        public async Task ThenTheProcessDataIsUpdated(UpdateProcessByIdQuery request, UpdateProcessByIdRequestObject requestBody)
+        public async Task ThenTheProcessDataIsUpdated(ProcessQuery request, UpdateProcessByIdRequestObject requestBody)
         {
             _lastResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 

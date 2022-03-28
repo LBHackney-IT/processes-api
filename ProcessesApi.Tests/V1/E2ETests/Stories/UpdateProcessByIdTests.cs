@@ -11,8 +11,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
 {
     [Story(
        AsA = "Internal Hackney user (such as a Housing Officer or Area Housing Manager)",
-       IWant = "The system to automatically check a tenant and an applicants eligibility for a Sole to Joint application",
-       SoThat = "I can more quickly determine if I should continue with the application")]
+       IWant = "I want to be able to update the Sole to Joint process without changing the state",
+       SoThat = "I can update case details when required")]
     [Collection("AppTest collection")]
     public class UpdateProcessByIdTests : IDisposable
     {

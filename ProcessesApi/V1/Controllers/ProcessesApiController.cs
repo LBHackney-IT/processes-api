@@ -56,7 +56,7 @@ namespace ProcessesApi.V1.Controllers
         [HttpGet]
         [LogCall(LogLevel.Information)]
         [Route("{process-name}/{id}")]
-        public async Task<IActionResult> GetProcessById([FromRoute] ProcessesQuery query)
+        public async Task<IActionResult> GetProcessById([FromRoute] ProcessQuery query)
         {
             var process = await _getByIdUseCase.Execute(query).ConfigureAwait(false);
             if (process == null) return NotFound(query.Id);
@@ -128,7 +128,7 @@ namespace ProcessesApi.V1.Controllers
         [HttpPatch]
         [LogCall(LogLevel.Information)]
         [Route("{processName}/{id}/{processTrigger}")]
-        public async Task<IActionResult> UpdateProcessState([FromBody] UpdateProcessQueryObject requestObject, [FromRoute] UpdateProcessQuery query)
+        public async Task<IActionResult> UpdateProcessState([FromBody] UpdateProcessRequestObject requestObject, [FromRoute] UpdateProcessQuery query)
         {
             var token = _tokenFactory.Create(_contextWrapper.GetContextRequestHeaders(HttpContext));
             _contextWrapper.GetContextRequestHeaders(HttpContext);
@@ -166,7 +166,7 @@ namespace ProcessesApi.V1.Controllers
         [HttpPatch]
         [LogCall(LogLevel.Information)]
         [Route("{processName}/{id}")]
-        public async Task<IActionResult> UpdateProcessById([FromBody] UpdateProcessByIdRequestObject requestObject, [FromRoute] UpdateProcessByIdQuery query)
+        public async Task<IActionResult> UpdateProcessById([FromBody] UpdateProcessByIdRequestObject requestObject, [FromRoute] ProcessQuery query)
         {
             var ifMatch = GetIfMatchFromHeader();
             try

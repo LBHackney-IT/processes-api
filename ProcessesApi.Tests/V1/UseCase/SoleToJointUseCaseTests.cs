@@ -94,7 +94,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         {
             // Arrange
             var process = CreateProcessInInitialState();
-            var updateProcessQuery = _fixture.Create<UpdateProcessQueryObject>();
+            var updateProcessQuery = _fixture.Create<UpdateProcessRequestObject>();
             _mockGateway.Setup(x => x.GetProcessById(process.Id)).ReturnsAsync(process);
             var token = new Token();
 
@@ -119,7 +119,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         {
             // Arrange
             var process = CreateProcessInInitialState();
-            var updateProcessQuery = _fixture.Create<UpdateProcessQueryObject>();
+            var updateProcessQuery = _fixture.Create<UpdateProcessRequestObject>();
             _mockGateway.Setup(x => x.GetProcessById(process.Id)).ReturnsAsync(process);
             var suppliedVersion = 1;
             var token = new Token();
@@ -139,7 +139,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         {
             //Arrange
             var process = CreateProcessInInitialState();
-            var updateProcessQuery = _fixture.Create<UpdateProcessQueryObject>();
+            var updateProcessQuery = _fixture.Create<UpdateProcessRequestObject>();
             var token = new Token();
             var exception = new ApplicationException("Test Exception");
             _mockGateway.Setup(x => x.GetProcessById(It.IsAny<Guid>())).ThrowsAsync(exception);

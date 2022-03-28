@@ -1,4 +1,5 @@
 using FluentValidation.TestHelper;
+using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Boundary.Request.Validation;
 using System;
@@ -9,6 +10,8 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
     public class UpdateProcessQueryValidatorTests
     {
         private readonly UpdateProcessQueryValidator _classUnderTest;
+        private const string ValueWithTags = "sdfsdf<sometag>";
+
 
         public UpdateProcessQueryValidatorTests()
         {
@@ -36,6 +39,15 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
             var result = _classUnderTest.TestValidate(model);
             //Assert
             result.ShouldNotHaveValidationErrorFor(x => x.ProcessName);
+        }
+
+        [Fact]
+        public void RequestShouldErrorWithTagsInProcessName()
+        {
+            var model = new UpdateProcessQuery() { ProcessName = ValueWithTags };
+            var result = _classUnderTest.TestValidate(model);
+            result.ShouldHaveValidationErrorFor(x => x.ProcessName)
+                .WithErrorCode(ErrorCodes.XssCheckFailure);
         }
 
         [Fact]

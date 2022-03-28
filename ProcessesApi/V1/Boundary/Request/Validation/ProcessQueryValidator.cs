@@ -5,17 +5,16 @@ using System;
 
 namespace ProcessesApi.V1.Boundary.Request.Validation
 {
-    public class UpdateProcessQueryValidator : AbstractValidator<UpdateProcessQuery>
+    public class ProcessQueryValidator : AbstractValidator<ProcessQuery>
     {
-        public UpdateProcessQueryValidator()
+        public ProcessQueryValidator()
         {
             RuleFor(x => x.ProcessName).NotEmpty().NotNull();
             RuleFor(x => x.ProcessName).NotXssString()
-                                       .WithErrorCode(ErrorCodes.XssCheckFailure);
-
+                .WithErrorCode(ErrorCodes.XssCheckFailure)
+                .When(x => !string.IsNullOrEmpty(x.ProcessName));
             RuleFor(x => x.Id).NotNull()
                             .NotEqual(Guid.Empty);
-            RuleFor(x => x.ProcessTrigger).NotNull().NotEmpty();
         }
     }
 }

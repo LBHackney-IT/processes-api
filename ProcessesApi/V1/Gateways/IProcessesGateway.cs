@@ -10,6 +10,6 @@ namespace ProcessesApi.V1.Gateways
     {
         Task<Process> GetProcessById(Guid id);
         Task<Process> SaveProcess(Process query);
-        Task<Process> SaveProcessById(UpdateProcessByIdQuery query, UpdateProcessByIdRequestObject requestObject, int? ifMatch);
+        Task<Process> UpdateProcessById(ProcessQuery query, UpdateProcessByIdRequestObject requestObject, int? ifMatch);
     }
 }

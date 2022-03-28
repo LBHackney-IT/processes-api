@@ -27,9 +27,9 @@ namespace ProcessesApi.Tests.V1.UseCase
             _classUnderTest = new UpdateProcessByIdUsecase(_mockGateway.Object);
         }
 
-        private UpdateProcessByIdQuery ConstructQuery(Guid id)
+        private ProcessQuery ConstructQuery(Guid id)
         {
-            return new UpdateProcessByIdQuery() { Id = id };
+            return new ProcessQuery() { Id = id };
         }
 
         private UpdateProcessByIdRequestObject ConstructRequest()
@@ -37,30 +37,20 @@ namespace ProcessesApi.Tests.V1.UseCase
             return new UpdateProcessByIdRequestObject();
         }
 
-        private UpdateProcess ConstructProcess()
+        private Process ConstructProcess()
         {
-            return _fixture.Create<UpdateProcess>();
-        }
-
-
-
-        private UpdateProcess ConstructUpdateRequest()
-        {
-            var processData = ProcessData.Create(_fixture.Create<Dictionary<string, object>>(), new List<Guid>());
-            var assignment = _fixture.Create<Assignment>();
-            var request = UpdateProcess.Create(Guid.NewGuid(), processData, assignment);
-            return request;
+            return _fixture.Create<Process>();
         }
 
 
         [Fact]
         public async Task UpdateProcessWhenProcessDoesNotExistReturnsNull()
         {
-            var updatedProcess = ConstructProcess();
-            var query = ConstructQuery(updatedProcess.Id);
+            var process = ConstructProcess();
+            var query = ConstructQuery(process.Id);
             var request = ConstructRequest();
 
-            _mockGateway.Setup(x => x.SaveProcessById(query, request, It.IsAny<int?>())).ReturnsAsync((Process) null);
+            _mockGateway.Setup(x => x.UpdateProcessById(query, request, It.IsAny<int?>())).ReturnsAsync((Process) null);
 
             var response = await _classUnderTest.Execute(query,
                                                          request,
@@ -74,15 +64,15 @@ namespace ProcessesApi.Tests.V1.UseCase
         [InlineData(3)]
         public async Task UpdateProcessByIdReturnsResult(int? ifMatch)
         {
-            var updatedProcess = ConstructProcess();
-            var query = ConstructQuery(updatedProcess.Id);
+            var process = ConstructProcess();
+            var query = ConstructQuery(process.Id);
             var request = ConstructRequest();
 
-            var process = _fixture.Build<Process>()
-                                  .With(x => x.Id, updatedProcess.Id)
+            var updateProcess = _fixture.Build<Process>()
+                                  .With(x => x.Id, process.Id)
                                   .Create();
 
-            _mockGateway.Setup(x => x.SaveProcessById(query, request, ifMatch)).ReturnsAsync(process);
+            _mockGateway.Setup(x => x.UpdateProcessById(query, request, ifMatch)).ReturnsAsync(process);
 
             var response = await _classUnderTest.Execute(query, request, ifMatch).ConfigureAwait(false);
             response.Id.Should().Be(query.Id);
@@ -99,7 +89,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             var request = ConstructRequest();
 
             var exception = new ApplicationException("Test exception");
-            _mockGateway.Setup(x => x.SaveProcessById(query, request, ifMatch)).ThrowsAsync(exception);
+            _mockGateway.Setup(x => x.UpdateProcessById(query, request, ifMatch)).ThrowsAsync(exception);
 
             // Act
             Func<Task<Process>> func = async () =>

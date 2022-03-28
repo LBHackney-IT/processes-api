@@ -9,7 +9,7 @@ namespace ProcessesApi.V1.UseCase.Interfaces
 {
     public interface IUpdateProcessByIdUsecase
     {
-        Task<Process> Execute(UpdateProcessByIdQuery query, UpdateProcessByIdRequestObject requestObject, int? ifMatch);
+        Task<Process> Execute(ProcessQuery query, UpdateProcessByIdRequestObject requestObject, int? ifMatch);
     }
 }
 

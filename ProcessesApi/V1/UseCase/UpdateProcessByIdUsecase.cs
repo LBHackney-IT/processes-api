@@ -21,10 +21,10 @@ namespace ProcessesApi.V1.UseCase
             _processGateway = processGateway;
         }
 
-        public async Task<Process> Execute(UpdateProcessByIdQuery query, UpdateProcessByIdRequestObject requestObject, int? ifMatch)
+        public async Task<Process> Execute(ProcessQuery query, UpdateProcessByIdRequestObject requestObject, int? ifMatch)
         {
 
-            var response = await _processGateway.SaveProcessById(query, requestObject, ifMatch).ConfigureAwait(false);
+            var response = await _processGateway.UpdateProcessById(query, requestObject, ifMatch).ConfigureAwait(false);
 
             return response;
         }

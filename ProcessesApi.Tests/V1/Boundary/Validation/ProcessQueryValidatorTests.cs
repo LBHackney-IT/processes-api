@@ -1,4 +1,5 @@
 using FluentValidation.TestHelper;
+using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Boundary.Request.Validation;
 using System;
@@ -6,20 +7,23 @@ using Xunit;
 
 namespace ProcessesApi.Tests.V1.Boundary.Validation
 {
-    public class UpdateProcessByIdQueryValidatorTests
+    public class ProcessQueryValidatorTests
     {
-        private readonly UpdateProcessByIdQueryValidator _classUnderTest;
+        private readonly ProcessQueryValidator _classUnderTest;
+        private const string ValueWithTags = "sdfsdf<sometag>";
 
-        public UpdateProcessByIdQueryValidatorTests()
+
+        public ProcessQueryValidatorTests()
         {
-            _classUnderTest = new UpdateProcessByIdQueryValidator();
+            _classUnderTest = new ProcessQueryValidator();
         }
+
 
         [Fact]
         public void RequestShouldErrorWithNullProcessName()
         {
             //Arrange
-            var model = new UpdateProcessByIdQuery() { ProcessName = null };
+            var model = new ProcessQuery() { ProcessName = null };
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert
@@ -31,7 +35,7 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         {
             //Arrange
             string processName = "process12345";
-            var model = new UpdateProcessByIdQuery() { ProcessName = processName };
+            var model = new ProcessQuery() { ProcessName = processName };
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert
@@ -39,10 +43,19 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         }
 
         [Fact]
+        public void RequestShouldErrorWithTagsInProcessName()
+        {
+            var model = new ProcessQuery() { ProcessName = ValueWithTags };
+            var result = _classUnderTest.TestValidate(model);
+            result.ShouldHaveValidationErrorFor(x => x.ProcessName)
+                .WithErrorCode(ErrorCodes.XssCheckFailure);
+        }
+
+        [Fact]
         public void RequestShouldErrorWithNullId()
         {
             //Arrange
-            var query = new UpdateProcessByIdQuery();
+            var query = new ProcessQuery();
             //Act
             var result = _classUnderTest.TestValidate(query);
             //Assert
@@ -53,7 +66,7 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         public void RequestShouldErrorWithEmptyId()
         {
             //Arrange
-            var query = new UpdateProcessByIdQuery() { Id = Guid.Empty };
+            var query = new ProcessQuery() { Id = Guid.Empty };
             //Act
             var result = _classUnderTest.TestValidate(query);
             //Assert

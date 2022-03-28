@@ -81,9 +81,9 @@ namespace ProcessesApi.Tests.V1.Controllers
             _classUnderTest.ControllerContext = controllerContext;
         }
 
-        private static ProcessesQuery ConstructQuery(Guid id)
+        private static ProcessQuery ConstructQuery(Guid id)
         {
-            return new ProcessesQuery
+            return new ProcessQuery
             {
                 Id = id
             };
@@ -94,9 +94,9 @@ namespace ProcessesApi.Tests.V1.Controllers
             return _fixture.Create<CreateProcess>();
         }
 
-        private (Process, UpdateProcessQuery, UpdateProcessQueryObject) ConstructPatchRequest()
+        private (Process, UpdateProcessQuery, UpdateProcessRequestObject) ConstructPatchRequest()
         {
-            var queryObject = _fixture.Create<UpdateProcessQueryObject>();
+            var queryObject = _fixture.Create<UpdateProcessRequestObject>();
             var processName = ProcessNamesConstants.SoleToJoint;
             var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), null, processName, null);
             var query = _fixture.Build<UpdateProcessQuery>()
@@ -106,13 +106,13 @@ namespace ProcessesApi.Tests.V1.Controllers
             return (processResponse, query, queryObject);
         }
 
-        private (Process, UpdateProcessByIdQuery, UpdateProcessByIdRequestObject) ConstructPatchByIdRequest()
+        private (Process, ProcessQuery, UpdateProcessByIdRequestObject) ConstructPatchByIdRequest()
         {
             var queryObject = _fixture.Create<UpdateProcessByIdRequestObject>();
             var processName = ProcessNamesConstants.SoleToJoint;
             var currentProcessState = _fixture.Create<ProcessState>();
             var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), currentProcessState, Guid.NewGuid(), null, processName, null);
-            var query = _fixture.Build<UpdateProcessByIdQuery>()
+            var query = _fixture.Build<ProcessQuery>()
                                 .With(x => x.ProcessName, processResponse.ProcessName)
                                 .With(x => x.Id, processResponse.Id)
                                 .Create();

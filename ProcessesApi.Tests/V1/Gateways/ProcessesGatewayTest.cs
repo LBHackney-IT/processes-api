@@ -152,11 +152,11 @@ namespace ProcessesApi.Tests.V1.Gateways
 
             var updateProcessRequest = _fixture.Create<UpdateProcessByIdRequestObject>();
 
-            var updatedProcessQuery = _fixture.Build<UpdateProcessByIdQuery>()
+            var updatedProcessQuery = _fixture.Build<ProcessQuery>()
                         .With(x => x.Id, originalProcess.Id)
                         .Create();
 
-            var response = await _classUnderTest.SaveProcessById(updatedProcessQuery, updateProcessRequest, 0).ConfigureAwait(false);
+            var response = await _classUnderTest.UpdateProcessById(updatedProcessQuery, updateProcessRequest, 0).ConfigureAwait(false);
 
             //CurrentState data changed
             response.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(updateProcessRequest.FormData);
@@ -187,12 +187,12 @@ namespace ProcessesApi.Tests.V1.Gateways
 
             var updateProcessRequest = _fixture.Create<UpdateProcessByIdRequestObject>();
 
-            var updatedProcessQuery = _fixture.Build<UpdateProcessByIdQuery>()
+            var updatedProcessQuery = _fixture.Build<ProcessQuery>()
                         .With(x => x.Id, originalProcess.Id)
                         .Create();
             var suppliedVersion = 1;
 
-            Func<Task<Process>> func = async () => await _classUnderTest.SaveProcessById(updatedProcessQuery, updateProcessRequest, suppliedVersion).ConfigureAwait(false);
+            Func<Task<Process>> func = async () => await _classUnderTest.UpdateProcessById(updatedProcessQuery, updateProcessRequest, suppliedVersion).ConfigureAwait(false);
 
             func.Should().Throw<VersionNumberConflictException>().WithMessage($"The version number supplied ({suppliedVersion}) does not match the current value on the entity ({0}).");
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync to update id {updatedProcessQuery.Id}", Times.Never());
@@ -204,9 +204,9 @@ namespace ProcessesApi.Tests.V1.Gateways
         public async Task UpdateProcessByIdReturnsNullIfProcessDoesNotExist()
         {
             var updateProcessRequest = _fixture.Create<UpdateProcessByIdRequestObject>();
-            var updatedProcessQuery = _fixture.Create<UpdateProcessByIdQuery>();
+            var updatedProcessQuery = _fixture.Create<ProcessQuery>();
 
-            var response = await _classUnderTest.SaveProcessById(updatedProcessQuery, updateProcessRequest, 0).ConfigureAwait(false);
+            var response = await _classUnderTest.UpdateProcessById(updatedProcessQuery, updateProcessRequest, 0).ConfigureAwait(false);
 
             response.Should().BeNull();
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync to update id {updatedProcessQuery.Id}", Times.Never());
