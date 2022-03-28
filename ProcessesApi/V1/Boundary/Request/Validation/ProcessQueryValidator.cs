@@ -9,7 +9,7 @@ namespace ProcessesApi.V1.Boundary.Request.Validation
     {
         public ProcessQueryValidator()
         {
-            RuleFor(x => x.ProcessName).NotEmpty().NotNull();
+            RuleFor(x => x.ProcessName).NotNull().NotEmpty();
             RuleFor(x => x.ProcessName).NotXssString()
                 .WithErrorCode(ErrorCodes.XssCheckFailure)
                 .When(x => !string.IsNullOrEmpty(x.ProcessName));

@@ -55,7 +55,7 @@ namespace ProcessesApi.V1.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [HttpGet]
         [LogCall(LogLevel.Information)]
-        [Route("{process-name}/{id}")]
+        [Route("{processName}/{id}")]
         public async Task<IActionResult> GetProcessById([FromRoute] ProcessQuery query)
         {
             var process = await _getByIdUseCase.Execute(query).ConfigureAwait(false);
