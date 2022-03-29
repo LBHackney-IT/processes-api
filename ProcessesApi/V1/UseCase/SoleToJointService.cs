@@ -183,7 +183,7 @@ namespace ProcessesApi.V1.UseCase
 
         private void OnRequestDocumentsAppointment(UpdateProcessState processRequest)
         {
-            var appointmentDetails = processRequest.FormData[SoleToJointFormDataKeys.AppointmentDateTime];
+            processRequest.FormData.TryGetValue(SoleToJointFormDataKeys.AppointmentDateTime, out var appointmentDetails);
             if (appointmentDetails is null) throw new FormDataNotFoundException(processRequest.FormData.Keys.ToList(), new List<string>() { SoleToJointFormDataKeys.AppointmentDateTime });
 
             if (DateTime.TryParse(appointmentDetails.ToString(), out DateTime appointmentDateTime))

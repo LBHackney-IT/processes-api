@@ -457,14 +457,14 @@ namespace ProcessesApi.Tests.V1.UseCase
             _tenancyBreachPassData.Remove(checkId);
 
             var triggerObject = CreateProcessTrigger(
-                process, SoleToJointPermittedTriggers.CheckManualEligibility, _tenancyBreachPassData);
+                process, SoleToJointPermittedTriggers.CheckTenancyBreach, _tenancyBreachPassData);
 
             var expectedErrorMessage = $"The form data keys supplied ({String.Join(", ", _tenancyBreachPassData.Keys.ToList())}) do not include the expected values ({checkId}).";
 
             // Act & assert
             _classUnderTest
                 .Invoking(cut => cut.Process(triggerObject, process, _token))
-                .Should().ThrowAsync<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
+                .Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
         }
 
         [Fact]
@@ -522,7 +522,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             // Act & assert
             _classUnderTest
                 .Invoking(cut => cut.Process(trigger, process, _token))
-                .Should().ThrowAsync<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
+                .Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
         }
 
         [Fact]
@@ -539,7 +539,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             // Act & assert
             _classUnderTest
                 .Invoking(cut => cut.Process(trigger, process, _token))
-                .Should().ThrowAsync<FormDataFormatException>().WithMessage(expectedErrorMessage);
+                .Should().Throw<FormDataFormatException>().WithMessage(expectedErrorMessage);
         }
 
         #endregion
