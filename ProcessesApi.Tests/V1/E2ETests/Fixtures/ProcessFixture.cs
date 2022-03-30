@@ -135,15 +135,37 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             };
         }
 
+        public void GivenATenancyBreachCheckRequest(bool isEligible)
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckTenancyBreach);
+
+            UpdateProcessRequestObject.FormData = new Dictionary<string, object>
+            {
+                { SoleToJointFormDataKeys.BR5, (!isEligible).ToString() },
+                { SoleToJointFormDataKeys.BR10, "false" },
+                { SoleToJointFormDataKeys.BR17, "false" },
+                { SoleToJointFormDataKeys.BR18, "false" }
+            };
+        }
+
         public void GivenAFailingCheckManualEligibilityRequest()
         {
             GivenACheckManualEligibilityRequest(false);
         }
 
-
         public void GivenAPassingCheckManualEligibilityRequest()
         {
             GivenACheckManualEligibilityRequest(true);
+        }
+
+        public void GivenAFailingCheckBreachEligibilityRequest()
+        {
+            GivenATenancyBreachCheckRequest(false);
+        }
+
+        public void GivenAPassingCheckBreachEligibilityRequest()
+        {
+            GivenATenancyBreachCheckRequest(true);
         }
 
         public void GivenAnUpdateSoleToJointProcessRequestWithValidationErrors()
