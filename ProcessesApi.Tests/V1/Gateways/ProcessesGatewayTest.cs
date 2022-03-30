@@ -185,7 +185,7 @@ namespace ProcessesApi.Tests.V1.Gateways
                                    .Create();
             await InsertDatatoDynamoDB(originalProcess.ToDatabase()).ConfigureAwait(false);
 
-            var updateProcessRequest = _fixture.Build<UpdateProcessByIdRequestObject>().Without(x=> x.Assignment).Create();
+            var updateProcessRequest = _fixture.Build<UpdateProcessByIdRequestObject>().Without(x => x.Assignment).Create();
 
             var updatedProcessQuery = _fixture.Build<ProcessQuery>()
                         .With(x => x.Id, originalProcess.Id)
