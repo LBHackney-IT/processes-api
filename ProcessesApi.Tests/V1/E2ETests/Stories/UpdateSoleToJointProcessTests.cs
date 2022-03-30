@@ -81,6 +81,20 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
             .BDDfy();
         }
 
+        [Theory]
+        [InlineData(109084)]
+        [InlineData(null)]
+        public void UpdateProcessReturnsConflictExceptionWhenTheIncorrectVersionNumberIsInIfMatchHeader(int? ifMatch)
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.ApplicationInitialised))
+                    .And(a => _processFixture.GivenACheckEligibilityRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, ifMatch))
+                .Then(t => _steps.ThenVersionConflictExceptionIsReturned(ifMatch))
+                .BDDfy();
+        }
+
+        #region Automatic eligibility checks
+
         [Fact]
         public void InternalServerErrorIsReturnedWhenTenureDoesNotExist()
         {
@@ -102,18 +116,6 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                     .And(a => _processFixture.GivenACheckEligibilityRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(t => _steps.ThenInternalServerErrorIsReturned())
-                .BDDfy();
-        }
-
-        [Theory]
-        [InlineData(109084)]
-        [InlineData(null)]
-        public void UpdateProcessReturnsConflictExceptionWhenTheIncorrectVersionNumberIsInIfMatchHeader(int? ifMatch)
-        {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.ApplicationInitialised))
-                    .And(a => _processFixture.GivenACheckEligibilityRequest())
-                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, ifMatch))
-                .Then(t => _steps.ThenVersionConflictExceptionIsReturned(ifMatch))
                 .BDDfy();
         }
 
@@ -153,6 +155,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                     .And(a => _steps.ThenTheProcessClosedEventIsRaised(_snsFixture, _processFixture.ProcessId))
                 .BDDfy();
         }
+
+        #endregion
 
         [Fact]
         public void ProcessStateIsUpdatedToManualChecksPassed()
@@ -197,6 +201,17 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToBreachChecksFailed(_processFixture.UpdateProcessRequest))
                     .And(a => _steps.ThenTheProcessClosedEventIsRaised(_snsFixture, _processFixture.ProcessId))
+                .BDDfy();
+        }
+
+        [Fact]
+        public void ProcessStateIsUpdatedToDocumentsRequestedAppointment()
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.BreachChecksPassed))
+                    .And(a => _processFixture.GivenARequestDocumentsAppointmentRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheProcessStateIsUpdatedToDocumentsRequestedAppointment(_processFixture.UpdateProcessRequest))
                 .BDDfy();
         }
     }

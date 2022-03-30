@@ -168,6 +168,12 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             GivenATenancyBreachCheckRequest(true);
         }
 
+        public void GivenARequestDocumentsAppointmentRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RequestDocumentsAppointment);
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, _fixture.Create<DateTime>());
+        }
+
         public void GivenAnUpdateSoleToJointProcessRequestWithValidationErrors()
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckEligibility);
