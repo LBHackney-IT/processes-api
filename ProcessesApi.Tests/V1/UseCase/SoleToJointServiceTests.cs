@@ -510,6 +510,22 @@ namespace ProcessesApi.Tests.V1.UseCase
         }
 
         [Fact]
+        public async Task ProcessUpdatedEventIsRasiedWhenDocumentsRequestedAppointmentIsBooked()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SoleToJointStates.BreachChecksPassed);
+            var formData = new Dictionary<string, object>() { { SoleToJointFormDataKeys.AppointmentDateTime, _fixture.Create<DateTime>() } };
+            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.RequestDocumentsAppointment, formData);
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _lastSnsEvent.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
+        }
+
+        [Fact]
         public void ThrowsFormDataNotFoundExceptionOnRequestDocumentsAppointmentWhenAppointmentDetailsAreNull()
         {
             // Arrange

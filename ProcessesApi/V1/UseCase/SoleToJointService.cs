@@ -161,7 +161,7 @@ namespace ProcessesApi.V1.UseCase
             ConfigureAsync(SoleToJointStates.ManualChecksFailed, Assignment.Create("tenants"), OnManualCheckFailed);
             ConfigureAsync(SoleToJointStates.BreachChecksPassed, Assignment.Create("tenants"), null);
             ConfigureAsync(SoleToJointStates.BreachChecksFailed, Assignment.Create("tenants"), OnTenancyBreachCheckFailed);
-            Configure(SoleToJointStates.DocumentsRequestedAppointment, Assignment.Create("tenants"), OnRequestDocumentsAppointment);
+            ConfigureAsync(SoleToJointStates.DocumentsRequestedAppointment, Assignment.Create("tenants"), OnRequestDocumentsAppointment);
         }
 
         private async Task OnAutomatedCheckFailed(UpdateProcessState processRequest)
@@ -181,14 +181,14 @@ namespace ProcessesApi.V1.UseCase
             await PublishProcessClosedEvent("Tenancy Breach Check failed - process closed.");
         }
 
-        private void OnRequestDocumentsAppointment(UpdateProcessState processRequest)
+        private async Task OnRequestDocumentsAppointment(UpdateProcessState processRequest)
         {
             processRequest.FormData.TryGetValue(SoleToJointFormDataKeys.AppointmentDateTime, out var appointmentDetails);
             if (appointmentDetails is null) throw new FormDataNotFoundException(processRequest.FormData.Keys.ToList(), new List<string>() { SoleToJointFormDataKeys.AppointmentDateTime });
 
             if (DateTime.TryParse(appointmentDetails.ToString(), out DateTime appointmentDateTime))
             {
-                // Do nothing
+                await PublishProcessUpdatedEvent($"Supporting Documents requested via an office appointment on {appointmentDateTime.ToString("dd/MM/yyyy hh:mm tt")}");
             }
             else
             {
@@ -244,6 +244,14 @@ namespace ProcessesApi.V1.UseCase
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
             var processSnsMessage = _snsFactory.ProcessClosed(_soleToJointProcess, _token, description);
+
+            await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
+        }
+
+        private async Task PublishProcessUpdatedEvent(string description)
+        {
+            var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
+            var processSnsMessage = _snsFactory.ProcessUpdated(_soleToJointProcess, _token, description);
 
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
