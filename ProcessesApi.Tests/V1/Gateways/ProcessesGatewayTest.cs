@@ -178,6 +178,41 @@ namespace ProcessesApi.Tests.V1.Gateways
         }
 
         [Fact]
+        public async Task UpdateProcessByIdSuccessfullySavesEvenWhenAssignmentIsNull()
+        {
+            var originalProcess = _fixture.Build<Process>()
+                                   .With(x => x.VersionNumber, (int?) null)
+                                   .Create();
+            await InsertDatatoDynamoDB(originalProcess.ToDatabase()).ConfigureAwait(false);
+
+            var updateProcessRequest = _fixture.Build<UpdateProcessByIdRequestObject>().Without(x=> x.Assignment).Create();
+
+            var updatedProcessQuery = _fixture.Build<ProcessQuery>()
+                        .With(x => x.Id, originalProcess.Id)
+                        .Create();
+
+            var response = await _classUnderTest.UpdateProcessById(updatedProcessQuery, updateProcessRequest, 0).ConfigureAwait(false);
+
+            //CurrentState data changed
+            response.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(updateProcessRequest.FormData);
+            response.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(updateProcessRequest.Documents);
+            response.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            response.VersionNumber.Should().Be(1);
+
+            //Current State data not changed
+            response.CurrentState.Assignment.Should().BeEquivalentTo(originalProcess.CurrentState.Assignment);
+            response.CurrentState.CreatedAt.Should().Be(originalProcess.CurrentState.CreatedAt);
+            response.CurrentState.State.Should().BeEquivalentTo(originalProcess.CurrentState.State);
+            response.CurrentState.PermittedTriggers.Should().BeEquivalentTo(originalProcess.CurrentState.PermittedTriggers);
+
+            //Rest of the object should remain the same
+            response.Should().BeEquivalentTo(originalProcess, config => config.Excluding(x => x.CurrentState).Excluding(x => x.VersionNumber));
+            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync to update id {updatedProcessQuery.Id}", Times.Never());
+
+            _cleanup.Add(async () => await _dynamoDb.DeleteAsync<ProcessesDb>(originalProcess.Id).ConfigureAwait(false));
+        }
+
+        [Fact]
         public async Task UpdateProcessByIdThrowsVersionConflictError()
         {
             var originalProcess = _fixture.Build<Process>()

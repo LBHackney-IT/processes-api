@@ -59,7 +59,7 @@ namespace ProcessesApi.V1.Gateways
             var processData = ProcessData.Create(requestObject.FormData, requestObject.Documents);
             var UpdatedcurrentState = ProcessState.Create(currentProcess.CurrentState.State,
                                                           currentProcess.CurrentState.PermittedTriggers,
-                                                          requestObject.Assignment,
+                                                          requestObject.Assignment ?? currentProcess.CurrentState.Assignment,
                                                           processData,
                                                           currentProcess.CurrentState.CreatedAt,
                                                           DateTime.UtcNow);
