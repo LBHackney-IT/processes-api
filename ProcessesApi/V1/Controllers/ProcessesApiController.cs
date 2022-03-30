@@ -26,15 +26,19 @@ namespace ProcessesApi.V1.Controllers
     {
         private readonly IGetByIdUseCase _getByIdUseCase;
         private readonly ISoleToJointUseCase _soleToJointUseCase;
+        private readonly IUpdateProcessByIdUsecase _updateProcessByIdUsecase;
         private readonly IHttpContextWrapper _contextWrapper;
         private readonly ITokenFactory _tokenFactory;
 
 
         public ProcessesApiController(IGetByIdUseCase getByIdUseCase, ISoleToJointUseCase soleToJointUseCase,
-                                      IHttpContextWrapper contextWrapper, ITokenFactory tokenFactory)
+                                      IUpdateProcessByIdUsecase updateProcessByIdUsecase, IHttpContextWrapper contextWrapper,
+                                      ITokenFactory tokenFactory)
+
         {
             _getByIdUseCase = getByIdUseCase;
             _soleToJointUseCase = soleToJointUseCase;
+            _updateProcessByIdUsecase = updateProcessByIdUsecase;
             _contextWrapper = contextWrapper;
             _tokenFactory = tokenFactory;
         }
@@ -51,8 +55,8 @@ namespace ProcessesApi.V1.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [HttpGet]
         [LogCall(LogLevel.Information)]
-        [Route("{process-name}/{id}")]
-        public async Task<IActionResult> GetProcessById([FromRoute] ProcessesQuery query)
+        [Route("{processName}/{id}")]
+        public async Task<IActionResult> GetProcessById([FromRoute] ProcessQuery query)
         {
             var process = await _getByIdUseCase.Execute(query).ConfigureAwait(false);
             if (process == null) return NotFound(query.Id);
@@ -124,7 +128,7 @@ namespace ProcessesApi.V1.Controllers
         [HttpPatch]
         [LogCall(LogLevel.Information)]
         [Route("{processName}/{id}/{processTrigger}")]
-        public async Task<IActionResult> UpdateProcess([FromBody] UpdateProcessQueryObject requestObject, [FromRoute] UpdateProcessQuery query)
+        public async Task<IActionResult> UpdateProcessState([FromBody] UpdateProcessRequestObject requestObject, [FromRoute] UpdateProcessQuery query)
         {
             var token = _tokenFactory.Create(_contextWrapper.GetContextRequestHeaders(HttpContext));
             _contextWrapper.GetContextRequestHeaders(HttpContext);
@@ -148,6 +152,37 @@ namespace ProcessesApi.V1.Controllers
                 return Conflict(vncErr.Message);
             }
         }
+        /// <summary>
+        /// Update a process
+        /// </summary>
+        /// <response code="204">Process has been updated successfully</response>
+        /// <response code="400">Bad Request</response> 
+        /// <response code="404">Not Found</response> 
+        /// <response code="500">Internal Server Error</response>
+        [ProducesResponseType(typeof(ProcessResponse), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [HttpPatch]
+        [LogCall(LogLevel.Information)]
+        [Route("{processName}/{id}")]
+        public async Task<IActionResult> UpdateProcessById([FromBody] UpdateProcessByIdRequestObject requestObject, [FromRoute] ProcessQuery query)
+        {
+            var ifMatch = GetIfMatchFromHeader();
+            try
+            {
+
+                var response = await _updateProcessByIdUsecase.Execute(query, requestObject, ifMatch);
+                if (response == null) return NotFound(query.Id);
+                return NoContent();
+            }
+            catch (VersionNumberConflictException vncErr)
+            {
+                return Conflict(vncErr.Message);
+            }
+        }
+
+
 
         private int? GetIfMatchFromHeader()
         {

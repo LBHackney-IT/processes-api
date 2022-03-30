@@ -15,7 +15,7 @@ namespace ProcessesApi.V1.UseCase
             _gateway = gateway;
         }
         [LogCall]
-        public async Task<Process> Execute(ProcessesQuery query)
+        public async Task<Process> Execute(ProcessQuery query)
         {
             var entity = await _gateway.GetProcessById(query.Id).ConfigureAwait(false);
             return entity;

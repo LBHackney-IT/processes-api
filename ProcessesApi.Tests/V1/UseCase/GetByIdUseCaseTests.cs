@@ -24,9 +24,9 @@ namespace ProcessesApi.Tests.V1.UseCase
             _classUnderTest = new GetProcessByIdUseCase(_mockGateway.Object);
         }
 
-        private static ProcessesQuery ConstructQuery(Guid id)
+        private static ProcessQuery ConstructQuery(Guid id)
         {
-            return new ProcessesQuery
+            return new ProcessQuery
             {
                 Id = id
             };
