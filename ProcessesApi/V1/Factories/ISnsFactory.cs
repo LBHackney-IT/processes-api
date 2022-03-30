@@ -9,5 +9,7 @@ namespace ProcessesApi.V1.Factories
         EntityEventSns ProcessStarted(Process process, Token token);
 
         EntityEventSns ProcessClosed(Process process, Token token, string description);
+
+        EntityEventSns ProcessUpdated(Process process, Token token, string description);
     }
 }

@@ -150,6 +150,33 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
         }
 
+        public async Task ThenTheProcessUpdatedEventIsRaised(ISnsFixture snsFixture, Guid processId)
+        {
+            Action<EntityEventSns> verifyFunc = actual =>
+            {
+                actual.Id.Should().NotBeEmpty();
+                actual.CorrelationId.Should().NotBeEmpty();
+                actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
+                actual.EntityId.Should().Be(processId);
+
+                actual.EventData.NewData.Should().NotBeNull();
+                actual.EventData.OldData.Should().BeNull();
+
+                actual.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
+                actual.SourceDomain.Should().Be(ProcessUpdatedEventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(ProcessUpdatedEventConstants.SOURCE_SYSTEM);
+                actual.Version.Should().Be(ProcessUpdatedEventConstants.V1_VERSION);
+
+                actual.User.Email.Should().Be(TestToken.UserEmail);
+                actual.User.Name.Should().Be(TestToken.UserName);
+            };
+
+            var snsVerifier = snsFixture.GetSnsEventVerifier<EntityEventSns>();
+            var snsResult = await snsVerifier.VerifySnsEventRaised(verifyFunc);
+
+            if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
+        }
+
         private async Task CheckProcessState(Guid processId, string currentState, string previousState)
         {
             var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(processId).ConfigureAwait(false);
