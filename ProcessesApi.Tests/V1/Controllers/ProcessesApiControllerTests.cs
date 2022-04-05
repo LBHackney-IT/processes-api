@@ -258,7 +258,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         {
             // Arrange
             (var processResponse, var request, var requestObject) = ConstructPatchByIdRequest();
-            _mockUpdateProcessByIdUseCase.Setup(x => x.Execute(request, requestObject, It.IsAny<int?>()))
+            _mockUpdateProcessByIdUseCase.Setup(x => x.Execute(request, requestObject, It.IsAny<int?>(), It.IsAny<Token>()))
                                          .ReturnsAsync(processResponse);
             // Act
             var response = await _classUnderTest.UpdateProcessById(requestObject, request).ConfigureAwait(false);
@@ -271,7 +271,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         {
             // Arrange
             (var processResponse, var request, var requestObject) = ConstructPatchByIdRequest();
-            _mockUpdateProcessByIdUseCase.Setup(x => x.Execute(request, requestObject, It.IsAny<int?>()))
+            _mockUpdateProcessByIdUseCase.Setup(x => x.Execute(request, requestObject, It.IsAny<int?>(), It.IsAny<Token>()))
                                          .ReturnsAsync((Process) null);
             // Act
             var response = await _classUnderTest.UpdateProcessById(requestObject, request).ConfigureAwait(false);
@@ -286,7 +286,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             // Arrange
             var exception = new ApplicationException("Test exception");
             (var processResponse, var request, var requestObject) = ConstructPatchByIdRequest();
-            _mockUpdateProcessByIdUseCase.Setup(x => x.Execute(request, requestObject, It.IsAny<int?>()))
+            _mockUpdateProcessByIdUseCase.Setup(x => x.Execute(request, requestObject, It.IsAny<int?>(), It.IsAny<Token>()))
                                          .ThrowsAsync(exception);
             // Act
             Func<Task<IActionResult>> func = async () => await _classUnderTest.UpdateProcessById(requestObject, request).ConfigureAwait(false);

@@ -168,11 +168,12 @@ namespace ProcessesApi.V1.Controllers
         [Route("{processName}/{id}")]
         public async Task<IActionResult> UpdateProcessById([FromBody] UpdateProcessByIdRequestObject requestObject, [FromRoute] ProcessQuery query)
         {
+            var token = _tokenFactory.Create(_contextWrapper.GetContextRequestHeaders(HttpContext));
             var ifMatch = GetIfMatchFromHeader();
             try
             {
 
-                var response = await _updateProcessByIdUsecase.Execute(query, requestObject, ifMatch);
+                var response = await _updateProcessByIdUsecase.Execute(query, requestObject, ifMatch, token);
                 if (response == null) return NotFound(query.Id);
                 return NoContent();
             }

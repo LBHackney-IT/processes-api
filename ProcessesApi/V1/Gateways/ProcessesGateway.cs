@@ -45,7 +45,7 @@ namespace ProcessesApi.V1.Gateways
         }
 
         [LogCall]
-        public async Task<Process> UpdateProcessById(ProcessQuery query, UpdateProcessByIdRequestObject requestObject, int? ifMatch)
+        public async Task<UpdateProcessGatewayResult> UpdateProcessById(ProcessQuery query, UpdateProcessByIdRequestObject requestObject, int? ifMatch)
         {
             _logger.LogDebug($"Calling IDynamoDBContext.LoadAsync for ID: {query.Id}");
 
@@ -77,7 +77,7 @@ namespace ProcessesApi.V1.Gateways
             _logger.LogDebug($"Calling IDynamoDBContext.SaveAsync for id {query.Id}");
 
             await _dynamoDbContext.SaveAsync(dbEntity).ConfigureAwait(false);
-            return dbEntity.ToDomain();
+            return new UpdateProcessGatewayResult(currentProcess.ToDomain(), dbEntity.ToDomain());
         }
 
 

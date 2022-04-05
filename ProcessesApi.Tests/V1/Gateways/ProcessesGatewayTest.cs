@@ -159,19 +159,19 @@ namespace ProcessesApi.Tests.V1.Gateways
             var response = await _classUnderTest.UpdateProcessById(updatedProcessQuery, updateProcessRequest, 0).ConfigureAwait(false);
 
             //CurrentState data changed
-            response.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(updateProcessRequest.FormData);
-            response.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(updateProcessRequest.Documents);
-            response.CurrentState.Assignment.Should().BeEquivalentTo(updateProcessRequest.Assignment);
-            response.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
-            response.VersionNumber.Should().Be(1);
+            response.UpdatedProcess.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(updateProcessRequest.FormData);
+            response.UpdatedProcess.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(updateProcessRequest.Documents);
+            response.UpdatedProcess.CurrentState.Assignment.Should().BeEquivalentTo(updateProcessRequest.Assignment);
+            response.UpdatedProcess.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            response.UpdatedProcess.VersionNumber.Should().Be(1);
 
             //Current State data not changed
-            response.CurrentState.CreatedAt.Should().Be(originalProcess.CurrentState.CreatedAt);
-            response.CurrentState.State.Should().BeEquivalentTo(originalProcess.CurrentState.State);
-            response.CurrentState.PermittedTriggers.Should().BeEquivalentTo(originalProcess.CurrentState.PermittedTriggers);
+            response.OldProcess.CurrentState.CreatedAt.Should().Be(originalProcess.CurrentState.CreatedAt);
+            response.OldProcess.CurrentState.State.Should().BeEquivalentTo(originalProcess.CurrentState.State);
+            response.OldProcess.CurrentState.PermittedTriggers.Should().BeEquivalentTo(originalProcess.CurrentState.PermittedTriggers);
 
             //Rest of the object should remain the same
-            response.Should().BeEquivalentTo(originalProcess, config => config.Excluding(x => x.CurrentState).Excluding(x => x.VersionNumber));
+            response.OldProcess.Should().BeEquivalentTo(originalProcess, config => config.Excluding(x => x.CurrentState).Excluding(x => x.VersionNumber));
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync to update id {updatedProcessQuery.Id}", Times.Never());
 
             _cleanup.Add(async () => await _dynamoDb.DeleteAsync<ProcessesDb>(originalProcess.Id).ConfigureAwait(false));
@@ -194,19 +194,19 @@ namespace ProcessesApi.Tests.V1.Gateways
             var response = await _classUnderTest.UpdateProcessById(updatedProcessQuery, updateProcessRequest, 0).ConfigureAwait(false);
 
             //CurrentState data changed
-            response.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(updateProcessRequest.FormData);
-            response.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(updateProcessRequest.Documents);
-            response.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
-            response.VersionNumber.Should().Be(1);
+            response.UpdatedProcess.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(updateProcessRequest.FormData);
+            response.UpdatedProcess.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(updateProcessRequest.Documents);
+            response.UpdatedProcess.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            response.UpdatedProcess.VersionNumber.Should().Be(1);
 
             //Current State data not changed
-            response.CurrentState.Assignment.Should().BeEquivalentTo(originalProcess.CurrentState.Assignment);
-            response.CurrentState.CreatedAt.Should().Be(originalProcess.CurrentState.CreatedAt);
-            response.CurrentState.State.Should().BeEquivalentTo(originalProcess.CurrentState.State);
-            response.CurrentState.PermittedTriggers.Should().BeEquivalentTo(originalProcess.CurrentState.PermittedTriggers);
+            response.OldProcess.CurrentState.Assignment.Should().BeEquivalentTo(originalProcess.CurrentState.Assignment);
+            response.OldProcess.CurrentState.CreatedAt.Should().Be(originalProcess.CurrentState.CreatedAt);
+            response.OldProcess.CurrentState.State.Should().BeEquivalentTo(originalProcess.CurrentState.State);
+            response.OldProcess.CurrentState.PermittedTriggers.Should().BeEquivalentTo(originalProcess.CurrentState.PermittedTriggers);
 
             //Rest of the object should remain the same
-            response.Should().BeEquivalentTo(originalProcess, config => config.Excluding(x => x.CurrentState).Excluding(x => x.VersionNumber));
+            response.OldProcess.Should().BeEquivalentTo(originalProcess, config => config.Excluding(x => x.CurrentState).Excluding(x => x.VersionNumber));
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync to update id {updatedProcessQuery.Id}", Times.Never());
 
             _cleanup.Add(async () => await _dynamoDb.DeleteAsync<ProcessesDb>(originalProcess.Id).ConfigureAwait(false));
@@ -227,7 +227,7 @@ namespace ProcessesApi.Tests.V1.Gateways
                         .Create();
             var suppliedVersion = 1;
 
-            Func<Task<Process>> func = async () => await _classUnderTest.UpdateProcessById(updatedProcessQuery, updateProcessRequest, suppliedVersion).ConfigureAwait(false);
+            Func<Task<UpdateProcessGatewayResult>> func = async () => await _classUnderTest.UpdateProcessById(updatedProcessQuery, updateProcessRequest, suppliedVersion).ConfigureAwait(false);
 
             func.Should().Throw<VersionNumberConflictException>().WithMessage($"The version number supplied ({suppliedVersion}) does not match the current value on the entity ({0}).");
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync to update id {updatedProcessQuery.Id}", Times.Never());

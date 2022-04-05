@@ -11,5 +11,6 @@ namespace ProcessesApi.V1.Factories
         EntityEventSns ProcessClosed(Process process, Token token, string description);
 
         EntityEventSns ProcessUpdated(Process process, Token token, string description);
+        EntityEventSns ProcessByIdUpdated(Process old, Process updated, Token token);
     }
 }

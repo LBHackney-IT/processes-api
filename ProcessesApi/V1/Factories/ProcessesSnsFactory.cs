@@ -75,5 +75,30 @@ namespace ProcessesApi.V1.Factories
                 }
             };
         }
+
+        public EntityEventSns ProcessByIdUpdated(Process old, Process updated, Token token)
+        {
+            return new EntityEventSns
+            {
+                CorrelationId = Guid.NewGuid(),
+                DateTime = DateTime.UtcNow,
+                EntityId = old.Id,
+                Id = Guid.NewGuid(),
+                EventType = ProcessUpdatedEventConstants.EVENTTYPE,
+                Version = ProcessUpdatedEventConstants.V1_VERSION,
+                SourceDomain = ProcessUpdatedEventConstants.SOURCE_DOMAIN,
+                SourceSystem = ProcessUpdatedEventConstants.SOURCE_SYSTEM,
+                EventData = new EventData
+                {
+                    OldData = old,
+                    NewData = updated
+                },
+                User = new User
+                {
+                    Name = token.Name,
+                    Email = token.Email
+                }
+            };
+        }
     }
 }
