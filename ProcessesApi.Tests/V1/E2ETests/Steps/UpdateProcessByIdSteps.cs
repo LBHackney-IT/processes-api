@@ -44,7 +44,7 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
             message.Headers.TryAddWithoutValidation(HeaderConstants.IfMatch, $"\"{ifMatch}\"");
             message.Method = HttpMethod.Patch;
 
-            
+
             _lastResponse = await _httpClient.SendAsync(message).ConfigureAwait(false);
         }
 

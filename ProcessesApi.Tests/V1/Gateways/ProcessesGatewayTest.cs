@@ -185,7 +185,7 @@ namespace ProcessesApi.Tests.V1.Gateways
                                 { "documents", updatedProcess.CurrentState.ProcessData.Documents}
                             }
                         });
-            
+
 
             var response = await _classUnderTest.UpdateProcessById(updatedProcessQuery, updateProcessRequest, RequestBody, 0).ConfigureAwait(false);
 
@@ -315,7 +315,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             var updateProcessRequest = _fixture.Create<UpdateProcessByIdRequestObject>();
             var updatedProcessQuery = _fixture.Create<ProcessQuery>();
 
-            var response = await _classUnderTest.UpdateProcessById(updatedProcessQuery, updateProcessRequest,RequestBody, 0).ConfigureAwait(false);
+            var response = await _classUnderTest.UpdateProcessById(updatedProcessQuery, updateProcessRequest, RequestBody, 0).ConfigureAwait(false);
 
             response.Should().BeNull();
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync to update id {updatedProcessQuery.Id}", Times.Never());

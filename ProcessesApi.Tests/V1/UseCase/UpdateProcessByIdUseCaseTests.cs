@@ -101,7 +101,7 @@ namespace ProcessesApi.Tests.V1.UseCase
 
             var response = await _classUnderTest.Execute(query, request, "", ifMatch, token).ConfigureAwait(false);
             response.Should().BeEquivalentTo(updateProcess.CurrentState);
-            
+
         }
 
         [Theory]
@@ -118,7 +118,7 @@ namespace ProcessesApi.Tests.V1.UseCase
 
             // Act
             Func<Task<ProcessState>> func = async () =>
-                await _classUnderTest.Execute(query, request,"", ifMatch, It.IsAny<Token>()).ConfigureAwait(false);
+                await _classUnderTest.Execute(query, request, "", ifMatch, It.IsAny<Token>()).ConfigureAwait(false);
 
             // Assert
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);

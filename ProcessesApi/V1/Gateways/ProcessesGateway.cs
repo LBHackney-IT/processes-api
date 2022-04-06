@@ -79,13 +79,13 @@ namespace ProcessesApi.V1.Gateways
             //                                              DateTime.UtcNow);
 
 
-                //var updateProcess = Process.Create(query.Id,
-                //                                   currentProcess.PreviousStates,
-                //                                   updatedResult.UpdatedEntity,
-                //                                   currentProcess.TargetId,
-                //                                   currentProcess.RelatedEntities,
-                //                                   currentProcess.ProcessName,
-                //                                   ifMatch);
+            //var updateProcess = Process.Create(query.Id,
+            //                                   currentProcess.PreviousStates,
+            //                                   updatedResult.UpdatedEntity,
+            //                                   currentProcess.TargetId,
+            //                                   currentProcess.RelatedEntities,
+            //                                   currentProcess.ProcessName,
+            //                                   ifMatch);
 
             //var dbEntity = updateProcess.ToDatabase();
             //_logger.LogDebug($"Calling IDynamoDBContext.SaveAsync for id {query.Id}");
