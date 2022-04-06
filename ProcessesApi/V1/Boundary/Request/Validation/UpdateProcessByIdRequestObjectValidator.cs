@@ -7,8 +7,7 @@ namespace ProcessesApi.V1.Boundary.Request.Validation
     {
         public UpdateProcessByIdRequestObjectValidator()
         {
-            RuleForEach(x => x.Documents).NotNull()
-                                        .NotEqual(Guid.Empty);
+            RuleFor(x => x.ProcessData).SetValidator(new ProcessDataValidator());
         }
     }
 }

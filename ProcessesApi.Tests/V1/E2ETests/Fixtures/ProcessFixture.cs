@@ -183,7 +183,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public void GivenAnUpdateProcessByIdRequestWithValidationErrors()
         {
             GivenAnUpdateProcessByIdRequest(ProcessId);
-            UpdateProcessByIdRequestObject.Documents.Add(Guid.Empty);
+            UpdateProcessByIdRequestObject.ProcessData.Documents.Add(Guid.Empty);
         }
         public void GivenAnUpdateProcessByIdRequest(Guid id)
         {

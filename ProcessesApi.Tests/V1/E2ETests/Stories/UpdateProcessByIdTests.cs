@@ -62,6 +62,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                     .And(a => _processFixture.GivenAnUpdateProcessByIdRequest(_processFixture.ProcessId))
                 .When(w => _steps.WhenAnUpdateProcessByIdRequestIsMade(_processFixture.UpdateProcessByIdRequest, _processFixture.UpdateProcessByIdRequestObject, 0))
                 .Then(t => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessByIdRequest, _processFixture.UpdateProcessByIdRequestObject))
+                   .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture))
                 .BDDfy();
         }
 

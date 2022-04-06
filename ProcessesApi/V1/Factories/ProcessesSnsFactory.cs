@@ -1,6 +1,7 @@
 using Hackney.Core.JWT;
 using Hackney.Core.Sns;
 using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Infrastructure.JWT;
 using System;
 
@@ -76,13 +77,13 @@ namespace ProcessesApi.V1.Factories
             };
         }
 
-        public EntityEventSns ProcessByIdUpdated(Process old, Process updated, Token token)
+        public EntityEventSns ProcessByIdUpdated(Guid id, UpdateEntityResult<ProcessState> updateResult, Token token)
         {
             return new EntityEventSns
             {
                 CorrelationId = Guid.NewGuid(),
                 DateTime = DateTime.UtcNow,
-                EntityId = old.Id,
+                EntityId = id,
                 Id = Guid.NewGuid(),
                 EventType = ProcessUpdatedEventConstants.EVENTTYPE,
                 Version = ProcessUpdatedEventConstants.V1_VERSION,
@@ -90,8 +91,8 @@ namespace ProcessesApi.V1.Factories
                 SourceSystem = ProcessUpdatedEventConstants.SOURCE_SYSTEM,
                 EventData = new EventData
                 {
-                    OldData = old,
-                    NewData = updated
+                    OldData = updateResult.OldValues,
+                    NewData = updateResult.NewValues
                 },
                 User = new User
                 {

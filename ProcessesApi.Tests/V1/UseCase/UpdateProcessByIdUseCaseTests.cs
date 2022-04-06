@@ -58,10 +58,11 @@ namespace ProcessesApi.Tests.V1.UseCase
             var request = ConstructRequest();
             var token = new Token();
 
-            _mockGateway.Setup(x => x.UpdateProcessById(query, request, It.IsAny<int?>())).ReturnsAsync((UpdateProcessGatewayResult) null);
+            _mockGateway.Setup(x => x.UpdateProcessById(query, request, It.IsAny<string>(), It.IsAny<int?>())).ReturnsAsync((UpdateEntityResult<ProcessState>) null);
 
             var response = await _classUnderTest.Execute(query,
                                                          request,
+                                                         "",
                                                          It.IsAny<int?>(),
                                                          token).ConfigureAwait(false);
 
@@ -81,12 +82,26 @@ namespace ProcessesApi.Tests.V1.UseCase
             var updateProcess = _fixture.Build<Process>()
                                   .With(x => x.Id, process.Id)
                                   .Create();
-            var gatewayResult = new UpdateProcessGatewayResult(process, updateProcess);
+            var formData = new Dictionary<string, object>() { { SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow } };
+            var gatewayResult = new UpdateEntityResult<ProcessState>()
+            {
+                UpdatedEntity = updateProcess.CurrentState,
+                OldValues = new Dictionary<string, object>
+                {
+                    {  "documents", Guid.NewGuid().ToString() },
+                    {  "formData", formData }
+                },
+                NewValues = new Dictionary<string, object>
+                {
+                    {  "documents", Guid.NewGuid().ToString() },
+                    {  "formData", formData }
+                }
+            };
+            _mockGateway.Setup(x => x.UpdateProcessById(query, request, It.IsAny<string>(), ifMatch)).ReturnsAsync(gatewayResult);
 
-            _mockGateway.Setup(x => x.UpdateProcessById(query, request, ifMatch)).ReturnsAsync(gatewayResult);
-
-            var response = await _classUnderTest.Execute(query, request, ifMatch, token).ConfigureAwait(false);
-            response.Should().BeEquivalentTo(updateProcess);
+            var response = await _classUnderTest.Execute(query, request, "", ifMatch, token).ConfigureAwait(false);
+            response.Should().BeEquivalentTo(updateProcess.CurrentState);
+            
         }
 
         [Theory]
@@ -99,11 +114,11 @@ namespace ProcessesApi.Tests.V1.UseCase
             var request = ConstructRequest();
 
             var exception = new ApplicationException("Test exception");
-            _mockGateway.Setup(x => x.UpdateProcessById(query, request, ifMatch)).ThrowsAsync(exception);
+            _mockGateway.Setup(x => x.UpdateProcessById(query, request, It.IsAny<string>(), ifMatch)).ThrowsAsync(exception);
 
             // Act
-            Func<Task<Process>> func = async () =>
-                await _classUnderTest.Execute(query, request, ifMatch, It.IsAny<Token>()).ConfigureAwait(false);
+            Func<Task<ProcessState>> func = async () =>
+                await _classUnderTest.Execute(query, request,"", ifMatch, It.IsAny<Token>()).ConfigureAwait(false);
 
             // Assert
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);

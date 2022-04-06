@@ -1,6 +1,7 @@
 using Amazon.DynamoDBv2.DataModel;
 using AutoFixture;
 using FluentAssertions;
+using Force.DeepCloner;
 using Hackney.Core.Testing.DynamoDb;
 using Hackney.Core.Testing.Shared;
 using Microsoft.Extensions.Logging;
@@ -27,13 +28,18 @@ namespace ProcessesApi.Tests.V1.Gateways
         private ProcessesGateway _classUnderTest;
         private readonly List<Action> _cleanup = new List<Action>();
         private readonly Mock<ILogger<ProcessesGateway>> _logger;
+        private readonly Mock<IEntityUpdater> _mockUpdater;
+        private const string RequestBody = "{ \"FormData\":\"key7d2d6e42-0cbf-411a-b66c-bc35da8b6061\":{ },\"Documents\":[\"89017f11-95f7-434d-96f8-178e33685fb4\"],\"Assignment\":{\"Type\":\"Type8a4da85c-5da4-43ba-a77d-08582db9f97f\",\"Value\":\"Value6543846f-1aa8-4095-b984-4ceac8c2770f\",\"Patch\":\"Patch557d8db0-2ccf-422d-9c6f-bf7d1737f5a5\"}}";
+
+
 
 
         public ProcessesGatewayTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
             _dbFixture = appFactory.DynamoDbFixture;
+            _mockUpdater = new Mock<IEntityUpdater>();
             _logger = new Mock<ILogger<ProcessesGateway>>();
-            _classUnderTest = new ProcessesGateway(_dbFixture.DynamoDbContext, _logger.Object);
+            _classUnderTest = new ProcessesGateway(_dbFixture.DynamoDbContext, _mockUpdater.Object, _logger.Object);
         }
 
         public void Dispose()
@@ -85,7 +91,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         {
             // Arrange
             var mockDynamoDb = new Mock<IDynamoDBContext>();
-            _classUnderTest = new ProcessesGateway(mockDynamoDb.Object, _logger.Object);
+            _classUnderTest = new ProcessesGateway(mockDynamoDb.Object, _mockUpdater.Object, _logger.Object);
 
             var id = Guid.NewGuid();
             var exception = new ApplicationException("Test Exception");
@@ -156,23 +162,60 @@ namespace ProcessesApi.Tests.V1.Gateways
                         .With(x => x.Id, originalProcess.Id)
                         .Create();
 
-            var response = await _classUnderTest.UpdateProcessById(updatedProcessQuery, updateProcessRequest, 0).ConfigureAwait(false);
+            var updatedProcess = originalProcess.DeepClone();
+            updatedProcess.CurrentState.Assignment = updateProcessRequest.Assignment;
+            updatedProcess.CurrentState.ProcessData.Documents = updateProcessRequest.ProcessData.Documents;
+            updatedProcess.CurrentState.ProcessData.FormData = updateProcessRequest.ProcessData.FormData;
+            updatedProcess.VersionNumber = 0;
+
+            _mockUpdater.Setup(x => x.UpdateEntity(It.IsAny<ProcessState>(), RequestBody, updateProcessRequest))
+                        .Returns(new UpdateEntityResult<ProcessState>()
+                        {
+                            UpdatedEntity = updatedProcess.CurrentState,
+                            OldValues = new Dictionary<string, object>
+                            {
+                                { "assignment", originalProcess.CurrentState.Assignment },
+                                { "formData", originalProcess.CurrentState.ProcessData.FormData},
+                                { "documents", originalProcess.CurrentState.ProcessData.Documents}
+                            },
+                            NewValues = new Dictionary<string, object>
+                            {
+                               { "assignment", updatedProcess.CurrentState.Assignment },
+                                { "formData", updatedProcess.CurrentState.ProcessData.FormData},
+                                { "documents", updatedProcess.CurrentState.ProcessData.Documents}
+                            }
+                        });
+            
+
+            var response = await _classUnderTest.UpdateProcessById(updatedProcessQuery, updateProcessRequest, RequestBody, 0).ConfigureAwait(false);
+
+            var load = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(originalProcess.Id).ConfigureAwait(false);
 
             //CurrentState data changed
-            response.UpdatedProcess.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(updateProcessRequest.FormData);
-            response.UpdatedProcess.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(updateProcessRequest.Documents);
-            response.UpdatedProcess.CurrentState.Assignment.Should().BeEquivalentTo(updateProcessRequest.Assignment);
-            response.UpdatedProcess.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
-            response.UpdatedProcess.VersionNumber.Should().Be(1);
+            load.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(updateProcessRequest.ProcessData.FormData);
+            load.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(updateProcessRequest.ProcessData.Documents);
+            load.CurrentState.Assignment.Should().BeEquivalentTo(updateProcessRequest.Assignment);
+            //load.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            load.VersionNumber.Should().Be(1);
 
             //Current State data not changed
-            response.OldProcess.CurrentState.CreatedAt.Should().Be(originalProcess.CurrentState.CreatedAt);
-            response.OldProcess.CurrentState.State.Should().BeEquivalentTo(originalProcess.CurrentState.State);
-            response.OldProcess.CurrentState.PermittedTriggers.Should().BeEquivalentTo(originalProcess.CurrentState.PermittedTriggers);
+            load.CurrentState.CreatedAt.Should().Be(originalProcess.CurrentState.CreatedAt);
+            load.CurrentState.State.Should().BeEquivalentTo(originalProcess.CurrentState.State);
+            load.CurrentState.PermittedTriggers.Should().BeEquivalentTo(originalProcess.CurrentState.PermittedTriggers);
 
             //Rest of the object should remain the same
-            response.OldProcess.Should().BeEquivalentTo(originalProcess, config => config.Excluding(x => x.CurrentState).Excluding(x => x.VersionNumber));
-            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync to update id {updatedProcessQuery.Id}", Times.Never());
+            load.Should().BeEquivalentTo(originalProcess, config => config.Excluding(x => x.CurrentState).Excluding(x => x.VersionNumber));
+            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync to update id {updatedProcessQuery.Id}", Times.Once());
+
+            //OldValues should be same as OrignalProcess
+            response.OldValues["assignment"].Should().BeEquivalentTo(originalProcess.ToDatabase().CurrentState.Assignment);
+            response.OldValues["formData"].Should().BeEquivalentTo(originalProcess.ToDatabase().CurrentState.ProcessData.FormData);
+            response.OldValues["documents"].Should().BeEquivalentTo(originalProcess.ToDatabase().CurrentState.ProcessData.Documents);
+
+            //NewValues should be same as UpdatedProcess
+            response.NewValues["assignment"].Should().BeEquivalentTo(response.UpdatedEntity.Assignment);
+            response.NewValues["formData"].Should().BeEquivalentTo(updatedProcess.CurrentState.ProcessData.FormData);
+            response.NewValues["documents"].Should().BeEquivalentTo(response.UpdatedEntity.ProcessData.Documents);
 
             _cleanup.Add(async () => await _dynamoDb.DeleteAsync<ProcessesDb>(originalProcess.Id).ConfigureAwait(false));
         }
@@ -191,23 +234,54 @@ namespace ProcessesApi.Tests.V1.Gateways
                         .With(x => x.Id, originalProcess.Id)
                         .Create();
 
-            var response = await _classUnderTest.UpdateProcessById(updatedProcessQuery, updateProcessRequest, 0).ConfigureAwait(false);
+            var updatedProcess = originalProcess.DeepClone();
+            updatedProcess.CurrentState.ProcessData.Documents = updateProcessRequest.ProcessData.Documents;
+            updatedProcess.CurrentState.ProcessData.FormData = updateProcessRequest.ProcessData.FormData;
+            updatedProcess.VersionNumber = 0;
+
+            _mockUpdater.Setup(x => x.UpdateEntity(It.IsAny<ProcessState>(), RequestBody, updateProcessRequest))
+                        .Returns(new UpdateEntityResult<ProcessState>()
+                        {
+                            UpdatedEntity = updatedProcess.CurrentState,
+                            OldValues = new Dictionary<string, object>
+                            {
+                                { "formData", originalProcess.CurrentState.ProcessData.FormData},
+                                { "documents", originalProcess.CurrentState.ProcessData.Documents}
+                            },
+                            NewValues = new Dictionary<string, object>
+                            {
+                                { "formData", updatedProcess.CurrentState.ProcessData.FormData},
+                                { "documents", updatedProcess.CurrentState.ProcessData.Documents}
+                            }
+                        });
+
+            var response = await _classUnderTest.UpdateProcessById(updatedProcessQuery, updateProcessRequest, RequestBody, 0).ConfigureAwait(false);
+
+            var load = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(originalProcess.Id).ConfigureAwait(false);
 
             //CurrentState data changed
-            response.UpdatedProcess.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(updateProcessRequest.FormData);
-            response.UpdatedProcess.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(updateProcessRequest.Documents);
-            response.UpdatedProcess.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
-            response.UpdatedProcess.VersionNumber.Should().Be(1);
+            load.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(updateProcessRequest.ProcessData.FormData);
+            load.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(updateProcessRequest.ProcessData.Documents);
+            load.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            load.VersionNumber.Should().Be(1);
 
             //Current State data not changed
-            response.OldProcess.CurrentState.Assignment.Should().BeEquivalentTo(originalProcess.CurrentState.Assignment);
-            response.OldProcess.CurrentState.CreatedAt.Should().Be(originalProcess.CurrentState.CreatedAt);
-            response.OldProcess.CurrentState.State.Should().BeEquivalentTo(originalProcess.CurrentState.State);
-            response.OldProcess.CurrentState.PermittedTriggers.Should().BeEquivalentTo(originalProcess.CurrentState.PermittedTriggers);
+            load.CurrentState.Assignment.Should().BeEquivalentTo(originalProcess.CurrentState.Assignment);
+            load.CurrentState.CreatedAt.Should().Be(originalProcess.CurrentState.CreatedAt);
+            load.CurrentState.State.Should().BeEquivalentTo(originalProcess.CurrentState.State);
+            load.CurrentState.PermittedTriggers.Should().BeEquivalentTo(originalProcess.CurrentState.PermittedTriggers);
 
             //Rest of the object should remain the same
-            response.OldProcess.Should().BeEquivalentTo(originalProcess, config => config.Excluding(x => x.CurrentState).Excluding(x => x.VersionNumber));
-            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync to update id {updatedProcessQuery.Id}", Times.Never());
+            load.Should().BeEquivalentTo(originalProcess, config => config.Excluding(x => x.CurrentState).Excluding(x => x.VersionNumber));
+            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync to update id {updatedProcessQuery.Id}", Times.Once());
+
+            //OldValues should be same as OrignalProcess
+            response.OldValues["formData"].Should().BeEquivalentTo(originalProcess.ToDatabase().CurrentState.ProcessData.FormData);
+            response.OldValues["documents"].Should().BeEquivalentTo(originalProcess.ToDatabase().CurrentState.ProcessData.Documents);
+
+            //NewValues should be same as UpdatedProcess
+            response.NewValues["formData"].Should().BeEquivalentTo(updatedProcess.CurrentState.ProcessData.FormData);
+            response.NewValues["documents"].Should().BeEquivalentTo(response.UpdatedEntity.ProcessData.Documents);
 
             _cleanup.Add(async () => await _dynamoDb.DeleteAsync<ProcessesDb>(originalProcess.Id).ConfigureAwait(false));
         }
@@ -227,7 +301,7 @@ namespace ProcessesApi.Tests.V1.Gateways
                         .Create();
             var suppliedVersion = 1;
 
-            Func<Task<UpdateProcessGatewayResult>> func = async () => await _classUnderTest.UpdateProcessById(updatedProcessQuery, updateProcessRequest, suppliedVersion).ConfigureAwait(false);
+            Func<Task<UpdateEntityResult<ProcessState>>> func = async () => await _classUnderTest.UpdateProcessById(updatedProcessQuery, updateProcessRequest, RequestBody, suppliedVersion).ConfigureAwait(false);
 
             func.Should().Throw<VersionNumberConflictException>().WithMessage($"The version number supplied ({suppliedVersion}) does not match the current value on the entity ({0}).");
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync to update id {updatedProcessQuery.Id}", Times.Never());
@@ -241,7 +315,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             var updateProcessRequest = _fixture.Create<UpdateProcessByIdRequestObject>();
             var updatedProcessQuery = _fixture.Create<ProcessQuery>();
 
-            var response = await _classUnderTest.UpdateProcessById(updatedProcessQuery, updateProcessRequest, 0).ConfigureAwait(false);
+            var response = await _classUnderTest.UpdateProcessById(updatedProcessQuery, updateProcessRequest,RequestBody, 0).ConfigureAwait(false);
 
             response.Should().BeNull();
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync to update id {updatedProcessQuery.Id}", Times.Never());

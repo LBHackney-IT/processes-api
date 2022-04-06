@@ -25,18 +25,18 @@ namespace ProcessesApi.V1.UseCase
             _snsGateway = snsGateway;
         }
 
-        public async Task<Process> Execute(ProcessQuery query, UpdateProcessByIdRequestObject requestObject, int? ifMatch, Token token)
+        public async Task<ProcessState> Execute(ProcessQuery query, UpdateProcessByIdRequestObject requestObject, string requestBody, int? ifMatch, Token token)
         {
 
-            var result = await _processGateway.UpdateProcessById(query, requestObject, ifMatch).ConfigureAwait(false);
+            var result = await _processGateway.UpdateProcessById(query, requestObject, requestBody, ifMatch).ConfigureAwait(false);
 
             if (result == null) return null;
-            var processSnsMessage = _snsFactory.ProcessByIdUpdated(result.OldProcess, result.UpdatedProcess, token);
+            var processSnsMessage = _snsFactory.ProcessByIdUpdated(query.Id,result, token);
             var topicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
             await _snsGateway.Publish(processSnsMessage, topicArn).ConfigureAwait(false);
 
 
-            return result.UpdatedProcess;
+            return result.UpdatedEntity;
         }
     }
 }

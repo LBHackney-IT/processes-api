@@ -1,6 +1,8 @@
 using Hackney.Core.JWT;
 using Hackney.Core.Sns;
 using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Infrastructure;
+using System;
 
 namespace ProcessesApi.V1.Factories
 {
@@ -11,6 +13,6 @@ namespace ProcessesApi.V1.Factories
         EntityEventSns ProcessClosed(Process process, Token token, string description);
 
         EntityEventSns ProcessUpdated(Process process, Token token, string description);
-        EntityEventSns ProcessByIdUpdated(Process old, Process updated, Token token);
+        EntityEventSns ProcessByIdUpdated(Guid id, UpdateEntityResult<ProcessState> updateResult, Token token);
     }
 }

@@ -15,13 +15,15 @@ namespace ProcessesApi.V1.Gateways
     public class ProcessesGateway : IProcessesGateway
     {
         private readonly IDynamoDBContext _dynamoDbContext;
+        private readonly IEntityUpdater _updater;
         private readonly ILogger<ProcessesGateway> _logger;
 
 
 
-        public ProcessesGateway(IDynamoDBContext dynamoDbContext, ILogger<ProcessesGateway> logger)
+        public ProcessesGateway(IDynamoDBContext dynamoDbContext, IEntityUpdater updater, ILogger<ProcessesGateway> logger)
         {
             _dynamoDbContext = dynamoDbContext;
+            _updater = updater;
             _logger = logger;
         }
 
@@ -45,7 +47,7 @@ namespace ProcessesApi.V1.Gateways
         }
 
         [LogCall]
-        public async Task<UpdateProcessGatewayResult> UpdateProcessById(ProcessQuery query, UpdateProcessByIdRequestObject requestObject, int? ifMatch)
+        public async Task<UpdateEntityResult<ProcessState>> UpdateProcessById(ProcessQuery query, UpdateProcessByIdRequestObject requestObject, string requestBody, int? ifMatch)
         {
             _logger.LogDebug($"Calling IDynamoDBContext.LoadAsync for ID: {query.Id}");
 
@@ -56,28 +58,40 @@ namespace ProcessesApi.V1.Gateways
             if (ifMatch != currentProcess.VersionNumber)
                 throw new VersionNumberConflictException(ifMatch, currentProcess.VersionNumber);
 
-            var processData = ProcessData.Create(requestObject.FormData, requestObject.Documents);
-            var UpdatedcurrentState = ProcessState.Create(currentProcess.CurrentState.State,
-                                                          currentProcess.CurrentState.PermittedTriggers,
-                                                          requestObject.Assignment ?? currentProcess.CurrentState.Assignment,
-                                                          processData,
-                                                          currentProcess.CurrentState.CreatedAt,
-                                                          DateTime.UtcNow);
+            var updatedResult = _updater.UpdateEntity(currentProcess.CurrentState, requestBody, requestObject);
+            if (updatedResult.NewValues.Any())
+            {
+                _logger.LogDebug($"Calling IDynamoDBContext.SaveAsync to update id {query.Id}");
+                updatedResult.UpdatedEntity.UpdatedAt = DateTime.UtcNow;
+                currentProcess.CurrentState = updatedResult.UpdatedEntity;
+                await _dynamoDbContext.SaveAsync(currentProcess).ConfigureAwait(false);
+            }
 
 
-            var updateProcess = Process.Create(query.Id,
-                                               currentProcess.PreviousStates,
-                                               UpdatedcurrentState,
-                                               currentProcess.TargetId,
-                                               currentProcess.RelatedEntities,
-                                               currentProcess.ProcessName,
-                                               ifMatch);
+            return updatedResult;
 
-            var dbEntity = updateProcess.ToDatabase();
-            _logger.LogDebug($"Calling IDynamoDBContext.SaveAsync for id {query.Id}");
+            //var processData = ProcessData.Create(requestObject.FormData, requestObject.Documents);
+            //var UpdatedcurrentState = ProcessState.Create(currentProcess.CurrentState.State,
+            //                                              currentProcess.CurrentState.PermittedTriggers,
+            //                                              requestObject.Assignment ?? currentProcess.CurrentState.Assignment,
+            //                                              processData,
+            //                                              currentProcess.CurrentState.CreatedAt,
+            //                                              DateTime.UtcNow);
 
-            await _dynamoDbContext.SaveAsync(dbEntity).ConfigureAwait(false);
-            return new UpdateProcessGatewayResult(currentProcess.ToDomain(), dbEntity.ToDomain());
+
+                //var updateProcess = Process.Create(query.Id,
+                //                                   currentProcess.PreviousStates,
+                //                                   updatedResult.UpdatedEntity,
+                //                                   currentProcess.TargetId,
+                //                                   currentProcess.RelatedEntities,
+                //                                   currentProcess.ProcessName,
+                //                                   ifMatch);
+
+            //var dbEntity = updateProcess.ToDatabase();
+            //_logger.LogDebug($"Calling IDynamoDBContext.SaveAsync for id {query.Id}");
+
+            //await _dynamoDbContext.SaveAsync(dbEntity).ConfigureAwait(false);
+            //return new UpdateProcessGatewayResult(currentProcess.ToDomain(), dbEntity.ToDomain());
         }
 
 
