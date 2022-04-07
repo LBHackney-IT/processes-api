@@ -195,7 +195,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             load.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(updateProcessRequest.ProcessData.FormData);
             load.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(updateProcessRequest.ProcessData.Documents);
             load.CurrentState.Assignment.Should().BeEquivalentTo(updateProcessRequest.Assignment);
-            //load.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            load.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
             load.VersionNumber.Should().Be(1);
 
             //Current State data not changed

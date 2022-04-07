@@ -66,32 +66,7 @@ namespace ProcessesApi.V1.Gateways
                 currentProcess.CurrentState = updatedResult.UpdatedEntity;
                 await _dynamoDbContext.SaveAsync(currentProcess).ConfigureAwait(false);
             }
-
-
             return updatedResult;
-
-            //var processData = ProcessData.Create(requestObject.FormData, requestObject.Documents);
-            //var UpdatedcurrentState = ProcessState.Create(currentProcess.CurrentState.State,
-            //                                              currentProcess.CurrentState.PermittedTriggers,
-            //                                              requestObject.Assignment ?? currentProcess.CurrentState.Assignment,
-            //                                              processData,
-            //                                              currentProcess.CurrentState.CreatedAt,
-            //                                              DateTime.UtcNow);
-
-
-            //var updateProcess = Process.Create(query.Id,
-            //                                   currentProcess.PreviousStates,
-            //                                   updatedResult.UpdatedEntity,
-            //                                   currentProcess.TargetId,
-            //                                   currentProcess.RelatedEntities,
-            //                                   currentProcess.ProcessName,
-            //                                   ifMatch);
-
-            //var dbEntity = updateProcess.ToDatabase();
-            //_logger.LogDebug($"Calling IDynamoDBContext.SaveAsync for id {query.Id}");
-
-            //await _dynamoDbContext.SaveAsync(dbEntity).ConfigureAwait(false);
-            //return new UpdateProcessGatewayResult(currentProcess.ToDomain(), dbEntity.ToDomain());
         }
 
 
