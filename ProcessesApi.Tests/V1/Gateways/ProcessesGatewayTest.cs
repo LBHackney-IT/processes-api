@@ -207,16 +207,6 @@ namespace ProcessesApi.Tests.V1.Gateways
             load.Should().BeEquivalentTo(originalProcess, config => config.Excluding(x => x.CurrentState).Excluding(x => x.VersionNumber));
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync to update id {updatedProcessQuery.Id}", Times.Once());
 
-            //OldValues should be same as OrignalProcess
-            response.OldValues["assignment"].Should().BeEquivalentTo(originalProcess.ToDatabase().CurrentState.Assignment);
-            response.OldValues["formData"].Should().BeEquivalentTo(originalProcess.ToDatabase().CurrentState.ProcessData.FormData);
-            response.OldValues["documents"].Should().BeEquivalentTo(originalProcess.ToDatabase().CurrentState.ProcessData.Documents);
-
-            //NewValues should be same as UpdatedProcess
-            response.NewValues["assignment"].Should().BeEquivalentTo(response.UpdatedEntity.Assignment);
-            response.NewValues["formData"].Should().BeEquivalentTo(updatedProcess.CurrentState.ProcessData.FormData);
-            response.NewValues["documents"].Should().BeEquivalentTo(response.UpdatedEntity.ProcessData.Documents);
-
             _cleanup.Add(async () => await _dynamoDb.DeleteAsync<ProcessesDb>(originalProcess.Id).ConfigureAwait(false));
         }
 
@@ -274,14 +264,6 @@ namespace ProcessesApi.Tests.V1.Gateways
             //Rest of the object should remain the same
             load.Should().BeEquivalentTo(originalProcess, config => config.Excluding(x => x.CurrentState).Excluding(x => x.VersionNumber));
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync to update id {updatedProcessQuery.Id}", Times.Once());
-
-            //OldValues should be same as OrignalProcess
-            response.OldValues["formData"].Should().BeEquivalentTo(originalProcess.ToDatabase().CurrentState.ProcessData.FormData);
-            response.OldValues["documents"].Should().BeEquivalentTo(originalProcess.ToDatabase().CurrentState.ProcessData.Documents);
-
-            //NewValues should be same as UpdatedProcess
-            response.NewValues["formData"].Should().BeEquivalentTo(updatedProcess.CurrentState.ProcessData.FormData);
-            response.NewValues["documents"].Should().BeEquivalentTo(response.UpdatedEntity.ProcessData.Documents);
 
             _cleanup.Add(async () => await _dynamoDb.DeleteAsync<ProcessesDb>(originalProcess.Id).ConfigureAwait(false));
         }

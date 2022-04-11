@@ -53,7 +53,7 @@ namespace ProcessesApi.V1.Factories
             };
         }
 
-        public EntityEventSns ProcessUpdated(Process process, Token token, string description)
+        public EntityEventSns ProcessUpdatedWithMessage(Process process, Token token, string description)
         {
             return new EntityEventSns
             {
@@ -77,7 +77,7 @@ namespace ProcessesApi.V1.Factories
             };
         }
 
-        public EntityEventSns ProcessByIdUpdated(Guid id, UpdateEntityResult<ProcessState> updateResult, Token token)
+        public EntityEventSns ProcessUpdated(Guid id, UpdateEntityResult<ProcessState> updateResult, Token token)
         {
             return new EntityEventSns
             {

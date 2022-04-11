@@ -12,7 +12,7 @@ namespace ProcessesApi.V1.Factories
 
         EntityEventSns ProcessClosed(Process process, Token token, string description);
 
-        EntityEventSns ProcessUpdated(Process process, Token token, string description);
-        EntityEventSns ProcessByIdUpdated(Guid id, UpdateEntityResult<ProcessState> updateResult, Token token);
+        EntityEventSns ProcessUpdatedWithMessage(Process process, Token token, string description);
+        EntityEventSns ProcessUpdated(Guid id, UpdateEntityResult<ProcessState> updateResult, Token token);
     }
 }

@@ -251,7 +251,7 @@ namespace ProcessesApi.V1.UseCase
         private async Task PublishProcessUpdatedEvent(string description)
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = _snsFactory.ProcessUpdated(_soleToJointProcess, _token, description);
+            var processSnsMessage = _snsFactory.ProcessUpdatedWithMessage(_soleToJointProcess, _token, description);
 
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }

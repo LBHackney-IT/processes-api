@@ -31,7 +31,7 @@ namespace ProcessesApi.V1.UseCase
             var result = await _processGateway.UpdateProcessById(query, requestObject, requestBody, ifMatch).ConfigureAwait(false);
 
             if (result == null) return null;
-            var processSnsMessage = _snsFactory.ProcessByIdUpdated(query.Id, result, token);
+            var processSnsMessage = _snsFactory.ProcessUpdated(query.Id, result, token);
             var topicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
             await _snsGateway.Publish(processSnsMessage, topicArn).ConfigureAwait(false);
 
