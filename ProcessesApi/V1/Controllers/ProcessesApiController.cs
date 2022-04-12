@@ -168,11 +168,17 @@ namespace ProcessesApi.V1.Controllers
         [Route("{processName}/{id}")]
         public async Task<IActionResult> UpdateProcessById([FromBody] UpdateProcessByIdRequestObject requestObject, [FromRoute] ProcessQuery query)
         {
+            // This is only possible because the EnableRequestBodyRewind middleware is specified in the application startup.
+            var bodyText = await HttpContext.Request.GetRawBodyStringAsync().ConfigureAwait(false);
+            var token = _tokenFactory.Create(_contextWrapper.GetContextRequestHeaders(HttpContext));
             var ifMatch = GetIfMatchFromHeader();
             try
             {
-
-                var response = await _updateProcessByIdUsecase.Execute(query, requestObject, ifMatch);
+                // We use a request object AND the raw request body text because the incoming request will only contain the fields that changed
+                // whereas the request object has all possible updateable fields defined.
+                // The implementation will use the raw body text to identify which fields to update and the request object is specified here so that its
+                // associated validation will be executed by the MVC pipeline before we even get to this point.
+                var response = await _updateProcessByIdUsecase.Execute(query, requestObject, bodyText, ifMatch, token);
                 if (response == null) return NotFound(query.Id);
                 return NoContent();
             }

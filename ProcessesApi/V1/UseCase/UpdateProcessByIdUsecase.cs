@@ -14,19 +14,29 @@ namespace ProcessesApi.V1.UseCase
     public class UpdateProcessByIdUsecase : IUpdateProcessByIdUsecase
     {
         private readonly IProcessesGateway _processGateway;
+        private readonly ISnsGateway _snsGateway;
+        private readonly ISnsFactory _snsFactory;
 
-        public UpdateProcessByIdUsecase(IProcessesGateway processGateway)
+        public UpdateProcessByIdUsecase(IProcessesGateway processGateway, ISnsGateway snsGateway, ISnsFactory snsFactory)
 
         {
             _processGateway = processGateway;
+            _snsFactory = snsFactory;
+            _snsGateway = snsGateway;
         }
 
-        public async Task<Process> Execute(ProcessQuery query, UpdateProcessByIdRequestObject requestObject, int? ifMatch)
+        public async Task<ProcessState> Execute(ProcessQuery query, UpdateProcessByIdRequestObject requestObject, string requestBody, int? ifMatch, Token token)
         {
 
-            var response = await _processGateway.UpdateProcessById(query, requestObject, ifMatch).ConfigureAwait(false);
+            var result = await _processGateway.UpdateProcessById(query, requestObject, requestBody, ifMatch).ConfigureAwait(false);
 
-            return response;
+            if (result == null) return null;
+            var processSnsMessage = _snsFactory.ProcessUpdated(query.Id, result, token);
+            var topicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
+            await _snsGateway.Publish(processSnsMessage, topicArn).ConfigureAwait(false);
+
+
+            return result.UpdatedEntity;
         }
     }
 }
