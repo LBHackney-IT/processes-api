@@ -1,6 +1,4 @@
 using ProcessesApi.V1.Domain;
-using System;
-using System.Collections.Generic;
 
 namespace ProcessesApi.V1.Boundary.Request
 {

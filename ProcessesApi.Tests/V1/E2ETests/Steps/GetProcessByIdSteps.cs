@@ -19,7 +19,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         {
         }
 
-        public async Task WhenTheProcessIsRequested(string processName, Guid id)
+        public async Task WhenTheProcessIsRequested(ProcessName processName, Guid id)
         {
             var uri = new Uri($"api/v1/process/{processName}/{id}", UriKind.Relative);
             _lastResponse = await _httpClient.GetAsync(uri).ConfigureAwait(false);

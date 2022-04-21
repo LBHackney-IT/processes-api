@@ -46,7 +46,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         [Fact]
         public async Task GetProcessByIdReturnsProcessFromGateway()
         {
-            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), new List<Guid>(), null, null);
+            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), new List<Guid>(), ProcessName.soletojoint, null);
             var query = ConstructQuery(process.Id);
 
             _mockGateway.Setup(x => x.GetProcessById(process.Id)).ReturnsAsync((Process) process);

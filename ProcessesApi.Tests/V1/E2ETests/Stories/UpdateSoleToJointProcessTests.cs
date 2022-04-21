@@ -72,7 +72,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [Fact]
         public void UpdateProcessReturnsBadRequestWhenThereAreValidationErrors()
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.ApplicationInitialised))
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SharedProcessStates.ApplicationInitialised))
                 .And(a => _tenureFixture.GivenATenureDoesNotExist())
                 .And(a => _personFixture.GivenAnAdultPersonExists(_processFixture.IncomingTenantId))
                 .And(a => _processFixture.GivenAnUpdateSoleToJointProcessRequestWithValidationErrors())
@@ -86,7 +86,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [InlineData(null)]
         public void UpdateProcessReturnsConflictExceptionWhenTheIncorrectVersionNumberIsInIfMatchHeader(int? ifMatch)
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.ApplicationInitialised))
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SharedProcessStates.ApplicationInitialised))
                     .And(a => _processFixture.GivenACheckEligibilityRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, ifMatch))
                 .Then(t => _steps.ThenVersionConflictExceptionIsReturned(ifMatch))
