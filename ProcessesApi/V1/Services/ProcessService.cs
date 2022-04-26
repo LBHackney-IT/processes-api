@@ -79,6 +79,12 @@ namespace ProcessesApi.V1.Services
                 DateTime.UtcNow, DateTime.UtcNow);
         }
 
+        protected async Task TriggerStateMachine(UpdateProcessState trigger)
+        {
+            var res = _machine.SetTriggerParameters<UpdateProcessState, Process>(trigger.Trigger);
+            await _machine.FireAsync(res, trigger, _process).ConfigureAwait(false);
+        }
+
         protected async Task PublishProcessClosedEvent(string description)
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
@@ -113,7 +119,7 @@ namespace ProcessesApi.V1.Services
             if (!canFire)
                 throw new Exception($"Cannot trigger {processRequest.Trigger} from {_machine.State}");
 
-            await _machine.FireAsync(res, processRequest, process);
+            await _machine.FireAsync(res, processRequest, process).ConfigureAwait(false);
 
             await process.AddState(_currentState);
         }

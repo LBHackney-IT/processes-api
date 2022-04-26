@@ -37,8 +37,7 @@ namespace ProcessesApi.V1.Services
 
                 processRequest.Trigger = isEligible ? SoleToJointInternalTriggers.EligibiltyPassed : SoleToJointInternalTriggers.EligibiltyFailed;
 
-                var res = _machine.SetTriggerParameters<UpdateProcessState, Process>(processRequest.Trigger);
-                await _machine.FireAsync(res, processRequest, _process);
+                await TriggerStateMachine(processRequest).ConfigureAwait(false);
             }
             catch (KeyNotFoundException)
             {
@@ -71,8 +70,7 @@ namespace ProcessesApi.V1.Services
                     ? passedTrigger
                     : failedTrigger;
 
-                var trigger = _machine.SetTriggerParameters<UpdateProcessState, Process>(processRequest.Trigger);
-                await _machine.FireAsync(trigger, processRequest, _process);
+                await TriggerStateMachine(processRequest).ConfigureAwait(false);
             }
             catch (KeyNotFoundException)
             {
