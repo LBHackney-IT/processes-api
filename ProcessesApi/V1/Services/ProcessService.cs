@@ -1,5 +1,7 @@
 using Hackney.Core.JWT;
+using Hackney.Core.Sns;
 using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Services.Interfaces;
 using Stateless;
 using System;
@@ -21,10 +23,14 @@ namespace ProcessesApi.V1.Services
                                                     .Where(fi => fi.IsLiteral && !fi.IsInitOnly && fi.FieldType == typeof(string))
                                                     .Select(x => (string) x.GetRawConstantValue())
                                                     .ToList();
+        protected ISnsFactory _snsFactory;
+        protected ISnsGateway _snsGateway;
         protected Token _token;
 
-        public ProcessService()
+        public ProcessService(ISnsFactory snsFactory, ISnsGateway snsGateway)
         {
+            _snsFactory = snsFactory;
+            _snsGateway = snsGateway;
         }
 
         protected virtual void SetUpStates()
@@ -71,6 +77,22 @@ namespace ProcessesApi.V1.Services
                 assignment,
                 ProcessData.Create(processRequest.FormData, processRequest.Documents),
                 DateTime.UtcNow, DateTime.UtcNow);
+        }
+
+        protected async Task PublishProcessClosedEvent(string description)
+        {
+            var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
+            var processSnsMessage = _snsFactory.ProcessClosed(_process, _token, description);
+
+            await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
+        }
+
+        protected async Task PublishProcessUpdatedEvent(string description)
+        {
+            var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
+            var processSnsMessage = _snsFactory.ProcessUpdatedWithMessage(_process, _token, description);
+
+            await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
 
         public async Task Process(UpdateProcessState processRequest, Process process, Token token)

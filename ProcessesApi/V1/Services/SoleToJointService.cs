@@ -15,10 +15,9 @@ namespace ProcessesApi.V1.Services
     public class SoleToJointService : ProcessService, ISoleToJointService
     {
         private readonly ISoleToJointGateway _soleToJointGateway;
-        private readonly ISnsFactory _snsFactory;
-        private readonly ISnsGateway _snsGateway;
 
-        public SoleToJointService(ISoleToJointGateway gateway, ISnsFactory snsFactory, ISnsGateway snsGateway)
+        public SoleToJointService(ISoleToJointGateway gateway, ISnsFactory snsFactory, ISnsGateway snsGateway) 
+            : base(snsFactory, snsGateway)
         {
             _soleToJointGateway = gateway;
             _snsFactory = snsFactory;
@@ -188,22 +187,6 @@ namespace ProcessesApi.V1.Services
             {
                 throw new FormDataFormatException("appointment datetime", appointmentDetails);
             }
-        }
-
-        private async Task PublishProcessClosedEvent(string description)
-        {
-            var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = _snsFactory.ProcessClosed(_process, _token, description);
-
-            await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
-        }
-
-        private async Task PublishProcessUpdatedEvent(string description)
-        {
-            var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = _snsFactory.ProcessUpdatedWithMessage(_process, _token, description);
-
-            await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
     }
 }
