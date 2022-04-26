@@ -16,7 +16,7 @@ namespace ProcessesApi.V1.Services
     {
         private readonly ISoleToJointGateway _soleToJointGateway;
 
-        public SoleToJointService(ISoleToJointGateway gateway, ISnsFactory snsFactory, ISnsGateway snsGateway) 
+        public SoleToJointService(ISoleToJointGateway gateway, ISnsFactory snsFactory, ISnsGateway snsGateway)
             : base(snsFactory, snsGateway)
         {
             _soleToJointGateway = gateway;
