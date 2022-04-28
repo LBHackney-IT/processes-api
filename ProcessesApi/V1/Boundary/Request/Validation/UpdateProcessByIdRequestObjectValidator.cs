@@ -1,5 +1,4 @@
 using FluentValidation;
-using System;
 
 namespace ProcessesApi.V1.Boundary.Request.Validation
 {

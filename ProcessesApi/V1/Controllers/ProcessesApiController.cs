@@ -5,7 +5,6 @@ using Hackney.Core.Middleware;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Boundary.Response;
 using ProcessesApi.V1.Domain;
@@ -25,19 +24,19 @@ namespace ProcessesApi.V1.Controllers
     public class ProcessesApiController : BaseController
     {
         private readonly IGetByIdUseCase _getByIdUseCase;
-        private readonly ISoleToJointUseCase _soleToJointUseCase;
+        private readonly IProcessUseCase _processUseCase;
         private readonly IUpdateProcessByIdUsecase _updateProcessByIdUsecase;
         private readonly IHttpContextWrapper _contextWrapper;
         private readonly ITokenFactory _tokenFactory;
 
 
-        public ProcessesApiController(IGetByIdUseCase getByIdUseCase, ISoleToJointUseCase soleToJointUseCase,
+        public ProcessesApiController(IGetByIdUseCase getByIdUseCase, IProcessUseCase processUseCase,
                                       IUpdateProcessByIdUsecase updateProcessByIdUsecase, IHttpContextWrapper contextWrapper,
                                       ITokenFactory tokenFactory)
 
         {
             _getByIdUseCase = getByIdUseCase;
-            _soleToJointUseCase = soleToJointUseCase;
+            _processUseCase = processUseCase;
             _updateProcessByIdUsecase = updateProcessByIdUsecase;
             _contextWrapper = contextWrapper;
             _tokenFactory = tokenFactory;
@@ -82,36 +81,20 @@ namespace ProcessesApi.V1.Controllers
         [HttpPost]
         [LogCall(LogLevel.Information)]
         [Route("{processName}")]
-        public async Task<IActionResult> CreateNewProcess([FromBody] CreateProcess request, [FromRoute] string processName)
+        public async Task<IActionResult> CreateNewProcess([FromBody] CreateProcess request, [FromRoute] ProcessName processName)
         {
             var token = _tokenFactory.Create(_contextWrapper.GetContextRequestHeaders(HttpContext));
-            switch (processName)
-            {
-                case ProcessNamesConstants.SoleToJoint:
-                    var soleToJointResult = await _soleToJointUseCase.Execute(
-                                                                      Guid.NewGuid(),
-                                                                      SoleToJointInternalTriggers.StartApplication,
-                                                                      request.TargetId,
-                                                                      request.RelatedEntities,
-                                                                      request.FormData,
-                                                                      request.Documents,
-                                                                      processName,
-                                                                      null,
-                                                                      token)
-                                                                     .ConfigureAwait(false);
-
-                    return Created(new Uri($"api/v1/processes/{processName}/{soleToJointResult.Id}", UriKind.Relative), soleToJointResult);
-                default:
-                    var error = new ErrorResponse
-                    {
-                        ErrorCode = 1,
-                        ProcessId = Guid.Empty,
-                        ErrorMessage = "Process type does not exist",
-                        ProcessName = processName
-                    };
-                    return new BadRequestObjectResult(error);
-            }
-
+            var result = await _processUseCase.Execute(Guid.NewGuid(),
+                                                       SharedInternalTriggers.StartApplication,
+                                                       request.TargetId,
+                                                       request.RelatedEntities,
+                                                       request.FormData,
+                                                       request.Documents,
+                                                       processName,
+                                                       null,
+                                                       token)
+                                                .ConfigureAwait(false);
+            return Created(new Uri($"api/v1/processes/{processName}/{result.Id}", UriKind.Relative), result);
         }
 
         /// <summary>
@@ -135,16 +118,16 @@ namespace ProcessesApi.V1.Controllers
             var ifMatch = GetIfMatchFromHeader();
             try
             {
-                var soleToJointResult = await _soleToJointUseCase.Execute(query.Id,
-                                                                          query.ProcessTrigger,
-                                                                          null,
-                                                                          null,
-                                                                          requestObject.FormData,
-                                                                          requestObject.Documents,
-                                                                          query.ProcessName,
-                                                                          ifMatch,
-                                                                          token);
-                if (soleToJointResult == null) return NotFound(query.Id);
+                var result = await _processUseCase.Execute(query.Id,
+                                                           query.ProcessTrigger,
+                                                           null,
+                                                           null,
+                                                           requestObject.FormData,
+                                                           requestObject.Documents,
+                                                           query.ProcessName,
+                                                           ifMatch,
+                                                           token);
+                if (result == null) return NotFound(query.Id);
                 return NoContent();
             }
             catch (VersionNumberConflictException vncErr)
@@ -152,6 +135,7 @@ namespace ProcessesApi.V1.Controllers
                 return Conflict(vncErr.Message);
             }
         }
+
         /// <summary>
         /// Update a process
         /// </summary>
@@ -187,7 +171,6 @@ namespace ProcessesApi.V1.Controllers
                 return Conflict(vncErr.Message);
             }
         }
-
 
 
         private int? GetIfMatchFromHeader()

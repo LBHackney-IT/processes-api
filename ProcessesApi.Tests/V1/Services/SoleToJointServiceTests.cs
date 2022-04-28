@@ -5,18 +5,17 @@ using Hackney.Core.Testing.DynamoDb;
 using Moq;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Gateways;
-using ProcessesApi.V1.UseCase;
 using ProcessesApi.V1.UseCase.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Hackney.Core.JWT;
 using Hackney.Core.Sns;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure.JWT;
 using Xunit;
+using ProcessesApi.V1.Services;
 
 namespace ProcessesApi.Tests.V1.UseCase
 {
@@ -126,7 +125,7 @@ namespace ProcessesApi.Tests.V1.UseCase
                                     .With(x => x.PreviousStates, new List<ProcessState>())
                                     .Create();
             var triggerObject = CreateProcessTrigger(process,
-                                                     SoleToJointInternalTriggers.StartApplication,
+                                                     SharedInternalTriggers.StartApplication,
                                                      _fixture.Create<Dictionary<string, object>>());
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);

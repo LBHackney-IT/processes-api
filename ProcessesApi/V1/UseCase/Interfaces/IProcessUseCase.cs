@@ -1,12 +1,12 @@
-using Hackney.Core.JWT;
 using ProcessesApi.V1.Domain;
+using System.Threading.Tasks;
+using Hackney.Core.JWT;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.UseCase.Interfaces
 {
-    public interface ISoleToJointUseCase
+    public interface IProcessUseCase
     {
         Task<Process> Execute(Guid id,
                               string processTrigger,
@@ -14,7 +14,7 @@ namespace ProcessesApi.V1.UseCase.Interfaces
                               List<Guid> relatedEntities,
                               Dictionary<string, object> formData,
                               List<Guid> documents,
-                              string processName,
+                              ProcessName processName,
                               int? ifMatch,
                               Token token);
     }

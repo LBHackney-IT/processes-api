@@ -39,6 +39,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json.Serialization;
+using ProcessesApi.V1;
 
 namespace ProcessesApi
 {
@@ -151,6 +152,7 @@ namespace ProcessesApi
             services.ConfigureSns();
             services.AddLogCallAspect();
 
+            services.ConfigureProcessServices();
 
             RegisterGateways(services);
             RegisterUseCases(services);
@@ -173,7 +175,6 @@ namespace ProcessesApi
 
         private static void RegisterGateways(IServiceCollection services)
         {
-
             services.AddScoped<IProcessesGateway, ProcessesGateway>();
             services.AddScoped<ISoleToJointGateway, SoleToJointGateway>();
             services.AddScoped<IEntityUpdater, EntityUpdater>();
@@ -183,8 +184,7 @@ namespace ProcessesApi
         private static void RegisterUseCases(IServiceCollection services)
         {
             services.AddScoped<IGetByIdUseCase, GetProcessByIdUseCase>();
-            services.AddScoped<ISoleToJointUseCase, SoleToJointUseCase>();
-            services.AddScoped<ISoleToJointService, SoleToJointService>();
+            services.AddScoped<IProcessUseCase, ProcessUseCase>();
             services.AddScoped<IUpdateProcessByIdUsecase, UpdateProcessByIdUsecase>();
         }
 
@@ -212,8 +212,6 @@ namespace ProcessesApi
             app.UseCustomExceptionHandler(logger);
             app.UseXRay("processes-api");
             app.EnableRequestBodyRewind();
-
-
 
             //Get All ApiVersions,
             var api = app.ApplicationServices.GetService<IApiVersionDescriptionProvider>();

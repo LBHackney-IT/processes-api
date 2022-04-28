@@ -11,7 +11,7 @@ using Hackney.Shared.Person.Infrastructure;
 using Hackney.Shared.Person.Factories;
 using Hackney.Shared.Person;
 using Hackney.Core.Http;
-using ProcessesApi.V1.Domain.Finance;
+using ProcessesApi.V1.Domain.SoleToJoint;
 using ProcessesApi.V1.Gateways.Exceptions;
 using System.Collections.Generic;
 

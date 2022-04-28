@@ -9,10 +9,6 @@ namespace ProcessesApi.V1.Boundary.Request.Validation
     {
         public UpdateProcessQueryValidator()
         {
-            RuleFor(x => x.ProcessName).NotEmpty().NotNull();
-            RuleFor(x => x.ProcessName).NotXssString()
-                                       .WithErrorCode(ErrorCodes.XssCheckFailure);
-
             RuleFor(x => x.Id).NotNull()
                             .NotEqual(Guid.Empty);
             RuleFor(x => x.ProcessTrigger).NotNull().NotEmpty();

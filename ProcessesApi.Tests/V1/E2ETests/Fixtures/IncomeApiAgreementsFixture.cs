@@ -1,6 +1,6 @@
 using AutoFixture;
 using Hackney.Core.Testing.Shared.E2E;
-using ProcessesApi.V1.Domain.Finance;
+using ProcessesApi.V1.Domain.SoleToJoint;
 using System;
 using System.Collections.Generic;
 
