@@ -9,31 +9,35 @@ using System.Linq;
 using System.Threading.Tasks;
 using Hackney.Core.Sns;
 using ProcessesApi.V1.Factories;
+using ProcessesApi.V1.Helpers;
 
 namespace ProcessesApi.V1.Services
 {
     public class SoleToJointService : ProcessService, ISoleToJointService
     {
         private readonly ISoleToJointGateway _soleToJointGateway;
+        private readonly ISoleToJointHelper _helper;
 
-        public SoleToJointService(ISoleToJointGateway gateway, ISnsFactory snsFactory, ISnsGateway snsGateway)
+        public SoleToJointService(ISoleToJointGateway soleToJointGateway, ISnsFactory snsFactory, ISnsGateway snsGateway, ISoleToJointHelper helper)
             : base(snsFactory, snsGateway)
         {
-            _soleToJointGateway = gateway;
+            _soleToJointGateway = soleToJointGateway;
             _snsFactory = snsFactory;
             _snsGateway = snsGateway;
+            _helper = helper;
             _permittedTriggersType = typeof(SoleToJointPermittedTriggers);
         }
 
-        private async Task CheckEligibility(StateMachine<string, string>.Transition x)
+        private async Task CheckAutomatedEligibility(StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as UpdateProcessState;
             try
             {
-                var isEligible = await _soleToJointGateway.CheckEligibility(_process.TargetId,
-                                                                            Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()),
-                                                                            Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.TenantId].ToString()))
-                                            .ConfigureAwait(false);
+                var isEligible = await _helper.CheckAutomatedEligibility(_process.TargetId,
+                                                                         Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()),
+                                                                         Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.TenantId].ToString()),
+                                                                         _soleToJointGateway)
+                                                                         .ConfigureAwait(false);
 
                 processRequest.Trigger = isEligible ? SoleToJointInternalTriggers.EligibiltyPassed : SoleToJointInternalTriggers.EligibiltyFailed;
 
@@ -120,7 +124,7 @@ namespace ProcessesApi.V1.Services
             _machine.Configure(SharedProcessStates.ApplicationInitialised)
                     .Permit(SharedInternalTriggers.StartApplication, SoleToJointStates.SelectTenants);
             _machine.Configure(SoleToJointStates.SelectTenants)
-                    .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckEligibility, async (x) => await CheckEligibility(x).ConfigureAwait(false))
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckEligibility, async (x) => await CheckAutomatedEligibility(x).ConfigureAwait(false))
                     .Permit(SoleToJointInternalTriggers.EligibiltyFailed, SoleToJointStates.AutomatedChecksFailed)
                     .Permit(SoleToJointInternalTriggers.EligibiltyPassed, SoleToJointStates.AutomatedChecksPassed);
             _machine.Configure(SoleToJointStates.AutomatedChecksFailed)
