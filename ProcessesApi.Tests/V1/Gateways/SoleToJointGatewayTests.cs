@@ -10,7 +10,7 @@ using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Factories;
 using Microsoft.Extensions.Logging;
 using Moq;
-using ProcessesApi.V1.Domain.SoleToJoint;
+using ProcessesApi.V1.Domain.Finance;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Gateways.Exceptions;
 using System;

@@ -1,0 +1,80 @@
+Index: ActivityListener.Tests/EventTypeHelper.cs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/ActivityListener.Tests/EventTypeHelper.cs b/ActivityListener.Tests/EventTypeHelper.cs
+--- a/ActivityListener.Tests/EventTypeHelper.cs	(revision 99fca608a6ba0058e11d7e0ffa9c65d81cd7902e)
++++ b/ActivityListener.Tests/EventTypeHelper.cs	(revision 4a7f79ce75c37f3508f6eb69733f5414a62e1cff)
+@@ -18,6 +18,7 @@
+                 EventTypes.EqualityInformationCreatedEvent,
+                 EventTypes.EqualityInformationUpdatedEvent,
+                 EventTypes.ProcessStartedEvent,
++                EventTypes.ProcessUpdatedEvent,
+                 EventTypes.ProcessClosedEvent
+             };
+     }
+Index: ActivityListener.Tests/Factories/EntityFactoryTest.cs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/ActivityListener.Tests/Factories/EntityFactoryTest.cs b/ActivityListener.Tests/Factories/EntityFactoryTest.cs
+--- a/ActivityListener.Tests/Factories/EntityFactoryTest.cs	(revision 99fca608a6ba0058e11d7e0ffa9c65d81cd7902e)
++++ b/ActivityListener.Tests/Factories/EntityFactoryTest.cs	(revision 4a7f79ce75c37f3508f6eb69733f5414a62e1cff)
+@@ -42,6 +42,7 @@
+                 case EventTypes.TenureUpdatedEvent:
+                 case EventTypes.HousingApplicationUpdatedEvent:
+                 case EventTypes.EqualityInformationUpdatedEvent:
++                case EventTypes.ProcessUpdatedEvent:
+                 case EventTypes.ProcessClosedEvent:
+                     eventSns.GetActivityType().Should().Be(ActivityType.update);
+                     break;
+@@ -92,6 +93,7 @@
+                     eventSns.GetTargetType().Should().Be(TargetType.personEqualityInformation);
+                     break;
+                 case EventTypes.ProcessStartedEvent:
++                case EventTypes.ProcessUpdatedEvent:
+                 case EventTypes.ProcessClosedEvent:
+                     eventSns.GetTargetType().Should().Be(TargetType.process);
+                     break;
+Index: ActivityListener/EventTypes.cs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/ActivityListener/EventTypes.cs b/ActivityListener/EventTypes.cs
+--- a/ActivityListener/EventTypes.cs	(revision 99fca608a6ba0058e11d7e0ffa9c65d81cd7902e)
++++ b/ActivityListener/EventTypes.cs	(revision 4a7f79ce75c37f3508f6eb69733f5414a62e1cff)
+@@ -21,6 +21,7 @@
+         public const string EqualityInformationUpdatedEvent = "EqualityInformationUpdatedEvent";
+ 
+         public const string ProcessStartedEvent = "ProcessStartedEvent";
++        public const string ProcessUpdatedEvent = "ProcessUpdatedEvent";
+         public const string ProcessClosedEvent = "ProcessClosedEvent";
+     }
+ }
+Index: ActivityListener/Factories/EntityFactory.cs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/ActivityListener/Factories/EntityFactory.cs b/ActivityListener/Factories/EntityFactory.cs
+--- a/ActivityListener/Factories/EntityFactory.cs	(revision 99fca608a6ba0058e11d7e0ffa9c65d81cd7902e)
++++ b/ActivityListener/Factories/EntityFactory.cs	(revision 4a7f79ce75c37f3508f6eb69733f5414a62e1cff)
+@@ -22,6 +22,7 @@
+                 case EventTypes.TenureUpdatedEvent:
+                 case EventTypes.HousingApplicationUpdatedEvent:
+                 case EventTypes.EqualityInformationUpdatedEvent:
++                case EventTypes.ProcessUpdatedEvent:
+                 case EventTypes.ProcessClosedEvent:
+                     return ActivityType.update;
+                 case EventTypes.ContactDetailDeletedEvent:
+@@ -56,6 +57,7 @@
+                 case EventTypes.EqualityInformationUpdatedEvent:
+                     return TargetType.personEqualityInformation;
+                 case EventTypes.ProcessStartedEvent:
++                case EventTypes.ProcessUpdatedEvent:
+                 case EventTypes.ProcessClosedEvent:
+                     return TargetType.process;
+                 default:

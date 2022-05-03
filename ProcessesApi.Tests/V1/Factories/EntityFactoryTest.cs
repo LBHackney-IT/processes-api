@@ -16,7 +16,7 @@ namespace ProcessesApi.Tests.V1.Factories
         public void CanMapADatabaseEntityToADomainObject()
         {
 
-            var entity = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), new List<Guid>(), ProcessName.soletojoint, null);
+            var entity = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), new List<Guid>(), null, null);
             var databaseEntity = entity.ToDatabase();
             var domain = databaseEntity.ToDomain();
 
@@ -31,7 +31,7 @@ namespace ProcessesApi.Tests.V1.Factories
         [Fact]
         public void CanMapADomainEntityToADatabaseObject()
         {
-            var entity = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), new List<Guid>(), ProcessName.soletojoint, null);
+            var entity = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), new List<Guid>(), null, null);
             var databaseEntity = entity.ToDatabase();
 
             databaseEntity.Id.Should().Be(entity.Id.ToString());

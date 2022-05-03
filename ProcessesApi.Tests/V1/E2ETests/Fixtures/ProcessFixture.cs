@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.SimpleNotificationService;
 using Amazon.SimpleNotificationService.Model;
 using AutoFixture;
+using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
@@ -19,14 +21,10 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         private readonly IAmazonSimpleNotificationService _amazonSimpleNotificationService;
         public Process Process { get; private set; }
         public Guid ProcessId { get; private set; }
-        public ProcessName ProcessName { get; private set; }
+        public string ProcessName { get; private set; }
         public CreateProcess CreateProcessRequest { get; private set; }
         public UpdateProcessQuery UpdateProcessRequest { get; private set; }
-        public UpdateProcessRequestObject UpdateProcessRequestObject { get; private set; }
-
-        public ProcessQuery UpdateProcessByIdRequest { get; private set; }
-        public UpdateProcessByIdRequestObject UpdateProcessByIdRequestObject { get; private set; }
-
+        public UpdateProcessQueryObject UpdateProcessRequestObject { get; private set; }
         public Guid IncomingTenantId { get; private set; }
         public Guid TenantId { get; private set; }
         public List<Guid> PersonTenures { get; private set; }
@@ -59,7 +57,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         private void createProcess(string state)
         {
             var process = _fixture.Build<Process>()
-                        .With(x => x.ProcessName, ProcessName.soletojoint)
+                        .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
                         .With(x => x.CurrentState,
                                 _fixture.Build<ProcessState>()
                                         .With(x => x.State, state)
@@ -81,7 +79,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenASoleToJointProcessDoesNotExist()
         {
-            createProcess(SharedProcessStates.ApplicationInitialised);
+            createProcess(SoleToJointStates.ApplicationInitialised);
         }
 
         public void GivenANewSoleToJointProcessRequest()
@@ -89,7 +87,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             CreateProcessRequest = _fixture.Build<CreateProcess>()
                                 .Create();
             CreateSnsTopic();
-            ProcessName = ProcessName.soletojoint;
+            ProcessName = ProcessNamesConstants.SoleToJoint;
         }
 
         public void GivenANewSoleToJointProcessRequestWithValidationErrors()
@@ -98,7 +96,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                             .With(x => x.TargetId, Guid.Empty)
                             .Create();
             CreateSnsTopic();
-            ProcessName = ProcessName.soletojoint;
+            ProcessName = ProcessNamesConstants.SoleToJoint;
         }
 
         public void GivenAnUpdateSoleToJointProcessRequest(string trigger)
@@ -109,7 +107,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                 ProcessName = Process.ProcessName,
                 ProcessTrigger = trigger
             };
-            UpdateProcessRequestObject = _fixture.Create<UpdateProcessRequestObject>();
+            UpdateProcessRequestObject = _fixture.Create<UpdateProcessQueryObject>();
         }
 
         public void GivenACheckEligibilityRequest()
@@ -133,63 +131,21 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             };
         }
 
-        public void GivenATenancyBreachCheckRequest(bool isEligible)
-        {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckTenancyBreach);
-
-            UpdateProcessRequestObject.FormData = new Dictionary<string, object>
-            {
-                { SoleToJointFormDataKeys.BR5, (!isEligible).ToString() },
-                { SoleToJointFormDataKeys.BR10, "false" },
-                { SoleToJointFormDataKeys.BR17, "false" },
-                { SoleToJointFormDataKeys.BR18, "false" }
-            };
-        }
-
         public void GivenAFailingCheckManualEligibilityRequest()
         {
             GivenACheckManualEligibilityRequest(false);
         }
+
 
         public void GivenAPassingCheckManualEligibilityRequest()
         {
             GivenACheckManualEligibilityRequest(true);
         }
 
-        public void GivenAFailingCheckBreachEligibilityRequest()
-        {
-            GivenATenancyBreachCheckRequest(false);
-        }
-
-        public void GivenAPassingCheckBreachEligibilityRequest()
-        {
-            GivenATenancyBreachCheckRequest(true);
-        }
-
-        public void GivenARequestDocumentsAppointmentRequest()
-        {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RequestDocumentsAppointment);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, _fixture.Create<DateTime>());
-        }
-
         public void GivenAnUpdateSoleToJointProcessRequestWithValidationErrors()
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckEligibility);
             UpdateProcessRequestObject.Documents.Add(Guid.Empty);
-        }
-
-        public void GivenAnUpdateProcessByIdRequestWithValidationErrors()
-        {
-            GivenAnUpdateProcessByIdRequest(ProcessId);
-            UpdateProcessByIdRequestObject.ProcessData.Documents.Add(Guid.Empty);
-        }
-        public void GivenAnUpdateProcessByIdRequest(Guid id)
-        {
-            UpdateProcessByIdRequest = _fixture.Build<ProcessQuery>()
-                                           .With(x => x.ProcessName, ProcessName.soletojoint)
-                                           .With(x => x.Id, id)
-                                           .Create();
-            UpdateProcessByIdRequestObject = _fixture.Create<UpdateProcessByIdRequestObject>();
         }
 
         private void CreateSnsTopic()

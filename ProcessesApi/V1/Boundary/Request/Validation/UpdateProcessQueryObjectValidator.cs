@@ -3,9 +3,9 @@ using System;
 
 namespace ProcessesApi.V1.Boundary.Request.Validation
 {
-    public class UpdateProcessRequestObjectValidator : AbstractValidator<UpdateProcessRequestObject>
+    public class UpdateProcessQueryObjectValidator : AbstractValidator<UpdateProcessQueryObject>
     {
-        public UpdateProcessRequestObjectValidator()
+        public UpdateProcessQueryObjectValidator()
         {
             RuleForEach(x => x.Documents).NotNull()
                                         .NotEqual(Guid.Empty);

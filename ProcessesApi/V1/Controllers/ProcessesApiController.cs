@@ -5,6 +5,7 @@ using Hackney.Core.Middleware;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Boundary.Response;
 using ProcessesApi.V1.Domain;
@@ -24,20 +25,16 @@ namespace ProcessesApi.V1.Controllers
     public class ProcessesApiController : BaseController
     {
         private readonly IGetByIdUseCase _getByIdUseCase;
-        private readonly IProcessUseCase _processUseCase;
-        private readonly IUpdateProcessByIdUsecase _updateProcessByIdUsecase;
+        private readonly ISoleToJointUseCase _soleToJointUseCase;
         private readonly IHttpContextWrapper _contextWrapper;
         private readonly ITokenFactory _tokenFactory;
 
 
-        public ProcessesApiController(IGetByIdUseCase getByIdUseCase, IProcessUseCase processUseCase,
-                                      IUpdateProcessByIdUsecase updateProcessByIdUsecase, IHttpContextWrapper contextWrapper,
-                                      ITokenFactory tokenFactory)
-
+        public ProcessesApiController(IGetByIdUseCase getByIdUseCase, ISoleToJointUseCase soleToJointUseCase,
+                                      IHttpContextWrapper contextWrapper, ITokenFactory tokenFactory)
         {
             _getByIdUseCase = getByIdUseCase;
-            _processUseCase = processUseCase;
-            _updateProcessByIdUsecase = updateProcessByIdUsecase;
+            _soleToJointUseCase = soleToJointUseCase;
             _contextWrapper = contextWrapper;
             _tokenFactory = tokenFactory;
         }
@@ -54,8 +51,8 @@ namespace ProcessesApi.V1.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [HttpGet]
         [LogCall(LogLevel.Information)]
-        [Route("{processName}/{id}")]
-        public async Task<IActionResult> GetProcessById([FromRoute] ProcessQuery query)
+        [Route("{process-name}/{id}")]
+        public async Task<IActionResult> GetProcessById([FromRoute] ProcessesQuery query)
         {
             var process = await _getByIdUseCase.Execute(query).ConfigureAwait(false);
             if (process == null) return NotFound(query.Id);
@@ -81,20 +78,36 @@ namespace ProcessesApi.V1.Controllers
         [HttpPost]
         [LogCall(LogLevel.Information)]
         [Route("{processName}")]
-        public async Task<IActionResult> CreateNewProcess([FromBody] CreateProcess request, [FromRoute] ProcessName processName)
+        public async Task<IActionResult> CreateNewProcess([FromBody] CreateProcess request, [FromRoute] string processName)
         {
             var token = _tokenFactory.Create(_contextWrapper.GetContextRequestHeaders(HttpContext));
-            var result = await _processUseCase.Execute(Guid.NewGuid(),
-                                                       SharedInternalTriggers.StartApplication,
-                                                       request.TargetId,
-                                                       request.RelatedEntities,
-                                                       request.FormData,
-                                                       request.Documents,
-                                                       processName,
-                                                       null,
-                                                       token)
-                                                .ConfigureAwait(false);
-            return Created(new Uri($"api/v1/processes/{processName}/{result.Id}", UriKind.Relative), result);
+            switch (processName)
+            {
+                case ProcessNamesConstants.SoleToJoint:
+                    var soleToJointResult = await _soleToJointUseCase.Execute(
+                                                                      Guid.NewGuid(),
+                                                                      SoleToJointInternalTriggers.StartApplication,
+                                                                      request.TargetId,
+                                                                      request.RelatedEntities,
+                                                                      request.FormData,
+                                                                      request.Documents,
+                                                                      processName,
+                                                                      null,
+                                                                      token)
+                                                                     .ConfigureAwait(false);
+
+                    return Created(new Uri($"api/v1/processes/{processName}/{soleToJointResult.Id}", UriKind.Relative), soleToJointResult);
+                default:
+                    var error = new ErrorResponse
+                    {
+                        ErrorCode = 1,
+                        ProcessId = Guid.Empty,
+                        ErrorMessage = "Process type does not exist",
+                        ProcessName = processName
+                    };
+                    return new BadRequestObjectResult(error);
+            }
+
         }
 
         /// <summary>
@@ -111,23 +124,23 @@ namespace ProcessesApi.V1.Controllers
         [HttpPatch]
         [LogCall(LogLevel.Information)]
         [Route("{processName}/{id}/{processTrigger}")]
-        public async Task<IActionResult> UpdateProcessState([FromBody] UpdateProcessRequestObject requestObject, [FromRoute] UpdateProcessQuery query)
+        public async Task<IActionResult> UpdateProcess([FromBody] UpdateProcessQueryObject requestObject, [FromRoute] UpdateProcessQuery query)
         {
             var token = _tokenFactory.Create(_contextWrapper.GetContextRequestHeaders(HttpContext));
             _contextWrapper.GetContextRequestHeaders(HttpContext);
             var ifMatch = GetIfMatchFromHeader();
             try
             {
-                var result = await _processUseCase.Execute(query.Id,
-                                                           query.ProcessTrigger,
-                                                           null,
-                                                           null,
-                                                           requestObject.FormData,
-                                                           requestObject.Documents,
-                                                           query.ProcessName,
-                                                           ifMatch,
-                                                           token);
-                if (result == null) return NotFound(query.Id);
+                var soleToJointResult = await _soleToJointUseCase.Execute(query.Id,
+                                                                          query.ProcessTrigger,
+                                                                          null,
+                                                                          null,
+                                                                          requestObject.FormData,
+                                                                          requestObject.Documents,
+                                                                          query.ProcessName,
+                                                                          ifMatch,
+                                                                          token);
+                if (soleToJointResult == null) return NotFound(query.Id);
                 return NoContent();
             }
             catch (VersionNumberConflictException vncErr)
@@ -135,43 +148,6 @@ namespace ProcessesApi.V1.Controllers
                 return Conflict(vncErr.Message);
             }
         }
-
-        /// <summary>
-        /// Update a process
-        /// </summary>
-        /// <response code="204">Process has been updated successfully</response>
-        /// <response code="400">Bad Request</response> 
-        /// <response code="404">Not Found</response> 
-        /// <response code="500">Internal Server Error</response>
-        [ProducesResponseType(typeof(ProcessResponse), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [HttpPatch]
-        [LogCall(LogLevel.Information)]
-        [Route("{processName}/{id}")]
-        public async Task<IActionResult> UpdateProcessById([FromBody] UpdateProcessByIdRequestObject requestObject, [FromRoute] ProcessQuery query)
-        {
-            // This is only possible because the EnableRequestBodyRewind middleware is specified in the application startup.
-            var bodyText = await HttpContext.Request.GetRawBodyStringAsync().ConfigureAwait(false);
-            var token = _tokenFactory.Create(_contextWrapper.GetContextRequestHeaders(HttpContext));
-            var ifMatch = GetIfMatchFromHeader();
-            try
-            {
-                // We use a request object AND the raw request body text because the incoming request will only contain the fields that changed
-                // whereas the request object has all possible updateable fields defined.
-                // The implementation will use the raw body text to identify which fields to update and the request object is specified here so that its
-                // associated validation will be executed by the MVC pipeline before we even get to this point.
-                var response = await _updateProcessByIdUsecase.Execute(query, requestObject, bodyText, ifMatch, token);
-                if (response == null) return NotFound(query.Id);
-                return NoContent();
-            }
-            catch (VersionNumberConflictException vncErr)
-            {
-                return Conflict(vncErr.Message);
-            }
-        }
-
 
         private int? GetIfMatchFromHeader()
         {

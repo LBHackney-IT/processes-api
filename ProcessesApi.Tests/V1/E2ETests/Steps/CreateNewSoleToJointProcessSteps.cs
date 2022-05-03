@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Hackney.Core.Testing.Shared.E2E;
 using Newtonsoft.Json;
+using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Boundary.Response;
 using ProcessesApi.V1.Domain;
@@ -30,7 +31,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             _dbFixture = dbFixture;
         }
 
-        public async Task WhenACreateProcessRequestIsMade(CreateProcess request, ProcessName processName)
+        public async Task WhenACreateProcessRequestIsMade(CreateProcess request, string processName)
         {
             var token = TestToken.Value;
             var uri = new Uri($"api/v1/process/{processName}/", UriKind.Relative);
@@ -54,7 +55,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
             dbRecord.TargetId.Should().Be(request.TargetId);
             dbRecord.RelatedEntities.Should().BeEquivalentTo(request.RelatedEntities);
-            dbRecord.ProcessName.Should().Be(ProcessName.soletojoint);
+            dbRecord.ProcessName.Should().Be(ProcessNamesConstants.SoleToJoint);
 
             dbRecord.CurrentState.State.Should().Be(SoleToJointStates.SelectTenants);
             dbRecord.CurrentState.PermittedTriggers.Should().BeEquivalentTo(new List<string>() { SoleToJointPermittedTriggers.CheckEligibility });

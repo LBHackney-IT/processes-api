@@ -16,8 +16,8 @@ namespace ProcessesApi.V1.Infrastructure
         [DynamoDBProperty]
         public Guid TargetId { get; set; }
 
-        [DynamoDBProperty(Converter = typeof(DynamoDbEnumConverter<ProcessName>))]
-        public ProcessName ProcessName { get; set; }
+        [DynamoDBProperty]
+        public string ProcessName { get; set; }
 
         [DynamoDBProperty]
         public List<Guid> RelatedEntities { get; set; }

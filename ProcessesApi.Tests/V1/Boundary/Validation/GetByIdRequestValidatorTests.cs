@@ -1,5 +1,4 @@
 using FluentValidation.TestHelper;
-using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Boundary.Request.Validation;
 using System;
@@ -7,22 +6,20 @@ using Xunit;
 
 namespace ProcessesApi.Tests.V1.Boundary.Validation
 {
-    public class ProcessQueryValidatorTests
+    public class GetByIdRequestValidatorTests
     {
-        private readonly ProcessQueryValidator _classUnderTest;
-        private const string ValueWithTags = "sdfsdf<sometag>";
+        private readonly GetByIdRequestValidator _classUnderTest;
 
-
-        public ProcessQueryValidatorTests()
+        public GetByIdRequestValidatorTests()
         {
-            _classUnderTest = new ProcessQueryValidator();
+            _classUnderTest = new GetByIdRequestValidator();
         }
 
         [Fact]
         public void RequestShouldErrorWithNullId()
         {
             //Arrange
-            var query = new ProcessQuery();
+            var query = new ProcessesQuery();
             //Act
             var result = _classUnderTest.TestValidate(query);
             //Assert
@@ -33,7 +30,7 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         public void RequestShouldErrorWithEmptyId()
         {
             //Arrange
-            var query = new ProcessQuery() { Id = Guid.Empty };
+            var query = new ProcessesQuery() { Id = Guid.Empty };
             //Act
             var result = _classUnderTest.TestValidate(query);
             //Assert

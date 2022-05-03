@@ -3,13 +3,14 @@ using FluentAssertions;
 using Hackney.Core.JWT;
 using Hackney.Core.Sns;
 using Moq;
+using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
-using ProcessesApi.V1.Services.Interfaces;
 using ProcessesApi.V1.UseCase;
 using ProcessesApi.V1.UseCase.Exceptions;
+using ProcessesApi.V1.UseCase.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -18,23 +19,21 @@ using Xunit;
 namespace ProcessesApi.Tests.V1.UseCase
 {
     [Collection("LogCall collection")]
-    public class ProcessUseCaseTests
+    public class SoleToJointUseCaseTests
     {
         private Mock<IProcessesGateway> _mockGateway;
-        private ProcessUseCase _classUnderTest;
-        private Mock<IProcessService> _mockProcessService;
+        private SoleToJointUseCase _classUnderTest;
+        private Mock<ISoleToJointService> _mockSTJService;
         private readonly Fixture _fixture = new Fixture();
         private readonly Mock<ISnsGateway> _processesSnsGateway;
         private readonly ProcessesSnsFactory _processesSnsFactory;
-        public ProcessUseCaseTests()
+        public SoleToJointUseCaseTests()
         {
             _mockGateway = new Mock<IProcessesGateway>();
-            _mockProcessService = new Mock<IProcessService>();
+            _mockSTJService = new Mock<ISoleToJointService>();
             _processesSnsGateway = new Mock<ISnsGateway>();
             _processesSnsFactory = new ProcessesSnsFactory();
-            Func<ProcessName, IProcessService> _mockProcessServiceProvider = (processName) => { return _mockProcessService.Object; };
-
-            _classUnderTest = new ProcessUseCase(_mockGateway.Object, _mockProcessServiceProvider,
+            _classUnderTest = new SoleToJointUseCase(_mockGateway.Object, _mockSTJService.Object,
                                                      _processesSnsGateway.Object, _processesSnsFactory);
         }
 
@@ -52,16 +51,16 @@ namespace ProcessesApi.Tests.V1.UseCase
         {
             // Arrange
             var createProcessQuery = _fixture.Create<CreateProcess>();
-            var processName = ProcessName.soletojoint;
+            var processName = ProcessNamesConstants.SoleToJoint;
             var processId = Guid.NewGuid();
             var token = new Token();
             // Act
             var response = await _classUnderTest.Execute(
-                processId, SharedInternalTriggers.StartApplication,
+                processId, SoleToJointInternalTriggers.StartApplication,
                 createProcessQuery.TargetId, createProcessQuery.RelatedEntities, createProcessQuery.FormData,
                 createProcessQuery.Documents, processName, null, token).ConfigureAwait(false);
             // Assert
-            _mockProcessService.Verify(x => x.Process(It.IsAny<UpdateProcessState>(), It.IsAny<Process>(), token), Times.Once);
+            _mockSTJService.Verify(x => x.Process(It.IsAny<UpdateProcessState>(), It.IsAny<Process>(), token), Times.Once);
             _mockGateway.Verify(x => x.SaveProcess(It.IsAny<Process>()), Times.Once);
 
             response.Id.Should().Be(processId);
@@ -75,14 +74,14 @@ namespace ProcessesApi.Tests.V1.UseCase
         {
             //Arrange
             var createProcessQuery = _fixture.Create<CreateProcess>();
-            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, createProcessQuery.TargetId, createProcessQuery.RelatedEntities, ProcessName.soletojoint, null);
+            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, createProcessQuery.TargetId, createProcessQuery.RelatedEntities, ProcessNamesConstants.SoleToJoint, null);
             var token = new Token();
             var exception = new ApplicationException("Test Exception");
             _mockGateway.Setup(x => x.SaveProcess(It.IsAny<Process>())).ThrowsAsync(exception);
 
             //Act
             Func<Task<Process>> func = async () => await _classUnderTest.Execute(
-                process.Id, SharedInternalTriggers.StartApplication,
+                process.Id, SoleToJointInternalTriggers.StartApplication,
                 process.TargetId, process.RelatedEntities, createProcessQuery.FormData,
                 createProcessQuery.Documents, process.ProcessName, null, token).ConfigureAwait(false);
 
@@ -95,7 +94,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         {
             // Arrange
             var process = CreateProcessInInitialState();
-            var updateProcessQuery = _fixture.Create<UpdateProcessRequestObject>();
+            var updateProcessQuery = _fixture.Create<UpdateProcessQueryObject>();
             _mockGateway.Setup(x => x.GetProcessById(process.Id)).ReturnsAsync(process);
             var token = new Token();
 
@@ -106,7 +105,7 @@ namespace ProcessesApi.Tests.V1.UseCase
                 updateProcessQuery.Documents, process.ProcessName, 0, token).ConfigureAwait(false);
 
             // Assert
-            _mockProcessService.Verify(x => x.Process(It.IsAny<UpdateProcessState>(), It.IsAny<Process>(), token), Times.Once);
+            _mockSTJService.Verify(x => x.Process(It.IsAny<UpdateProcessState>(), It.IsAny<Process>(), token), Times.Once);
             _mockGateway.Verify(x => x.SaveProcess(It.IsAny<Process>()), Times.Once);
 
             response.Id.Should().Be(process.Id);
@@ -120,7 +119,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         {
             // Arrange
             var process = CreateProcessInInitialState();
-            var updateProcessQuery = _fixture.Create<UpdateProcessRequestObject>();
+            var updateProcessQuery = _fixture.Create<UpdateProcessQueryObject>();
             _mockGateway.Setup(x => x.GetProcessById(process.Id)).ReturnsAsync(process);
             var suppliedVersion = 1;
             var token = new Token();
@@ -140,7 +139,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         {
             //Arrange
             var process = CreateProcessInInitialState();
-            var updateProcessQuery = _fixture.Create<UpdateProcessRequestObject>();
+            var updateProcessQuery = _fixture.Create<UpdateProcessQueryObject>();
             var token = new Token();
             var exception = new ApplicationException("Test Exception");
             _mockGateway.Setup(x => x.GetProcessById(It.IsAny<Guid>())).ThrowsAsync(exception);
