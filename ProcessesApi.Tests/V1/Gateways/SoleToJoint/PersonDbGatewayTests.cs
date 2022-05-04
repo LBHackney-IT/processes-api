@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
-using ProcessesApi.V1.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;

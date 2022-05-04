@@ -184,7 +184,7 @@ namespace ProcessesApi.V1.Services
 
         protected override void SetUpStateActions()
         {
-            Configure(SoleToJointStates.SelectTenants, Assignment.Create("tenants"));
+            ConfigureAsync(SoleToJointStates.SelectTenants, Assignment.Create("tenants"), (x) => PublishProcessStartedEvent());
             ConfigureAsync(SoleToJointStates.AutomatedChecksFailed, Assignment.Create("tenants"), OnAutomatedCheckFailed);
             Configure(SoleToJointStates.AutomatedChecksPassed, Assignment.Create("tenants"), AddIncomingTenantId);
             Configure(SoleToJointStates.ProcessCancelled, Assignment.Create("tenants"));

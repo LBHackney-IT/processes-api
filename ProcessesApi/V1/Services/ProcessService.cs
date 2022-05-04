@@ -88,10 +88,10 @@ namespace ProcessesApi.V1.Services
             await _machine.FireAsync(res, trigger, _process).ConfigureAwait(false);
         }
 
-        protected async Task PublishProcessClosedEvent(string description)
+        protected async Task PublishProcessStartedEvent()
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = _snsFactory.ProcessClosed(_process, _token, description);
+            var processSnsMessage = _snsFactory.ProcessStarted(_process, _token);
 
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
@@ -100,6 +100,14 @@ namespace ProcessesApi.V1.Services
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
             var processSnsMessage = _snsFactory.ProcessUpdatedWithMessage(_process, _token, description);
+
+            await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
+        }
+
+        protected async Task PublishProcessClosedEvent(string description)
+        {
+            var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
+            var processSnsMessage = _snsFactory.ProcessClosed(_process, _token, description);
 
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
