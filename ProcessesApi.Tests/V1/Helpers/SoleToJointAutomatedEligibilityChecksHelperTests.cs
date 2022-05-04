@@ -17,16 +17,21 @@ using Xunit;
 namespace ProcessesApi.Tests.V1.Helpers
 {
     [Collection("LogCall collection")]
-    public class SoleToJointHelperTests
+    public class SoleToJointAutomatedEligibilityChecksHelperTests
     {
         private readonly Fixture _fixture = new Fixture();
-        private Mock<ISoleToJointGateway> _mockGateway;
-        private SoleToJointHelper _classUnderTest;
+        private Mock<IIncomeApiGateway> _mockIncomeApiGateway;
+        private Mock<IPersonDbGateway> _mockPersonGateway;
+        private Mock<ITenureDbGateway> _mockTenureGateway;
+        private SoleToJointAutomatedEligibilityChecksHelper _classUnderTest;
 
-        public SoleToJointHelperTests()
+        public SoleToJointAutomatedEligibilityChecksHelperTests()
         {
-            _mockGateway = new Mock<ISoleToJointGateway>();
-            _classUnderTest = new SoleToJointHelper();
+            _mockIncomeApiGateway = new Mock<IIncomeApiGateway>();
+            _mockPersonGateway = new Mock<IPersonDbGateway>();
+            _mockTenureGateway = new Mock<ITenureDbGateway>();
+
+            _classUnderTest = new SoleToJointAutomatedEligibilityChecksHelper(_mockIncomeApiGateway.Object, _mockPersonGateway.Object, _mockTenureGateway.Object);
         }
 
         private (Person, TenureInformation, Guid, string) CreateEligibleTenureAndProposedTenant()
@@ -72,10 +77,10 @@ namespace ProcessesApi.Tests.V1.Helpers
 
         private async Task<bool> SetupAndCheckAutomatedEligibility(TenureInformation tenure, Person proposedTenant, Guid tenantId)
         {
-            _mockGateway.Setup(x => x.GetTenureById(tenure.Id)).ReturnsAsync(tenure);
-            _mockGateway.Setup(x => x.GetPersonById(proposedTenant.Id)).ReturnsAsync(proposedTenant);
+            _mockTenureGateway.Setup(x => x.GetTenureById(tenure.Id)).ReturnsAsync(tenure);
+            _mockPersonGateway.Setup(x => x.GetPersonById(proposedTenant.Id)).ReturnsAsync(proposedTenant);
             // Act
-            return await _classUnderTest.CheckAutomatedEligibility(tenure.Id, proposedTenant.Id, tenantId, _mockGateway.Object).ConfigureAwait(false);
+            return await _classUnderTest.CheckAutomatedEligibility(tenure.Id, proposedTenant.Id, tenantId).ConfigureAwait(false);
         }
 
 
@@ -102,9 +107,9 @@ namespace ProcessesApi.Tests.V1.Helpers
         {
             // Arrange
             (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
-            _mockGateway.Setup(x => x.GetPersonById(proposedTenant.Id)).ReturnsAsync(proposedTenant);
+            _mockPersonGateway.Setup(x => x.GetPersonById(proposedTenant.Id)).ReturnsAsync(proposedTenant);
             // Act
-            Func<Task<bool>> func = async () => await _classUnderTest.CheckAutomatedEligibility(tenure.Id, proposedTenant.Id, tenantId, _mockGateway.Object)
+            Func<Task<bool>> func = async () => await _classUnderTest.CheckAutomatedEligibility(tenure.Id, proposedTenant.Id, tenantId)
                                                                      .ConfigureAwait(false);
             // Assert
             func.Should().Throw<TenureNotFoundException>().WithMessage($"Tenure with id {tenure.Id} not found.");
@@ -115,9 +120,9 @@ namespace ProcessesApi.Tests.V1.Helpers
         {
             // Arrange
             (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
-            _mockGateway.Setup(x => x.GetTenureById(tenure.Id)).ReturnsAsync(tenure);
+            _mockTenureGateway.Setup(x => x.GetTenureById(tenure.Id)).ReturnsAsync(tenure);
             // Act
-            Func<Task<bool>> func = async () => await _classUnderTest.CheckAutomatedEligibility(tenure.Id, proposedTenant.Id, tenantId, _mockGateway.Object)
+            Func<Task<bool>> func = async () => await _classUnderTest.CheckAutomatedEligibility(tenure.Id, proposedTenant.Id, tenantId)
                                                                      .ConfigureAwait(false);
             // Assert
             func.Should().Throw<PersonNotFoundException>().WithMessage($"Person with id {proposedTenant.Id} not found.");
@@ -208,7 +213,7 @@ namespace ProcessesApi.Tests.V1.Helpers
                         .Create()
                 }
             };
-            _mockGateway.Setup(x => x.GetPaymentAgreementsByTenancyReference(tenancyRef, It.IsAny<Guid>())).ReturnsAsync(paymentAgreements);
+            _mockIncomeApiGateway.Setup(x => x.GetPaymentAgreementsByTenancyReference(tenancyRef, It.IsAny<Guid>())).ReturnsAsync(paymentAgreements);
             // Act
             var response = await SetupAndCheckAutomatedEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
             // Assert
@@ -232,7 +237,7 @@ namespace ProcessesApi.Tests.V1.Helpers
                                     )
                                     .Create();
 
-            _mockGateway.Setup(x => x.GetTenancyByReference(tenancyRef, It.IsAny<Guid>())).ReturnsAsync(tenancyWithNosp);
+            _mockIncomeApiGateway.Setup(x => x.GetTenancyByReference(tenancyRef, It.IsAny<Guid>())).ReturnsAsync(tenancyWithNosp);
 
             // Act
             var response = await SetupAndCheckAutomatedEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);

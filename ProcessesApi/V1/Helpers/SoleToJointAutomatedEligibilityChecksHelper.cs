@@ -9,8 +9,20 @@ using ProcessesApi.V1.Gateways.Exceptions;
 
 namespace ProcessesApi.V1.Helpers
 {
-    public class SoleToJointHelper : ISoleToJointHelper
+    public class SoleToJointAutomatedEligibilityChecksHelper : ISoleToJointAutomatedEligibilityChecksHelper
     {
+        private readonly IIncomeApiGateway _incomeApiGateway;
+        private readonly IPersonDbGateway _personDbGateway;
+        private readonly ITenureDbGateway _tenureDbGateway;
+        public Dictionary<string, bool> EligibilityResults { get; private set; }
+
+        public SoleToJointAutomatedEligibilityChecksHelper(IIncomeApiGateway incomeApiGateway, IPersonDbGateway personDbGateway, ITenureDbGateway tenureDbGateway)
+        {
+            _incomeApiGateway = incomeApiGateway;
+            _personDbGateway = personDbGateway;
+            _tenureDbGateway = tenureDbGateway;
+        }
+
         #region Automated eligibility checks
 
         /// <summary>
@@ -40,7 +52,7 @@ namespace ProcessesApi.V1.Helpers
         /// <summary>
         /// Passes if there are no active payment agreeements on the tenure
         /// </summary>
-        public static async Task<bool> BR7(TenureInformation tenure, ISoleToJointGateway gateway)
+        public static async Task<bool> BR7(TenureInformation tenure, IIncomeApiGateway gateway)
         {
             var tenancyRef = tenure.LegacyReferences.FirstOrDefault(x => x.Name == "uh_tag_ref");
 
@@ -54,7 +66,7 @@ namespace ProcessesApi.V1.Helpers
         /// <summary>
         /// Passes if there is no active NOSP (notice of seeking possession) on the tenure
         /// </summary>
-        public static async Task<bool> BR8(TenureInformation tenure, ISoleToJointGateway gateway)
+        public static async Task<bool> BR8(TenureInformation tenure, IIncomeApiGateway gateway)
         {
             var tenancyRef = tenure.LegacyReferences.FirstOrDefault(x => x.Name == "uh_tag_ref");
             if (tenancyRef is null) return true;
@@ -74,13 +86,12 @@ namespace ProcessesApi.V1.Helpers
         /// </summary>
         private static bool BR9(Person proposedTenant, Guid tenureId) => !proposedTenant.Tenures.Any(x => x.IsActive && x.Type != TenureTypes.NonSecure.Code && x.Id != tenureId);
 
-        public Dictionary<string, bool> EligibilityResults { get; private set; }
-        public async Task<bool> CheckAutomatedEligibility(Guid tenureId, Guid proposedTenantId, Guid tenantId, ISoleToJointGateway gateway)
+        public async Task<bool> CheckAutomatedEligibility(Guid tenureId, Guid proposedTenantId, Guid tenantId)
         {
-            var tenure = await gateway.GetTenureById(tenureId).ConfigureAwait(false);
+            var tenure = await _tenureDbGateway.GetTenureById(tenureId).ConfigureAwait(false);
             if (tenure is null) throw new TenureNotFoundException(tenureId);
 
-            var proposedTenant = await gateway.GetPersonById(proposedTenantId).ConfigureAwait(false);
+            var proposedTenant = await _personDbGateway.GetPersonById(proposedTenantId).ConfigureAwait(false);
             if (proposedTenant is null) throw new PersonNotFoundException(proposedTenantId);
 
             EligibilityResults = new Dictionary<string, bool>()
@@ -89,8 +100,8 @@ namespace ProcessesApi.V1.Helpers
                 { "BR3", BR3(tenure) },
                 { "BR4", BR4(tenure) },
                 { "BR6", BR6(tenure) },
-                { "BR7", await BR7(tenure, gateway).ConfigureAwait(false) },
-                { "BR8", await BR8(tenure, gateway).ConfigureAwait(false) },
+                { "BR7", await BR7(tenure, _incomeApiGateway).ConfigureAwait(false) },
+                { "BR8", await BR8(tenure, _incomeApiGateway).ConfigureAwait(false) },
                 { "BR19", BR19(proposedTenant) },
                 { "BR9", BR9(proposedTenant, tenureId) }
             };

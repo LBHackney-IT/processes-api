@@ -1,5 +1,4 @@
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.UseCase.Exceptions;
 using ProcessesApi.V1.Services.Interfaces;
 using Stateless;
@@ -15,18 +14,18 @@ namespace ProcessesApi.V1.Services
 {
     public class SoleToJointService : ProcessService, ISoleToJointService
     {
-        private readonly ISoleToJointGateway _soleToJointGateway;
-        private readonly ISoleToJointHelper _helper;
+        private readonly ISoleToJointAutomatedEligibilityChecksHelper _helper;
 
-        public SoleToJointService(ISoleToJointGateway soleToJointGateway, ISnsFactory snsFactory, ISnsGateway snsGateway, ISoleToJointHelper helper)
+        public SoleToJointService(ISnsFactory snsFactory, ISnsGateway snsGateway, ISoleToJointAutomatedEligibilityChecksHelper helper)
             : base(snsFactory, snsGateway)
         {
-            _soleToJointGateway = soleToJointGateway;
             _snsFactory = snsFactory;
             _snsGateway = snsGateway;
             _helper = helper;
             _permittedTriggersType = typeof(SoleToJointPermittedTriggers);
         }
+
+        #region Internal Transitions
 
         private async Task CheckAutomatedEligibility(StateMachine<string, string>.Transition x)
         {
@@ -35,8 +34,7 @@ namespace ProcessesApi.V1.Services
             {
                 var isEligible = await _helper.CheckAutomatedEligibility(_process.TargetId,
                                                                          Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()),
-                                                                         Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.TenantId].ToString()),
-                                                                         _soleToJointGateway)
+                                                                         Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.TenantId].ToString()))
                                                                          .ConfigureAwait(false);
 
                 processRequest.Trigger = isEligible ? SoleToJointInternalTriggers.EligibiltyPassed : SoleToJointInternalTriggers.EligibiltyFailed;
@@ -54,10 +52,10 @@ namespace ProcessesApi.V1.Services
             }
         }
 
-        private async Task ValidateManualCheck(
-            StateMachine<string, string>.Transition transition,
-            string passedTrigger, string failedTrigger,
-            params (string CheckId, string Value)[] expectations)
+        private async Task ValidateManualCheck(StateMachine<string, string>.Transition transition,
+                                               string passedTrigger,
+                                               string failedTrigger,
+                                               params (string CheckId, string Value)[] expectations)
         {
             var processRequest = (UpdateProcessState) transition.Parameters[0];
             var formData = processRequest.FormData;
@@ -110,6 +108,10 @@ namespace ProcessesApi.V1.Services
                 .ConfigureAwait(false);
         }
 
+        #endregion
+
+        #region State Transition Actions
+
         private void AddIncomingTenantId(UpdateProcessState processRequest)
         {
             //TODO: When doing a POST request from the FE they should created a relatedEntities object with all neccesary values
@@ -119,45 +121,6 @@ namespace ProcessesApi.V1.Services
             _process.RelatedEntities.Add(Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()));
         }
 
-        protected override void SetUpStates()
-        {
-            _machine.Configure(SharedProcessStates.ApplicationInitialised)
-                    .Permit(SharedInternalTriggers.StartApplication, SoleToJointStates.SelectTenants);
-            _machine.Configure(SoleToJointStates.SelectTenants)
-                    .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckEligibility, async (x) => await CheckAutomatedEligibility(x).ConfigureAwait(false))
-                    .Permit(SoleToJointInternalTriggers.EligibiltyFailed, SoleToJointStates.AutomatedChecksFailed)
-                    .Permit(SoleToJointInternalTriggers.EligibiltyPassed, SoleToJointStates.AutomatedChecksPassed);
-            _machine.Configure(SoleToJointStates.AutomatedChecksFailed)
-                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessCancelled);
-            _machine.Configure(SoleToJointStates.AutomatedChecksPassed)
-                    .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckManualEligibility, async (x) => await CheckManualEligibility(x).ConfigureAwait(false))
-                    .Permit(SoleToJointInternalTriggers.ManualEligibilityPassed, SoleToJointStates.ManualChecksPassed)
-                    .Permit(SoleToJointInternalTriggers.ManualEligibilityFailed, SoleToJointStates.ManualChecksFailed);
-            _machine.Configure(SoleToJointStates.ManualChecksFailed)
-                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessCancelled);
-            _machine.Configure(SoleToJointStates.ManualChecksPassed)
-                    .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckTenancyBreach, async (x) => await CheckTenancyBreach(x).ConfigureAwait(false))
-                    .Permit(SoleToJointInternalTriggers.BreachChecksPassed, SoleToJointStates.BreachChecksPassed)
-                    .Permit(SoleToJointInternalTriggers.BreachChecksFailed, SoleToJointStates.BreachChecksFailed);
-            _machine.Configure(SoleToJointStates.BreachChecksFailed)
-                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessCancelled);
-            _machine.Configure(SoleToJointStates.BreachChecksPassed)
-                    .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment);
-        }
-
-
-        protected override void SetUpStateActions()
-        {
-            Configure(SoleToJointStates.SelectTenants, Assignment.Create("tenants"), null);
-            ConfigureAsync(SoleToJointStates.AutomatedChecksFailed, Assignment.Create("tenants"), OnAutomatedCheckFailed);
-            Configure(SoleToJointStates.AutomatedChecksPassed, Assignment.Create("tenants"), AddIncomingTenantId);
-            Configure(SoleToJointStates.ProcessCancelled, Assignment.Create("tenants"), null);
-            Configure(SoleToJointStates.ManualChecksPassed, Assignment.Create("tenants"), null);
-            ConfigureAsync(SoleToJointStates.ManualChecksFailed, Assignment.Create("tenants"), OnManualCheckFailed);
-            ConfigureAsync(SoleToJointStates.BreachChecksPassed, Assignment.Create("tenants"), null);
-            ConfigureAsync(SoleToJointStates.BreachChecksFailed, Assignment.Create("tenants"), OnTenancyBreachCheckFailed);
-            ConfigureAsync(SoleToJointStates.DocumentsRequestedAppointment, Assignment.Create("tenants"), OnRequestDocumentsAppointment);
-        }
 
         private async Task OnAutomatedCheckFailed(UpdateProcessState processRequest)
         {
@@ -189,6 +152,47 @@ namespace ProcessesApi.V1.Services
             {
                 throw new FormDataFormatException("appointment datetime", appointmentDetails);
             }
+        }
+
+        #endregion
+
+        protected override void SetUpStates()
+        {
+            _machine.Configure(SharedProcessStates.ApplicationInitialised)
+                    .Permit(SharedInternalTriggers.StartApplication, SoleToJointStates.SelectTenants);
+            _machine.Configure(SoleToJointStates.SelectTenants)
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckEligibility, async (x) => await CheckAutomatedEligibility(x).ConfigureAwait(false))
+                    .Permit(SoleToJointInternalTriggers.EligibiltyFailed, SoleToJointStates.AutomatedChecksFailed)
+                    .Permit(SoleToJointInternalTriggers.EligibiltyPassed, SoleToJointStates.AutomatedChecksPassed);
+            _machine.Configure(SoleToJointStates.AutomatedChecksFailed)
+                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessCancelled);
+            _machine.Configure(SoleToJointStates.AutomatedChecksPassed)
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckManualEligibility, async (x) => await CheckManualEligibility(x).ConfigureAwait(false))
+                    .Permit(SoleToJointInternalTriggers.ManualEligibilityPassed, SoleToJointStates.ManualChecksPassed)
+                    .Permit(SoleToJointInternalTriggers.ManualEligibilityFailed, SoleToJointStates.ManualChecksFailed);
+            _machine.Configure(SoleToJointStates.ManualChecksFailed)
+                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessCancelled);
+            _machine.Configure(SoleToJointStates.ManualChecksPassed)
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckTenancyBreach, async (x) => await CheckTenancyBreach(x).ConfigureAwait(false))
+                    .Permit(SoleToJointInternalTriggers.BreachChecksPassed, SoleToJointStates.BreachChecksPassed)
+                    .Permit(SoleToJointInternalTriggers.BreachChecksFailed, SoleToJointStates.BreachChecksFailed);
+            _machine.Configure(SoleToJointStates.BreachChecksFailed)
+                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessCancelled);
+            _machine.Configure(SoleToJointStates.BreachChecksPassed)
+                    .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment);
+        }
+
+        protected override void SetUpStateActions()
+        {
+            Configure(SoleToJointStates.SelectTenants, Assignment.Create("tenants"));
+            ConfigureAsync(SoleToJointStates.AutomatedChecksFailed, Assignment.Create("tenants"), OnAutomatedCheckFailed);
+            Configure(SoleToJointStates.AutomatedChecksPassed, Assignment.Create("tenants"), AddIncomingTenantId);
+            Configure(SoleToJointStates.ProcessCancelled, Assignment.Create("tenants"));
+            Configure(SoleToJointStates.ManualChecksPassed, Assignment.Create("tenants"));
+            ConfigureAsync(SoleToJointStates.ManualChecksFailed, Assignment.Create("tenants"), OnManualCheckFailed);
+            ConfigureAsync(SoleToJointStates.BreachChecksPassed, Assignment.Create("tenants"));
+            ConfigureAsync(SoleToJointStates.BreachChecksFailed, Assignment.Create("tenants"), OnTenancyBreachCheckFailed);
+            ConfigureAsync(SoleToJointStates.DocumentsRequestedAppointment, Assignment.Create("tenants"), OnRequestDocumentsAppointment);
         }
     }
 }
