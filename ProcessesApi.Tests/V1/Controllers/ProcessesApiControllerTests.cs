@@ -13,6 +13,8 @@ using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Controllers;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
+using ProcessesApi.V1.Services.Exceptions;
+using ProcessesApi.V1.UseCase.Exceptions;
 using ProcessesApi.V1.UseCase.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -196,6 +198,24 @@ namespace ProcessesApi.Tests.V1.Controllers
             (response as CreatedResult).Value.Should().Be(processResponse);
         }
 
+        [Theory]
+        [InlineData(typeof(FormDataNotFoundException))]
+        [InlineData(typeof(FormDataFormatException))]
+        [InlineData(typeof(InvalidTriggerException))]
+        public async Task CreateNewProcessReturnsBadRequest(Type exceptionType)
+        {
+            var request = _fixture.Create<CreateProcess>();
+            var processName = ProcessName.soletojoint;
+            var exception = Activator.CreateInstance(exceptionType) as Exception;
+
+            _mockProcessUseCase.Setup(x => x.Execute(It.IsAny<Guid>(), SharedInternalTriggers.StartApplication,
+              request.TargetId, request.RelatedEntities, request.FormData, request.Documents, processName, It.IsAny<int?>(), It.IsAny<Token>())).ThrowsAsync(exception);
+
+            var response = await _classUnderTest.CreateNewProcess(request, processName).ConfigureAwait(false);
+
+            response.Should().BeOfType(typeof(BadRequestObjectResult));
+        }
+
         [Fact]
         public void CreateNewProcessExceptionIsThrown()
         {
@@ -210,7 +230,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         }
 
         [Fact]
-        public async void UpdateProcessSuccessfullyReturnsUpdatedStatus()
+        public async void UpdateProcessStateSuccessfullyReturnsUpdatedStatus()
         {
             // Arrange
             (var processResponse, var request, var requestObject) = ConstructPatchRequest();
@@ -224,7 +244,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         }
 
         [Fact]
-        public async void UpdateProcessReturnsNotFoundWhenProcessDoesNotExist()
+        public async void UpdateProcessStateReturnsNotFoundWhenProcessDoesNotExist()
         {
             // Arrange
             (var processResponse, var request, var requestObject) = ConstructPatchRequest();
@@ -238,8 +258,41 @@ namespace ProcessesApi.Tests.V1.Controllers
             (response as NotFoundObjectResult).Value.Should().Be(request.Id);
         }
 
+        [Theory]
+        [InlineData(typeof(FormDataNotFoundException))]
+        [InlineData(typeof(FormDataFormatException))]
+        [InlineData(typeof(InvalidTriggerException))]
+        public async Task UpdateProcessStateReturnsBadRequest(Type exceptionType)
+        {
+            (var processResponse, var request, var requestObject) = ConstructPatchRequest();
+            var exception = Activator.CreateInstance(exceptionType) as Exception;
+
+            _mockProcessUseCase.Setup(x => x.Execute(request.Id, request.ProcessTrigger,
+              null, null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
+                .ThrowsAsync(exception);
+
+            var response = await _classUnderTest.UpdateProcessState(requestObject, request).ConfigureAwait(false);
+
+            response.Should().BeOfType(typeof(BadRequestObjectResult));
+        }
+
         [Fact]
-        public void UpdateProcessExceptionIsThrown()
+        public async Task UpdateProcessStateReturnsConflict()
+        {
+            (var processResponse, var request, var requestObject) = ConstructPatchRequest();
+            var exception = new VersionNumberConflictException(1, 2);
+
+            _mockProcessUseCase.Setup(x => x.Execute(request.Id, request.ProcessTrigger,
+              null, null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
+                .ThrowsAsync(exception);
+
+            var response = await _classUnderTest.UpdateProcessState(requestObject, request).ConfigureAwait(false);
+
+            response.Should().BeOfType(typeof(ConflictObjectResult));
+        }
+
+        [Fact]
+        public void UpdateProcessStateExceptionIsThrown()
         {
             // Arrange
             var exception = new ApplicationException("Test exception");
@@ -278,6 +331,19 @@ namespace ProcessesApi.Tests.V1.Controllers
             // Assert
             response.Should().BeOfType(typeof(NotFoundObjectResult));
             (response as NotFoundObjectResult).Value.Should().Be(request.Id);
+        }
+
+        [Fact]
+        public async Task UpdateProcessByIdReturnsConflict()
+        {
+            (var processResponse, var request, var requestObject) = ConstructPatchByIdRequest();
+            var exception = new VersionNumberConflictException(1, 2);
+            _mockUpdateProcessByIdUseCase.Setup(x => x.Execute(request, requestObject, RequestBodyText, It.IsAny<int?>(), It.IsAny<Token>()))
+                                         .ThrowsAsync(exception);
+
+            var response = await _classUnderTest.UpdateProcessById(requestObject, request).ConfigureAwait(false);
+
+            response.Should().BeOfType(typeof(ConflictObjectResult));
         }
 
         [Fact]

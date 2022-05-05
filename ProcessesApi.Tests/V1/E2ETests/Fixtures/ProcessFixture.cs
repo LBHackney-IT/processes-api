@@ -112,11 +112,17 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             UpdateProcessRequestObject = _fixture.Create<UpdateProcessRequestObject>();
         }
 
-        public void GivenACheckEligibilityRequest()
+        public void GivenACheckAutomatedEligibilityRequest()
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckEligibility);
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.IncomingTenantId, IncomingTenantId);
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.TenantId, TenantId);
+        }
+
+        public void GivenACheckAutomatedEligibilityRequestWithMissingData()
+        {
+            GivenACheckAutomatedEligibilityRequest();
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.IncomingTenantId);
         }
 
         public void GivenACheckManualEligibilityRequest(bool isEligible)
@@ -133,6 +139,22 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             };
         }
 
+        public void GivenAFailingCheckManualEligibilityRequest()
+        {
+            GivenACheckManualEligibilityRequest(false);
+        }
+
+        public void GivenAPassingCheckManualEligibilityRequest()
+        {
+            GivenACheckManualEligibilityRequest(true);
+        }
+
+        public void GivenACheckManualEligibilityRequestWithMissingData()
+        {
+            GivenACheckManualEligibilityRequest(true);
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.BR11);
+        }
+
         public void GivenATenancyBreachCheckRequest(bool isEligible)
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckTenancyBreach);
@@ -146,16 +168,6 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             };
         }
 
-        public void GivenAFailingCheckManualEligibilityRequest()
-        {
-            GivenACheckManualEligibilityRequest(false);
-        }
-
-        public void GivenAPassingCheckManualEligibilityRequest()
-        {
-            GivenACheckManualEligibilityRequest(true);
-        }
-
         public void GivenAFailingCheckBreachEligibilityRequest()
         {
             GivenATenancyBreachCheckRequest(false);
@@ -166,12 +178,25 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             GivenATenancyBreachCheckRequest(true);
         }
 
+        public void GivenACheckBreachEligibilityRequestWithMissingData()
+        {
+            GivenATenancyBreachCheckRequest(true);
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.BR5);
+        }
+
+
         public void GivenARequestDocumentsAppointmentRequest()
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RequestDocumentsAppointment);
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, _fixture.Create<DateTime>());
         }
 
+        public void GivenARequestDocumentsAppointmentRequestWithMissingData()
+        {
+            GivenARequestDocumentsAppointmentRequest();
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.AppointmentDateTime);
+        }
+        
         public void GivenAnUpdateSoleToJointProcessRequestWithValidationErrors()
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckEligibility);

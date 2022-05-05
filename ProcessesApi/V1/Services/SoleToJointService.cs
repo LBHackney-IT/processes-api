@@ -1,5 +1,4 @@
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.UseCase.Exceptions;
 using ProcessesApi.V1.Services.Interfaces;
 using Stateless;
 using System;
@@ -9,6 +8,7 @@ using System.Threading.Tasks;
 using Hackney.Core.Sns;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Helpers;
+using ProcessesApi.V1.Services.Exceptions;
 
 namespace ProcessesApi.V1.Services
 {

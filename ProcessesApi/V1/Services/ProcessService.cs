@@ -2,6 +2,7 @@ using Hackney.Core.JWT;
 using Hackney.Core.Sns;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
+using ProcessesApi.V1.Services.Exceptions;
 using ProcessesApi.V1.Services.Interfaces;
 using Stateless;
 using System;
@@ -129,7 +130,7 @@ namespace ProcessesApi.V1.Services
             var canFire = triggerIsPermitted && _machine.CanFire(processRequest.Trigger);
 
             if (!canFire)
-                throw new Exception($"Cannot trigger {processRequest.Trigger} from {_machine.State}");
+                throw new InvalidTriggerException(processRequest.Trigger, _machine.State);
 
             await _machine.FireAsync(res, processRequest, process).ConfigureAwait(false);
 

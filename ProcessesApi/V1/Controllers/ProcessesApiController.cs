@@ -9,6 +9,7 @@ using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Boundary.Response;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
+using ProcessesApi.V1.Services.Exceptions;
 using ProcessesApi.V1.UseCase.Exceptions;
 using ProcessesApi.V1.UseCase.Interfaces;
 using System;
@@ -84,17 +85,26 @@ namespace ProcessesApi.V1.Controllers
         public async Task<IActionResult> CreateNewProcess([FromBody] CreateProcess request, [FromRoute] ProcessName processName)
         {
             var token = _tokenFactory.Create(_contextWrapper.GetContextRequestHeaders(HttpContext));
-            var result = await _processUseCase.Execute(Guid.NewGuid(),
-                                                       SharedInternalTriggers.StartApplication,
-                                                       request.TargetId,
-                                                       request.RelatedEntities,
-                                                       request.FormData,
-                                                       request.Documents,
-                                                       processName,
-                                                       null,
-                                                       token)
-                                                .ConfigureAwait(false);
-            return Created(new Uri($"api/v1/processes/{processName}/{result.Id}", UriKind.Relative), result);
+            try
+            {
+                var result = await _processUseCase.Execute(Guid.NewGuid(),
+                                                        SharedInternalTriggers.StartApplication,
+                                                        request.TargetId,
+                                                        request.RelatedEntities,
+                                                        request.FormData,
+                                                        request.Documents,
+                                                        processName,
+                                                        null,
+                                                        token)
+                                                    .ConfigureAwait(false);
+                return Created(new Uri($"api/v1/processes/{processName}/{result.Id}", UriKind.Relative), result);
+            }
+            catch (Exception ex) when (ex is FormDataNotFoundException
+                                      || ex is FormDataFormatException
+                                      || ex is InvalidTriggerException)
+            {
+                return BadRequest(ex);
+            }
         }
 
         /// <summary>
@@ -133,6 +143,12 @@ namespace ProcessesApi.V1.Controllers
             catch (VersionNumberConflictException vncErr)
             {
                 return Conflict(vncErr.Message);
+            }
+            catch (Exception ex) when (ex is FormDataNotFoundException
+                                      || ex is FormDataFormatException
+                                      || ex is InvalidTriggerException)
+            {
+                return BadRequest(ex.Message);
             }
         }
 

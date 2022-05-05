@@ -4,7 +4,6 @@ using FluentAssertions;
 using Hackney.Core.Testing.DynamoDb;
 using Moq;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.UseCase.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +15,7 @@ using ProcessesApi.V1.Infrastructure.JWT;
 using Xunit;
 using ProcessesApi.V1.Services;
 using ProcessesApi.V1.Helpers;
+using ProcessesApi.V1.Services.Exceptions;
 
 namespace ProcessesApi.Tests.V1.Services
 {
