@@ -19,6 +19,29 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         }
 
         [Fact]
+        public void RequestShouldErrorWithNullProcessName()
+        {
+            //Arrange
+            var model = new UpdateProcessQuery() { ProcessName = null };
+            //Act
+            var result = _classUnderTest.TestValidate(model);
+            //Assert
+            result.ShouldHaveValidationErrorFor(x => x.ProcessName);
+        }
+
+        [Fact]
+        public void RequestShouldNotErrorWithValidProcessName()
+        {
+            //Arrange
+            string processName = "process12345";
+            var model = new UpdateProcessQuery() { ProcessName = processName };
+            //Act
+            var result = _classUnderTest.TestValidate(model);
+            //Assert
+            result.ShouldNotHaveValidationErrorFor(x => x.ProcessName);
+        }
+
+        [Fact]
         public void RequestShouldErrorWithNullId()
         {
             //Arrange
