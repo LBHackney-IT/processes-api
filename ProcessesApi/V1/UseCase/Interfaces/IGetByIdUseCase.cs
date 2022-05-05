@@ -6,6 +6,6 @@ namespace ProcessesApi.V1.UseCase.Interfaces
 {
     public interface IGetByIdUseCase
     {
-        Task<Process> Execute(ProcessQuery query);
+        Task<Process> Execute(ProcessesQuery query);
     }
 }

@@ -1,6 +1,4 @@
 using FluentValidation;
-using Hackney.Core.Validation;
-using ProcessesApi.V1.Boundary.Constants;
 using System;
 
 namespace ProcessesApi.V1.Boundary.Request.Validation
@@ -9,6 +7,7 @@ namespace ProcessesApi.V1.Boundary.Request.Validation
     {
         public UpdateProcessQueryValidator()
         {
+            RuleFor(x => x.ProcessName).NotNull().NotEmpty();
             RuleFor(x => x.Id).NotNull()
                             .NotEqual(Guid.Empty);
             RuleFor(x => x.ProcessTrigger).NotNull().NotEmpty();
