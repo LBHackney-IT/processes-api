@@ -97,7 +97,7 @@ namespace ProcessesApi.Tests.V1.UseCase
 
             // Act
             var response = await _classUnderTest.Execute(
-                process.Id, SoleToJointPermittedTriggers.CheckEligibility,
+                process.Id, SoleToJointPermittedTriggers.CheckAutomatedEligibility,
                 process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
                 updateProcessQuery.Documents, process.ProcessName, 0, token).ConfigureAwait(false);
 
@@ -123,7 +123,7 @@ namespace ProcessesApi.Tests.V1.UseCase
 
             // Act
             Func<Task<Process>> func = async () => await _classUnderTest.Execute(
-                process.Id, SoleToJointPermittedTriggers.CheckEligibility,
+                process.Id, SoleToJointPermittedTriggers.CheckAutomatedEligibility,
                 process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
                 updateProcessQuery.Documents, process.ProcessName, suppliedVersion, token).ConfigureAwait(false);
 
@@ -143,7 +143,7 @@ namespace ProcessesApi.Tests.V1.UseCase
 
             //Act
             Func<Task<Process>> func = async () => await _classUnderTest.Execute(
-                process.Id, SoleToJointPermittedTriggers.CheckEligibility,
+                process.Id, SoleToJointPermittedTriggers.CheckAutomatedEligibility,
                 process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
                 updateProcessQuery.Documents, process.ProcessName, 0, token).ConfigureAwait(false);
 

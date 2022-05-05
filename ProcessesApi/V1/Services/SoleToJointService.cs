@@ -161,7 +161,7 @@ namespace ProcessesApi.V1.Services
             _machine.Configure(SharedProcessStates.ApplicationInitialised)
                     .Permit(SharedInternalTriggers.StartApplication, SoleToJointStates.SelectTenants);
             _machine.Configure(SoleToJointStates.SelectTenants)
-                    .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckEligibility, async (x) => await CheckAutomatedEligibility(x).ConfigureAwait(false))
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckAutomatedEligibility, async (x) => await CheckAutomatedEligibility(x).ConfigureAwait(false))
                     .Permit(SoleToJointInternalTriggers.EligibiltyFailed, SoleToJointStates.AutomatedChecksFailed)
                     .Permit(SoleToJointInternalTriggers.EligibiltyPassed, SoleToJointStates.AutomatedChecksPassed);
             _machine.Configure(SoleToJointStates.AutomatedChecksFailed)

@@ -134,7 +134,7 @@ namespace ProcessesApi.Tests.V1.Services
             CurrentStateShouldContainCorrectData(process,
                                                  triggerObject,
                                                  SoleToJointStates.SelectTenants,
-                                                 new List<string>() { SoleToJointPermittedTriggers.CheckEligibility });
+                                                 new List<string>() { SoleToJointPermittedTriggers.CheckAutomatedEligibility });
             process.PreviousStates.Should().BeEmpty();
         }
 
@@ -171,7 +171,7 @@ namespace ProcessesApi.Tests.V1.Services
             var incomingTenantId = Guid.NewGuid();
             var tenantId = Guid.NewGuid();
             var triggerObject = CreateProcessTrigger(process,
-                                                     SoleToJointPermittedTriggers.CheckEligibility,
+                                                     SoleToJointPermittedTriggers.CheckAutomatedEligibility,
                                                      new Dictionary<string, object>
                                                     {
                                                         { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId },
@@ -201,7 +201,7 @@ namespace ProcessesApi.Tests.V1.Services
             };
 
             var triggerObject = CreateProcessTrigger(process,
-                                                     SoleToJointPermittedTriggers.CheckEligibility,
+                                                     SoleToJointPermittedTriggers.CheckAutomatedEligibility,
                                                      formData);
 
             _mockAutomatedEligibilityChecksHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(false);
@@ -232,7 +232,7 @@ namespace ProcessesApi.Tests.V1.Services
             };
 
             var triggerObject = CreateProcessTrigger(process,
-                                                     SoleToJointPermittedTriggers.CheckEligibility,
+                                                     SoleToJointPermittedTriggers.CheckAutomatedEligibility,
                                                      formData);
             _mockAutomatedEligibilityChecksHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(true);
 
@@ -258,7 +258,7 @@ namespace ProcessesApi.Tests.V1.Services
             var formData = new Dictionary<string, object> { { SoleToJointFormDataKeys.TenantId, tenantId } };
 
             var triggerObject = CreateProcessTrigger(process,
-                                                     SoleToJointPermittedTriggers.CheckEligibility,
+                                                     SoleToJointPermittedTriggers.CheckAutomatedEligibility,
                                                      formData);
             var expectedErrorMessage = $"The form data keys supplied ({SoleToJointFormDataKeys.TenantId}) do not include the expected values ({SoleToJointFormDataKeys.IncomingTenantId}).";
             // Act
@@ -277,7 +277,7 @@ namespace ProcessesApi.Tests.V1.Services
 
             var triggerObject = CreateProcessTrigger(
                 process,
-                SoleToJointPermittedTriggers.CheckEligibility,
+                SoleToJointPermittedTriggers.CheckAutomatedEligibility,
                 new Dictionary<string, object>
                 {
                     { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId },

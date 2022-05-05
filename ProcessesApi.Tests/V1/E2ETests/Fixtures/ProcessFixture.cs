@@ -114,7 +114,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenACheckAutomatedEligibilityRequest()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckEligibility);
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckAutomatedEligibility);
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.IncomingTenantId, IncomingTenantId);
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.TenantId, TenantId);
         }
@@ -196,10 +196,10 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             GivenARequestDocumentsAppointmentRequest();
             UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.AppointmentDateTime);
         }
-        
+
         public void GivenAnUpdateSoleToJointProcessRequestWithValidationErrors()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckEligibility);
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckAutomatedEligibility);
             UpdateProcessRequestObject.Documents.Add(Guid.Empty);
         }
 

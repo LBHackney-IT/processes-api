@@ -31,6 +31,7 @@ namespace ProcessesApi.V1.Helpers
         private static bool BR2(Guid tenantId, TenureInformation tenure)
         {
             var currentTenantDetails = tenure.HouseholdMembers.FirstOrDefault(x => x.Id == tenantId);
+            if (currentTenantDetails is null) return false; // TODO: Confirm error message
             return currentTenantDetails.PersonTenureType == PersonTenureType.Tenant;
         }
 
