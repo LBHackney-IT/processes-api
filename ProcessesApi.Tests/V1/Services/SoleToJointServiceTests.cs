@@ -4,7 +4,6 @@ using FluentAssertions;
 using Hackney.Core.Testing.DynamoDb;
 using Moq;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.UseCase.Exceptions;
 using System;
 using System.Collections.Generic;
@@ -16,8 +15,9 @@ using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure.JWT;
 using Xunit;
 using ProcessesApi.V1.Services;
+using ProcessesApi.V1.Helpers;
 
-namespace ProcessesApi.Tests.V1.UseCase
+namespace ProcessesApi.Tests.V1.Services
 {
     [Collection("AppTest collection")]
     public class SoleToJointServiceTests : IDisposable
@@ -46,7 +46,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             { SoleToJointFormDataKeys.BR18, "false" }
         };
 
-        private Mock<ISoleToJointGateway> _mockSTJGateway;
+        private Mock<ISoleToJointAutomatedEligibilityChecksHelper> _mockAutomatedEligibilityChecksHelper;
         private Mock<ISnsGateway> _mockSnsGateway;
 
         private readonly List<Action> _cleanup = new List<Action>();
@@ -75,9 +75,10 @@ namespace ProcessesApi.Tests.V1.UseCase
         public SoleToJointServiceTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
             _dbFixture = appFactory.DynamoDbFixture;
-            _mockSTJGateway = new Mock<ISoleToJointGateway>();
             _mockSnsGateway = new Mock<ISnsGateway>();
-            _classUnderTest = new SoleToJointService(_mockSTJGateway.Object, new ProcessesSnsFactory(), _mockSnsGateway.Object);
+            _mockAutomatedEligibilityChecksHelper = new Mock<ISoleToJointAutomatedEligibilityChecksHelper>();
+
+            _classUnderTest = new SoleToJointService(new ProcessesSnsFactory(), _mockSnsGateway.Object, _mockAutomatedEligibilityChecksHelper.Object);
 
             _mockSnsGateway
                 .Setup(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()))
@@ -164,7 +165,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         #region Automated eligibility checks
 
         [Fact]
-        public async Task AddIncomingTenantToRelatedEntitiesOnCheckEligibilityTrigger()
+        public async Task AddIncomingTenantToRelatedEntitiesOnCheckAutomatedEligibilityTrigger()
         {
             // Arrange
             var process = CreateProcessWithCurrentState(SoleToJointStates.SelectTenants);
@@ -178,6 +179,8 @@ namespace ProcessesApi.Tests.V1.UseCase
                                                         { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId },
                                                         { SoleToJointFormDataKeys.TenantId, tenantId },
                                                     });
+
+            _mockAutomatedEligibilityChecksHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(true);
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 
@@ -186,7 +189,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         }
 
         [Fact]
-        public async Task CurrentStateIsUpdatedToAutomatedChecksFailedWhenCheckEligibilityReturnsFalse()
+        public async Task CurrentStateIsUpdatedToAutomatedChecksFailedWhenCheckAutomatedEligibilityReturnsFalse()
         {
             // Arrange
             var process = CreateProcessWithCurrentState(SoleToJointStates.SelectTenants);
@@ -202,7 +205,8 @@ namespace ProcessesApi.Tests.V1.UseCase
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.CheckEligibility,
                                                      formData);
-            _mockSTJGateway.Setup(x => x.CheckEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(false);
+
+            _mockAutomatedEligibilityChecksHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(false);
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 
@@ -212,11 +216,11 @@ namespace ProcessesApi.Tests.V1.UseCase
                                                  SoleToJointStates.AutomatedChecksFailed,
                                                  new List<string>() { SoleToJointPermittedTriggers.CancelProcess });
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
-            _mockSTJGateway.Verify(x => x.CheckEligibility(process.TargetId, incomingTenantId, tenantId), Times.Once());
+            _mockAutomatedEligibilityChecksHelper.Verify(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId), Times.Once());
         }
 
         [Fact]
-        public async Task ProcessStateIsUpdatedToAutomatedChecksPassedWhenCheckEligibilityReturnsTrue()
+        public async Task ProcessStateIsUpdatedToAutomatedChecksPassedWhenCheckAutomatedEligibilityReturnsTrue()
         {
             // Arrange
             var process = CreateProcessWithCurrentState(SoleToJointStates.SelectTenants);
@@ -232,7 +236,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.CheckEligibility,
                                                      formData);
-            _mockSTJGateway.Setup(x => x.CheckEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(true);
+            _mockAutomatedEligibilityChecksHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(true);
 
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
@@ -243,11 +247,11 @@ namespace ProcessesApi.Tests.V1.UseCase
                                                  SoleToJointStates.AutomatedChecksPassed,
                                                  new List<string>() { SoleToJointPermittedTriggers.CheckManualEligibility });
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
-            _mockSTJGateway.Verify(x => x.CheckEligibility(process.TargetId, incomingTenantId, tenantId), Times.Once());
+            _mockAutomatedEligibilityChecksHelper.Verify(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId), Times.Once());
         }
 
         [Fact]
-        public void ThrowsFormDataNotFoundExceptionOnCheckEligibilityTrigger()
+        public void ThrowsFormDataNotFoundExceptionOnCheckAutomatedEligibilityTrigger()
         {
             // Arrange
             var process = CreateProcessWithCurrentState(SoleToJointStates.SelectTenants);
@@ -284,7 +288,7 @@ namespace ProcessesApi.Tests.V1.UseCase
 
             var snsEvent = new EntityEventSns();
 
-            _mockSTJGateway.Setup(x => x.CheckEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(false);
+            _mockAutomatedEligibilityChecksHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(false);
             _mockSnsGateway
                 .Setup(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()))
                 .Callback<EntityEventSns, string, string>((ev, s1, s2) => snsEvent = ev);

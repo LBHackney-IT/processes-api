@@ -35,13 +35,16 @@ namespace ProcessesApi.V1.Services
 
         protected virtual void SetUpStates()
         {
+            // All services must implement the following lines to allow the first state to be initialised correctly:
+            // _machine.Configure(SharedProcessStates.ApplicationInitialised)
+            //         .Permit(SharedInternalTriggers.StartApplication, SOME_STATE);
         }
 
         protected virtual void SetUpStateActions()
         {
         }
 
-        protected void Configure(string state, Assignment assignment, Action<UpdateProcessState> func)
+        protected void Configure(string state, Assignment assignment, Action<UpdateProcessState> func = null)
         {
             _machine.Configure(state)
                 .OnEntry(x =>
@@ -53,7 +56,7 @@ namespace ProcessesApi.V1.Services
                 });
         }
 
-        protected void ConfigureAsync(string state, Assignment assignment, Func<UpdateProcessState, Task> func)
+        protected void ConfigureAsync(string state, Assignment assignment, Func<UpdateProcessState, Task> func = null)
         {
             _machine.Configure(state)
                 .OnEntryAsync(async x =>
@@ -85,10 +88,10 @@ namespace ProcessesApi.V1.Services
             await _machine.FireAsync(res, trigger, _process).ConfigureAwait(false);
         }
 
-        protected async Task PublishProcessClosedEvent(string description)
+        protected async Task PublishProcessStartedEvent()
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = _snsFactory.ProcessClosed(_process, _token, description);
+            var processSnsMessage = _snsFactory.ProcessStarted(_process, _token);
 
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
@@ -97,6 +100,14 @@ namespace ProcessesApi.V1.Services
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
             var processSnsMessage = _snsFactory.ProcessUpdatedWithMessage(_process, _token, description);
+
+            await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
+        }
+
+        protected async Task PublishProcessClosedEvent(string description)
+        {
+            var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
+            var processSnsMessage = _snsFactory.ProcessClosed(_process, _token, description);
 
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
@@ -114,7 +125,8 @@ namespace ProcessesApi.V1.Services
             SetUpStates();
             SetUpStateActions();
 
-            var canFire = _machine.CanFire(processRequest.Trigger);
+            var triggerIsPermitted = _permittedTriggers.Contains(processRequest.Trigger) || processRequest.Trigger == SharedInternalTriggers.StartApplication;
+            var canFire = triggerIsPermitted && _machine.CanFire(processRequest.Trigger);
 
             if (!canFire)
                 throw new Exception($"Cannot trigger {processRequest.Trigger} from {_machine.State}");

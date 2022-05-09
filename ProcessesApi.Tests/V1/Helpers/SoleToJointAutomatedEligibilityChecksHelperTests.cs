@@ -1,75 +1,37 @@
-using AutoFixture;
-using FluentAssertions;
-using Hackney.Core.Http;
-using Hackney.Core.Testing.DynamoDb;
-using Hackney.Core.Testing.Shared;
-using Hackney.Shared.Person;
-using Hackney.Shared.Person.Domain;
-using Hackney.Shared.Person.Factories;
-using Hackney.Shared.Tenure.Domain;
-using Hackney.Shared.Tenure.Factories;
-using Microsoft.Extensions.Logging;
-using Moq;
-using ProcessesApi.V1.Domain.SoleToJoint;
-using ProcessesApi.V1.Gateways;
-using ProcessesApi.V1.Gateways.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoFixture;
+using FluentAssertions;
+using Hackney.Shared.Person;
+using Hackney.Shared.Person.Domain;
+using Hackney.Shared.Tenure.Domain;
+using Moq;
+using ProcessesApi.V1.Domain.SoleToJoint;
+using ProcessesApi.V1.Gateways;
+using ProcessesApi.V1.Gateways.Exceptions;
+using ProcessesApi.V1.Helpers;
 using Xunit;
 
-namespace ProcessesApi.Tests.V1.Gateways
+namespace ProcessesApi.Tests.V1.Helpers
 {
-
-    [Collection("AppTest collection")]
-    public class SoleToJointGatewayTests : IDisposable
+    [Collection("LogCall collection")]
+    public class SoleToJointAutomatedEligibilityChecksHelperTests
     {
-        private readonly IDynamoDbFixture _dbFixture;
         private readonly Fixture _fixture = new Fixture();
-        private SoleToJointGateway _classUnderTest;
-        private readonly List<Action> _cleanup = new List<Action>();
-        private readonly Mock<ILogger<SoleToJointGateway>> _logger;
-        private readonly Mock<IApiGateway> _mockApiGateway;
+        private Mock<IIncomeApiGateway> _mockIncomeApiGateway;
+        private Mock<IPersonDbGateway> _mockPersonGateway;
+        private Mock<ITenureDbGateway> _mockTenureGateway;
+        private SoleToJointAutomatedEligibilityChecksHelper _classUnderTest;
 
-        private const string IncomeApiRoute = "https://some-domain.com/api";
-        private const string IncomeApiToken = "dksfghjskueygfakseygfaskjgfsdjkgfdkjsgfdkjgf";
-        private const string ApiName = "Income";
-        private const string IncomeApiUrlKey = "IncomeApiUrl";
-        private const string IncomeApiTokenKey = "IncomeApiToken";
-        private static string paymentAgreementRoute => $"{IncomeApiRoute}/agreements";
-        private static string tenanciesRoute => $"{IncomeApiRoute}/tenancies";
-
-        public SoleToJointGatewayTests(AwsMockWebApplicationFactory<Startup> appFactory)
+        public SoleToJointAutomatedEligibilityChecksHelperTests()
         {
-            _dbFixture = appFactory.DynamoDbFixture;
+            _mockIncomeApiGateway = new Mock<IIncomeApiGateway>();
+            _mockPersonGateway = new Mock<IPersonDbGateway>();
+            _mockTenureGateway = new Mock<ITenureDbGateway>();
 
-            _logger = new Mock<ILogger<SoleToJointGateway>>();
-
-            _mockApiGateway = new Mock<IApiGateway>();
-            _mockApiGateway.SetupGet(x => x.ApiName).Returns(ApiName);
-            _mockApiGateway.SetupGet(x => x.ApiRoute).Returns(IncomeApiRoute);
-            _mockApiGateway.SetupGet(x => x.ApiToken).Returns(IncomeApiToken);
-
-            _classUnderTest = new SoleToJointGateway(_dbFixture.DynamoDbContext, _logger.Object, _mockApiGateway.Object);
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        private bool _disposed;
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing && !_disposed)
-            {
-                foreach (var action in _cleanup)
-                    action();
-
-                _disposed = true;
-            }
+            _classUnderTest = new SoleToJointAutomatedEligibilityChecksHelper(_mockIncomeApiGateway.Object, _mockPersonGateway.Object, _mockTenureGateway.Object);
         }
 
         private (Person, TenureInformation, Guid, string) CreateEligibleTenureAndProposedTenant()
@@ -113,34 +75,17 @@ namespace ProcessesApi.Tests.V1.Gateways
             return (proposedTenant, tenure, tenant.Id, tenancyRef);
         }
 
-        private async Task<bool> SaveAndCheckEligibility(TenureInformation tenure, Person proposedTenant, Guid tenantId)
+        private async Task<bool> SetupAndCheckAutomatedEligibility(TenureInformation tenure, Person proposedTenant, Guid tenantId)
         {
-            await _dbFixture.SaveEntityAsync(tenure.ToDatabase()).ConfigureAwait(false);
-            await _dbFixture.SaveEntityAsync(proposedTenant.ToDatabase()).ConfigureAwait(false);
+            _mockTenureGateway.Setup(x => x.GetTenureById(tenure.Id)).ReturnsAsync(tenure);
+            _mockPersonGateway.Setup(x => x.GetPersonById(proposedTenant.Id)).ReturnsAsync(proposedTenant);
             // Act
-            var response = await _classUnderTest.CheckEligibility(tenure.Id, proposedTenant.Id, tenantId).ConfigureAwait(false);
-            return response;
-        }
-
-        private void AllTestsShouldHaveRun(TenureInformation tenure, Person proposedTenant, string tenancyRef)
-        {
-            _classUnderTest.EligibilityResults.Should().HaveCount(6);
-            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Tenure ID: {tenure.Id}", Times.Once());
-            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Person ID: {proposedTenant.Id}", Times.Once());
-            //_logger.VerifyExact(LogLevel.Debug, $"Calling Income API for payment agreement with tenancy ref: {tenancyRef}", Times.Once());
-            //_logger.VerifyExact(LogLevel.Debug, $"Calling Income API with tenancy ref: {tenancyRef}", Times.Once());
+            return await _classUnderTest.CheckAutomatedEligibility(tenure.Id, proposedTenant.Id, tenantId).ConfigureAwait(false);
         }
 
 
         [Fact]
-        public void ConstructorTestInitialisesApiGateway()
-        {
-            _mockApiGateway.Verify(x => x.Initialise(ApiName, IncomeApiUrlKey, IncomeApiTokenKey, null, true),
-                                   Times.Once);
-        }
-
-        [Fact]
-        public async Task CheckEligibiltyReturnsTrueIfAllConditionsAreMet()
+        public async Task CheckAutomatedEligibilityReturnsTrueIfAllConditionsAreMet()
         {
             // Arrange
             (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
@@ -151,41 +96,40 @@ namespace ProcessesApi.Tests.V1.Gateways
                                                                 .Create());
             proposedTenant.Tenures = tenures;
             // Act
-            var response = await SaveAndCheckEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
+            var response = await SetupAndCheckAutomatedEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
             // Assert
             response.Should().BeTrue();
-            AllTestsShouldHaveRun(tenure, proposedTenant, tenancyRef);
+            _classUnderTest.EligibilityResults.Should().HaveCount(8);
         }
 
         [Fact]
-        public async Task CheckEligibilityThrowsErrorIfTheTargetTenureIsNotFound()
+        public void CheckAutomatedEligibilityThrowsErrorIfTheTargetTenureIsNotFound()
         {
             // Arrange
             (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
-            await _dbFixture.SaveEntityAsync(proposedTenant.ToDatabase()).ConfigureAwait(false);
+            _mockPersonGateway.Setup(x => x.GetPersonById(proposedTenant.Id)).ReturnsAsync(proposedTenant);
             // Act
-            Func<Task<bool>> func = async () => await _classUnderTest.CheckEligibility(tenure.Id, proposedTenant.Id, tenantId).ConfigureAwait(false);
+            Func<Task<bool>> func = async () => await _classUnderTest.CheckAutomatedEligibility(tenure.Id, proposedTenant.Id, tenantId)
+                                                                     .ConfigureAwait(false);
             // Assert
             func.Should().Throw<TenureNotFoundException>().WithMessage($"Tenure with id {tenure.Id} not found.");
-            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Tenure ID: {tenure.Id}", Times.Once());
         }
 
         [Fact]
-        public async Task CheckEligibilityThrowsErrorIfTheProposedTenantIsNotFound()
+        public void CheckAutomatedEligibilityThrowsErrorIfTheProposedTenantIsNotFound()
         {
             // Arrange
             (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
-            await _dbFixture.SaveEntityAsync(tenure.ToDatabase()).ConfigureAwait(false);
+            _mockTenureGateway.Setup(x => x.GetTenureById(tenure.Id)).ReturnsAsync(tenure);
             // Act
-            Func<Task<bool>> func = async () => await _classUnderTest.CheckEligibility(tenure.Id, proposedTenant.Id, tenantId).ConfigureAwait(false);
+            Func<Task<bool>> func = async () => await _classUnderTest.CheckAutomatedEligibility(tenure.Id, proposedTenant.Id, tenantId)
+                                                                     .ConfigureAwait(false);
             // Assert
             func.Should().Throw<PersonNotFoundException>().WithMessage($"Person with id {proposedTenant.Id} not found.");
-            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Tenure ID: {tenure.Id}", Times.Once());
-            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Person ID: {proposedTenant.Id}", Times.Once());
         }
 
         [Fact]
-        public async Task CheckEligibiltyReturnsFalseIfTenantIsNotANamedTenureHolderOfTheSelectedTenure()
+        public async Task CheckAutomatedEligibilityReturnsFalseIfTenantIsNotANamedTenureHolderOfTheSelectedTenure()
         {
             // Arrange
             (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
@@ -194,16 +138,17 @@ namespace ProcessesApi.Tests.V1.Gateways
             householdMembers.FirstOrDefault(x => x.Id == tenantId).PersonTenureType = PersonTenureType.Occupant;
             tenure.HouseholdMembers = householdMembers;
             // Act
-            var response = await SaveAndCheckEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
+            var response = await SetupAndCheckAutomatedEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
             // Assert
             response.Should().BeFalse();
+
             _classUnderTest.EligibilityResults["BR2"].Should().BeFalse();
             _classUnderTest.EligibilityResults.Count(x => x.Value == false).Should().Be(1);
-            AllTestsShouldHaveRun(tenure, proposedTenant, tenancyRef);
+            _classUnderTest.EligibilityResults.Should().HaveCount(8);
         }
 
         [Fact]
-        public async Task CheckEligibiltyFailsIfTheTenantIsAlreadyPartOfAJointTenancy()
+        public async Task CheckAutomatedEligibilityFailsIfTheTenantIsAlreadyPartOfAJointTenancy()
         {
             // Arrange
             (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
@@ -213,46 +158,49 @@ namespace ProcessesApi.Tests.V1.Gateways
             tenure.HouseholdMembers = householdMembers;
 
             // Act
-            var response = await SaveAndCheckEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
+            var response = await SetupAndCheckAutomatedEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
             // Assert
             response.Should().BeFalse();
+
             _classUnderTest.EligibilityResults["BR3"].Should().BeFalse();
             _classUnderTest.EligibilityResults.Count(x => x.Value == false).Should().Be(1);
-            AllTestsShouldHaveRun(tenure, proposedTenant, tenancyRef);
+            _classUnderTest.EligibilityResults.Should().HaveCount(8);
         }
 
         [Fact]
-        public async Task CheckEligibiltyReturnsFalseIfTheSelectedTenureIsNotSecure()
+        public async Task CheckAutomatedEligibilityReturnsFalseIfTheSelectedTenureIsNotSecure()
         {
             // Arrange
             (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
             tenure.TenureType = TenureTypes.NonSecure;
             // Act
-            var response = await SaveAndCheckEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
+            var response = await SetupAndCheckAutomatedEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
             // Assert
             response.Should().BeFalse();
+
             _classUnderTest.EligibilityResults["BR4"].Should().BeFalse();
             _classUnderTest.EligibilityResults.Count(x => x.Value == false).Should().Be(1);
-            AllTestsShouldHaveRun(tenure, proposedTenant, tenancyRef);
+            _classUnderTest.EligibilityResults.Should().HaveCount(8);
         }
 
         [Fact]
-        public async Task CheckEligibiltyReturnsFalseIfTheSelectedTenureIsNotCurrentlyActive()
+        public async Task CheckAutomatedEligibilityReturnsFalseIfTheSelectedTenureIsNotCurrentlyActive()
         {
             // Arrange
             (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
             tenure.EndOfTenureDate = DateTime.UtcNow.AddDays(-10);
             // Act
-            var response = await SaveAndCheckEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
+            var response = await SetupAndCheckAutomatedEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
             // Assert
             response.Should().BeFalse();
+
             _classUnderTest.EligibilityResults["BR6"].Should().BeFalse();
             _classUnderTest.EligibilityResults.Count(x => x.Value == false).Should().Be(1);
-            AllTestsShouldHaveRun(tenure, proposedTenant, tenancyRef);
+            _classUnderTest.EligibilityResults.Should().HaveCount(8);
         }
 
         [Fact(Skip = "Check has been temporarily moved to ManualEligibility Check")]
-        public async Task CheckEligibilityFailsIfTenantHasLivePaymentAgreements()
+        public async Task CheckAutomaticEligibilityFailsIfTenantHasLivePaymentAgreements()
         {
             (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
             var paymentAgreements = new PaymentAgreements
@@ -265,19 +213,19 @@ namespace ProcessesApi.Tests.V1.Gateways
                         .Create()
                 }
             };
-            _mockApiGateway.Setup(x => x.GetByIdAsync<PaymentAgreements>($"{paymentAgreementRoute}/{tenancyRef}", tenancyRef, It.IsAny<Guid>())).ReturnsAsync(paymentAgreements);
+            _mockIncomeApiGateway.Setup(x => x.GetPaymentAgreementsByTenancyReference(tenancyRef, It.IsAny<Guid>())).ReturnsAsync(paymentAgreements);
             // Act
-            var response = await SaveAndCheckEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
+            var response = await SetupAndCheckAutomatedEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
             // Assert
             response.Should().BeFalse();
+
             _classUnderTest.EligibilityResults["BR7"].Should().BeFalse();
             _classUnderTest.EligibilityResults.Count(x => x.Value == false).Should().Be(1);
-            AllTestsShouldHaveRun(tenure, proposedTenant, tenancyRef);
-            _mockApiGateway.Verify(x => x.GetByIdAsync<PaymentAgreements>($"{paymentAgreementRoute}/{tenancyRef}", tenancyRef, It.IsAny<Guid>()), Times.Once);
+            _classUnderTest.EligibilityResults.Should().HaveCount(8);
         }
 
         [Fact(Skip = "Check has been temporarily moved to ManualEligibility Check")]
-        public async Task CheckEligibilityFailsIfTenantHasAnActiveNoticeOfSeekingPossession()
+        public async Task CheckAutomaticEligibilityFailsIfTenantHasAnActiveNoticeOfSeekingPossession()
         {
             (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
 
@@ -289,35 +237,36 @@ namespace ProcessesApi.Tests.V1.Gateways
                                     )
                                     .Create();
 
-            _mockApiGateway.Setup(x => x.GetByIdAsync<Tenancy>($"{tenanciesRoute}/{tenancyRef}", tenancyRef, It.IsAny<Guid>())).ReturnsAsync(tenancyWithNosp);
+            _mockIncomeApiGateway.Setup(x => x.GetTenancyByReference(tenancyRef, It.IsAny<Guid>())).ReturnsAsync(tenancyWithNosp);
 
             // Act
-            var response = await SaveAndCheckEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
+            var response = await SetupAndCheckAutomatedEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
             // Assert
             response.Should().BeFalse();
+
             _classUnderTest.EligibilityResults["BR8"].Should().BeFalse();
             _classUnderTest.EligibilityResults.Count(x => x.Value == false).Should().Be(1);
-            AllTestsShouldHaveRun(tenure, proposedTenant, tenancyRef);
-            _mockApiGateway.Verify(x => x.GetByIdAsync<Tenancy>($"{tenanciesRoute}/{tenancyRef}", tenancyRef, It.IsAny<Guid>()), Times.Once);
+            _classUnderTest.EligibilityResults.Should().HaveCount(8);
         }
 
         [Fact]
-        public async Task CheckEligibiltyReturnsFalseIfTheProposedTenantIsAMinor()
+        public async Task CheckAutomatedEligibilityReturnsFalseIfTheProposedTenantIsAMinor()
         {
             // Arrange
             (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
             proposedTenant.DateOfBirth = DateTime.UtcNow;
             // Act
-            var response = await SaveAndCheckEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
+            var response = await SetupAndCheckAutomatedEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
             // Assert
             response.Should().BeFalse();
+
             _classUnderTest.EligibilityResults["BR19"].Should().BeFalse();
             _classUnderTest.EligibilityResults.Count(x => x.Value == false).Should().Be(1);
-            AllTestsShouldHaveRun(tenure, proposedTenant, tenancyRef);
+            _classUnderTest.EligibilityResults.Should().HaveCount(8);
         }
 
         [Fact]
-        public async Task CheckEligibiltyReturnsFalseIfTheProposedTenantIsAHouseholdMemberOfAnActiveTenureThatIsNotNonSecure()
+        public async Task CheckAutomatedEligibilityReturnsFalseIfTheProposedTenantIsAHouseholdMemberOfAnActiveTenureThatIsNotNonSecure()
         {
             // Arrange
             (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
@@ -328,12 +277,13 @@ namespace ProcessesApi.Tests.V1.Gateways
                                                                 .Create());
             proposedTenant.Tenures = tenures;
             // Act
-            var response = await SaveAndCheckEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
+            var response = await SetupAndCheckAutomatedEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
             // Assert
             response.Should().BeFalse();
+
             _classUnderTest.EligibilityResults["BR9"].Should().BeFalse();
             _classUnderTest.EligibilityResults.Count(x => x.Value == false).Should().Be(1);
-            AllTestsShouldHaveRun(tenure, proposedTenant, tenancyRef);
+            _classUnderTest.EligibilityResults.Should().HaveCount(8);
         }
     }
 }
