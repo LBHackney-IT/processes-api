@@ -1,17 +1,14 @@
-# LBH Base API
+# Processes API
 
-Base API is a boilerplate code for being reused for new APIs for LBH
+This API provides a workflow engine that will allow housing officers and other members of staff to initiate new workflows, upload documents, assign them and capture form information for the Manage My Home project.
+View the API specification on [SwaggerHub](https://app.swaggerhub.com/apis-docs/Hackney/ProcessesApi/1.0.0). 
 
 ## Stack
 
-- .NET Core as a web framework.
-- nUnit as a test framework.
-
-## Dependencies
-
-- Universal Housing Simulator
-
-## Contributing
+- .NET Core v3.1 as a web framework.
+- xUnit as a test framework.
+- DynamoDb as a datastore.
+- [Stateless](https://github.com/dotnet-state-machine/stateless) to implement the process state machine. ([See more](#process-engine-implementation))
 
 ### Setup
 
@@ -20,14 +17,36 @@ Base API is a boilerplate code for being reused for new APIs for LBH
 3. Clone this repository.
 4. Open it in your IDE.
 
-### Development
+## Contributing
 
-To serve the application, run it using your IDE of choice, we use Visual Studio CE and JetBrains Rider on Mac.
+### Branching Strategy
 
-**Note**
-When running locally the appropriate database conneciton details are still needed.
+This project utilises a Trunk-Based Development workflow. To see more information about this strategy, please refer to [this page on our API Playbook](https://playbook.hackney.gov.uk/API-Playbook/branching_strategies). 
 
-##### DynamoDb
+#### Development
+
+![Development CircleCI Workflow Example](docs/development_workflow.png)
+
+Automated tests (xUnit) & code linters are run on each push to any feature branch to ensure the code is of good quality. We use a pull request workflow, where changes are made on a branch and are approved by one or more other maintainers before the developer can merge into `master` branch.
+
+Once a PR is approved and merged to the `master` branch, the application is deployed to development automatically, where we confirm that our latest changes work well. 
+
+#### Staging & Production
+
+To deploy to staging or production, we create a PR from the `master` branch to the `release` branch. Once this is approved, the application is deployed to staging automatically.
+We manually confirm a production deployment in the CircleCI workflow once we're happy with our changes in staging.
+
+### Creating a Pull Request
+
+To help with making changes to code easier to understand when being reviewed, we've added a PR template.
+When a new PR is created on a repo that uses this API template, the PR template will automatically fill in the `Open a pull request` description textbox.
+The PR author can edit and change the PR description using the template as a guide.
+
+## Development
+
+To serve the application, run it using your IDE of choice. We use Visual Studio CE and JetBrains Rider on Mac.
+
+### Using DynamoDb
 To use a local instance of DynamoDb, this will need to be installed. This is most easily done using [Docker](https://www.docker.com/products/docker-desktop).
 Run the following command, specifying the local path where you want the container's shared volume to be stored.
 ```
@@ -49,66 +68,31 @@ $ aws ecr get-login --no-include-email
 ```sh
 $ make build && make serve
 ```
-### NuGet Packages
-At Hackney, we have created the NuGet Package to prevent the duplication of common code when implementing our APIs. Hence our NuGet packages will store the common code that can then be used in the relevant projects. For full details on the different features implemented within our packages please read [this ReadMe](https://github.com/LBHackney-IT/lbh-core/blob/release/README.md)
 
-##### Using the package
-For full details on how to use the package(s) within this repository please read 
-[this wiki page](https://github.com/LBHackney-IT/lbh-core/wiki/Using-the-package(s)-from-the-Hackney.Core-repository).
+### Configuring Hackney NuGet Packages
+At Hackney, we have created NuGet Packages to prevent duplication of common code when implementing our APIs. These NuGet packages store the common code that can be used in relevant projects.
+For full details on the features implemented in our packages please read [this ReadMe](https://github.com/LBHackney-IT/lbh-core/blob/release/README.md).
+
+#### Using the packages
+For full details on how to use the package(s) within this repository please read [this wiki page](https://github.com/LBHackney-IT/lbh-core/wiki/Using-the-package(s)-from-the-Hackney.Core-repository).
 
 
-### Release process
+### Testing
 
-We use a pull request workflow, where changes are made on a branch and approved by one or more other maintainers before the developer can merge into `master` branch.
-
-![Circle CI Workflow Example](docs/circle_ci_workflow.png)
-
-Then we have an automated six step deployment process, which runs in CircleCI.
-
-1. Automated tests (nUnit) are run to ensure the release is of good quality.
-2. The application is deployed to development automatically, where we check our latest changes work well.
-3. We manually confirm a staging deployment in the CircleCI workflow once we're happy with our changes in development.
-4. The application is deployed to staging.
-5. We manually confirm a production deployment in the CircleCI workflow once we're happy with our changes in staging.
-6. The application is deployed to production.
-
-Our staging and production environments are hosted by AWS. We would deploy to production per each feature/config merged into  `master`  branch.
-
-### Creating A PR
-
-To help with making changes to code easier to understand when being reviewed, we've added a PR template.
-When a new PR is created on a repo that uses this API template, the PR template will automatically fill in the `Open a pull request` description textbox.
-The PR author can edit and change the PR description using the template as a guide.
-
-## Static Code Analysis
-
-### Using [FxCop Analysers](https://www.nuget.org/packages/Microsoft.CodeAnalysis.FxCopAnalyzers)
-
-FxCop runs code analysis when the Solution is built.
-
-Both the API and Test projects have been set up to **treat all warnings from the code analysis as errors** and therefore, fail the build.
-
-However, we can select which errors to suppress by setting the severity of the responsible rule to none, e.g `dotnet_analyzer_diagnostic.<Category-or-RuleId>.severity = none`, within the `.editorconfig` file.
-Documentation on how to do this can be found [here](https://docs.microsoft.com/en-us/visualstudio/code-quality/use-roslyn-analyzers?view=vs-2019).
-
-## Testing
-
-### Run the tests
+#### Running the tests
 
 ```sh
 $ make test
 ```
 
-To run database tests locally (e.g. via Visual Studio) and you are using Postgres the `CONNECTION_STRING` environment variable will need to be populated with:
+or
 
-`Host=localhost;Database=testdb;Username=postgres;Password=mypassword"`
+```sh
+$ docker-compose up processes-api-test
+```
 
-Note: The Host name needs to be the name of the stub database docker-compose service, in order to run tests via Docker.
-
-If changes to the database schema are made then the docker image for the database will have to be removed and recreated. The restart-db make command will do this for you.
-
-### Agreed Testing Approach
-- Use nUnit, FluentAssertions and Moq
+#### Agreed Testing Approach
+- Use xUnit, FluentAssertions and Moq
 - Always follow a TDD approach
 - Tests should be independent of each other
 - Gateway tests should interact with a real test instance of the database
@@ -119,14 +103,83 @@ If changes to the database schema are made then the docker image for the databas
 - Test database schemas should match up with production database schema
 - Have integration tests which test from the PostgreSQL database to API Gateway
 
-## Data Migrations
-### A good data migration
-- Record failure logs
-- Automated
-- Reliable
-- As close to real time as possible
-- Observable monitoring in place
-- Should not affect any existing databases
+See more: https://playbook.hackney.gov.uk/API-Playbook/tdd
+
+## Process Engine Implementation
+
+We use the [Stateless](https://github.com/dotnet-state-machine/stateless) NuGet package as a lightweight state machine. This means that this API's structure differs slightly from the [Base API template](https://github.com/LBHackney-IT/lbh-base-api).
+
+### How to amend an existing workflow:
+1. If adding a new state or trigger to an existing process workflow, update the constants file with your new values. (In [ProcessesApi/V1/Domain](./ProcessesApi/V1/Domain)).
+2. Update the [SetUpStates](#2---overriding-setupstates) method in the specific service class (in ProcessesApi/V1/Services) according to the new business logic. 
+   - This could include adding new [Internal Transitions](#using-internal-transitions) if the API needs to carry out any logic before determining the next state.
+   - This could include adding [State Transition Actions](#using-state-transition-actions), which are functions that run on state transitions (e.g. firing ProcessUpdated Events)
+3. Update relevant tests (Should normally just be the Service tests & E2E tests)
+
+### How to add a new process workflow:
+1. Update the ProcessName enum (In [ProcessesApi/V1/Domain/Enums.cs](./ProcessesApi/V1/Domain/Enums.cs)) to add the new process name.
+2. Create a constants file for the states and triggers used in your process.
+3. Create a new Service that is derived from the ProcessService base class & implement your steps. See instructions [here](#implementing-a-new-process-service-using-stateless).
+4. Update the `ConfigureProcessServices` function (In [ProcessesApi/V1/ServiceCollectionExtensions.cs](./ProcessesApi/V1/ServiceCollectionExtensions.cs)) to add a new case to the switch statement, which will return your new Service.
+
+**Remember to create & update tests as & when necessary**
+
+-----
+
+### Implementing a new Process Service using Stateless
+See the stateless documentation [here](https://github.com/dotnet-state-machine/stateless).
+
+#### 1 - Creating the class
+Create a new class derived from the ProcessService base class. In the constructor, add this line: 
+
+```C#
+_permittedTriggersType = typeof(**<SOME_TYPE>**);
+```
+
+With **`<SOME_TYPE>`** being the name of the constant class that you created that stores all permitted triggers for your process.
+
+#### 2 - Overriding `SetUpStates`
+This method is specific for each process. Within this method, we define the states, what triggers they require based on the business logic, and what conditions need to be met to move to the next state. It should be overridden from the virtual method in the ProcessService base case.
+
+##### Using Internal Transitions
+Internal Transitions are used in this API when it needs to do some logic using the data from the request, then update the state based on the result. 
+
+For example, in the automated eligibility check stage of the Sole To Joint process, the API makes various calls and checks, then updates the state to AutomatedChecksFailed or AutomatedChecksPassed.
+
+![Example configuring internal transitions](./docs/SetUpStates.png)
+
+#### 3 - Overriding `SetUpStateActions`
+This method sets up custom actions that happen when a state transition happens. It consists of many [`Configure` & `ConfigureAsync`](#configure--configureasync) method calls. It should be overridden from the virtual method in the ProcessService base case.
+
+##### Using State Transition Actions
+State transitions actions are small that happen when a state transition is made. For example, publishing a ProcessClosed event when the process is closed.
+
+-----
+### Methods in the ProcessService base class
+There are a number of helper methods in the ProcessService base class:
+
+#### `Configure` & `ConfigureAsync`
+These methods are normally called from the `SetUpStateActions` method. It updates the current state with the correct data, adds assignment data (placeholder for now), and runs any function passed as a parameter. 
+
+Example: 
+
+![Example configuring state transition actions](./docs/SetUpStateActions.png)
+
+#### `TriggerStateMachine`
+Allows the state machine to be triggered internally without updating the current state or previous states array. Mostly used in Internal State Transitions.
+
+### `PublishProcessStartedEvent`, `PublishProcessUpdatedEvent` & PublishProcessClosedEvent`
+Helper methods to publish events on state transitions.
+
+### Process
+The main method that is used by the UseCase to handle all interactions with the state machine. It does the following:
+
+1. Sets up the current state if it is null to be `ApplicationInitialised`
+2. Sets up the state machine
+3. Calls the SetUpStates & SetUpStateActions methods to configure the process states, triggers and actions on the state machine
+4. Checks if the trigger in the request is permitted & throws an exception if not (e.g. *Can not trigger `CheckDocuments` from `ApplicationInitialised`.*)
+5. Triggers the state machine
+6. Updates the process entity (from the database) with the new current state.
 
 ## Contacts
 
@@ -134,7 +187,6 @@ If changes to the database schema are made then the docker image for the databas
 
 - **Selwyn Preston**, Lead Developer at London Borough of Hackney (selwyn.preston@hackney.gov.uk)
 - **Mirela Georgieva**, Lead Developer at London Borough of Hackney (mirela.georgieva@hackney.gov.uk)
-- **Matt Keyworth**, Lead Developer at London Borough of Hackney (matthew.keyworth@hackney.gov.uk)
 
 ### Other Contacts
 
@@ -142,5 +194,4 @@ If changes to the database schema are made then the docker image for the databas
 
 [docker-download]: https://www.docker.com/products/docker-desktop
 [universal-housing-simulator]: https://github.com/LBHackney-IT/lbh-universal-housing-simulator
-[made-tech]: https://madetech.com/
 [AWS-CLI]: https://aws.amazon.com/cli/
