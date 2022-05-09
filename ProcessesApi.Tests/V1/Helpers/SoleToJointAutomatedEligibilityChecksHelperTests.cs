@@ -12,6 +12,7 @@ using ProcessesApi.V1.Domain.SoleToJoint;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Gateways.Exceptions;
 using ProcessesApi.V1.Helpers;
+using ProcessesApi.V1.Services.Exceptions;
 using Xunit;
 
 namespace ProcessesApi.Tests.V1.Helpers
@@ -126,6 +127,19 @@ namespace ProcessesApi.Tests.V1.Helpers
                                                                      .ConfigureAwait(false);
             // Assert
             func.Should().Throw<PersonNotFoundException>().WithMessage($"Person with id {proposedTenant.Id} not found.");
+        }
+
+        [Fact]
+        public void CheckAutomatedEligibilityThrowsErrorIfTheCurrentTenantIsNotListedAsAHouseholdMember()
+        {
+            // Arrange
+            (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
+            tenure.HouseholdMembers = tenure.HouseholdMembers.Where(x => x.Id != tenantId);
+            // Act
+            Func<Task<bool>> func = async () => await SetupAndCheckAutomatedEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
+            // Assert
+            func.Should().Throw<FormDataInvalidException>()
+                .WithMessage($"The request's FormData is invalid: The tenant with ID {tenantId} is not listed as a household member of the tenure with ID {tenure.Id}");
         }
 
         [Fact]
