@@ -33,7 +33,9 @@ namespace ProcessesApi.Tests.V1.UseCase
             { SoleToJointFormDataKeys.BR12, "false" },
             { SoleToJointFormDataKeys.BR13, "false" },
             { SoleToJointFormDataKeys.BR15, "false" },
-            { SoleToJointFormDataKeys.BR16, "false" }
+            { SoleToJointFormDataKeys.BR16, "false" },
+            { SoleToJointFormDataKeys.BR7, "false"},
+            { SoleToJointFormDataKeys.BR8, "false" }
         };
 
         private readonly Dictionary<string, object> _tenancyBreachPassData = new Dictionary<string, object>
@@ -360,6 +362,8 @@ namespace ProcessesApi.Tests.V1.UseCase
                 { SoleToJointFormDataKeys.BR13, true },
                 { SoleToJointFormDataKeys.BR15, true },
                 { SoleToJointFormDataKeys.BR16, true },
+                { SoleToJointFormDataKeys.BR7, "false" },
+                { SoleToJointFormDataKeys.BR8, "false" }
             };
 
             var triggerObject = CreateProcessTrigger(process,

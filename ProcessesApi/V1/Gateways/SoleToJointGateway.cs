@@ -101,32 +101,35 @@ namespace ProcessesApi.V1.Gateways
             return tenure.IsActive;
         }
 
-        /// <summary>
-        /// Passes if there are no active payment agreeements on the tenure
-        /// </summary>
-        private async Task<bool> BR7(TenureInformation tenure)
-        {
-            var tenancyRef = tenure.LegacyReferences.FirstOrDefault(x => x.Name == "uh_tag_ref");
 
-            if (tenancyRef is null) return true;
-            var paymentAgreements = await GetPaymentAgreementsByTenancyReference(tenancyRef.Value, Guid.NewGuid())
-                                        .ConfigureAwait(false);
+        ///// <summary>
+        ///// Temporarily moved to Manual check
+        ///// Passes if there are no active payment agreeements on the tenure
+        ///// </summary>
+        //private async Task<bool> BR7(TenureInformation tenure)
+        //{
+        //    var tenancyRef = tenure.LegacyReferences.FirstOrDefault(x => x.Name == "uh_tag_ref");
 
-            return paymentAgreements == null || !paymentAgreements.Agreements.Any(x => x.Amount > 0);
-        }
+        //    if (tenancyRef is null) return true;
+        //    var paymentAgreements = await GetPaymentAgreementsByTenancyReference(tenancyRef.Value, Guid.NewGuid())
+        //                                .ConfigureAwait(false);
 
-        /// <summary>
-        /// Passes if there is no active NOSP (notice of seeking possession) on the tenure
-        /// </summary>
-        private async Task<bool> BR8(TenureInformation tenure)
-        {
-            var tenancyRef = tenure.LegacyReferences.FirstOrDefault(x => x.Name == "uh_tag_ref");
-            if (tenancyRef is null) return true;
-            var tenancy = await GetTenancyByReference(tenancyRef.Value, Guid.NewGuid())
-                                .ConfigureAwait(false);
+        //    return paymentAgreements == null || !paymentAgreements.Agreements.Any(x => x.Amount > 0);
+        //}
 
-            return tenancy == null || !tenancy.nosp.active;
-        }
+        ///// <summary>
+        ///// Temporarily moved to Manual check
+        ///// Passes if there is no active NOSP (notice of seeking possession) on the tenure
+        ///// </summary>
+        //private async Task<bool> BR8(TenureInformation tenure)
+        //{
+        //    var tenancyRef = tenure.LegacyReferences.FirstOrDefault(x => x.Name == "uh_tag_ref");
+        //    if (tenancyRef is null) return true;
+        //    var tenancy = await GetTenancyByReference(tenancyRef.Value, Guid.NewGuid())
+        //                        .ConfigureAwait(false);
+
+        //    return tenancy == null || !tenancy.nosp.active;
+        //}
 
         /// <summary>
         /// Passes if the proposed tenant is not a minor
@@ -158,8 +161,8 @@ namespace ProcessesApi.V1.Gateways
                 { "BR3", BR3(tenure) },
                 { "BR4", BR4(tenure) },
                 { "BR6", BR6(tenure) },
-                { "BR7", await BR7(tenure).ConfigureAwait(false) },
-                { "BR8", await BR8(tenure).ConfigureAwait(false) },
+                //{ "BR7", await BR7(tenure).ConfigureAwait(false) },
+                //{ "BR8", await BR8(tenure).ConfigureAwait(false) },
                 { "BR19", BR19(proposedTenant) },
                 { "BR9", BR9(proposedTenant, tenureId) }
             };

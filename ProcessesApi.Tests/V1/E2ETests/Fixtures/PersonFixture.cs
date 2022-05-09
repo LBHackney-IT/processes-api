@@ -55,6 +55,19 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             Person = person;
         }
 
+        public async Task GivenAnAdultDoesNotPersonExists(Guid personId)
+        {
+            var person = _fixture.Build<Person>()
+                        .With(x => x.Id, personId)
+                        .With(x => x.Tenures, new List<TenureDetails>())
+                        .With(x => x.DateOfBirth, DateTime.UtcNow.AddYears(20))
+                        .With(x => x.VersionNumber, (int?) null)
+                        .Create();
+            await _dbContext.SaveAsync<PersonDbEntity>(person.ToDatabase()).ConfigureAwait(false);
+
+            Person = person;
+        }
+
         public void GivenAPersonDoesNotExist()
         {
         }

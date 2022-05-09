@@ -89,7 +89,9 @@ namespace ProcessesApi.V1.Services
                     (SoleToJointFormDataKeys.BR12, "false"),
                     (SoleToJointFormDataKeys.BR13, "false"),
                     (SoleToJointFormDataKeys.BR15, "false"),
-                    (SoleToJointFormDataKeys.BR16, "false"))
+                    (SoleToJointFormDataKeys.BR16, "false"),
+                    (SoleToJointFormDataKeys.BR7, "false"),
+                    (SoleToJointFormDataKeys.BR8, "false"))
                 .ConfigureAwait(false);
         }
 
@@ -99,8 +101,8 @@ namespace ProcessesApi.V1.Services
                     transition,
                     SoleToJointInternalTriggers.BreachChecksPassed,
                     SoleToJointInternalTriggers.BreachChecksFailed,
-                    (SoleToJointFormDataKeys.BR5, "false"),
                     (SoleToJointFormDataKeys.BR10, "false"),
+                    (SoleToJointFormDataKeys.BR5, "false"),
                     (SoleToJointFormDataKeys.BR17, "false"),
                     (SoleToJointFormDataKeys.BR18, "false"))
                 .ConfigureAwait(false);

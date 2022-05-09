@@ -124,11 +124,11 @@ namespace ProcessesApi.Tests.V1.Gateways
 
         private void AllTestsShouldHaveRun(TenureInformation tenure, Person proposedTenant, string tenancyRef)
         {
-            _classUnderTest.EligibilityResults.Should().HaveCount(8);
+            _classUnderTest.EligibilityResults.Should().HaveCount(6);
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Tenure ID: {tenure.Id}", Times.Once());
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Person ID: {proposedTenant.Id}", Times.Once());
-            _logger.VerifyExact(LogLevel.Debug, $"Calling Income API for payment agreement with tenancy ref: {tenancyRef}", Times.Once());
-            _logger.VerifyExact(LogLevel.Debug, $"Calling Income API with tenancy ref: {tenancyRef}", Times.Once());
+            //_logger.VerifyExact(LogLevel.Debug, $"Calling Income API for payment agreement with tenancy ref: {tenancyRef}", Times.Once());
+            //_logger.VerifyExact(LogLevel.Debug, $"Calling Income API with tenancy ref: {tenancyRef}", Times.Once());
         }
 
 
@@ -251,7 +251,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             AllTestsShouldHaveRun(tenure, proposedTenant, tenancyRef);
         }
 
-        [Fact]
+        [Fact(Skip = "Check has been temporarily moved to ManualEligibility Check")]
         public async Task CheckEligibilityFailsIfTenantHasLivePaymentAgreements()
         {
             (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
@@ -276,15 +276,15 @@ namespace ProcessesApi.Tests.V1.Gateways
             _mockApiGateway.Verify(x => x.GetByIdAsync<PaymentAgreements>($"{paymentAgreementRoute}/{tenancyRef}", tenancyRef, It.IsAny<Guid>()), Times.Once);
         }
 
-        [Fact]
+        [Fact(Skip = "Check has been temporarily moved to ManualEligibility Check")]
         public async Task CheckEligibilityFailsIfTenantHasAnActiveNoticeOfSeekingPossession()
         {
             (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
 
             var tenancyWithNosp = _fixture.Build<Tenancy>()
                                     .With(x => x.TenancyRef, tenancyRef)
-                                    .With(x => x.nosp, _fixture.Build<NoticeOfSeekingPossession>()
-                                                                .With(x => x.active, true)
+                                    .With(x => x.NOSP, _fixture.Build<NoticeOfSeekingPossession>()
+                                                                .With(x => x.Active, true)
                                                                 .Create()
                                     )
                                     .Create();
