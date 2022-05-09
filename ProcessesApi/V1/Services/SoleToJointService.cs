@@ -14,14 +14,14 @@ namespace ProcessesApi.V1.Services
 {
     public class SoleToJointService : ProcessService, ISoleToJointService
     {
-        private readonly ISoleToJointAutomatedEligibilityChecksHelper _helper;
+        private readonly ISoleToJointAutomatedEligibilityChecksHelper _automatedcheckshelper;
 
-        public SoleToJointService(ISnsFactory snsFactory, ISnsGateway snsGateway, ISoleToJointAutomatedEligibilityChecksHelper helper)
+        public SoleToJointService(ISnsFactory snsFactory, ISnsGateway snsGateway, ISoleToJointAutomatedEligibilityChecksHelper automatedChecksHelper)
             : base(snsFactory, snsGateway)
         {
             _snsFactory = snsFactory;
             _snsGateway = snsGateway;
-            _helper = helper;
+            _automatedcheckshelper = automatedChecksHelper;
             _permittedTriggersType = typeof(SoleToJointPermittedTriggers);
         }
 
@@ -30,82 +30,43 @@ namespace ProcessesApi.V1.Services
         private async Task CheckAutomatedEligibility(StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as UpdateProcessState;
-            try
-            {
-                var isEligible = await _helper.CheckAutomatedEligibility(_process.TargetId,
-                                                                         Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()),
-                                                                         Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.TenantId].ToString()))
-                                                                         .ConfigureAwait(false);
-
-                processRequest.Trigger = isEligible ? SoleToJointInternalTriggers.EligibiltyPassed : SoleToJointInternalTriggers.EligibiltyFailed;
-
-                await TriggerStateMachine(processRequest).ConfigureAwait(false);
-            }
-            catch (KeyNotFoundException)
-            {
-                var expectedFormDataKeys = new List<string>
-                {
-                    SoleToJointFormDataKeys.IncomingTenantId,
-                    SoleToJointFormDataKeys.TenantId
-                };
-                throw new FormDataNotFoundException(processRequest.FormData.Keys.ToList(), expectedFormDataKeys);
-            }
-        }
-
-        private async Task ValidateManualCheck(StateMachine<string, string>.Transition transition,
-                                               string passedTrigger,
-                                               string failedTrigger,
-                                               params (string CheckId, string Value)[] expectations)
-        {
-            var processRequest = (UpdateProcessState) transition.Parameters[0];
             var formData = processRequest.FormData;
+            SoleToJointHelpers.ValidateFormData(formData, new List<string>() { SoleToJointFormDataKeys.IncomingTenantId, SoleToJointFormDataKeys.TenantId });
 
-            try
-            {
-                var isCheckPassed = expectations.All(expectation =>
-                    String.Equals(
-                        expectation.Value,
-                        formData[expectation.CheckId].ToString(),
-                        StringComparison.OrdinalIgnoreCase));
+            var isEligible = await _automatedcheckshelper.CheckAutomatedEligibility(_process.TargetId,
+                                                                     Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()),
+                                                                     Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.TenantId].ToString()))
+                                                                     .ConfigureAwait(false);
 
-                processRequest.Trigger = isCheckPassed
-                    ? passedTrigger
-                    : failedTrigger;
+            processRequest.Trigger = isEligible ? SoleToJointInternalTriggers.EligibiltyPassed : SoleToJointInternalTriggers.EligibiltyFailed;
 
-                await TriggerStateMachine(processRequest).ConfigureAwait(false);
-            }
-            catch (KeyNotFoundException)
-            {
-                var expectedFormDataKeys = expectations.Select(expectation => expectation.CheckId).ToList();
-                throw new FormDataNotFoundException(formData.Keys.ToList(), expectedFormDataKeys);
-            }
+            await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
         private async Task CheckManualEligibility(StateMachine<string, string>.Transition transition)
         {
-            await ValidateManualCheck(
-                    transition,
-                    SoleToJointInternalTriggers.ManualEligibilityPassed,
-                    SoleToJointInternalTriggers.ManualEligibilityFailed,
-                    (SoleToJointFormDataKeys.BR11, "true"),
-                    (SoleToJointFormDataKeys.BR12, "false"),
-                    (SoleToJointFormDataKeys.BR13, "false"),
-                    (SoleToJointFormDataKeys.BR15, "false"),
-                    (SoleToJointFormDataKeys.BR16, "false"))
-                .ConfigureAwait(false);
+            var processRequest = SoleToJointHelpers.ValidateManualCheck(transition,
+                                                                        SoleToJointInternalTriggers.ManualEligibilityPassed,
+                                                                        SoleToJointInternalTriggers.ManualEligibilityFailed,
+                                                                        (SoleToJointFormDataKeys.BR11, "true"),
+                                                                        (SoleToJointFormDataKeys.BR12, "false"),
+                                                                        (SoleToJointFormDataKeys.BR13, "false"),
+                                                                        (SoleToJointFormDataKeys.BR15, "false"),
+                                                                        (SoleToJointFormDataKeys.BR16, "false"));
+            await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
         private async Task CheckTenancyBreach(StateMachine<string, string>.Transition transition)
         {
-            await ValidateManualCheck(
-                    transition,
-                    SoleToJointInternalTriggers.BreachChecksPassed,
-                    SoleToJointInternalTriggers.BreachChecksFailed,
-                    (SoleToJointFormDataKeys.BR5, "false"),
-                    (SoleToJointFormDataKeys.BR10, "false"),
-                    (SoleToJointFormDataKeys.BR17, "false"),
-                    (SoleToJointFormDataKeys.BR18, "false"))
-                .ConfigureAwait(false);
+
+            var processRequest = SoleToJointHelpers.ValidateManualCheck(transition,
+                                                                        SoleToJointInternalTriggers.BreachChecksPassed,
+                                                                        SoleToJointInternalTriggers.BreachChecksFailed,
+                                                                        (SoleToJointFormDataKeys.BR5, "false"),
+                                                                        (SoleToJointFormDataKeys.BR10, "false"),
+                                                                        (SoleToJointFormDataKeys.BR17, "false"),
+                                                                        (SoleToJointFormDataKeys.BR18, "false"));
+            await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
         #endregion
@@ -114,10 +75,13 @@ namespace ProcessesApi.V1.Services
 
         private void AddIncomingTenantId(UpdateProcessState processRequest)
         {
+            SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.IncomingTenantId });
+
             //TODO: When doing a POST request from the FE they should created a relatedEntities object with all neccesary values
             // Once Frontend work is completed the IF statement below should be removed.
             if (_process.RelatedEntities == null)
                 _process.RelatedEntities = new List<Guid>();
+
             _process.RelatedEntities.Add(Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()));
         }
 
@@ -141,8 +105,8 @@ namespace ProcessesApi.V1.Services
 
         private async Task OnRequestDocumentsAppointment(UpdateProcessState processRequest)
         {
-            processRequest.FormData.TryGetValue(SoleToJointFormDataKeys.AppointmentDateTime, out var appointmentDetails);
-            if (appointmentDetails is null) throw new FormDataNotFoundException(processRequest.FormData.Keys.ToList(), new List<string>() { SoleToJointFormDataKeys.AppointmentDateTime });
+            SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.AppointmentDateTime });
+            var appointmentDetails = processRequest.FormData[SoleToJointFormDataKeys.AppointmentDateTime];
 
             if (DateTime.TryParse(appointmentDetails.ToString(), out DateTime appointmentDateTime))
             {
