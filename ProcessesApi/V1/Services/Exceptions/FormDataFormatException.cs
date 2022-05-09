@@ -1,8 +1,6 @@
-using System;
-
 namespace ProcessesApi.V1.Services.Exceptions
 {
-    public class FormDataFormatException : Exception
+    public class FormDataFormatException : FormDataInvalidException
     {
         public FormDataFormatException() : base("One of the form data values is not in the correct format.")
         {

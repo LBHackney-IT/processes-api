@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace ProcessesApi.V1.Services.Exceptions
 {
-    public class FormDataNotFoundException : Exception
+    public class FormDataNotFoundException : FormDataInvalidException
     {
         public List<string> ExpectedFormDataKeys { get; private set; }
         public List<string> IncomingFormDataKeys { get; private set; }

@@ -259,8 +259,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         }
 
         [Theory]
-        [InlineData(typeof(FormDataNotFoundException))]
-        [InlineData(typeof(FormDataFormatException))]
+        [InlineData(typeof(FormDataInvalidException))]
         [InlineData(typeof(InvalidTriggerException))]
         public async Task UpdateProcessStateReturnsBadRequest(Type exceptionType)
         {

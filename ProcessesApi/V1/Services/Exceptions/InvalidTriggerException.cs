@@ -4,7 +4,7 @@ namespace ProcessesApi.V1.Services.Exceptions
 {
     public class InvalidTriggerException : Exception
     {
-        public InvalidTriggerException() : base("Invalid trigger")
+        public InvalidTriggerException() : base("Invalid trigger.")
         {
         }
 

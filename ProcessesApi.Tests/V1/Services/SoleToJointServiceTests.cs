@@ -260,7 +260,7 @@ namespace ProcessesApi.Tests.V1.Services
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.CheckAutomatedEligibility,
                                                      formData);
-            var expectedErrorMessage = $"The form data keys supplied ({SoleToJointFormDataKeys.TenantId}) do not include the expected values ({SoleToJointFormDataKeys.IncomingTenantId}).";
+            var expectedErrorMessage = $"The request's FormData is invalid: The form data keys supplied ({SoleToJointFormDataKeys.TenantId}) do not include the expected values ({SoleToJointFormDataKeys.IncomingTenantId}).";
             // Act
             Func<Task> func = async () => await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
             // Assert
@@ -369,7 +369,7 @@ namespace ProcessesApi.Tests.V1.Services
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.CheckManualEligibility,
                                                      formData);
-            var expectedErrorMessage = $"The form data keys supplied ({String.Join(", ", formData.Keys.ToList())}) do not include the expected values ({SoleToJointFormDataKeys.BR11}).";
+            var expectedErrorMessage = $"The request's FormData is invalid: The form data keys supplied ({String.Join(", ", formData.Keys.ToList())}) do not include the expected values ({SoleToJointFormDataKeys.BR11}).";
             // Act
             Func<Task> func = async () => await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
             // Assert
@@ -462,7 +462,7 @@ namespace ProcessesApi.Tests.V1.Services
             var triggerObject = CreateProcessTrigger(
                 process, SoleToJointPermittedTriggers.CheckTenancyBreach, _tenancyBreachPassData);
 
-            var expectedErrorMessage = $"The form data keys supplied ({String.Join(", ", _tenancyBreachPassData.Keys.ToList())}) do not include the expected values ({checkId}).";
+            var expectedErrorMessage = $"The request's FormData is invalid: The form data keys supplied ({String.Join(", ", _tenancyBreachPassData.Keys.ToList())}) do not include the expected values ({checkId}).";
 
             // Act & assert
             _classUnderTest
@@ -536,7 +536,7 @@ namespace ProcessesApi.Tests.V1.Services
             var formData = new Dictionary<string, object>();
             var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.RequestDocumentsAppointment, formData);
 
-            var expectedErrorMessage = $"The form data keys supplied () do not include the expected values ({SoleToJointFormDataKeys.AppointmentDateTime}).";
+            var expectedErrorMessage = $"The request's FormData is invalid: The form data keys supplied () do not include the expected values ({SoleToJointFormDataKeys.AppointmentDateTime}).";
 
             // Act & assert
             _classUnderTest
@@ -553,7 +553,7 @@ namespace ProcessesApi.Tests.V1.Services
             var formData = new Dictionary<string, object>() { { SoleToJointFormDataKeys.AppointmentDateTime, incorrectDateTime } };
             var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.RequestDocumentsAppointment, formData);
 
-            var expectedErrorMessage = $"The appointment datetime provided ({incorrectDateTime}) is not in the correct format.";
+            var expectedErrorMessage = $"The request's FormData is invalid: The appointment datetime provided ({incorrectDateTime}) is not in the correct format.";
 
             // Act & assert
             _classUnderTest

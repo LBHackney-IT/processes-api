@@ -3,9 +3,9 @@ using ProcessesApi.V1.Helpers;
 using Xunit;
 using FluentAssertions;
 using System;
-using ProcessesApi.V1.UseCase.Exceptions;
 using AutoFixture;
 using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Services.Exceptions;
 
 namespace ProcessesApi.Tests.V1.Helpers
 {
@@ -28,7 +28,7 @@ namespace ProcessesApi.Tests.V1.Helpers
             Action action = () => SoleToJointHelpers.ValidateFormData(requestFormData, new List<string>() { expectedFormDataKey });
             // Assert
             action.Should().Throw<FormDataNotFoundException>()
-                  .WithMessage($"The form data keys supplied () do not include the expected values ({expectedFormDataKey}).");
+                  .WithMessage($"The request's FormData is invalid: The form data keys supplied () do not include the expected values ({expectedFormDataKey}).");
         }
 
         [Fact]

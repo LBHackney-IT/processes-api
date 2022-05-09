@@ -144,8 +144,7 @@ namespace ProcessesApi.V1.Controllers
             {
                 return Conflict(vncErr.Message);
             }
-            catch (Exception ex) when (ex is FormDataNotFoundException
-                                      || ex is FormDataFormatException
+            catch (Exception ex) when (ex is FormDataInvalidException
                                       || ex is InvalidTriggerException)
             {
                 return BadRequest(ex.Message);
