@@ -24,18 +24,14 @@ namespace ProcessesApi.Tests.V1.UseCase
         private ProcessUseCase _classUnderTest;
         private Mock<IProcessService> _mockProcessService;
         private readonly Fixture _fixture = new Fixture();
-        private readonly Mock<ISnsGateway> _processesSnsGateway;
-        private readonly ProcessesSnsFactory _processesSnsFactory;
+
         public ProcessUseCaseTests()
         {
             _mockGateway = new Mock<IProcessesGateway>();
             _mockProcessService = new Mock<IProcessService>();
-            _processesSnsGateway = new Mock<ISnsGateway>();
-            _processesSnsFactory = new ProcessesSnsFactory();
             Func<ProcessName, IProcessService> _mockProcessServiceProvider = (processName) => { return _mockProcessService.Object; };
 
-            _classUnderTest = new ProcessUseCase(_mockGateway.Object, _mockProcessServiceProvider,
-                                                     _processesSnsGateway.Object, _processesSnsFactory);
+            _classUnderTest = new ProcessUseCase(_mockGateway.Object, _mockProcessServiceProvider);
         }
 
         private Process CreateProcessInInitialState()
