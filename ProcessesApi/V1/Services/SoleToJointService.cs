@@ -27,9 +27,9 @@ namespace ProcessesApi.V1.Services
 
         #region Internal Transitions
 
-        private async Task CheckAutomatedEligibility(StateMachine<string, string>.Transition x)
+        private async Task CheckAutomatedEligibility(StateMachine<string, string>.Transition transition)
         {
-            var processRequest = x.Parameters[0] as UpdateProcessState;
+            var processRequest = transition.Parameters[0] as UpdateProcessState;
             var formData = processRequest.FormData;
             SoleToJointHelpers.ValidateFormData(formData, new List<string>() { SoleToJointFormDataKeys.IncomingTenantId, SoleToJointFormDataKeys.TenantId });
 
@@ -45,27 +45,27 @@ namespace ProcessesApi.V1.Services
 
         private async Task CheckManualEligibility(StateMachine<string, string>.Transition transition)
         {
-            var processRequest = SoleToJointHelpers.ValidateManualCheck(transition,
-                                                                        SoleToJointInternalTriggers.ManualEligibilityPassed,
-                                                                        SoleToJointInternalTriggers.ManualEligibilityFailed,
-                                                                        (SoleToJointFormDataKeys.BR11, "true"),
-                                                                        (SoleToJointFormDataKeys.BR12, "false"),
-                                                                        (SoleToJointFormDataKeys.BR13, "false"),
-                                                                        (SoleToJointFormDataKeys.BR15, "false"),
-                                                                        (SoleToJointFormDataKeys.BR16, "false"));
+            var processRequest = transition.Parameters[0] as UpdateProcessState;
+            processRequest.ValidateManualCheck(SoleToJointInternalTriggers.ManualEligibilityPassed,
+                                               SoleToJointInternalTriggers.ManualEligibilityFailed,
+                                               (SoleToJointFormDataKeys.BR11, "true"),
+                                               (SoleToJointFormDataKeys.BR12, "false"),
+                                               (SoleToJointFormDataKeys.BR13, "false"),
+                                               (SoleToJointFormDataKeys.BR15, "false"),
+                                               (SoleToJointFormDataKeys.BR16, "false"));
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
         private async Task CheckTenancyBreach(StateMachine<string, string>.Transition transition)
         {
 
-            var processRequest = SoleToJointHelpers.ValidateManualCheck(transition,
-                                                                        SoleToJointInternalTriggers.BreachChecksPassed,
-                                                                        SoleToJointInternalTriggers.BreachChecksFailed,
-                                                                        (SoleToJointFormDataKeys.BR5, "false"),
-                                                                        (SoleToJointFormDataKeys.BR10, "false"),
-                                                                        (SoleToJointFormDataKeys.BR17, "false"),
-                                                                        (SoleToJointFormDataKeys.BR18, "false"));
+            var processRequest = transition.Parameters[0] as UpdateProcessState;
+            processRequest.ValidateManualCheck(SoleToJointInternalTriggers.BreachChecksPassed,
+                                               SoleToJointInternalTriggers.BreachChecksFailed,
+                                               (SoleToJointFormDataKeys.BR5, "false"),
+                                               (SoleToJointFormDataKeys.BR10, "false"),
+                                               (SoleToJointFormDataKeys.BR17, "false"),
+                                               (SoleToJointFormDataKeys.BR18, "false"));
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 

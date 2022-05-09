@@ -24,8 +24,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         private ProcessUseCase _classUnderTest;
         private Mock<IProcessService> _mockProcessService;
         private readonly Fixture _fixture = new Fixture();
-        private readonly Mock<ISnsGateway> _processesSnsGateway;
-        private readonly ProcessesSnsFactory _processesSnsFactory;
+
         public ProcessUseCaseTests()
         {
             _mockGateway = new Mock<IProcessesGateway>();
