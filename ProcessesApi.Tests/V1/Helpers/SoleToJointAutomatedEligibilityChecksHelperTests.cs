@@ -199,8 +199,8 @@ namespace ProcessesApi.Tests.V1.Helpers
             _classUnderTest.EligibilityResults.Should().HaveCount(8);
         }
 
-        [Fact]
-        public async Task CheckAutomatedEligibilityFailsIfTenantHasLivePaymentAgreements()
+        [Fact(Skip = "Check has been temporarily moved to ManualEligibility Check")]
+        public async Task CheckAutomaticEligibilityFailsIfTenantHasLivePaymentAgreements()
         {
             (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
             var paymentAgreements = new PaymentAgreements
@@ -224,15 +224,15 @@ namespace ProcessesApi.Tests.V1.Helpers
             _classUnderTest.EligibilityResults.Should().HaveCount(8);
         }
 
-        [Fact]
-        public async Task CheckAutomatedEligibilityFailsIfTenantHasAnActiveNoticeOfSeekingPossession()
+        [Fact(Skip = "Check has been temporarily moved to ManualEligibility Check")]
+        public async Task CheckAutomaticEligibilityFailsIfTenantHasAnActiveNoticeOfSeekingPossession()
         {
             (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
 
             var tenancyWithNosp = _fixture.Build<Tenancy>()
                                     .With(x => x.TenancyRef, tenancyRef)
-                                    .With(x => x.nosp, _fixture.Build<NoticeOfSeekingPossession>()
-                                                                .With(x => x.active, true)
+                                    .With(x => x.NOSP, _fixture.Build<NoticeOfSeekingPossession>()
+                                                                .With(x => x.Active, true)
                                                                 .Create()
                                     )
                                     .Create();

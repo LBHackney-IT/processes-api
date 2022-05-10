@@ -52,7 +52,9 @@ namespace ProcessesApi.V1.Services
                                                (SoleToJointFormDataKeys.BR12, "false"),
                                                (SoleToJointFormDataKeys.BR13, "false"),
                                                (SoleToJointFormDataKeys.BR15, "false"),
-                                               (SoleToJointFormDataKeys.BR16, "false"));
+                                               (SoleToJointFormDataKeys.BR16, "false"),
+                                               (SoleToJointFormDataKeys.BR7, "false"),
+                                               (SoleToJointFormDataKeys.BR8, "false"));
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 

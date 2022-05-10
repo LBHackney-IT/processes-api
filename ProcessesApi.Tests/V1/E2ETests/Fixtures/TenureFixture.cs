@@ -16,7 +16,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public readonly Fixture _fixture = new Fixture();
         public readonly IDynamoDBContext _dbContext;
         public TenureInformation Tenure { get; private set; }
-        public string tenancyRef { get; private set; }
+        public string TenancyRef { get; private set; }
 
         public TenureFixture(IDynamoDBContext dbContext)
         {
