@@ -143,7 +143,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.SelectTenants))
                     .And(a => _tenureFixture.GivenASecureTenureExists(_processFixture.Process.TargetId, _processFixture.TenantId, true))
                     .And(a => _tenureFixture.GivenAPersonIsAddedAsAHouseholdMember(_processFixture.IncomingTenantId))
-                    .And(a => _personFixture.GivenAnAdultDoesNotPersonExists(_processFixture.IncomingTenantId))
+                    .And(a => _personFixture.GivenAnAdultPersonDoesNotExist(_processFixture.IncomingTenantId))
                     .And(a => _personFixture.GivenAPersonHasAnActiveTenure(_processFixture.Process.TargetId))
                     //.And(a => _agreementsApiFixture.GivenAPaymentAgreementDoesNotExist())
                     //.And(a => _tenanciesApiFixture.GivenTheTenancyHasAnActiveNoticeOfSeekingPossession(_tenureFixture.tenancyRef))
