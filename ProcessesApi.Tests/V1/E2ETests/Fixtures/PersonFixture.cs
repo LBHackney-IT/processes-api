@@ -55,7 +55,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             Person = person;
         }
 
-        public async Task GivenAnAdultDoesNotPersonExists(Guid personId)
+        public async Task GivenAnAdultPersonDoesNotExist(Guid personId)
         {
             var person = _fixture.Build<Person>()
                         .With(x => x.Id, personId)
