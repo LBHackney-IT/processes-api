@@ -1,11 +1,9 @@
 using AutoFixture;
 using FluentAssertions;
 using Hackney.Core.JWT;
-using Hackney.Core.Sns;
 using Moq;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Services.Interfaces;
 using ProcessesApi.V1.UseCase;
@@ -97,7 +95,7 @@ namespace ProcessesApi.Tests.V1.UseCase
 
             // Act
             var response = await _classUnderTest.Execute(
-                process.Id, SoleToJointPermittedTriggers.CheckEligibility,
+                process.Id, SoleToJointPermittedTriggers.CheckAutomatedEligibility,
                 process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
                 updateProcessQuery.Documents, process.ProcessName, 0, token).ConfigureAwait(false);
 
@@ -123,7 +121,7 @@ namespace ProcessesApi.Tests.V1.UseCase
 
             // Act
             Func<Task<Process>> func = async () => await _classUnderTest.Execute(
-                process.Id, SoleToJointPermittedTriggers.CheckEligibility,
+                process.Id, SoleToJointPermittedTriggers.CheckAutomatedEligibility,
                 process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
                 updateProcessQuery.Documents, process.ProcessName, suppliedVersion, token).ConfigureAwait(false);
 
@@ -143,7 +141,7 @@ namespace ProcessesApi.Tests.V1.UseCase
 
             //Act
             Func<Task<Process>> func = async () => await _classUnderTest.Execute(
-                process.Id, SoleToJointPermittedTriggers.CheckEligibility,
+                process.Id, SoleToJointPermittedTriggers.CheckAutomatedEligibility,
                 process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
                 updateProcessQuery.Documents, process.ProcessName, 0, token).ConfigureAwait(false);
 

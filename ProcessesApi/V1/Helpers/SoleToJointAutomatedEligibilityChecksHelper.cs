@@ -6,6 +6,7 @@ using Hackney.Shared.Person;
 using Hackney.Shared.Tenure.Domain;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Gateways.Exceptions;
+using ProcessesApi.V1.Services.Exceptions;
 
 namespace ProcessesApi.V1.Helpers
 {
@@ -31,6 +32,8 @@ namespace ProcessesApi.V1.Helpers
         private static bool BR2(Guid tenantId, TenureInformation tenure)
         {
             var currentTenantDetails = tenure.HouseholdMembers.FirstOrDefault(x => x.Id == tenantId);
+            if (currentTenantDetails is null)
+                throw new FormDataInvalidException($"The tenant with ID {tenantId} is not listed as a household member of the tenure with ID {tenure.Id}");
             return currentTenantDetails.PersonTenureType == PersonTenureType.Tenant;
         }
 
@@ -56,7 +59,7 @@ namespace ProcessesApi.V1.Helpers
         {
             var tenancyRef = tenure.LegacyReferences.FirstOrDefault(x => x.Name == "uh_tag_ref");
 
-            if (tenancyRef is null) return true;
+            if (tenancyRef is null) return true; // TODO: Confirm error message
             var paymentAgreements = await gateway.GetPaymentAgreementsByTenancyReference(tenancyRef.Value, Guid.NewGuid())
                                                  .ConfigureAwait(false);
 
@@ -69,7 +72,7 @@ namespace ProcessesApi.V1.Helpers
         public static async Task<bool> BR8(TenureInformation tenure, IIncomeApiGateway gateway)
         {
             var tenancyRef = tenure.LegacyReferences.FirstOrDefault(x => x.Name == "uh_tag_ref");
-            if (tenancyRef is null) return true;
+            if (tenancyRef is null) return true; // TODO: Confirm error message
             var tenancy = await gateway.GetTenancyByReference(tenancyRef.Value, Guid.NewGuid())
                                        .ConfigureAwait(false);
 

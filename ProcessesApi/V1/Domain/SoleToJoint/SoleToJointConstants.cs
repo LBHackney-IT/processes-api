@@ -17,7 +17,7 @@ namespace ProcessesApi.V1.Domain
 
     public static class SoleToJointPermittedTriggers
     {
-        public const string CheckEligibility = "CheckEligibility";
+        public const string CheckAutomatedEligibility = "CheckAutomatedEligibility";
         public const string CheckManualEligibility = "CheckManualEligibility";
         public const string RequestDocuments = "RequestDocuments";
         public const string CheckTenancyBreach = "CheckTenancyBreach";
@@ -39,15 +39,17 @@ namespace ProcessesApi.V1.Domain
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     public static class SoleToJointFormDataKeys
     {
+        public const string AppointmentDateTime = "appointmentDateTime";
+
         #region Automated eligibility checks
 
         /// <summary>
-        /// The ID of the proposed tenant
+        ///     The ID of the proposed tenant
         /// </summary>
         public const string IncomingTenantId = "incomingTenantId";
 
         /// <summary>
-        /// The ID of the current tenant
+        ///     The ID of the current tenant
         /// </summary>
         public const string TenantId = "tenantId";
 
@@ -56,27 +58,30 @@ namespace ProcessesApi.V1.Domain
         #region Manual eligibility checks
 
         /// <summary>
-        /// Have the tenant and proposed tenant been living together for 12 months or more, or are they married or in a civil partnership?
+        ///     Have the tenant and proposed tenant been living together for 12 months or more, or are they married or in a civil
+        ///     partnership?
         /// </summary>
         public const string BR11 = "br11";
 
         /// <summary>
-        /// Does the tenant or the proposed tenant hold or intend to hold any other property or tenancy besides this one, as their only or main home?
+        ///     Does the tenant or the proposed tenant hold or intend to hold any other property or tenancy besides this one, as
+        ///     their only or main home?
         /// </summary>
         public const string BR12 = "br12";
 
         /// <summary>
-        /// is the tenant a survivor of one of more joint tenants?
+        ///     is the tenant a survivor of one of more joint tenants?
         /// </summary>
         public const string BR13 = "br13";
 
         /// <summary>
-        /// Has the proposed tenant been evicted by London Borough of Hackney or any other local authority or housing association?
+        ///     Has the proposed tenant been evicted by London Borough of Hackney or any other local authority or housing
+        ///     association?
         /// </summary>
         public const string BR15 = "br15";
 
         /// <summary>
-        /// Is the proposed tenant subject to immigration control under the Asylum And Immigration Act 1996?
+        ///     Is the proposed tenant subject to immigration control under the Asylum And Immigration Act 1996?
         /// </summary>
         public const string BR16 = "br16";
 
@@ -95,22 +100,22 @@ namespace ProcessesApi.V1.Domain
         #region HO Tenancy breach checks
 
         /// <summary>
-        /// Is the tenant or proposed tenant a cautionary contact?
+        ///     Is the tenant or proposed tenant a cautionary contact?
         /// </summary>
         public const string BR5 = "br5";
 
         /// <summary>
-        /// Does the tenant have rent arrears remaining with LBH or another local authority or housing association property?
+        ///     Does the tenant have rent arrears remaining with LBH or another local authority or housing association property?
         /// </summary>
         public const string BR10 = "br10";
 
         /// <summary>
-        /// Has the tenure previously been succeeded?
+        ///     Has the tenure previously been succeeded?
         /// </summary>
         public const string BR17 = "br17";
 
         /// <summary>
-        /// Other than a NOSP, does the tenant have any live notices against the tenure, e.g. a breach of tenancy?
+        ///     Other than a NOSP, does the tenant have any live notices against the tenure, e.g. a breach of tenancy?
         /// </summary>
         public const string BR18 = "br18";
 
@@ -119,8 +124,5 @@ namespace ProcessesApi.V1.Domain
 
 
         #endregion
-
-        public const string AppointmentDateTime = "appointmentDateTime";
     }
-
 }

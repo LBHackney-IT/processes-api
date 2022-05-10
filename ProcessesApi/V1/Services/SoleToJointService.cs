@@ -1,14 +1,13 @@
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.UseCase.Exceptions;
 using ProcessesApi.V1.Services.Interfaces;
 using Stateless;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Hackney.Core.Sns;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Helpers;
+using ProcessesApi.V1.Services.Exceptions;
 
 namespace ProcessesApi.V1.Services
 {
@@ -127,7 +126,7 @@ namespace ProcessesApi.V1.Services
             _machine.Configure(SharedProcessStates.ApplicationInitialised)
                     .Permit(SharedInternalTriggers.StartApplication, SoleToJointStates.SelectTenants);
             _machine.Configure(SoleToJointStates.SelectTenants)
-                    .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckEligibility, async (x) => await CheckAutomatedEligibility(x).ConfigureAwait(false))
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckAutomatedEligibility, async (x) => await CheckAutomatedEligibility(x).ConfigureAwait(false))
                     .Permit(SoleToJointInternalTriggers.EligibiltyFailed, SoleToJointStates.AutomatedChecksFailed)
                     .Permit(SoleToJointInternalTriggers.EligibiltyPassed, SoleToJointStates.AutomatedChecksPassed);
             _machine.Configure(SoleToJointStates.AutomatedChecksFailed)

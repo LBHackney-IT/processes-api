@@ -57,7 +57,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             dbRecord.ProcessName.Should().Be(ProcessName.soletojoint);
 
             dbRecord.CurrentState.State.Should().Be(SoleToJointStates.SelectTenants);
-            dbRecord.CurrentState.PermittedTriggers.Should().BeEquivalentTo(new List<string>() { SoleToJointPermittedTriggers.CheckEligibility });
+            dbRecord.CurrentState.PermittedTriggers.Should().BeEquivalentTo(new List<string>() { SoleToJointPermittedTriggers.CheckAutomatedEligibility });
             // TODO: Add test for assignment when implemented
             dbRecord.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(request.FormData);
             dbRecord.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(request.Documents);
