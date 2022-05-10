@@ -85,6 +85,16 @@ namespace ProcessesApi.V1.Domain
         /// </summary>
         public const string BR16 = "br16";
 
+        /// <summary>
+        /// Does the tenant have a live notice seeking possession?
+        /// </summary>
+        public const string BR8 = "br8";
+
+        /// <summary>
+        /// Does the tenant have rent arrears over £500?
+        /// </summary>
+        public const string BR7 = "br7";
+
         #endregion ManualeEligibility checks
 
         #region HO Tenancy breach checks
@@ -108,6 +118,10 @@ namespace ProcessesApi.V1.Domain
         ///     Other than a NOSP, does the tenant have any live notices against the tenure, e.g. a breach of tenancy?
         /// </summary>
         public const string BR18 = "br18";
+
+
+
+
 
         #endregion
     }

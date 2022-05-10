@@ -136,6 +136,8 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                 { SoleToJointFormDataKeys.BR13, "false" },
                 { SoleToJointFormDataKeys.BR15, "false" },
                 { SoleToJointFormDataKeys.BR16, "false" },
+                { SoleToJointFormDataKeys.BR7, "false"},
+                { SoleToJointFormDataKeys.BR8, "false"}
             };
         }
 

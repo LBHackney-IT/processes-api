@@ -76,7 +76,7 @@ namespace ProcessesApi.V1.Helpers
             var tenancy = await gateway.GetTenancyByReference(tenancyRef.Value, Guid.NewGuid())
                                        .ConfigureAwait(false);
 
-            return tenancy == null || !tenancy.nosp.active;
+            return tenancy == null || !tenancy.NOSP.Active;
         }
 
         /// <summary>
