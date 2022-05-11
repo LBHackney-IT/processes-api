@@ -45,7 +45,10 @@ namespace ProcessesApi.V1.Factories
                 SourceSystem = ProcessClosedEventConstants.SOURCE_SYSTEM,
                 EventData = new EventData
                 {
-                    NewData = description
+                    NewData = new Message
+                    {
+                        Description = description
+                    }
                 },
                 User = new User
                 {
