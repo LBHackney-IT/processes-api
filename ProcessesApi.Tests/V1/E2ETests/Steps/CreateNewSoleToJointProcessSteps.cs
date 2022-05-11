@@ -17,6 +17,7 @@ using ProcessesApi.Tests.V1.E2E.Fixtures;
 using Hackney.Core.Testing.Sns;
 using Hackney.Core.Sns;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
+using ProcessesApi.V1.Infrastructure.JWT;
 using ProcessesApi.V1.Factories;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
@@ -30,7 +31,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             _dbFixture = dbFixture;
         }
 
-        public async Task WhenACreateProcessRequestIsMade(CreateProcess request, string processName)
+        public async Task WhenACreateProcessRequestIsMade(CreateProcess request, ProcessName processName)
         {
             var token = TestToken.Value;
             var uri = new Uri($"api/v1/process/{processName}/", UriKind.Relative);
@@ -54,10 +55,10 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
             dbRecord.TargetId.Should().Be(request.TargetId);
             dbRecord.RelatedEntities.Should().BeEquivalentTo(request.RelatedEntities);
-            dbRecord.ProcessName.Should().Be(ProcessNamesConstants.SoleToJoint);
+            dbRecord.ProcessName.Should().Be(ProcessName.soletojoint);
 
             dbRecord.CurrentState.State.Should().Be(SoleToJointStates.SelectTenants);
-            dbRecord.CurrentState.PermittedTriggers.Should().BeEquivalentTo(new List<string>() { SoleToJointPermittedTriggers.CheckEligibility });
+            dbRecord.CurrentState.PermittedTriggers.Should().BeEquivalentTo(new List<string>() { SoleToJointPermittedTriggers.CheckAutomatedEligibility });
             // TODO: Add test for assignment when implemented
             dbRecord.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(request.FormData);
             dbRecord.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(request.Documents);
