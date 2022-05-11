@@ -103,8 +103,8 @@ namespace ProcessesApi.V1.Helpers
                 { "BR3", BR3(tenure) },
                 { "BR4", BR4(tenure) },
                 { "BR6", BR6(tenure) },
-                { "BR7", await BR7(tenure, _incomeApiGateway).ConfigureAwait(false) },
-                { "BR8", await BR8(tenure, _incomeApiGateway).ConfigureAwait(false) },
+                { "BR7", true }, // await BR7(tenure, _incomeApiGateway).ConfigureAwait(false) - Check has been temporarily moved to a Manual Eligibility Check
+                { "BR8", true }, // await BR8(tenure, _incomeApiGateway).ConfigureAwait(false) - Check has been temporarily moved to a Manual Eligibility Check
                 { "BR19", BR19(proposedTenant) },
                 { "BR9", BR9(proposedTenant, tenureId) }
             };
