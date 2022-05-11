@@ -1,5 +1,6 @@
 using Hackney.Core.JWT;
 using Hackney.Core.Sns;
+using Newtonsoft.Json;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Infrastructure.JWT;
@@ -26,6 +27,7 @@ namespace ProcessesApi.V1.Factories
                     NewData = process
                 },
                 User = new User { Name = token.Name, Email = token.Email }
+
             };
         }
 
@@ -67,7 +69,10 @@ namespace ProcessesApi.V1.Factories
                 SourceSystem = ProcessUpdatedEventConstants.SOURCE_SYSTEM,
                 EventData = new EventData
                 {
-                    NewData = description
+                    NewData = new Message
+                    {
+                        Description = description
+                    }
                 },
                 User = new User
                 {
@@ -101,5 +106,10 @@ namespace ProcessesApi.V1.Factories
                 }
             };
         }
+    }
+
+    public class Message
+    {
+        public string Description { get; set; }
     }
 }
