@@ -13,6 +13,7 @@ namespace ProcessesApi.V1.Domain
         public const string BreachChecksPassed = "BreachChecksPassed";
         public const string DocumentsRequestedAppointment = "DocumentsRequestedAppointment";
         public const string ProcessCancelled = "ProcessCancelled";
+        public const string ProcessClosed = "ProcessClosed";
     }
 
     public static class SoleToJointPermittedTriggers
@@ -23,6 +24,7 @@ namespace ProcessesApi.V1.Domain
         public const string CheckTenancyBreach = "CheckTenancyBreach";
         public const string RequestDocumentsAppointment = "RequestDocumentsAppointment";
         public const string CancelProcess = "CancelProcess";
+        public const string CloseProcess = "CloseProcess";
     }
 
     public static class SoleToJointInternalTriggers
@@ -118,10 +120,6 @@ namespace ProcessesApi.V1.Domain
         ///     Other than a NOSP, does the tenant have any live notices against the tenure, e.g. a breach of tenancy?
         /// </summary>
         public const string BR18 = "br18";
-
-
-
-
 
         #endregion
     }

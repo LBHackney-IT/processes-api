@@ -29,7 +29,7 @@ namespace ProcessesApi.V1.Factories
             };
         }
 
-        public EntityEventSns ProcessClosed(Process process, Token token, string description)
+        public EntityEventSns ProcessClosed(Process process, Token token)
         {
             return new EntityEventSns
             {
@@ -43,7 +43,7 @@ namespace ProcessesApi.V1.Factories
                 SourceSystem = ProcessClosedEventConstants.SOURCE_SYSTEM,
                 EventData = new EventData
                 {
-                    NewData = description
+                    NewData = "Process Closed"
                 },
                 User = new User
                 {
