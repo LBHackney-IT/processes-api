@@ -112,6 +112,11 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             UpdateProcessRequestObject = _fixture.Create<UpdateProcessRequestObject>();
         }
 
+        public void GivenACloseProcessRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CloseProcess);
+        }
+
         public void GivenACheckAutomatedEligibilityRequest()
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckAutomatedEligibility);

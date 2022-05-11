@@ -88,6 +88,11 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             dbRecord.RelatedEntities.Should().Contain(incomingTenantId);
         }
 
+        public async Task ThenTheProcessStateIsUpdatedToProcessClosed(UpdateProcessQuery request, string previousState)
+        {
+            await CheckProcessState(request.Id, SoleToJointStates.ProcessClosed, previousState).ConfigureAwait(false);
+        }
+
         public async Task ThenTheProcessStateIsUpdatedToAutomatedEligibilityChecksPassed(UpdateProcessQuery request)
         {
             await CheckProcessState(request.Id, SoleToJointStates.AutomatedChecksPassed, SoleToJointStates.SelectTenants).ConfigureAwait(false);
