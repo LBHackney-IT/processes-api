@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Hackney.Core.Testing.Shared.E2E;
 using Newtonsoft.Json;
+using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Boundary.Response;
 using ProcessesApi.V1.Domain;
@@ -16,7 +17,6 @@ using ProcessesApi.Tests.V1.E2E.Fixtures;
 using Hackney.Core.Testing.Sns;
 using Hackney.Core.Sns;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
-using ProcessesApi.V1.Infrastructure.JWT;
 using ProcessesApi.V1.Factories;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
@@ -30,7 +30,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             _dbFixture = dbFixture;
         }
 
-        public async Task WhenACreateProcessRequestIsMade(CreateProcess request, ProcessName processName)
+        public async Task WhenACreateProcessRequestIsMade(CreateProcess request, string processName)
         {
             var token = TestToken.Value;
             var uri = new Uri($"api/v1/process/{processName}/", UriKind.Relative);
@@ -54,10 +54,10 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
             dbRecord.TargetId.Should().Be(request.TargetId);
             dbRecord.RelatedEntities.Should().BeEquivalentTo(request.RelatedEntities);
-            dbRecord.ProcessName.Should().Be(ProcessName.soletojoint);
+            dbRecord.ProcessName.Should().Be(ProcessNamesConstants.SoleToJoint);
 
             dbRecord.CurrentState.State.Should().Be(SoleToJointStates.SelectTenants);
-            dbRecord.CurrentState.PermittedTriggers.Should().BeEquivalentTo(new List<string>() { SoleToJointPermittedTriggers.CheckAutomatedEligibility });
+            dbRecord.CurrentState.PermittedTriggers.Should().BeEquivalentTo(new List<string>() { SoleToJointPermittedTriggers.CheckEligibility });
             // TODO: Add test for assignment when implemented
             dbRecord.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(request.FormData);
             dbRecord.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(request.Documents);
@@ -89,13 +89,13 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                 actualNewData.Should().BeEquivalentTo(expected);
                 actual.EventData.OldData.Should().BeNull();
 
-                actual.EventType.Should().Be(ProcessStartedEventConstants.EVENTTYPE);
+                actual.EventType.Should().Be(ProcessEventConstants.PROCESS_STARTED_EVENT);
                 actual.Id.Should().NotBeEmpty();
-                actual.SourceDomain.Should().Be(ProcessStartedEventConstants.SOURCE_DOMAIN);
-                actual.SourceSystem.Should().Be(ProcessStartedEventConstants.SOURCE_SYSTEM);
+                actual.SourceDomain.Should().Be(ProcessEventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(ProcessEventConstants.SOURCE_SYSTEM);
                 actual.User.Email.Should().Be(TestToken.UserEmail);
                 actual.User.Name.Should().Be(TestToken.UserName);
-                actual.Version.Should().Be(ProcessStartedEventConstants.V1_VERSION);
+                actual.Version.Should().Be(ProcessEventConstants.V1_VERSION);
             };
 
             var snsVerifer = snsFixture.GetSnsEventVerifier<EntityEventSns>();

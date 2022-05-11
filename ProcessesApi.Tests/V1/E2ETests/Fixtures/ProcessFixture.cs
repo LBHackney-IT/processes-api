@@ -1,14 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.SimpleNotificationService;
 using Amazon.SimpleNotificationService.Model;
 using AutoFixture;
+using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure;
+using ProcessesApi.V1.Infrastructure.Extensions;
 
 namespace ProcessesApi.Tests.V1.E2E.Fixtures
 {
@@ -19,14 +22,10 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         private readonly IAmazonSimpleNotificationService _amazonSimpleNotificationService;
         public Process Process { get; private set; }
         public Guid ProcessId { get; private set; }
-        public ProcessName ProcessName { get; private set; }
+        public string ProcessName { get; private set; }
         public CreateProcess CreateProcessRequest { get; private set; }
         public UpdateProcessQuery UpdateProcessRequest { get; private set; }
-        public UpdateProcessRequestObject UpdateProcessRequestObject { get; private set; }
-
-        public ProcessQuery UpdateProcessByIdRequest { get; private set; }
-        public UpdateProcessByIdRequestObject UpdateProcessByIdRequestObject { get; private set; }
-
+        public UpdateProcessQueryObject UpdateProcessRequestObject { get; private set; }
         public Guid IncomingTenantId { get; private set; }
         public Guid TenantId { get; private set; }
         public List<Guid> PersonTenures { get; private set; }
@@ -56,10 +55,10 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             }
         }
 
-        private void createProcess(string state)
+        private void CreateProcess(string state)
         {
             var process = _fixture.Build<Process>()
-                        .With(x => x.ProcessName, ProcessName.soletojoint)
+                        .With(x => x.ProcessName, ProcessNamesConstants.SoleToJoint)
                         .With(x => x.CurrentState,
                                 _fixture.Build<ProcessState>()
                                         .With(x => x.State, state)
@@ -75,13 +74,15 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public async Task GivenASoleToJointProcessExists(string state)
         {
-            createProcess(state);
-            await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
+            CreateProcess(state);
+
+            await _dbContext.SaveAsync(Process.ToDatabase()).ConfigureAwait(false);
+            Process.VersionNumber = 0;
         }
 
         public void GivenASoleToJointProcessDoesNotExist()
         {
-            createProcess(SharedProcessStates.ApplicationInitialised);
+            CreateProcess(SoleToJointStates.ApplicationInitialised);
         }
 
         public void GivenANewSoleToJointProcessRequest()
@@ -89,7 +90,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             CreateProcessRequest = _fixture.Build<CreateProcess>()
                                 .Create();
             CreateSnsTopic();
-            ProcessName = ProcessName.soletojoint;
+            ProcessName = ProcessNamesConstants.SoleToJoint;
         }
 
         public void GivenANewSoleToJointProcessRequestWithValidationErrors()
@@ -98,7 +99,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                             .With(x => x.TargetId, Guid.Empty)
                             .Create();
             CreateSnsTopic();
-            ProcessName = ProcessName.soletojoint;
+            ProcessName = ProcessNamesConstants.SoleToJoint;
         }
 
         public void GivenAnUpdateSoleToJointProcessRequest(string trigger)
@@ -109,20 +110,14 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                 ProcessName = Process.ProcessName,
                 ProcessTrigger = trigger
             };
-            UpdateProcessRequestObject = _fixture.Create<UpdateProcessRequestObject>();
+            UpdateProcessRequestObject = _fixture.Create<UpdateProcessQueryObject>();
         }
 
-        public void GivenACheckAutomatedEligibilityRequest()
+        public void GivenACheckEligibilityRequest()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckAutomatedEligibility);
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckEligibility);
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.IncomingTenantId, IncomingTenantId);
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.TenantId, TenantId);
-        }
-
-        public void GivenACheckAutomatedEligibilityRequestWithMissingData()
-        {
-            GivenACheckAutomatedEligibilityRequest();
-            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.IncomingTenantId);
         }
 
         public void GivenACheckManualEligibilityRequest(bool isEligible)
@@ -136,25 +131,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                 { SoleToJointFormDataKeys.BR13, "false" },
                 { SoleToJointFormDataKeys.BR15, "false" },
                 { SoleToJointFormDataKeys.BR16, "false" },
-                { SoleToJointFormDataKeys.BR7, "false"},
-                { SoleToJointFormDataKeys.BR8, "false"}
             };
-        }
-
-        public void GivenAFailingCheckManualEligibilityRequest()
-        {
-            GivenACheckManualEligibilityRequest(false);
-        }
-
-        public void GivenAPassingCheckManualEligibilityRequest()
-        {
-            GivenACheckManualEligibilityRequest(true);
-        }
-
-        public void GivenACheckManualEligibilityRequestWithMissingData()
-        {
-            GivenACheckManualEligibilityRequest(true);
-            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.BR11);
         }
 
         public void GivenATenancyBreachCheckRequest(bool isEligible)
@@ -170,6 +147,40 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             };
         }
 
+        public void GivenARequestDocumentsDesRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RequestDocumentsDes);
+        }
+
+        public void GivenARequestDocumentsAppointmentRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RequestDocumentsAppointment);
+
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+        }
+
+        public async Task GivenARescheduleDocumentsAppointmentRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment);
+
+            Process.CurrentState.ProcessData.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+
+            await _dbContext.SaveAsync(Process.ToDatabase()).ConfigureAwait(false);
+            Process.VersionNumber++;
+
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.AddDays(1).ToIsoString());
+        }
+
+        public void GivenAFailingCheckManualEligibilityRequest()
+        {
+            GivenACheckManualEligibilityRequest(false);
+        }
+
+        public void GivenAPassingCheckManualEligibilityRequest()
+        {
+            GivenACheckManualEligibilityRequest(true);
+        }
+
         public void GivenAFailingCheckBreachEligibilityRequest()
         {
             GivenATenancyBreachCheckRequest(false);
@@ -180,43 +191,10 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             GivenATenancyBreachCheckRequest(true);
         }
 
-        public void GivenACheckBreachEligibilityRequestWithMissingData()
-        {
-            GivenATenancyBreachCheckRequest(true);
-            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.BR5);
-        }
-
-
-        public void GivenARequestDocumentsAppointmentRequest()
-        {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RequestDocumentsAppointment);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, _fixture.Create<DateTime>());
-        }
-
-        public void GivenARequestDocumentsAppointmentRequestWithMissingData()
-        {
-            GivenARequestDocumentsAppointmentRequest();
-            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.AppointmentDateTime);
-        }
-
         public void GivenAnUpdateSoleToJointProcessRequestWithValidationErrors()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckAutomatedEligibility);
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckEligibility);
             UpdateProcessRequestObject.Documents.Add(Guid.Empty);
-        }
-
-        public void GivenAnUpdateProcessByIdRequestWithValidationErrors()
-        {
-            GivenAnUpdateProcessByIdRequest(ProcessId);
-            UpdateProcessByIdRequestObject.ProcessData.Documents.Add(Guid.Empty);
-        }
-        public void GivenAnUpdateProcessByIdRequest(Guid id)
-        {
-            UpdateProcessByIdRequest = _fixture.Build<ProcessQuery>()
-                                           .With(x => x.ProcessName, ProcessName.soletojoint)
-                                           .With(x => x.Id, id)
-                                           .Create();
-            UpdateProcessByIdRequestObject = _fixture.Create<UpdateProcessByIdRequestObject>();
         }
 
         private void CreateSnsTopic()
