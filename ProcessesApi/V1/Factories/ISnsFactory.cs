@@ -10,8 +10,7 @@ namespace ProcessesApi.V1.Factories
     {
         EntityEventSns ProcessStarted(Process process, Token token);
 
-		EntityEventSns ProcessClosed(Process process, Token token, string description);
-        EntityEventSns Create(Process process, Token token, string eventType, object newData, object oldData = null);
+        EntityEventSns ProcessClosed(Process process, Token token, string description);
         EntityEventSns ProcessUpdatedWithMessage(Process process, Token token, string description);
         EntityEventSns ProcessUpdated(Guid id, UpdateEntityResult<ProcessState> updateResult, Token token);
     }

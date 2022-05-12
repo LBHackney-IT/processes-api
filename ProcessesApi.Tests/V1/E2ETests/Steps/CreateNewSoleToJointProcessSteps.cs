@@ -90,13 +90,13 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                 actualNewData.Should().BeEquivalentTo(expected);
                 actual.EventData.OldData.Should().BeNull();
 
-                actual.EventType.Should().Be(ProcessEventConstants.PROCESS_STARTED_EVENT);
+                actual.EventType.Should().Be(ProcessStartedEventConstants.EVENTTYPE);
                 actual.Id.Should().NotBeEmpty();
-                actual.SourceDomain.Should().Be(ProcessEventConstants.SOURCE_DOMAIN);
-                actual.SourceSystem.Should().Be(ProcessEventConstants.SOURCE_SYSTEM);
+                actual.SourceDomain.Should().Be(ProcessStartedEventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(ProcessStartedEventConstants.SOURCE_SYSTEM);
                 actual.User.Email.Should().Be(TestToken.UserEmail);
                 actual.User.Name.Should().Be(TestToken.UserName);
-                actual.Version.Should().Be(ProcessEventConstants.V1_VERSION);
+                actual.Version.Should().Be(ProcessStartedEventConstants.V1_VERSION);
             };
 
             var snsVerifer = snsFixture.GetSnsEventVerifier<EntityEventSns>();

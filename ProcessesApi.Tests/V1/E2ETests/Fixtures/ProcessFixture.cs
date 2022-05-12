@@ -80,8 +80,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
             await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
             Process.VersionNumber = 0;
-			//ToDo
-			
+
         }
 
         public void GivenASoleToJointProcessDoesNotExist()
@@ -200,16 +199,6 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.AddDays(1).ToIsoString());
         }
 
-        public void GivenAFailingCheckManualEligibilityRequest()
-        {
-            GivenACheckManualEligibilityRequest(false);
-        }
-
-        public void GivenAPassingCheckManualEligibilityRequest()
-        {
-            GivenACheckManualEligibilityRequest(true);
-        }
-
         public void GivenAFailingCheckBreachEligibilityRequest()
         {
             GivenATenancyBreachCheckRequest(false);
@@ -226,13 +215,6 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.BR5);
         }
 
-
-        public void GivenARequestDocumentsAppointmentRequest()
-        {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RequestDocumentsAppointment);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, _fixture.Create<DateTime>());
-        }
-
         public void GivenARequestDocumentsAppointmentRequestWithMissingData()
         {
             GivenARequestDocumentsAppointmentRequest();
@@ -242,7 +224,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckAutomatedEligibility);
             UpdateProcessRequestObject.Documents.Add(Guid.Empty);
-       }
+        }
 
         public void GivenAnUpdateProcessByIdRequestWithValidationErrors()
         {
@@ -256,7 +238,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                                            .With(x => x.Id, id)
                                            .Create();
             UpdateProcessByIdRequestObject = _fixture.Create<UpdateProcessByIdRequestObject>();
-     
+
         }
 
         private void CreateSnsTopic()

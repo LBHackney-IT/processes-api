@@ -4,7 +4,6 @@ using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Infrastructure.JWT;
 using System;
-using ProcessesApi.V1.Infrastructure;
 
 namespace ProcessesApi.V1.Factories
 {
@@ -44,7 +43,7 @@ namespace ProcessesApi.V1.Factories
                 SourceSystem = ProcessClosedEventConstants.SOURCE_SYSTEM,
                 EventData = new EventData
                 {
-					NewData = new Message
+                    NewData = new Message
                     {
                         Description = description
                     }
@@ -71,7 +70,7 @@ namespace ProcessesApi.V1.Factories
                 SourceSystem = ProcessUpdatedEventConstants.SOURCE_SYSTEM,
                 EventData = new EventData
                 {
-				NewData = new Message
+                    NewData = new Message
                     {
                         Description = description
                     }
@@ -108,34 +107,10 @@ namespace ProcessesApi.V1.Factories
                 }
             };
         }
-		
-        public EntityEventSns Create(Process process, Token token, string eventType, object newData, object oldData = null)
-        {
-            return new EntityEventSns
-            {
-                CorrelationId = Guid.NewGuid(),
-                DateTime = DateTime.UtcNow,
-                EntityId = process.Id,
-                Id = Guid.NewGuid(),
-                EventType = eventType,
-                Version = ProcessEventConstants.V1_VERSION,
-                SourceDomain = ProcessEventConstants.SOURCE_DOMAIN,
-                SourceSystem = ProcessEventConstants.SOURCE_SYSTEM,
-                EventData = new EventData
-                {
-                    NewData = newData,
-                    OldData = oldData
-                },
-                User = new User
-                {
-                    Name = token.Name,
-                    Email = token.Email
-                }
-            };
-        }
+
     }
-	
-	public class Message
+
+    public class Message
     {
         public string Description { get; set; }
     }

@@ -113,6 +113,8 @@ namespace ProcessesApi.V1.Services
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
 
+
+
         public async Task Process(UpdateProcessState processRequest, Process process, Token token)
         {
             _process = process;

@@ -21,7 +21,7 @@ namespace ProcessesApi.V1.Domain
 
     public static class SoleToJointPermittedTriggers
     {
-		public const string CheckAutomatedEligibility = "CheckAutomatedEligibility";
+        public const string CheckAutomatedEligibility = "CheckAutomatedEligibility";
         public const string CancelProcess = "CancelProcess";
         public const string CheckManualEligibility = "CheckManualEligibility";
         public const string RequestDocuments = "RequestDocuments";
@@ -58,7 +58,7 @@ namespace ProcessesApi.V1.Domain
         ///     The ID of the current tenant
         /// </summary>
         public const string TenantId = "tenantId";
- 
+
         #endregion
 
         #region Manual eligibility checks

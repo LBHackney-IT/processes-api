@@ -127,18 +127,6 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .Then(t => _steps.ThenBadRequestIsReturned())
                 .BDDfy();
         }
-		
-        [Theory]
-        [InlineData(109084)]
-        [InlineData(null)]
-        public void UpdateProcessReturnsConflictExceptionWhenTheIncorrectVersionNumberIsInIfMatchHeader(int? ifMatch)
-        {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.ApplicationInitialised))
-                    .And(a => _processFixture.GivenACheckAutomatedEligibilityRequest())
-                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, ifMatch))
-                .Then(t => _steps.ThenVersionConflictExceptionIsReturned(ifMatch))
-                .BDDfy();
-        }
 
         [Fact]
         public void ProcessStateIsUpdatedToAutomatedEligibilityChecksPassed()
@@ -250,7 +238,10 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .Then(t => _steps.ThenBadRequestIsReturned())
                 .BDDfy();
         }
-		
+        #endregion
+
+        #region Documents Requested Des
+
         [Fact]
         public void ProcessStateIsUpdatedToDocumentsRequestedDes()
         {
@@ -263,6 +254,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         }
 
         #endregion
+
+        #region Documents Requested Appointment
 
         [Fact]
         public void ProcessStateIsUpdatedToDocumentsRequestedAppointment()
@@ -285,7 +278,10 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .Then(t => _steps.ThenBadRequestIsReturned())
                 .BDDfy();
         }
-		
+        #endregion
+
+        #region Document Appointment Reschedule
+
         [Fact]
         public void ProcessStateIsUpdatedToDocumentsAppointmentRescheduled()
         {
@@ -293,7 +289,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                     .And(a => _processFixture.GivenARescheduleDocumentsAppointmentRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, _processFixture.Process.VersionNumber))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
-                    .And(a => _steps.ThenTheAppointmentRescheduledEventIsRaised(_snsFixture, _processFixture.ProcessId))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToDocumentsAppointmentRescheduled(_processFixture.UpdateProcessRequest))
                 .BDDfy();
         }
@@ -305,9 +301,10 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                     .And(a => _processFixture.GivenARescheduleDocumentsAppointmentRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, _processFixture.Process.VersionNumber))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
-                    .And(a => _steps.ThenTheAppointmentRescheduledEventIsRaised(_snsFixture, _processFixture.ProcessId))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId))
                     .And(a => _steps.ThenTheProcessStateRemainsDocumentsAppointmentRescheduled(_processFixture.UpdateProcessRequest))
                 .BDDfy();
         }
+        #endregion
     }
 }
