@@ -151,10 +151,14 @@ namespace ProcessesApi.Tests.V1.Services
         {
             // Arrange
             var process = CreateProcessWithCurrentState(fromState);
+            var formData = new Dictionary<string, object>()
+        {
+                { SoleToJointFormDataKeys.HasNotifiedResident, true }
+            };
 
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.CloseProcess,
-                                                     new Dictionary<string, object>());
+                                                     formData);
 
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);

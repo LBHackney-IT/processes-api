@@ -65,9 +65,6 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             dbRecord.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
 
             dbRecord.PreviousStates.Should().BeEmpty();
-
-            // Cleanup
-            await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
         }
 
         public async Task ThenProcessStartedEventIsRaised(ProcessFixture processFixture, ISnsFixture snsFixture)
@@ -98,10 +95,14 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                 actual.Version.Should().Be(ProcessStartedEventConstants.V1_VERSION);
             };
 
-            var snsVerifer = snsFixture.GetSnsEventVerifier<EntityEventSns>();
-            var snsResult = await snsVerifer.VerifySnsEventRaised(verifyFunc);
-            if (!snsResult && snsVerifer.LastException != null)
-                throw snsVerifer.LastException;
+            var snsVerifier = snsFixture.GetSnsEventVerifier<EntityEventSns>();
+            var snsResult = await snsVerifier.VerifySnsEventRaised(verifyFunc);
+
+            if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
+            await snsVerifier.PurgeQueueMessages().ConfigureAwait(false);
+
+            // Cleanup
+            await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
         }
 
         public void ThenBadRequestIsReturned()

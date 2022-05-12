@@ -88,7 +88,6 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             CreateProcessRequest = _fixture.Build<CreateProcess>()
                                 .Create();
-            CreateSnsTopic();
             ProcessName = ProcessName.soletojoint;
         }
 
@@ -97,7 +96,6 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             CreateProcessRequest = _fixture.Build<CreateProcess>()
                             .With(x => x.TargetId, Guid.Empty)
                             .Create();
-            CreateSnsTopic();
             ProcessName = ProcessName.soletojoint;
         }
 
@@ -115,6 +113,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public void GivenACloseProcessRequest()
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CloseProcess);
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.HasNotifiedResident, true);
         }
 
         public void GivenACheckAutomatedEligibilityRequest()
@@ -222,21 +221,6 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                                            .With(x => x.Id, id)
                                            .Create();
             UpdateProcessByIdRequestObject = _fixture.Create<UpdateProcessByIdRequestObject>();
-        }
-
-        private void CreateSnsTopic()
-        {
-            var snsAttrs = new Dictionary<string, string>();
-            snsAttrs.Add("fifo_topic", "true");
-            snsAttrs.Add("content_based_deduplication", "true");
-
-            var response = _amazonSimpleNotificationService.CreateTopicAsync(new CreateTopicRequest
-            {
-                Name = "processes",
-                Attributes = snsAttrs
-            }).Result;
-
-            Environment.SetEnvironmentVariable("PROCESS_SNS_ARN", response.TopicArn);
         }
     }
 }

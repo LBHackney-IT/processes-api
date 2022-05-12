@@ -99,7 +99,7 @@ namespace ProcessesApi.V1.Services
 
             if (Boolean.TryParse(hasNotifiedResidentString.ToString(), out bool hasNotifiedResident))
             {
-                if(!hasNotifiedResident) throw new FormDataInvalidException("Housing Officer must notify the resident before closing this process.");
+                if (!hasNotifiedResident) throw new FormDataInvalidException("Housing Officer must notify the resident before closing this process.");
                 await PublishProcessClosedEvent().ConfigureAwait(false);
             }
             else

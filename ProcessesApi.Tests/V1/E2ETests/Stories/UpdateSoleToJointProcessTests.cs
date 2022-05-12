@@ -49,11 +49,11 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         {
             if (disposing && !_disposed)
             {
-                if (_processFixture != null) _processFixture.Dispose();
-                if (_personFixture != null) _personFixture.Dispose();
-                if (_tenureFixture != null) _tenureFixture.Dispose();
-                if (_agreementsApiFixture != null) _agreementsApiFixture.Dispose();
-                if (_tenanciesApiFixture != null) _tenanciesApiFixture.Dispose();
+                _processFixture?.Dispose();
+                _personFixture?.Dispose();
+                _tenureFixture?.Dispose();
+                _agreementsApiFixture?.Dispose();
+                _tenanciesApiFixture?.Dispose();
 
                 _disposed = true;
             }

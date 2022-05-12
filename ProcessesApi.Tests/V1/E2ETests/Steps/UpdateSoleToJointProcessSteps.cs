@@ -13,9 +13,9 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Hackney.Core.Sns;
-using Hackney.Core.Testing.Sns;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
 using ProcessesApi.V1.Infrastructure.JWT;
+using Hackney.Core.Testing.Sns;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {
@@ -153,6 +153,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             var snsResult = await snsVerifier.VerifySnsEventRaised(verifyFunc);
 
             if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
+            await snsVerifier.PurgeQueueMessages().ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessUpdatedEventIsRaised(ISnsFixture snsFixture, Guid processId)
@@ -180,6 +181,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             var snsResult = await snsVerifier.VerifySnsEventRaised(verifyFunc);
 
             if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
+            await snsVerifier.PurgeQueueMessages().ConfigureAwait(false);
         }
 
         private async Task CheckProcessState(Guid processId, string currentState, string previousState)

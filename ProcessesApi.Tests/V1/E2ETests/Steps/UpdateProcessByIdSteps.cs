@@ -78,6 +78,7 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
             var snsResult = await snsVerifier.VerifySnsEventRaised(verifyFunc);
 
             if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
+            await snsVerifier.PurgeQueueMessages().ConfigureAwait(false);
         }
 
         public void ThenNotFoundIsReturned()

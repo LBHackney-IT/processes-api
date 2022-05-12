@@ -42,7 +42,7 @@ namespace ProcessesApi.V1.Domain
     public static class SoleToJointFormDataKeys
     {
         public const string HasNotifiedResident = "hasNotifiedResident";
-        
+
         #region Automated eligibility checks
 
         /// <summary>

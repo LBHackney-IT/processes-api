@@ -59,12 +59,9 @@ namespace ProcessesApi.Tests
         {
             if (disposing && !_disposed)
             {
-                if (null != DynamoDbFixture)
-                    DynamoDbFixture.Dispose();
-                if (null != SnsFixture)
-                    SnsFixture.Dispose();
-                if (null != Client)
-                    Client.Dispose();
+                DynamoDbFixture?.Dispose();
+                SnsFixture?.Dispose();
+                Client?.Dispose();
                 _disposed = true;
             }
         }
@@ -93,7 +90,7 @@ namespace ProcessesApi.Tests
                 DynamoDbFixture.EnsureTablesExist(_tables);
 
                 SnsFixture = serviceProvider.GetRequiredService<ISnsFixture>();
-                SnsFixture.CreateSnsTopic<EntityEventSns>("processes", "PROCESS_SNS_ARN");
+                SnsFixture.CreateSnsTopic<EntityEventSns>("processes.fifo", "PROCESS_SNS_ARN");
             });
         }
     }
