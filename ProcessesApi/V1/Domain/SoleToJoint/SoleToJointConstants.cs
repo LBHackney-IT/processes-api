@@ -4,7 +4,6 @@ namespace ProcessesApi.V1.Domain
 {
     public static class SoleToJointStates
     {
-        public const string ApplicationInitialised = "ApplicationInitialised";
         public const string SelectTenants = "SelectTenants";
         public const string AutomatedChecksFailed = "AutomatedChecksFailed";
         public const string AutomatedChecksPassed = "AutomatedChecksPassed";
