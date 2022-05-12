@@ -41,8 +41,8 @@ namespace ProcessesApi.V1.Domain
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     public static class SoleToJointFormDataKeys
     {
-        public const string AppointmentDateTime = "appointmentDateTime";
-
+        public const string HasNotifiedResident = "hasNotifiedResident";
+        
         #region Automated eligibility checks
 
         /// <summary>
@@ -122,5 +122,7 @@ namespace ProcessesApi.V1.Domain
         public const string BR18 = "br18";
 
         #endregion
+
+        public const string AppointmentDateTime = "appointmentDateTime";
     }
 }

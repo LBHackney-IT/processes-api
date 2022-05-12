@@ -92,6 +92,22 @@ namespace ProcessesApi.V1.Services
             await PublishProcessUpdatedEvent("Automatic eligibility check failed.");
         }
 
+        private async Task OnProcessClosed(UpdateProcessState processRequest)
+        {
+            SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.HasNotifiedResident });
+            var hasNotifiedResidentString = processRequest.FormData[SoleToJointFormDataKeys.HasNotifiedResident];
+
+            if (Boolean.TryParse(hasNotifiedResidentString.ToString(), out bool hasNotifiedResident))
+            {
+                if(!hasNotifiedResident) throw new FormDataInvalidException("Housing Officer must notify the resident before closing this process.");
+                await PublishProcessClosedEvent().ConfigureAwait(false);
+            }
+            else
+            {
+                throw new FormDataFormatException("boolean", hasNotifiedResidentString);
+            }
+        }
+
         private async Task OnManualCheckFailed(UpdateProcessState processRequest)
         {
             await PublishProcessUpdatedEvent("Manual Eligibility Check failed.");
@@ -155,7 +171,7 @@ namespace ProcessesApi.V1.Services
         protected override void SetUpStateActions()
         {
             ConfigureAsync(SoleToJointStates.SelectTenants, Assignment.Create("tenants"), (x) => PublishProcessStartedEvent());
-            ConfigureAsync(SoleToJointStates.ProcessClosed, Assignment.Create("tenants"), (x) => PublishProcessClosedEvent());
+            ConfigureAsync(SoleToJointStates.ProcessClosed, Assignment.Create("tenants"), OnProcessClosed);
 
             ConfigureAsync(SoleToJointStates.AutomatedChecksFailed, Assignment.Create("tenants"), OnAutomatedCheckFailed);
             Configure(SoleToJointStates.AutomatedChecksPassed, Assignment.Create("tenants"), AddIncomingTenantId);

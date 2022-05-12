@@ -108,7 +108,7 @@ namespace ProcessesApi.V1.Services
         protected async Task PublishProcessClosedEvent()
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = _snsFactory.ProcessClosed(_process, _token);
+            var processSnsMessage = _snsFactory.ProcessClosed(_process, _token, "Process Closed. The resident has been notified.");
 
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
