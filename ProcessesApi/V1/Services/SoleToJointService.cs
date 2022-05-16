@@ -132,7 +132,7 @@ namespace ProcessesApi.V1.Services
             var oldAppointmentDateTime = GetAppointmentDateTime(_process.CurrentState.ProcessData.FormData);
             var newAppointmentDateTime = GetAppointmentDateTime(processRequest.FormData);
 
-            await PublishProcessUpdatedEventWithRescheduledAppointment(oldAppointmentDateTime.ToString("dd/MM/yyyy hh:mm tt"),newAppointmentDateTime.ToString("dd/MM/yyyy hh:mm tt"));
+            await PublishProcessUpdatedEventWithRescheduledAppointment(oldAppointmentDateTime.ToString("dd/MM/yyyy hh:mm tt"), newAppointmentDateTime.ToString("dd/MM/yyyy hh:mm tt"));
         }
 
 

@@ -108,7 +108,7 @@ namespace ProcessesApi.V1.Services
         protected async Task PublishProcessUpdatedEventWithRescheduledAppointment(string oldAppointmentTime, string newAppointmentTime)
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = _snsFactory.ProcessUpdatedWithAppointmentRescheduled(_process, _token, oldAppointmentTime,newAppointmentTime);
+            var processSnsMessage = _snsFactory.ProcessUpdatedWithAppointmentRescheduled(_process, _token, oldAppointmentTime, newAppointmentTime);
 
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
