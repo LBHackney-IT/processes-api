@@ -179,7 +179,6 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             var snsVerifier = snsFixture.GetSnsEventVerifier<EntityEventSns>();
             var snsResult = await snsVerifier.VerifySnsEventRaised(verifyFunc);
 
-            // Console.WriteLine($"Number of SQS messages: {snsVerifier.NumberOfMessages}");
             if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
         }
 
@@ -189,6 +188,9 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
             dbRecord.CurrentState.State.Should().Be(currentState);
             dbRecord.PreviousStates.Last().State.Should().Be(previousState);
+
+            // Cleanup
+            await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(processId).ConfigureAwait(false);
         }
     }
 }

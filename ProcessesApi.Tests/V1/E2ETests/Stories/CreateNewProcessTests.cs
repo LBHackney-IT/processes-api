@@ -51,8 +51,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         {
             this.Given(g => _processFixture.GivenANewSoleToJointProcessRequest())
                 .When(w => _steps.WhenACreateProcessRequestIsMade(_processFixture.CreateProcessRequest, _processFixture.ProcessName))
-                .Then(t => _steps.ThenTheProcessIsCreated(_processFixture.CreateProcessRequest))
-                    .And(t => _steps.ThenProcessStartedEventIsRaised(_processFixture, _snsFixture))
+                .Then(t => _steps.ThenProcessStartedEventIsRaised(_processFixture, _snsFixture))
+                    .And(t => _steps.ThenTheProcessIsCreated(_processFixture.CreateProcessRequest))
                 .BDDfy();
         }
 

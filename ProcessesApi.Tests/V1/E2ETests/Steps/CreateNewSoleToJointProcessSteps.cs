@@ -65,6 +65,9 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             dbRecord.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
 
             dbRecord.PreviousStates.Should().BeEmpty();
+
+            // Cleanup
+            await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
         }
 
         public async Task ThenProcessStartedEventIsRaised(ProcessFixture processFixture, ISnsFixture snsFixture)
