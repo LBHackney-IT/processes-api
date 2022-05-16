@@ -210,7 +210,7 @@ custom:
       safeguard: require-authorizer
       path: ./policies
   associateWaf:
-    name: ProcessApiWafAcl
+    name: Platform_APIs_Web_ACL
     version: V2
   hostname:
     Fn::Join:
