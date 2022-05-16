@@ -41,7 +41,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
             {
                 _processFixture?.Dispose();
                 _snsFixture?.PurgeAllQueueMessages();
-                
+
                 _disposed = true;
             }
         }

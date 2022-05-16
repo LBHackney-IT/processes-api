@@ -83,8 +83,9 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
                 var expected = dbRecord.ToDomain();
                 var actualNewData = JsonConvert.DeserializeObject<Process>(actual.EventData.NewData.ToString());
-                actualNewData.Should().BeEquivalentTo(expected);
-                
+                actualNewData.Should().BeEquivalentTo(expected, c => c.Excluding(x => x.CurrentState)
+                                                                      .Excluding(x => x.VersionNumber));
+
                 actual.EventData.OldData.Should().BeNull();
 
                 actual.EventType.Should().Be(ProcessStartedEventConstants.EVENTTYPE);
