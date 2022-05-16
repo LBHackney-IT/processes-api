@@ -12,6 +12,7 @@ namespace ProcessesApi.V1.Factories
 
         EntityEventSns ProcessClosed(Process process, Token token, string description);
         EntityEventSns ProcessUpdatedWithMessage(Process process, Token token, string description);
+        EntityEventSns ProcessUpdatedWithAppointmentRescheduled(Process process, Token token, string oldAppointmentTime, string newAppointmentTime);
         EntityEventSns ProcessUpdated(Guid id, UpdateEntityResult<ProcessState> updateResult, Token token);
     }
 }

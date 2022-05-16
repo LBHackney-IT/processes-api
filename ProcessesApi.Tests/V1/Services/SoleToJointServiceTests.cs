@@ -716,6 +716,7 @@ namespace ProcessesApi.Tests.V1.Services
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
 
             _lastSnsEvent.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
+            _lastSnsEvent.EventData.OldData.Should().BeOfType<Message>();
             _lastSnsEvent.EventData.NewData.Should().BeOfType<Message>();
 
         }

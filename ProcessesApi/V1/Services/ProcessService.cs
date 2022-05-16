@@ -105,6 +105,14 @@ namespace ProcessesApi.V1.Services
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
 
+        protected async Task PublishProcessUpdatedEventWithRescheduledAppointment(string oldAppointmentTime, string newAppointmentTime)
+        {
+            var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
+            var processSnsMessage = _snsFactory.ProcessUpdatedWithAppointmentRescheduled(_process, _token, oldAppointmentTime,newAppointmentTime);
+
+            await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
+        }
+
         protected async Task PublishProcessClosedEvent(string description)
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
