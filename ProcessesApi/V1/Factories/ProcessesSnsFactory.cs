@@ -1,5 +1,6 @@
 using Hackney.Core.JWT;
 using Hackney.Core.Sns;
+using Newtonsoft.Json;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Infrastructure.JWT;
@@ -26,6 +27,7 @@ namespace ProcessesApi.V1.Factories
                     NewData = process
                 },
                 User = new User { Name = token.Name, Email = token.Email }
+
             };
         }
 
