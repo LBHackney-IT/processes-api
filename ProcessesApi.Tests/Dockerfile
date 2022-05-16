@@ -36,6 +36,8 @@ RUN dotnet restore ./ProcessesApi.Tests/ProcessesApi.Tests.csproj
 # Copy everything else and build
 COPY . .
 
+RUN dotnet build -c Release -o out ProcessesApi/ProcessesApi.csproj
 RUN dotnet build -c debug -o out ProcessesApi.Tests/ProcessesApi.Tests.csproj
 
 CMD dotnet test
+RUN dotnet sonarscanner end /d:sonar.login="${SONAR_TOKEN}"

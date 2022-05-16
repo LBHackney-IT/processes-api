@@ -28,7 +28,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             _dbFixture = dbFixture;
         }
 
-        public async Task WhenAnUpdateProcessRequestIsMade(UpdateProcessQuery request, UpdateProcessQueryObject requestBody, int? ifMatch)
+        public async Task WhenAnUpdateProcessRequestIsMade(UpdateProcessQuery request, UpdateProcessRequestObject requestBody, int? ifMatch)
         {
             var token = TestToken.Value;
             var uri = new Uri($"api/v1/process/{request.ProcessName}/{request.Id}/{request.ProcessTrigger}", UriKind.Relative);
@@ -70,7 +70,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             _lastResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         }
 
-        public async Task ThenTheProcessDataIsUpdated(UpdateProcessQuery request, UpdateProcessQueryObject requestBody)
+        public async Task ThenTheProcessDataIsUpdated(UpdateProcessQuery request, UpdateProcessRequestObject requestBody)
         {
             _lastResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
@@ -80,7 +80,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             dbRecord.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(requestBody.Documents);
         }
 
-        public async Task ThenTheIncomingTenantIdIsAddedToRelatedEntities(UpdateProcessQuery request, UpdateProcessQueryObject requestBody)
+        public async Task ThenTheIncomingTenantIdIsAddedToRelatedEntities(UpdateProcessQuery request, UpdateProcessRequestObject requestBody)
         {
             var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
 
@@ -88,12 +88,12 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             dbRecord.RelatedEntities.Should().Contain(incomingTenantId);
         }
 
-        public async Task ThenTheProcessStateIsUpdatedToEligibilityChecksPassed(UpdateProcessQuery request)
+        public async Task ThenTheProcessStateIsUpdatedToAutomatedEligibilityChecksPassed(UpdateProcessQuery request)
         {
             await CheckProcessState(request.Id, SoleToJointStates.AutomatedChecksPassed, SoleToJointStates.SelectTenants).ConfigureAwait(false);
         }
 
-        public async Task ThenTheProcessStateIsUpdatedToEligibilityChecksFailed(UpdateProcessQuery request)
+        public async Task ThenTheProcessStateIsUpdatedToAutomatedEligibilityChecksFailed(UpdateProcessQuery request)
         {
             await CheckProcessState(request.Id, SoleToJointStates.AutomatedChecksFailed, SoleToJointStates.SelectTenants).ConfigureAwait(false);
         }
@@ -118,6 +118,11 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             await CheckProcessState(request.Id, SoleToJointStates.BreachChecksFailed, SoleToJointStates.ManualChecksPassed).ConfigureAwait(false);
         }
 
+        public async Task ThenTheProcessStateIsUpdatedToDocumentsRequestedAppointment(UpdateProcessQuery request)
+        {
+            await CheckProcessState(request.Id, SoleToJointStates.DocumentsRequestedAppointment, SoleToJointStates.BreachChecksPassed).ConfigureAwait(false);
+        }
+
         public async Task ThenTheProcessClosedEventIsRaised(ISnsFixture snsFixture, Guid processId)
         {
             Action<EntityEventSns> verifyFunc = actual =>
@@ -134,6 +139,33 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                 actual.SourceDomain.Should().Be(ProcessClosedEventConstants.SOURCE_DOMAIN);
                 actual.SourceSystem.Should().Be(ProcessClosedEventConstants.SOURCE_SYSTEM);
                 actual.Version.Should().Be(ProcessClosedEventConstants.V1_VERSION);
+
+                actual.User.Email.Should().Be(TestToken.UserEmail);
+                actual.User.Name.Should().Be(TestToken.UserName);
+            };
+
+            var snsVerifier = snsFixture.GetSnsEventVerifier<EntityEventSns>();
+            var snsResult = await snsVerifier.VerifySnsEventRaised(verifyFunc);
+
+            if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
+        }
+
+        public async Task ThenTheProcessUpdatedEventIsRaised(ISnsFixture snsFixture, Guid processId)
+        {
+            Action<EntityEventSns> verifyFunc = actual =>
+            {
+                actual.Id.Should().NotBeEmpty();
+                actual.CorrelationId.Should().NotBeEmpty();
+                actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
+                actual.EntityId.Should().Be(processId);
+
+                actual.EventData.NewData.Should().NotBeNull();
+                actual.EventData.OldData.Should().BeNull();
+
+                actual.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
+                actual.SourceDomain.Should().Be(ProcessUpdatedEventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(ProcessUpdatedEventConstants.SOURCE_SYSTEM);
+                actual.Version.Should().Be(ProcessUpdatedEventConstants.V1_VERSION);
 
                 actual.User.Email.Should().Be(TestToken.UserEmail);
                 actual.User.Name.Should().Be(TestToken.UserName);

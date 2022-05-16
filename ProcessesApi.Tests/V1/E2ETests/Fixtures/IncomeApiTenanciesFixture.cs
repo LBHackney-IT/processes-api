@@ -1,6 +1,6 @@
 using AutoFixture;
 using Hackney.Core.Testing.Shared.E2E;
-using ProcessesApi.V1.Domain.Finance;
+using ProcessesApi.V1.Domain.SoleToJoint;
 using System;
 
 namespace ProcessesApi.Tests.V1.E2E.Fixtures
@@ -30,7 +30,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             ResponseObject = _fixture.Build<Tenancy>()
                             .With(x => x.TenancyRef, tenancyRef)
-                            .With(x => x.nosp, new NoticeOfSeekingPossession { active = false })
+                            .With(x => x.NOSP, new NoticeOfSeekingPossession { Active = false })
                             .Create();
             return ResponseObject;
         }
@@ -39,7 +39,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             ResponseObject = _fixture.Build<Tenancy>()
                             .With(x => x.TenancyRef, tenancyRef)
-                            .With(x => x.nosp, new NoticeOfSeekingPossession { active = true })
+                            .With(x => x.NOSP, new NoticeOfSeekingPossession { Active = true })
                             .Create();
             return ResponseObject;
         }

@@ -1,10 +1,13 @@
 using Amazon.DynamoDBv2.DataModel;
 using Hackney.Core.Logging;
 using Microsoft.Extensions.Logging;
+using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure;
+using ProcessesApi.V1.UseCase.Exceptions;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.Gateways
@@ -12,12 +15,15 @@ namespace ProcessesApi.V1.Gateways
     public class ProcessesGateway : IProcessesGateway
     {
         private readonly IDynamoDBContext _dynamoDbContext;
+        private readonly IEntityUpdater _updater;
         private readonly ILogger<ProcessesGateway> _logger;
 
 
-        public ProcessesGateway(IDynamoDBContext dynamoDbContext, ILogger<ProcessesGateway> logger)
+
+        public ProcessesGateway(IDynamoDBContext dynamoDbContext, IEntityUpdater updater, ILogger<ProcessesGateway> logger)
         {
             _dynamoDbContext = dynamoDbContext;
+            _updater = updater;
             _logger = logger;
         }
 
@@ -39,6 +45,30 @@ namespace ProcessesApi.V1.Gateways
             await _dynamoDbContext.SaveAsync(processDbEntity).ConfigureAwait(false);
             return processDbEntity.ToDomain();
         }
+
+        [LogCall]
+        public async Task<UpdateEntityResult<ProcessState>> UpdateProcessById(ProcessQuery query, UpdateProcessByIdRequestObject requestObject, string requestBody, int? ifMatch)
+        {
+            _logger.LogDebug($"Calling IDynamoDBContext.LoadAsync for ID: {query.Id}");
+
+            var currentProcess = await _dynamoDbContext.LoadAsync<ProcessesDb>(query.Id).ConfigureAwait(false);
+            if (currentProcess == null) return null;
+
+
+            if (ifMatch != currentProcess.VersionNumber)
+                throw new VersionNumberConflictException(ifMatch, currentProcess.VersionNumber);
+
+            var updatedResult = _updater.UpdateEntity(currentProcess.CurrentState, requestBody, requestObject);
+            if (updatedResult.NewValues.Any())
+            {
+                _logger.LogDebug($"Calling IDynamoDBContext.SaveAsync to update id {query.Id}");
+                updatedResult.UpdatedEntity.UpdatedAt = DateTime.UtcNow;
+                currentProcess.CurrentState = updatedResult.UpdatedEntity;
+                await _dynamoDbContext.SaveAsync(currentProcess).ConfigureAwait(false);
+            }
+            return updatedResult;
+        }
+
 
     }
 }

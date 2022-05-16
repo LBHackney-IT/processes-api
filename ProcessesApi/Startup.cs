@@ -39,6 +39,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json.Serialization;
+using ProcessesApi.V1;
+using ProcessesApi.V1.Helpers;
 
 namespace ProcessesApi
 {
@@ -151,9 +153,12 @@ namespace ProcessesApi
             services.ConfigureSns();
             services.AddLogCallAspect();
 
+            services.ConfigureProcessServices();
 
             RegisterGateways(services);
             RegisterUseCases(services);
+            RegisterHelpers(services);
+
             services.AddSingleton<IConfiguration>(Configuration);
 
             services.AddScoped<ISnsFactory, ProcessesSnsFactory>();
@@ -173,16 +178,23 @@ namespace ProcessesApi
 
         private static void RegisterGateways(IServiceCollection services)
         {
-
             services.AddScoped<IProcessesGateway, ProcessesGateway>();
-            services.AddScoped<ISoleToJointGateway, SoleToJointGateway>();
+            services.AddScoped<ITenureDbGateway, TenureDbGateway>();
+            services.AddScoped<IPersonDbGateway, PersonDbGateway>();
+            services.AddScoped<IIncomeApiGateway, IncomeApiGateway>();
+            services.AddScoped<IEntityUpdater, EntityUpdater>();
         }
 
         private static void RegisterUseCases(IServiceCollection services)
         {
             services.AddScoped<IGetByIdUseCase, GetProcessByIdUseCase>();
-            services.AddScoped<ISoleToJointUseCase, SoleToJointUseCase>();
-            services.AddScoped<ISoleToJointService, SoleToJointService>();
+            services.AddScoped<IProcessUseCase, ProcessUseCase>();
+            services.AddScoped<IUpdateProcessByIdUsecase, UpdateProcessByIdUsecase>();
+        }
+
+        private static void RegisterHelpers(IServiceCollection services)
+        {
+            services.AddScoped<ISoleToJointAutomatedEligibilityChecksHelper, SoleToJointAutomatedEligibilityChecksHelper>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -209,8 +221,6 @@ namespace ProcessesApi
             app.UseCustomExceptionHandler(logger);
             app.UseXRay("processes-api");
             app.EnableRequestBodyRewind();
-
-
 
             //Get All ApiVersions,
             var api = app.ApplicationServices.GetService<IApiVersionDescriptionProvider>();
