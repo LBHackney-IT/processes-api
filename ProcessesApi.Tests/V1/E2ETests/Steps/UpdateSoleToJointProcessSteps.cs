@@ -16,6 +16,7 @@ using Hackney.Core.Sns;
 using Hackney.Core.Testing.Sns;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
 using ProcessesApi.V1.Infrastructure.JWT;
+using ProcessesApi.V1.Factories;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {
