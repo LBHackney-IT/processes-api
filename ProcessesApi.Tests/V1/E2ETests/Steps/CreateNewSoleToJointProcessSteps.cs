@@ -84,6 +84,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                 var expected = dbRecord.ToDomain();
                 var actualNewData = JsonConvert.DeserializeObject<Process>(actual.EventData.NewData.ToString());
                 actualNewData.Should().BeEquivalentTo(expected);
+                
                 actual.EventData.OldData.Should().BeNull();
 
                 actual.EventType.Should().Be(ProcessStartedEventConstants.EVENTTYPE);
@@ -99,10 +100,6 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             var snsResult = await snsVerifier.VerifySnsEventRaised(verifyFunc);
 
             if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
-            await snsVerifier.PurgeQueueMessages().ConfigureAwait(false);
-
-            // Cleanup
-            await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
         }
 
         public void ThenBadRequestIsReturned()

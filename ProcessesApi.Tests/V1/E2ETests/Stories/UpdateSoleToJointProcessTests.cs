@@ -54,6 +54,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 _tenureFixture?.Dispose();
                 _agreementsApiFixture?.Dispose();
                 _tenanciesApiFixture?.Dispose();
+                _snsFixture?.PurgeAllQueueMessages();
 
                 _disposed = true;
             }
