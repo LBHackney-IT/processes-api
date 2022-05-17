@@ -48,10 +48,11 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
         {
             var dbEntity = await processFixture._dbContext.LoadAsync<ProcessesDb>(processFixture.ProcessId).ConfigureAwait(false);
 
-            Action<ProcessData, ProcessesDb> verifyProcessData = (actualData, process) =>
+            Action<string, ProcessesDb> verifyData = (dataAsString, process) =>
             {
-                actualData.FormData.Should().HaveSameCount(process.CurrentState.ProcessData.FormData); // workaround for comparing
-                actualData.Documents.Should().BeEquivalentTo(process.CurrentState.ProcessData.Documents);
+                var dataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(dataAsString, CreateJsonOptions());
+                dataDic["processData"].Should().Be(process.CurrentState.ProcessData);
+                dataDic["assignment"].Should().Be(process.CurrentState.Assignment);
             };
 
             Action<EntityEventSns> verifyFunc = actual =>
@@ -61,8 +62,8 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
                 actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
                 actual.EntityId.Should().Be(processFixture.ProcessId);
 
-                verifyProcessData((actual.EventData.OldData as ProcessData), processFixture.Process.ToDatabase());
-                verifyProcessData((actual.EventData.NewData as ProcessData), dbEntity);
+                verifyData((actual.EventData.OldData as string), processFixture.Process.ToDatabase());
+                verifyData((actual.EventData.NewData as string), dbEntity);
 
                 actual.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
                 actual.SourceDomain.Should().Be(ProcessUpdatedEventConstants.SOURCE_DOMAIN);
@@ -114,7 +115,7 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
 
             dbRecord.Id.Should().Be(request.Id);
 
-            dbRecord.CurrentState.ProcessData.FormData.Should().HaveSameCount(requestBody.ProcessData.FormData); // workaround for comparing
+            dbRecord.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(requestBody.ProcessData.FormData);
             dbRecord.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(requestBody.ProcessData.Documents);
             dbRecord.CurrentState.Assignment.Should().BeEquivalentTo(requestBody.Assignment);
             dbRecord.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);

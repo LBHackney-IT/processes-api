@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.SimpleNotificationService;
-using Amazon.SimpleNotificationService.Model;
 using AutoFixture;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
@@ -211,15 +210,17 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenAnUpdateProcessByIdRequestWithValidationErrors()
         {
-            GivenAnUpdateProcessByIdRequest(ProcessId);
+            GivenAnUpdateProcessByIdRequest();
             UpdateProcessByIdRequestObject.ProcessData.Documents.Add(Guid.Empty);
         }
-        public void GivenAnUpdateProcessByIdRequest(Guid id)
+
+        public void GivenAnUpdateProcessByIdRequest()
         {
-            UpdateProcessByIdRequest = _fixture.Build<ProcessQuery>()
-                                           .With(x => x.ProcessName, ProcessName.soletojoint)
-                                           .With(x => x.Id, id)
-                                           .Create();
+            UpdateProcessByIdRequest = new ProcessQuery
+            {
+                ProcessName = ProcessName.soletojoint,
+                Id = ProcessId
+            };
             UpdateProcessByIdRequestObject = _fixture.Create<UpdateProcessByIdRequestObject>();
         }
     }

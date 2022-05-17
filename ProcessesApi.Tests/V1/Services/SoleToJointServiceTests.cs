@@ -1,7 +1,5 @@
-using Amazon.DynamoDBv2.DataModel;
 using AutoFixture;
 using FluentAssertions;
-using Hackney.Core.Testing.DynamoDb;
 using Moq;
 using ProcessesApi.V1.Domain;
 using System;
