@@ -94,7 +94,6 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         }
 
         #region Automatic eligibility checks
-
         [Fact]
         public void InternalServerErrorIsReturnedWhenTenureDoesNotExist()
         {
@@ -239,8 +238,24 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .Then(t => _steps.ThenBadRequestIsReturned())
                 .BDDfy();
         }
+        #endregion
+
+        #region Documents Requested Des
+
+        [Fact]
+        public void ProcessStateIsUpdatedToDocumentsRequestedDes()
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.BreachChecksPassed))
+                    .And(a => _processFixture.GivenARequestDocumentsDesRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenTheProcessStateIsUpdatedToDocumentsRequestedDes(_processFixture.UpdateProcessRequest))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId))
+                .BDDfy();
+        }
 
         #endregion
+
+        #region Documents Requested Appointment
 
         [Fact]
         public void ProcessStateIsUpdatedToDocumentsRequestedAppointment()
@@ -263,6 +278,33 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .Then(t => _steps.ThenBadRequestIsReturned())
                 .BDDfy();
         }
+        #endregion
 
+        #region Document Appointment Reschedule
+
+        [Fact]
+        public void ProcessStateIsUpdatedToDocumentsAppointmentRescheduled()
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.DocumentsRequestedAppointment))
+                    .And(a => _processFixture.GivenARescheduleDocumentsAppointmentRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, _processFixture.Process.VersionNumber))
+                .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheProcessUpdatedEventWithRescheduledAppointmentIsRaised(_snsFixture, _processFixture.ProcessId))
+                    .And(a => _steps.ThenTheProcessStateIsUpdatedToDocumentsAppointmentRescheduled(_processFixture.UpdateProcessRequest))
+                .BDDfy();
+        }
+
+        [Fact]
+        public void MultipleDocumentsAppointmentReschedulesArePermitted()
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.DocumentsAppointmentRescheduled))
+                    .And(a => _processFixture.GivenARescheduleDocumentsAppointmentRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, _processFixture.Process.VersionNumber))
+                .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheProcessUpdatedEventWithRescheduledAppointmentIsRaised(_snsFixture, _processFixture.ProcessId))
+                    .And(a => _steps.ThenTheProcessStateRemainsDocumentsAppointmentRescheduled(_processFixture.UpdateProcessRequest))
+                .BDDfy();
+        }
+        #endregion
     }
 }
