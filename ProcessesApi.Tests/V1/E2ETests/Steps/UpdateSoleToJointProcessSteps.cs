@@ -206,7 +206,6 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             {
                 var dataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(dataAsString, _jsonOptions);
                 dataDic.Should().ContainKey("description");
-                DateTime.Parse(dataDic["description"].ToString());
             };
 
             Action<EntityEventSns> verifyFunc = actual =>
