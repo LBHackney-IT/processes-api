@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.SimpleNotificationService;
 using AutoFixture;
+using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure;
+using ProcessesApi.V1.Infrastructure.Extensions;
 
 namespace ProcessesApi.Tests.V1.E2E.Fixtures
 {
@@ -22,10 +25,8 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public CreateProcess CreateProcessRequest { get; private set; }
         public UpdateProcessQuery UpdateProcessRequest { get; private set; }
         public UpdateProcessRequestObject UpdateProcessRequestObject { get; private set; }
-
         public ProcessQuery UpdateProcessByIdRequest { get; private set; }
         public UpdateProcessByIdRequestObject UpdateProcessByIdRequestObject { get; private set; }
-
         public Guid IncomingTenantId { get; private set; }
         public Guid TenantId { get; private set; }
         public List<Guid> PersonTenures { get; private set; }
@@ -75,7 +76,10 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public async Task GivenASoleToJointProcessExists(string state)
         {
             createProcess(state);
+
             await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
+            Process.VersionNumber = 0;
+
         }
 
         public void GivenASoleToJointProcessDoesNotExist()
@@ -128,6 +132,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.IncomingTenantId);
         }
 
+
         public void GivenACheckManualEligibilityRequest(bool isEligible)
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckManualEligibility);
@@ -173,6 +178,30 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             };
         }
 
+        public void GivenARequestDocumentsDesRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RequestDocumentsDes);
+        }
+
+        public void GivenARequestDocumentsAppointmentRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RequestDocumentsAppointment);
+
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+        }
+
+        public async Task GivenARescheduleDocumentsAppointmentRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment);
+
+            Process.CurrentState.ProcessData.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+
+            await _dbContext.SaveAsync(Process.ToDatabase()).ConfigureAwait(false);
+            Process.VersionNumber++;
+
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.AddDays(1).ToIsoString());
+        }
+
         public void GivenAFailingCheckBreachEligibilityRequest()
         {
             GivenATenancyBreachCheckRequest(false);
@@ -189,19 +218,11 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.BR5);
         }
 
-
-        public void GivenARequestDocumentsAppointmentRequest()
-        {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RequestDocumentsAppointment);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, _fixture.Create<DateTime>());
-        }
-
         public void GivenARequestDocumentsAppointmentRequestWithMissingData()
         {
             GivenARequestDocumentsAppointmentRequest();
             UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.AppointmentDateTime);
         }
-
         public void GivenAnUpdateSoleToJointProcessRequestWithValidationErrors()
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckAutomatedEligibility);

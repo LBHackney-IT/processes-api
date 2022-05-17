@@ -8,6 +8,9 @@ using Hackney.Core.Sns;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Services.Exceptions;
+using System.Globalization;
+using System.Linq;
+using ProcessesApi.V1.Infrastructure.Extensions;
 
 namespace ProcessesApi.V1.Services
 {
@@ -118,6 +121,11 @@ namespace ProcessesApi.V1.Services
             await PublishProcessUpdatedEvent("Tenancy Breach Check failed.");
         }
 
+        private async Task OnDocumentsRequestedDes(UpdateProcessState processRequest)
+        {
+            await PublishProcessUpdatedEvent("Supporting Documents requested through the Document Evidence Store.");
+        }
+
         private async Task OnRequestDocumentsAppointment(UpdateProcessState processRequest)
         {
             SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.AppointmentDateTime });
@@ -131,6 +139,37 @@ namespace ProcessesApi.V1.Services
             {
                 throw new FormDataFormatException("appointment datetime", appointmentDetails);
             }
+        }
+
+        protected async Task PublishProcessUpdatedEventWithRescheduledAppointment(string oldAppointmentTime, string newAppointmentTime)
+        {
+            var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
+            var processSnsMessage = _snsFactory.ProcessUpdatedWithAppointmentRescheduled(_process, _token, oldAppointmentTime, newAppointmentTime);
+
+            await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
+        }
+
+        private async Task OnDocumentsAppointmentRescheduled(UpdateProcessState processRequest)
+        {
+            var oldAppointmentDateTime = GetAppointmentDateTime(_process.CurrentState.ProcessData.FormData);
+            var newAppointmentDateTime = GetAppointmentDateTime(processRequest.FormData);
+
+            await PublishProcessUpdatedEventWithRescheduledAppointment(oldAppointmentDateTime.ToString("dd/MM/yyyy hh:mm tt"), newAppointmentDateTime.ToString("dd/MM/yyyy hh:mm tt"));
+        }
+
+
+        private static DateTime GetAppointmentDateTime(Dictionary<string, object> formData)
+        {
+            formData.TryGetValue(SoleToJointFormDataKeys.AppointmentDateTime, out var dateTimeString);
+
+            if (dateTimeString != null)
+            {
+                return DateTime
+                    .Parse(dateTimeString.ToString(), null, DateTimeStyles.RoundtripKind)
+                    .ToUniversalTime();
+            }
+
+            throw new FormDataNotFoundException(formData.Keys.ToList(), new List<string> { SoleToJointFormDataKeys.AppointmentDateTime });
         }
 
         #endregion
@@ -165,7 +204,17 @@ namespace ProcessesApi.V1.Services
                     .Permit(SoleToJointPermittedTriggers.CloseProcess, SoleToJointStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.BreachChecksPassed)
+                    .Permit(SoleToJointPermittedTriggers.RequestDocumentsDes, SoleToJointStates.DocumentsRequestedDes)
                     .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment);
+
+            _machine.Configure(SoleToJointStates.DocumentsRequestedDes)
+                    .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment);
+
+            _machine.Configure(SoleToJointStates.DocumentsRequestedAppointment)
+                    .Permit(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointStates.DocumentsAppointmentRescheduled);
+
+            _machine.Configure(SoleToJointStates.DocumentsAppointmentRescheduled)
+                    .PermitReentry(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment);
         }
 
         protected override void SetUpStateActions()
@@ -182,7 +231,9 @@ namespace ProcessesApi.V1.Services
             ConfigureAsync(SoleToJointStates.BreachChecksFailed, Assignment.Create("tenants"), OnTenancyBreachCheckFailed);
             ConfigureAsync(SoleToJointStates.BreachChecksPassed, Assignment.Create("tenants"));
 
+            ConfigureAsync(SoleToJointStates.DocumentsRequestedDes, Assignment.Create("tenants"), OnDocumentsRequestedDes);
             ConfigureAsync(SoleToJointStates.DocumentsRequestedAppointment, Assignment.Create("tenants"), OnRequestDocumentsAppointment);
+            ConfigureAsync(SoleToJointStates.DocumentsAppointmentRescheduled, Assignment.Create("tenants"), OnDocumentsAppointmentRescheduled);
         }
     }
 }

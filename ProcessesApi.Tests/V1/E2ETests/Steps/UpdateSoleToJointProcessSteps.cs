@@ -16,6 +16,9 @@ using Hackney.Core.Sns;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
 using ProcessesApi.V1.Infrastructure.JWT;
 using Hackney.Core.Testing.Sns;
+using ProcessesApi.V1.Factories;
+using JsonSerializer = System.Text.Json.JsonSerializer;
+using System.Collections.Generic;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {
@@ -123,9 +126,24 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             await CheckProcessState(request.Id, SoleToJointStates.BreachChecksFailed, SoleToJointStates.ManualChecksPassed).ConfigureAwait(false);
         }
 
+
+        public async Task ThenTheProcessStateIsUpdatedToDocumentsRequestedDes(UpdateProcessQuery request)
+        {
+            await CheckProcessState(request.Id, SoleToJointStates.DocumentsRequestedDes, SoleToJointStates.BreachChecksPassed).ConfigureAwait(false);
+        }
+
         public async Task ThenTheProcessStateIsUpdatedToDocumentsRequestedAppointment(UpdateProcessQuery request)
         {
             await CheckProcessState(request.Id, SoleToJointStates.DocumentsRequestedAppointment, SoleToJointStates.BreachChecksPassed).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheProcessStateIsUpdatedToDocumentsAppointmentRescheduled(UpdateProcessQuery request)
+        {
+            await CheckProcessState(request.Id, SoleToJointStates.DocumentsAppointmentRescheduled, SoleToJointStates.DocumentsRequestedAppointment).ConfigureAwait(false);
+        }
+        public async Task ThenTheProcessStateRemainsDocumentsAppointmentRescheduled(UpdateProcessQuery request)
+        {
+            await CheckProcessState(request.Id, SoleToJointStates.DocumentsAppointmentRescheduled, SoleToJointStates.DocumentsAppointmentRescheduled).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessClosedEventIsRaised(ISnsFixture snsFixture, Guid processId)
@@ -166,6 +184,42 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
                 actual.EventData.NewData.Should().NotBeNull();
                 actual.EventData.OldData.Should().BeNull();
+
+                actual.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
+                actual.SourceDomain.Should().Be(ProcessUpdatedEventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(ProcessUpdatedEventConstants.SOURCE_SYSTEM);
+                actual.Version.Should().Be(ProcessUpdatedEventConstants.V1_VERSION);
+
+                actual.User.Email.Should().Be(TestToken.UserEmail);
+                actual.User.Name.Should().Be(TestToken.UserName);
+            };
+
+            var snsVerifier = snsFixture.GetSnsEventVerifier<EntityEventSns>();
+            var snsResult = await snsVerifier.VerifySnsEventRaised(verifyFunc);
+
+            if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
+        }
+
+        public async Task ThenTheProcessUpdatedEventWithRescheduledAppointmentIsRaised(ISnsFixture snsFixture, Guid processId)
+        {
+            Action<string> verifyData = (dataAsString) =>
+            {
+                var dataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(dataAsString, _jsonOptions);
+                dataDic.Should().ContainKey("description");
+                DateTime.Parse(dataDic["description"].ToString());
+            };
+
+            Action<EntityEventSns> verifyFunc = actual =>
+            {
+                actual.Id.Should().NotBeEmpty();
+                actual.CorrelationId.Should().NotBeEmpty();
+                actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
+                actual.EntityId.Should().Be(processId);
+
+                actual.EventData.NewData.Should().NotBeNull();
+                verifyData(actual.EventData.NewData.ToString());
+                actual.EventData.OldData.Should().NotBeNull();
+                verifyData(actual.EventData.OldData.ToString());
 
                 actual.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
                 actual.SourceDomain.Should().Be(ProcessUpdatedEventConstants.SOURCE_DOMAIN);
