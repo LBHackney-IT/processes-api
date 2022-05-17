@@ -3,7 +3,6 @@ using Hackney.Core.Sns;
 using Hackney.Core.Testing.DynamoDb;
 using Hackney.Core.Testing.Shared.E2E;
 using Hackney.Core.Testing.Sns;
-using Newtonsoft.Json;
 using ProcessesApi.Tests.V1.E2E.Fixtures;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
 using ProcessesApi.V1.Boundary.Constants;
@@ -36,7 +35,7 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
             var uri = new Uri($"api/v1/process/{request.ProcessName}/{request.Id}", UriKind.Relative);
             var message = new HttpRequestMessage(HttpMethod.Patch, uri);
 
-            message.Content = new StringContent(JsonConvert.SerializeObject(requestObject), Encoding.UTF8, "application/json");
+            message.Content = new StringContent(JsonSerializer.Serialize(requestObject, _jsonOptions), Encoding.UTF8, "application/json");
             message.Headers.Add("Authorization", token);
             message.Headers.TryAddWithoutValidation(HeaderConstants.IfMatch, $"\"{ifMatch}\"");
             message.Method = HttpMethod.Patch;
@@ -50,9 +49,14 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
 
             Action<string, ProcessesDb> verifyData = (dataAsString, process) =>
             {
-                var dataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(dataAsString, CreateJsonOptions());
-                dataDic["processData"].Should().Be(process.CurrentState.ProcessData);
-                dataDic["assignment"].Should().Be(process.CurrentState.Assignment);
+                var dataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(dataAsString, _jsonOptions);
+
+                var assignment = JsonSerializer.Deserialize<Assignment>(dataDic["assignment"].ToString(), _jsonOptions);
+                assignment.Should().BeEquivalentTo(process.CurrentState.Assignment);
+
+                var processData = JsonSerializer.Deserialize<ProcessData>(dataDic["processData"].ToString(), _jsonOptions);
+                processData.Documents.Should().BeEquivalentTo(process.CurrentState.ProcessData.Documents);
+                processData.FormData.Should().HaveSameCount(process.CurrentState.ProcessData.FormData); // workaround for validating form data
             };
 
             Action<EntityEventSns> verifyFunc = actual =>
@@ -62,8 +66,8 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
                 actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
                 actual.EntityId.Should().Be(processFixture.ProcessId);
 
-                verifyData((actual.EventData.OldData as string), processFixture.Process.ToDatabase());
-                verifyData((actual.EventData.NewData as string), dbEntity);
+                verifyData(actual.EventData.OldData.ToString(), processFixture.Process.ToDatabase());
+                verifyData(actual.EventData.NewData.ToString(), dbEntity);
 
                 actual.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
                 actual.SourceDomain.Should().Be(ProcessUpdatedEventConstants.SOURCE_DOMAIN);
