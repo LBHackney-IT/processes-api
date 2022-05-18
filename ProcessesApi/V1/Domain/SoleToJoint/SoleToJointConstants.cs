@@ -4,8 +4,6 @@ namespace ProcessesApi.V1.Domain
 {
     public static class SoleToJointStates
     {
-        public const string ProcessClosed = "ProcessClosed";
-        public const string ProcessCancelled = "ProcessCancelled";
         public const string SelectTenants = "SelectTenants";
         public const string AutomatedChecksFailed = "AutomatedChecksFailed";
         public const string AutomatedChecksPassed = "AutomatedChecksPassed";

@@ -185,7 +185,7 @@ namespace ProcessesApi.V1.Services
                     .Permit(SoleToJointInternalTriggers.EligibiltyPassed, SoleToJointStates.AutomatedChecksPassed);
 
             _machine.Configure(SoleToJointStates.AutomatedChecksFailed)
-                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SoleToJointStates.ProcessClosed);
+                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.AutomatedChecksPassed)
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckManualEligibility, async (x) => await CheckManualEligibility(x).ConfigureAwait(false))
@@ -193,7 +193,7 @@ namespace ProcessesApi.V1.Services
                     .Permit(SoleToJointInternalTriggers.ManualEligibilityFailed, SoleToJointStates.ManualChecksFailed);
 
             _machine.Configure(SoleToJointStates.ManualChecksFailed)
-                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SoleToJointStates.ProcessClosed);
+                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.ManualChecksPassed)
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckTenancyBreach, async (x) => await CheckTenancyBreach(x).ConfigureAwait(false))
@@ -201,7 +201,7 @@ namespace ProcessesApi.V1.Services
                     .Permit(SoleToJointInternalTriggers.BreachChecksFailed, SoleToJointStates.BreachChecksFailed);
 
             _machine.Configure(SoleToJointStates.BreachChecksFailed)
-                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SoleToJointStates.ProcessClosed);
+                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.BreachChecksPassed)
                     .Permit(SoleToJointPermittedTriggers.RequestDocumentsDes, SoleToJointStates.DocumentsRequestedDes)
@@ -220,7 +220,7 @@ namespace ProcessesApi.V1.Services
         protected override void SetUpStateActions()
         {
             ConfigureAsync(SoleToJointStates.SelectTenants, Assignment.Create("tenants"), (x) => PublishProcessStartedEvent());
-            ConfigureAsync(SoleToJointStates.ProcessClosed, Assignment.Create("tenants"), OnProcessClosed);
+            ConfigureAsync(SharedProcessStates.ProcessClosed, Assignment.Create("tenants"), OnProcessClosed);
 
             ConfigureAsync(SoleToJointStates.AutomatedChecksFailed, Assignment.Create("tenants"), OnAutomatedCheckFailed);
             Configure(SoleToJointStates.AutomatedChecksPassed, Assignment.Create("tenants"), AddIncomingTenantId);

@@ -169,7 +169,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(process,
                                                  triggerObject,
-                                                 SoleToJointStates.ProcessClosed,
+                                                 SharedProcessStates.ProcessClosed,
                                                  new List<string>());
             process.PreviousStates.LastOrDefault().State.Should().Be(fromState);
 
