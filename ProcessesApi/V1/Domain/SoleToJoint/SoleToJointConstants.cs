@@ -7,22 +7,27 @@ namespace ProcessesApi.V1.Domain
         public const string SelectTenants = "SelectTenants";
         public const string AutomatedChecksFailed = "AutomatedChecksFailed";
         public const string AutomatedChecksPassed = "AutomatedChecksPassed";
+        public const string ProcessCancelled = "ProcessCancelled";
         public const string ManualChecksFailed = "ManualChecksFailed";
         public const string ManualChecksPassed = "ManualChecksPassed";
         public const string BreachChecksFailed = "BreachChecksFailed";
         public const string BreachChecksPassed = "BreachChecksPassed";
+        public const string DocumentsRequestedDes = "DocumentsRequestedDes";
         public const string DocumentsRequestedAppointment = "DocumentsRequestedAppointment";
-        public const string ProcessCancelled = "ProcessCancelled";
+        public const string DocumentsAppointmentRescheduled = "DocumentsAppointmentRescheduled";
+        public const string ConfirmAppointmentScheduled = "ConfirmAppointmentScheduled";
     }
 
     public static class SoleToJointPermittedTriggers
     {
         public const string CheckAutomatedEligibility = "CheckAutomatedEligibility";
+        public const string CancelProcess = "CancelProcess";
         public const string CheckManualEligibility = "CheckManualEligibility";
         public const string RequestDocuments = "RequestDocuments";
         public const string CheckTenancyBreach = "CheckTenancyBreach";
+        public const string RequestDocumentsDes = "RequestDocumentsDes";
         public const string RequestDocumentsAppointment = "RequestDocumentsAppointment";
-        public const string CancelProcess = "CancelProcess";
+        public const string RescheduleDocumentsAppointment = "RescheduleDocumentsAppointment";
     }
 
     public static class SoleToJointInternalTriggers
@@ -119,10 +124,7 @@ namespace ProcessesApi.V1.Domain
         /// </summary>
         public const string BR18 = "br18";
 
-
-
-
-
         #endregion
     }
+
 }

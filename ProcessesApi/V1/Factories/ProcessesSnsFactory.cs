@@ -85,6 +85,37 @@ namespace ProcessesApi.V1.Factories
             };
         }
 
+        public EntityEventSns ProcessUpdatedWithAppointmentRescheduled(Process process, Token token, string oldAppointmentTime, string newAppointmentTime)
+        {
+            return new EntityEventSns
+            {
+                CorrelationId = Guid.NewGuid(),
+                DateTime = DateTime.UtcNow,
+                EntityId = process.Id,
+                Id = Guid.NewGuid(),
+                EventType = ProcessUpdatedEventConstants.EVENTTYPE,
+                Version = ProcessUpdatedEventConstants.V1_VERSION,
+                SourceDomain = ProcessUpdatedEventConstants.SOURCE_DOMAIN,
+                SourceSystem = ProcessUpdatedEventConstants.SOURCE_SYSTEM,
+                EventData = new EventData
+                {
+                    OldData = new Message()
+                    {
+                        Description = oldAppointmentTime
+                    },
+                    NewData = new Message
+                    {
+                        Description = newAppointmentTime
+                    }
+                },
+                User = new User
+                {
+                    Name = token.Name,
+                    Email = token.Email
+                }
+            };
+        }
+
         public EntityEventSns ProcessUpdated(Guid id, UpdateEntityResult<ProcessState> updateResult, Token token)
         {
             return new EntityEventSns
@@ -109,6 +140,7 @@ namespace ProcessesApi.V1.Factories
                 }
             };
         }
+
     }
 
     public class Message
