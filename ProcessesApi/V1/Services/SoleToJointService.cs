@@ -135,6 +135,11 @@ namespace ProcessesApi.V1.Services
             await PublishProcessUpdatedEventWithRescheduledAppointment(oldAppointmentDateTime.ToString("dd/MM/yyyy hh:mm tt"), newAppointmentDateTime.ToString("dd/MM/yyyy hh:mm tt"));
         }
 
+        private async Task OnReviewDocuments(UpdateProcessState processState)
+        {
+
+        }
+
 
         private static DateTime GetAppointmentDateTime(Dictionary<string, object> formData)
         {
@@ -179,14 +184,20 @@ namespace ProcessesApi.V1.Services
                     .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment);
 
             _machine.Configure(SoleToJointStates.DocumentsRequestedDes)
-                    .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment);
+                    .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment)
+                    .Permit(SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointStates.ReviewDocuments)
+                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessCancelled);
 
             _machine.Configure(SoleToJointStates.DocumentsRequestedAppointment)
-                    .Permit(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointStates.DocumentsAppointmentRescheduled);
+                    .Permit(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointStates.DocumentsAppointmentRescheduled)
+                    .Permit(SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointStates.ReviewDocuments)
+                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessCancelled);
 
             _machine.Configure(SoleToJointStates.DocumentsAppointmentRescheduled)
-                    .PermitReentry(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment);
-        }
+                    .PermitReentry(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment)
+                    .Permit(SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointStates.ReviewDocuments)
+                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessCancelled);
+      }
 
         protected override void SetUpStateActions()
         {
@@ -201,6 +212,7 @@ namespace ProcessesApi.V1.Services
             ConfigureAsync(SoleToJointStates.DocumentsRequestedDes, Assignment.Create("tenants"), OnDocumentsRequestedDes);
             ConfigureAsync(SoleToJointStates.DocumentsRequestedAppointment, Assignment.Create("tenants"), OnRequestDocumentsAppointment);
             ConfigureAsync(SoleToJointStates.DocumentsAppointmentRescheduled, Assignment.Create("tenants"), OnDocumentsAppointmentRescheduled);
+            ConfigureAsync(SoleToJointStates.ReviewDocuments, Assignment.Create("tenants"), OnReviewDocuments);
         }
     }
 }

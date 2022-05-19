@@ -15,7 +15,7 @@ namespace ProcessesApi.V1.Domain
         public const string DocumentsRequestedDes = "DocumentsRequestedDes";
         public const string DocumentsRequestedAppointment = "DocumentsRequestedAppointment";
         public const string DocumentsAppointmentRescheduled = "DocumentsAppointmentRescheduled";
-        public const string ConfirmAppointmentScheduled = "ConfirmAppointmentScheduled";
+        public const string ReviewDocuments = "ReviewDocuments";
     }
 
     public static class SoleToJointPermittedTriggers
@@ -28,6 +28,10 @@ namespace ProcessesApi.V1.Domain
         public const string RequestDocumentsDes = "RequestDocumentsDes";
         public const string RequestDocumentsAppointment = "RequestDocumentsAppointment";
         public const string RescheduleDocumentsAppointment = "RescheduleDocumentsAppointment";
+        public const string SubmitApplication = "SubmitApplication";
+        public const string ReviewDocuments = "ReviewDocuments";
+
+
     }
 
     public static class SoleToJointInternalTriggers
@@ -38,6 +42,8 @@ namespace ProcessesApi.V1.Domain
         public const string ManualEligibilityPassed = "ManualEligibilityPassed";
         public const string BreachChecksFailed = "BreachChecksFailed";
         public const string BreachChecksPassed = "BreachChecksPassed";
+        public const string DocumentChecksPassed = "DocumentChecksPassed";
+
     }
 
     // NOTE: Form data key values must be camelCase to avoid issues with Json Serialiser in E2E tests
@@ -123,6 +129,21 @@ namespace ProcessesApi.V1.Domain
         ///     Other than a NOSP, does the tenant have any live notices against the tenure, e.g. a breach of tenancy?
         /// </summary>
         public const string BR18 = "br18";
+
+        #endregion
+
+        #region ReviewDocuments
+
+        /// <summary>
+        ///     I confirm I have seen a government issue photographic ID
+        /// </summary>
+        public const string SeenPhotographicId = "SeenPhotographicId";
+
+        /// <summary>
+        ///     I confirm I have seen a government issue photographic ID
+        /// </summary>
+        public const string SeenPhotographicId = "SeenPhotographicId";
+
 
         #endregion
     }
