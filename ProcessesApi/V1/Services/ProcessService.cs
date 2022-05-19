@@ -26,6 +26,7 @@ namespace ProcessesApi.V1.Services
                                                     .Select(x => (string) x.GetRawConstantValue())
                                                     .ToList();
         protected List<string> _ignoredTriggersForProcessUpdated;
+        protected Dictionary<string, object> _eventData;
 
         protected ISnsFactory _snsFactory;
         protected ISnsGateway _snsGateway;
@@ -39,7 +40,7 @@ namespace ProcessesApi.V1.Services
 
         private void ConfigureStateTransitions()
         {
-            _machine.OnTransitionedAsync(async x =>
+            _machine.OnTransitionCompletedAsync(async x =>
             {
                 var processRequest = x.Parameters[0] as ProcessTrigger;
                 var assignment = Assignment.Create("tenants"); // placeholder
@@ -62,7 +63,7 @@ namespace ProcessesApi.V1.Services
             if (!_ignoredTriggersForProcessUpdated.Contains(transition.Trigger))
             {
                 var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-                var processSnsMessage = _snsFactory.ProcessStateUpdated(transition, _token);
+                var processSnsMessage = _snsFactory.ProcessStateUpdated(transition, _eventData, _token);
 
                 await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
             }

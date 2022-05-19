@@ -123,30 +123,6 @@ namespace ProcessesApi.Tests.V1.Services
             (_lastSnsEvent.EventData.NewData as ProcessStateChangeData).State.Should().Be(newState);
         }
 
-        [Fact]
-        public async Task InitialiseStateToSelectTenantsIfCurrentStateIsNotDefinedAndTriggerProcessStartedEvent()
-        {
-            // Arrange
-            var process = _fixture.Build<Process>()
-                                    .With(x => x.CurrentState, (ProcessState) null)
-                                    .With(x => x.PreviousStates, new List<ProcessState>())
-                                    .Create();
-            var triggerObject = CreateProcessTrigger(process,
-                                                     SharedInternalTriggers.StartApplication,
-                                                     _fixture.Create<Dictionary<string, object>>());
-            // Act
-            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
-            // Assert
-            CurrentStateShouldContainCorrectData(process,
-                                                 triggerObject,
-                                                 SoleToJointStates.SelectTenants,
-                                                 new List<string>() { SoleToJointPermittedTriggers.CheckAutomatedEligibility });
-            process.PreviousStates.Should().BeEmpty();
-
-            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessStartedEventConstants.EVENTTYPE);
-        }
-
         // List all states that CloseProcess can be triggered from
         [Theory]
         [InlineData(SoleToJointStates.AutomatedChecksFailed)]
@@ -177,6 +153,31 @@ namespace ProcessesApi.Tests.V1.Services
 
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             _lastSnsEvent.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
+        }
+
+
+        [Fact]
+        public async Task InitialiseStateToSelectTenantsIfCurrentStateIsNotDefinedAndTriggerProcessStartedEvent()
+        {
+            // Arrange
+            var process = _fixture.Build<Process>()
+                                    .With(x => x.CurrentState, (ProcessState) null)
+                                    .With(x => x.PreviousStates, new List<ProcessState>())
+                                    .Create();
+            var triggerObject = CreateProcessTrigger(process,
+                                                     SharedInternalTriggers.StartApplication,
+                                                     _fixture.Create<Dictionary<string, object>>());
+            // Act
+            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
+            // Assert
+            CurrentStateShouldContainCorrectData(process,
+                                                 triggerObject,
+                                                 SoleToJointStates.SelectTenants,
+                                                 new List<string>() { SoleToJointPermittedTriggers.CheckAutomatedEligibility });
+            process.PreviousStates.Should().BeEmpty();
+
+            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _lastSnsEvent.EventType.Should().Be(ProcessStartedEventConstants.EVENTTYPE);
         }
 
         #region Automated eligibility checks
@@ -483,23 +484,6 @@ namespace ProcessesApi.Tests.V1.Services
                 .Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
         }
 
-        [Fact]
-        public void ThrowsFormDataFormatExceptionOnRequestDocumentsAppointmentWhenAppointmentDateTimeIsNotCorrectFormat()
-        {
-            // Arrange
-            var process = CreateProcessWithCurrentState(SoleToJointStates.BreachChecksPassed);
-            var incorrectDateTime = _fixture.Create<int>();
-            var formData = new Dictionary<string, object>() { { SoleToJointFormDataKeys.AppointmentDateTime, incorrectDateTime } };
-            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.RequestDocumentsAppointment, formData);
-
-            var expectedErrorMessage = $"The request's FormData is invalid: The appointment datetime provided ({incorrectDateTime}) is not in the correct format.";
-
-            // Act & assert
-            _classUnderTest
-                .Invoking(cut => cut.Process(trigger, process, _token))
-                .Should().Throw<FormDataFormatException>().WithMessage(expectedErrorMessage);
-        }
-
         #endregion
 
         #region Request documents via DES
@@ -549,6 +533,9 @@ namespace ProcessesApi.Tests.V1.Services
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.BreachChecksPassed, SoleToJointStates.DocumentsRequestedAppointment);
+
+            var stateData = (_lastSnsEvent.EventData.NewData as ProcessStateChangeData).StateData;
+            stateData.Should().ContainKey(SoleToJointFormDataKeys.AppointmentDateTime);
         }
 
         #endregion
@@ -578,10 +565,13 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsAppointmentRescheduled,
-                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment });
-
+                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment }
+            );
             process.PreviousStates.Last().State.Should().Be(initialState);
             VerifyThatProcessUpdatedEventIsTriggered(initialState, SoleToJointStates.DocumentsAppointmentRescheduled);
+
+            var stateData = (_lastSnsEvent.EventData.NewData as ProcessStateChangeData).StateData;
+            stateData.Should().ContainKey(SoleToJointFormDataKeys.AppointmentDateTime);
         }
 
         #endregion

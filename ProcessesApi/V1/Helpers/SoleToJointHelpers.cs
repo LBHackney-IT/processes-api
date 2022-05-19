@@ -34,16 +34,5 @@ namespace ProcessesApi.V1.Helpers
                     throw new FormDataNotFoundException(requestFormData.Keys.ToList(), expectedFormDataKeys);
             });
         }
-
-        public static void ValidateAppointmentDateTime(Stateless.StateMachine<string, string>.Transition x)
-        {
-            var processRequest = x.Parameters[0] as ProcessTrigger;
-
-            ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.AppointmentDateTime });
-            var appointmentDetails = processRequest.FormData[SoleToJointFormDataKeys.AppointmentDateTime];
-
-            if (!DateTime.TryParse(appointmentDetails.ToString(), out DateTime appointmentDateTime))
-                throw new FormDataFormatException("appointment datetime", appointmentDetails);
-        }
     }
 }

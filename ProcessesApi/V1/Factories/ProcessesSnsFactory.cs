@@ -4,6 +4,7 @@ using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Infrastructure.JWT;
 using System;
+using System.Collections.Generic;
 
 namespace ProcessesApi.V1.Factories
 {
@@ -75,7 +76,7 @@ namespace ProcessesApi.V1.Factories
             };
         }
 
-        public EntityEventSns ProcessStateUpdated(Stateless.StateMachine<string, string>.Transition transition, Token token)
+        public EntityEventSns ProcessStateUpdated(Stateless.StateMachine<string, string>.Transition transition, Dictionary<string, object> stateData, Token token)
         {
             var triggerData = transition.Parameters[0] as ProcessTrigger;
 
@@ -97,7 +98,8 @@ namespace ProcessesApi.V1.Factories
                     },
                     NewData = new ProcessStateChangeData
                     {
-                        State = transition.Destination
+                        State = transition.Destination,
+                        StateData = stateData
                     }
                 },
                 User = new User
@@ -112,5 +114,6 @@ namespace ProcessesApi.V1.Factories
     public class ProcessStateChangeData
     {
         public string State { get; set; }
+        public Dictionary<string, object> StateData { get; set; }
     }
 }

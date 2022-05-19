@@ -21,7 +21,7 @@ namespace ProcessesApi.V1.Services
             _snsFactory = snsFactory;
             _snsGateway = snsGateway;
             _automatedcheckshelper = automatedChecksHelper;
-            
+
             _permittedTriggersType = typeof(SoleToJointPermittedTriggers);
             _ignoredTriggersForProcessUpdated = new List<string>
             {
@@ -111,6 +111,17 @@ namespace ProcessesApi.V1.Services
             _process.RelatedEntities.Add(Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()));
         }
 
+        public void AddAppointmentDateTimeToEvent(Stateless.StateMachine<string, string>.Transition transition)
+        {
+            var trigger = transition.Parameters[0] as ProcessTrigger;
+            SoleToJointHelpers.ValidateFormData(trigger.FormData, new List<string>() { SoleToJointFormDataKeys.AppointmentDateTime });
+            var appointmentDetails = new Dictionary<string, object>
+            {
+                { SoleToJointFormDataKeys.AppointmentDateTime, trigger.FormData[SoleToJointFormDataKeys.AppointmentDateTime] }
+            };
+            _eventData = appointmentDetails;
+        }
+
         #endregion
 
         protected override void SetUpStates()
@@ -155,11 +166,11 @@ namespace ProcessesApi.V1.Services
                     .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment);
 
             _machine.Configure(SoleToJointStates.DocumentsRequestedAppointment)
-                    .OnEntry(SoleToJointHelpers.ValidateAppointmentDateTime)
+                    .OnEntry(AddAppointmentDateTimeToEvent)
                     .Permit(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointStates.DocumentsAppointmentRescheduled);
 
             _machine.Configure(SoleToJointStates.DocumentsAppointmentRescheduled)
-                    .OnEntry(SoleToJointHelpers.ValidateAppointmentDateTime)
+                    .OnEntry(AddAppointmentDateTimeToEvent)
                     .PermitReentry(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment);
         }
     }
