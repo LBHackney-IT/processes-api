@@ -21,7 +21,13 @@ namespace ProcessesApi.V1.Services
             _snsFactory = snsFactory;
             _snsGateway = snsGateway;
             _automatedcheckshelper = automatedChecksHelper;
+            
             _permittedTriggersType = typeof(SoleToJointPermittedTriggers);
+            _ignoredTriggersForProcessUpdated = new List<string>
+            {
+                SoleToJointPermittedTriggers.CloseProcess,
+                SharedInternalTriggers.StartApplication
+            };
         }
 
         #region Internal Transitions

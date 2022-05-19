@@ -18,12 +18,15 @@ namespace ProcessesApi.V1.Services
         protected StateMachine<string, string> _machine;
         protected ProcessState _currentState;
         protected Process _process;
+
         protected Type _permittedTriggersType;
         protected List<string> _permittedTriggers => _permittedTriggersType
                                                     .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
                                                     .Where(fi => fi.IsLiteral && !fi.IsInitOnly && fi.FieldType == typeof(string))
                                                     .Select(x => (string) x.GetRawConstantValue())
                                                     .ToList();
+        protected List<string> _ignoredTriggersForProcessUpdated;
+
         protected ISnsFactory _snsFactory;
         protected ISnsGateway _snsGateway;
         protected Token _token;
@@ -56,8 +59,7 @@ namespace ProcessesApi.V1.Services
 
         private async Task PublishProcessUpdatedEvent(StateMachine<string, string>.Transition transition)
         {
-            if (transition.Destination != SharedProcessStates.ProcessClosed
-               && transition.Trigger != SharedInternalTriggers.StartApplication)
+            if (!_ignoredTriggersForProcessUpdated.Contains(transition.Trigger))
             {
                 var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
                 var processSnsMessage = _snsFactory.ProcessStateUpdated(transition, _token);
