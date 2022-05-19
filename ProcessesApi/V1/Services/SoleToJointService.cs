@@ -31,7 +31,7 @@ namespace ProcessesApi.V1.Services
 
         private async Task CheckAutomatedEligibility(StateMachine<string, string>.Transition transition)
         {
-            var processRequest = transition.Parameters[0] as UpdateProcessState;
+            var processRequest = transition.Parameters[0] as ProcessTrigger;
             var formData = processRequest.FormData;
             SoleToJointHelpers.ValidateFormData(formData, new List<string>() { SoleToJointFormDataKeys.IncomingTenantId, SoleToJointFormDataKeys.TenantId });
 
@@ -47,7 +47,7 @@ namespace ProcessesApi.V1.Services
 
         private async Task CheckManualEligibility(StateMachine<string, string>.Transition transition)
         {
-            var processRequest = transition.Parameters[0] as UpdateProcessState;
+            var processRequest = transition.Parameters[0] as ProcessTrigger;
             processRequest.ValidateManualCheck(SoleToJointInternalTriggers.ManualEligibilityPassed,
                                                SoleToJointInternalTriggers.ManualEligibilityFailed,
                                                (SoleToJointFormDataKeys.BR11, "true"),
@@ -63,7 +63,7 @@ namespace ProcessesApi.V1.Services
         private async Task CheckTenancyBreach(StateMachine<string, string>.Transition transition)
         {
 
-            var processRequest = transition.Parameters[0] as UpdateProcessState;
+            var processRequest = transition.Parameters[0] as ProcessTrigger;
             processRequest.ValidateManualCheck(SoleToJointInternalTriggers.BreachChecksPassed,
                                                SoleToJointInternalTriggers.BreachChecksFailed,
                                                (SoleToJointFormDataKeys.BR5, "false"),
@@ -77,7 +77,7 @@ namespace ProcessesApi.V1.Services
 
         #region State Transition Actions
 
-        private void AddIncomingTenantId(UpdateProcessState processRequest)
+        private void AddIncomingTenantId(ProcessTrigger processRequest)
         {
             SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.IncomingTenantId });
 
@@ -89,13 +89,13 @@ namespace ProcessesApi.V1.Services
             _process.RelatedEntities.Add(Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()));
         }
 
-        private async Task OnAutomatedCheckFailed(UpdateProcessState processRequest)
+        private async Task OnAutomatedCheckFailed(ProcessTrigger processRequest)
         {
             AddIncomingTenantId(processRequest);
             await PublishProcessUpdatedEvent("Automatic eligibility check failed.");
         }
 
-        private async Task OnProcessClosed(UpdateProcessState processRequest)
+        private async Task OnProcessClosed(ProcessTrigger processRequest)
         {
             SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.HasNotifiedResident });
             var hasNotifiedResidentString = processRequest.FormData[SoleToJointFormDataKeys.HasNotifiedResident];
@@ -111,22 +111,22 @@ namespace ProcessesApi.V1.Services
             }
         }
 
-        private async Task OnManualCheckFailed(UpdateProcessState processRequest)
+        private async Task OnManualCheckFailed(ProcessTrigger processRequest)
         {
             await PublishProcessUpdatedEvent("Manual Eligibility Check failed.");
         }
 
-        private async Task OnTenancyBreachCheckFailed(UpdateProcessState processRequest)
+        private async Task OnTenancyBreachCheckFailed(ProcessTrigger processRequest)
         {
             await PublishProcessUpdatedEvent("Tenancy Breach Check failed.");
         }
 
-        private async Task OnDocumentsRequestedDes(UpdateProcessState processRequest)
+        private async Task OnDocumentsRequestedDes(ProcessTrigger processRequest)
         {
             await PublishProcessUpdatedEvent("Supporting Documents requested through the Document Evidence Store.");
         }
 
-        private async Task OnRequestDocumentsAppointment(UpdateProcessState processRequest)
+        private async Task OnRequestDocumentsAppointment(ProcessTrigger processRequest)
         {
             SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.AppointmentDateTime });
             var appointmentDetails = processRequest.FormData[SoleToJointFormDataKeys.AppointmentDateTime];
@@ -149,7 +149,7 @@ namespace ProcessesApi.V1.Services
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
 
-        private async Task OnDocumentsAppointmentRescheduled(UpdateProcessState processRequest)
+        private async Task OnDocumentsAppointmentRescheduled(ProcessTrigger processRequest)
         {
             var oldAppointmentDateTime = GetAppointmentDateTime(_process.CurrentState.ProcessData.FormData);
             var newAppointmentDateTime = GetAppointmentDateTime(processRequest.FormData);

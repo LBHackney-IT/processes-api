@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace ProcessesApi.V1.Domain
 {
-    public class UpdateProcessState
+    public class ProcessTrigger
     {
-        private UpdateProcessState(Guid id, Guid? targetId, string trigger, Dictionary<string, object> formData, List<Guid> documents, List<Guid> relatedEntities)
+        private ProcessTrigger(Guid id, Guid? targetId, string trigger, Dictionary<string, object> formData, List<Guid> documents, List<Guid> relatedEntities)
         {
             Id = id;
             TargetId = targetId;
@@ -22,9 +22,9 @@ namespace ProcessesApi.V1.Domain
         public List<Guid> Documents { get; private set; }
         public List<Guid> RelatedEntities { get; private set; }
 
-        public static UpdateProcessState Create(Guid id, Guid? targetId, string trigger, Dictionary<string, object> formData, List<Guid> documents, List<Guid> relatedEntities)
+        public static ProcessTrigger Create(Guid id, Guid? targetId, string trigger, Dictionary<string, object> formData, List<Guid> documents, List<Guid> relatedEntities)
         {
-            return new UpdateProcessState(id, targetId, trigger, formData, documents, relatedEntities);
+            return new ProcessTrigger(id, targetId, trigger, formData, documents, relatedEntities);
         }
     }
 }

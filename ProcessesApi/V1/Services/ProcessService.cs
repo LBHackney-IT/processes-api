@@ -45,24 +45,24 @@ namespace ProcessesApi.V1.Services
         {
         }
 
-        protected void Configure(string state, Assignment assignment, Action<UpdateProcessState> func = null)
+        protected void Configure(string state, Assignment assignment, Action<ProcessTrigger> func = null)
         {
             _machine.Configure(state)
                 .OnEntry(x =>
                 {
-                    var processRequest = x.Parameters[0] as UpdateProcessState;
+                    var processRequest = x.Parameters[0] as ProcessTrigger;
                     SwitchProcessState(assignment, processRequest);
 
                     func?.Invoke(processRequest);
                 });
         }
 
-        protected void ConfigureAsync(string state, Assignment assignment, Func<UpdateProcessState, Task> func = null)
+        protected void ConfigureAsync(string state, Assignment assignment, Func<ProcessTrigger, Task> func = null)
         {
             _machine.Configure(state)
                 .OnEntryAsync(async x =>
                 {
-                    var processRequest = x.Parameters[0] as UpdateProcessState;
+                    var processRequest = x.Parameters[0] as ProcessTrigger;
                     SwitchProcessState(assignment, processRequest);
 
                     if (func != null)
@@ -72,7 +72,7 @@ namespace ProcessesApi.V1.Services
                 });
         }
 
-        private void SwitchProcessState(Assignment assignment, UpdateProcessState processRequest)
+        private void SwitchProcessState(Assignment assignment, ProcessTrigger processRequest)
         {
             _currentState = ProcessState.Create(
                 _machine.State,
@@ -83,9 +83,9 @@ namespace ProcessesApi.V1.Services
                 DateTime.UtcNow, DateTime.UtcNow);
         }
 
-        protected async Task TriggerStateMachine(UpdateProcessState trigger)
+        protected async Task TriggerStateMachine(ProcessTrigger trigger)
         {
-            var res = _machine.SetTriggerParameters<UpdateProcessState, Process>(trigger.Trigger);
+            var res = _machine.SetTriggerParameters<ProcessTrigger, Process>(trigger.Trigger);
             await _machine.FireAsync(res, trigger, _process).ConfigureAwait(false);
         }
 
@@ -114,7 +114,7 @@ namespace ProcessesApi.V1.Services
         }
 
 
-        public async Task Process(UpdateProcessState processRequest, Process process, Token token)
+        public async Task Process(ProcessTrigger processRequest, Process process, Token token)
         {
             _process = process;
             _token = token;
@@ -122,7 +122,7 @@ namespace ProcessesApi.V1.Services
             var state = process.CurrentState is null ? SharedProcessStates.ApplicationInitialised : process.CurrentState.State;
 
             _machine = new StateMachine<string, string>(() => state, s => state = s);
-            var res = _machine.SetTriggerParameters<UpdateProcessState, Process>(processRequest.Trigger);
+            var res = _machine.SetTriggerParameters<ProcessTrigger, Process>(processRequest.Trigger);
 
             SetUpStates();
             SetUpStateActions();

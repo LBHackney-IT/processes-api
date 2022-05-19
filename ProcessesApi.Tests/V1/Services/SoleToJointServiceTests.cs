@@ -95,9 +95,9 @@ namespace ProcessesApi.Tests.V1.Services
                             .Create();
         }
 
-        private UpdateProcessState CreateProcessTrigger(Process process, string trigger, Dictionary<string, object> formData = null)
+        private ProcessTrigger CreateProcessTrigger(Process process, string trigger, Dictionary<string, object> formData = null)
         {
-            return UpdateProcessState.Create
+            return ProcessTrigger.Create
             (
                 process.Id,
                 process.TargetId,
@@ -108,7 +108,7 @@ namespace ProcessesApi.Tests.V1.Services
             );
         }
 
-        private void CurrentStateShouldContainCorrectData(Process process, UpdateProcessState triggerObject, string expectedCurrentState, List<string> expectedTriggers)
+        private void CurrentStateShouldContainCorrectData(Process process, ProcessTrigger triggerObject, string expectedCurrentState, List<string> expectedTriggers)
         {
             process.CurrentState.State.Should().Be(expectedCurrentState);
             process.CurrentState.PermittedTriggers.Should().BeEquivalentTo(expectedTriggers);

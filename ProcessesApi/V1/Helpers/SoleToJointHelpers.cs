@@ -8,7 +8,7 @@ namespace ProcessesApi.V1.Helpers
 {
     public static class SoleToJointHelpers
     {
-        public static void ValidateManualCheck(this UpdateProcessState processRequest,
+        public static void ValidateManualCheck(this ProcessTrigger processRequest,
                                                string passedTrigger,
                                                string failedTrigger,
                                                params (string CheckId, string Value)[] expectations)
