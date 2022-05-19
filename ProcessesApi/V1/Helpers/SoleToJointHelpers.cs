@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Services.Exceptions;
@@ -33,6 +34,20 @@ namespace ProcessesApi.V1.Helpers
                 if (!requestFormData.ContainsKey(x))
                     throw new FormDataNotFoundException(requestFormData.Keys.ToList(), expectedFormDataKeys);
             });
+        }
+
+        public static DateTime GetAppointmentDateTime(Dictionary<string, object> formData)
+        {
+            formData.TryGetValue(SoleToJointFormDataKeys.AppointmentDateTime, out var dateTimeString);
+
+            if (dateTimeString != null)
+            {
+                return DateTime
+                    .Parse(dateTimeString.ToString(), null, DateTimeStyles.RoundtripKind)
+                    .ToUniversalTime();
+            }
+
+            throw new FormDataNotFoundException(formData.Keys.ToList(), new List<string> { SoleToJointFormDataKeys.AppointmentDateTime });
         }
     }
 }

@@ -159,25 +159,10 @@ namespace ProcessesApi.V1.Services
         private async Task OnDocumentsAppointmentRescheduled(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
-            var oldAppointmentDateTime = GetAppointmentDateTime(_process.CurrentState.ProcessData.FormData);
-            var newAppointmentDateTime = GetAppointmentDateTime(processRequest.FormData);
+            var oldAppointmentDateTime = SoleToJointHelpers.GetAppointmentDateTime(_process.CurrentState.ProcessData.FormData);
+            var newAppointmentDateTime = SoleToJointHelpers.GetAppointmentDateTime(processRequest.FormData);
 
             await PublishProcessUpdatedEventWithRescheduledAppointment(oldAppointmentDateTime.ToString("dd/MM/yyyy hh:mm tt"), newAppointmentDateTime.ToString("dd/MM/yyyy hh:mm tt"));
-        }
-
-
-        private static DateTime GetAppointmentDateTime(Dictionary<string, object> formData)
-        {
-            formData.TryGetValue(SoleToJointFormDataKeys.AppointmentDateTime, out var dateTimeString);
-
-            if (dateTimeString != null)
-            {
-                return DateTime
-                    .Parse(dateTimeString.ToString(), null, DateTimeStyles.RoundtripKind)
-                    .ToUniversalTime();
-            }
-
-            throw new FormDataNotFoundException(formData.Keys.ToList(), new List<string> { SoleToJointFormDataKeys.AppointmentDateTime });
         }
 
         #endregion
@@ -203,8 +188,8 @@ namespace ProcessesApi.V1.Services
             _machine.Configure(SoleToJointStates.AutomatedChecksPassed)
                     .OnEntry(AddIncomingTenantId)
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckManualEligibility, CheckManualEligibility)
-                    .Permit(SoleToJointInternalTriggers.ManualEligibilityPassed, SoleToJointStates.ManualChecksPassed)
-                    .Permit(SoleToJointInternalTriggers.ManualEligibilityFailed, SoleToJointStates.ManualChecksFailed);
+                    .Permit(SoleToJointInternalTriggers.ManualEligibilityFailed, SoleToJointStates.ManualChecksFailed)
+                    .Permit(SoleToJointInternalTriggers.ManualEligibilityPassed, SoleToJointStates.ManualChecksPassed);
 
             _machine.Configure(SoleToJointStates.ManualChecksFailed)
                     .OnEntryAsync(OnManualCheckFailed)

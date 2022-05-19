@@ -24,12 +24,7 @@ namespace ProcessesApi.V1.UseCase
 
         public async Task<Process> Execute(Guid id, string processTrigger, Guid? targetId, List<Guid> relatedEntities, Dictionary<string, object> formData, List<Guid> documents, ProcessName processName, int? ifMatch, Token token)
         {
-            var triggerObject = ProcessTrigger.Create(id,
-                                                          targetId,
-                                                          processTrigger,
-                                                          formData,
-                                                          documents,
-                                                          relatedEntities);
+            var triggerObject = ProcessTrigger.Create(id, processTrigger, formData, documents);
 
             Process process;
 

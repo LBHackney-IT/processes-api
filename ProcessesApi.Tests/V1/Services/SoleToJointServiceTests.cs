@@ -100,11 +100,9 @@ namespace ProcessesApi.Tests.V1.Services
             return ProcessTrigger.Create
             (
                 process.Id,
-                process.TargetId,
                 trigger,
                 formData,
-                _fixture.Create<List<Guid>>(),
-                process.RelatedEntities
+                _fixture.Create<List<Guid>>()
             );
         }
 

@@ -47,19 +47,16 @@ namespace ProcessesApi.V1.Services
             {
                 var processRequest = x.Parameters[0] as ProcessTrigger;
                 var assignment = Assignment.Create("tenants"); // placeholder
-                SwitchProcessState(assignment, processRequest);
+                
+                _currentState = ProcessState.Create(
+                    _machine.State,
+                    _machine.PermittedTriggers
+                        .Where(trigger => _permittedTriggers.Contains(trigger)).ToList(),
+                    assignment,
+                    ProcessData.Create(processRequest.FormData, processRequest.Documents),
+                    DateTime.UtcNow, DateTime.UtcNow
+                );
             });
-        }
-
-        private void SwitchProcessState(Assignment assignment, ProcessTrigger processRequest)
-        {
-            _currentState = ProcessState.Create(
-                _machine.State,
-                _machine.PermittedTriggers
-                    .Where(trigger => _permittedTriggers.Contains(trigger)).ToList(),
-                assignment,
-                ProcessData.Create(processRequest.FormData, processRequest.Documents),
-                DateTime.UtcNow, DateTime.UtcNow);
         }
 
         protected async Task TriggerStateMachine(ProcessTrigger trigger)
