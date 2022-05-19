@@ -41,35 +41,14 @@ namespace ProcessesApi.V1.Services
             //         .Permit(SharedInternalTriggers.StartApplication, SOME_STATE);
         }
 
-        protected virtual void SetUpStateActions()
+        private void ConfigureStateTransitions()
         {
-        }
-
-        protected void Configure(string state, Assignment assignment, Action<ProcessTrigger> func = null)
-        {
-            _machine.Configure(state)
-                .OnEntry(x =>
-                {
-                    var processRequest = x.Parameters[0] as ProcessTrigger;
-                    SwitchProcessState(assignment, processRequest);
-
-                    func?.Invoke(processRequest);
-                });
-        }
-
-        protected void ConfigureAsync(string state, Assignment assignment, Func<ProcessTrigger, Task> func = null)
-        {
-            _machine.Configure(state)
-                .OnEntryAsync(async x =>
-                {
-                    var processRequest = x.Parameters[0] as ProcessTrigger;
-                    SwitchProcessState(assignment, processRequest);
-
-                    if (func != null)
-                    {
-                        await func.Invoke(processRequest).ConfigureAwait(false);
-                    }
-                });
+            _machine.OnTransitioned(x =>
+            {
+                var processRequest = x.Parameters[0] as ProcessTrigger;
+                var assignment = Assignment.Create("tenants"); // placeholder
+                SwitchProcessState(assignment, processRequest);
+            });
         }
 
         private void SwitchProcessState(Assignment assignment, ProcessTrigger processRequest)
@@ -124,8 +103,8 @@ namespace ProcessesApi.V1.Services
             _machine = new StateMachine<string, string>(() => state, s => state = s);
             var res = _machine.SetTriggerParameters<ProcessTrigger, Process>(processRequest.Trigger);
 
+            ConfigureStateTransitions();
             SetUpStates();
-            SetUpStateActions();
 
             var triggerIsPermitted = _permittedTriggers.Contains(processRequest.Trigger) || processRequest.Trigger == SharedInternalTriggers.StartApplication;
             var canFire = triggerIsPermitted && _machine.CanFire(processRequest.Trigger);

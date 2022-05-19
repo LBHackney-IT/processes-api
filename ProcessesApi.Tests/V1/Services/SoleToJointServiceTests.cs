@@ -125,7 +125,7 @@ namespace ProcessesApi.Tests.V1.Services
         }
 
         [Fact]
-        public async Task InitialiseStateToSelectTenantsIfCurrentStateIsNotDefined()
+        public async Task InitialiseStateToSelectTenantsIfCurrentStateIsNotDefinedAndTriggerProcessStartedEvent()
         {
             // Arrange
             var process = _fixture.Build<Process>()
@@ -143,6 +143,9 @@ namespace ProcessesApi.Tests.V1.Services
                                                  SoleToJointStates.SelectTenants,
                                                  new List<string>() { SoleToJointPermittedTriggers.CheckAutomatedEligibility });
             process.PreviousStates.Should().BeEmpty();
+
+            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _lastSnsEvent.EventType.Should().Be(ProcessStartedEventConstants.EVENTTYPE);
         }
 
         // List all states that CloseProcess can be triggered from
