@@ -15,7 +15,7 @@ namespace ProcessesApi.V1.Domain
         public const string DocumentsRequestedDes = "DocumentsRequestedDes";
         public const string DocumentsRequestedAppointment = "DocumentsRequestedAppointment";
         public const string DocumentsAppointmentRescheduled = "DocumentsAppointmentRescheduled";
-        public const string ReviewDocuments = "ReviewDocuments";
+        public const string DocumentChecksPassed = "DocumentChecksPassed";
     }
 
     public static class SoleToJointPermittedTriggers
@@ -140,9 +140,32 @@ namespace ProcessesApi.V1.Domain
         public const string SeenPhotographicId = "SeenPhotographicId";
 
         /// <summary>
-        ///     I confirm I have seen a government issue photographic ID
+        ///     I confirm I have seen a second form of ID (does not have to be photographic)
         /// </summary>
-        public const string SeenPhotographicId = "SeenPhotographicId";
+        public const string SeenSecondId = "SeenSecondId";
+
+        /// <summary>
+        ///     I confirm that the prespective tenant is not subject to immigration control under the
+        ///     Asylum and Immigration Act 1996
+        /// </summary>
+        public const string IsNotInImmigrationControl = "IsNotInImmigrationControl";
+
+        /// <summary>
+        ///     I confirm that I have seen proof of relationship to the existing tenant
+        /// </summary>
+        public const string SeenProofOfRelationship = "SeenProofOfRelationship";
+
+        /// <summary>
+        ///     I confirm that I have seen 3 seperate documents proving the proposed tenant has been
+        ///     living at the property for a minimum of 12 months
+        /// </summary>
+        public const string IncomingTenantLivingInProperty = "IncomingTenantLivingInProperty";
+
+
+
+
+
+
 
 
         #endregion

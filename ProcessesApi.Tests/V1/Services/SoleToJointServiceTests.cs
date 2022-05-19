@@ -48,6 +48,15 @@ namespace ProcessesApi.Tests.V1.Services
             { SoleToJointFormDataKeys.BR18, "false" }
         };
 
+        private Dictionary<string, object> _reviewDocumentCheckPass => new Dictionary<string, object>
+        {
+            { SoleToJointFormDataKeys.SeenPhotographicId, "true" },
+            { SoleToJointFormDataKeys.SeenSecondId, "true" },
+            { SoleToJointFormDataKeys.IsNotInImmigrationControl, "true" },
+            {SoleToJointFormDataKeys.SeenProofOfRelationship, "true" },
+            { SoleToJointFormDataKeys.IncomingTenantLivingInProperty, "true" }
+        };
+
         private Mock<ISoleToJointAutomatedEligibilityChecksHelper> _mockAutomatedEligibilityChecksHelper;
         private Mock<ISnsGateway> _mockSnsGateway;
 
@@ -516,7 +525,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsRequestedAppointment,
-                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment /*Add next state here*/ });
+                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CancelProcess });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
         }
@@ -587,7 +596,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsRequestedDes,
-                new List<string> { SoleToJointPermittedTriggers.RequestDocumentsAppointment /* TODO: Update permitted triggers when implemented */ });
+                new List<string> { SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CancelProcess });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
         }
@@ -630,7 +639,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsRequestedAppointment,
-                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment /* TODO: Update permitted when implemented */});
+                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CancelProcess });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
         }
@@ -688,7 +697,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsAppointmentRescheduled,
-                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment });
+                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CancelProcess });
 
             process.PreviousStates.Last().State.Should().Be(initialState);
         }
@@ -722,5 +731,62 @@ namespace ProcessesApi.Tests.V1.Services
         }
 
         #endregion Reschedule documents appointment
+
+        #region Review Documents
+
+        [Theory]
+        [InlineData(SoleToJointStates.DocumentsRequestedDes)]
+        [InlineData(SoleToJointStates.DocumentsRequestedAppointment)]
+        [InlineData(SoleToJointStates.DocumentsAppointmentRescheduled)]
+        public async Task ProcessStateIsUpdatedToDocumentChecksPassed(string initialState)
+        {
+            // Arrange
+
+            var process = CreateProcessWithCurrentState(initialState);
+
+            var formData = _reviewDocumentCheckPass;
+            var triggerObject = CreateProcessTrigger(process,
+                                                     SoleToJointPermittedTriggers.ReviewDocuments,
+                                                     formData);
+            // Act
+            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(process,
+                                                 triggerObject,
+                                                 SoleToJointStates.DocumentChecksPassed,
+                                                 new List<string> { /*Add new state here when implemented*/ });
+            process.PreviousStates.LastOrDefault().State.Should().Be(initialState);
+        }
+
+        [Theory]
+        [InlineData(SoleToJointStates.DocumentsRequestedDes)]
+        [InlineData(SoleToJointStates.DocumentsRequestedAppointment)]
+        [InlineData(SoleToJointStates.DocumentsAppointmentRescheduled)]
+        public void ThrowsFormDataNotFoundExceptionOnReviewDocumentsTrigger(string initialState)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(initialState);
+
+            var formData = new Dictionary<string, object>
+            {
+                { SoleToJointFormDataKeys.SeenPhotographicId, true },
+                { SoleToJointFormDataKeys.SeenSecondId, true },
+                { SoleToJointFormDataKeys.IsNotInImmigrationControl, true },
+                {SoleToJointFormDataKeys.SeenProofOfRelationship, "true" },
+            };
+
+            var triggerObject = CreateProcessTrigger(process,
+                                                     SoleToJointPermittedTriggers.ReviewDocuments,
+                                                     formData);
+            var expectedErrorMessage = $"The request's FormData is invalid: The form data keys supplied ({String.Join(", ", formData.Keys.ToList())}) do not include the expected values ({SoleToJointFormDataKeys.IncomingTenantLivingInProperty}).";
+            // Act
+            Func<Task> func = async () => await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
+            // Assert
+            func.Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
+        }
+
+
+        #endregion
     }
 }

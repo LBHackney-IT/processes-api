@@ -73,6 +73,18 @@ namespace ProcessesApi.V1.Services
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
+        private async Task ReviewDocumentsCheck(StateMachine<string, string>.Transition transition)
+        {
+            var processRequest = transition.Parameters[0] as UpdateProcessState;
+            processRequest.ValidateDocumentsReview(SoleToJointInternalTriggers.DocumentChecksPassed,
+                                               (SoleToJointFormDataKeys.SeenPhotographicId, "true"),
+                                               (SoleToJointFormDataKeys.SeenSecondId, "true"),
+                                               (SoleToJointFormDataKeys.IsNotInImmigrationControl, "true"),
+                                               (SoleToJointFormDataKeys.SeenProofOfRelationship, "true"),
+                                               (SoleToJointFormDataKeys.IncomingTenantLivingInProperty, "true"));
+            await TriggerStateMachine(processRequest).ConfigureAwait(false);
+        }
+
         #endregion
 
         #region State Transition Actions
@@ -137,7 +149,7 @@ namespace ProcessesApi.V1.Services
 
         private async Task OnReviewDocuments(UpdateProcessState processState)
         {
-
+            await PublishProcessUpdatedEvent($"DocumentsChecksPassed");
         }
 
 
@@ -184,20 +196,23 @@ namespace ProcessesApi.V1.Services
                     .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment);
 
             _machine.Configure(SoleToJointStates.DocumentsRequestedDes)
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, async (x) => await ReviewDocumentsCheck(x).ConfigureAwait(false))
+                    .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
                     .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment)
-                    .Permit(SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointStates.ReviewDocuments)
                     .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessCancelled);
 
             _machine.Configure(SoleToJointStates.DocumentsRequestedAppointment)
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, async (x) => await ReviewDocumentsCheck(x).ConfigureAwait(false))
+                    .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
                     .Permit(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointStates.DocumentsAppointmentRescheduled)
-                    .Permit(SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointStates.ReviewDocuments)
                     .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessCancelled);
 
             _machine.Configure(SoleToJointStates.DocumentsAppointmentRescheduled)
                     .PermitReentry(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment)
-                    .Permit(SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointStates.ReviewDocuments)
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, async (x) => await ReviewDocumentsCheck(x).ConfigureAwait(false))
+                    .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
                     .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessCancelled);
-      }
+        }
 
         protected override void SetUpStateActions()
         {
@@ -212,7 +227,7 @@ namespace ProcessesApi.V1.Services
             ConfigureAsync(SoleToJointStates.DocumentsRequestedDes, Assignment.Create("tenants"), OnDocumentsRequestedDes);
             ConfigureAsync(SoleToJointStates.DocumentsRequestedAppointment, Assignment.Create("tenants"), OnRequestDocumentsAppointment);
             ConfigureAsync(SoleToJointStates.DocumentsAppointmentRescheduled, Assignment.Create("tenants"), OnDocumentsAppointmentRescheduled);
-            ConfigureAsync(SoleToJointStates.ReviewDocuments, Assignment.Create("tenants"), OnReviewDocuments);
+            ConfigureAsync(SoleToJointStates.DocumentChecksPassed, Assignment.Create("tenants"), OnReviewDocuments);
         }
     }
 }

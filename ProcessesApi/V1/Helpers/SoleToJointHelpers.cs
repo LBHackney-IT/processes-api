@@ -26,6 +26,27 @@ namespace ProcessesApi.V1.Helpers
             processRequest.Trigger = isCheckPassed ? passedTrigger : failedTrigger;
         }
 
+        public static void ValidateDocumentsReview(this UpdateProcessState processRequest,
+                                               string passedTrigger,
+                                               params (string CheckId, string Value)[] expectations)
+        {
+            var formData = processRequest.FormData;
+            var expectedFormDataKeys = expectations.Select(expectation => expectation.CheckId).ToList();
+            ValidateFormData(formData, expectedFormDataKeys);
+
+            var isCheckPassed = expectations.All(expectation =>
+                String.Equals(expectation.Value,
+                              formData[expectation.CheckId].ToString(),
+                              StringComparison.OrdinalIgnoreCase)
+            );
+            if (isCheckPassed == true)
+            {
+                processRequest.Trigger = passedTrigger;
+            }
+
+            //processRequest.Trigger = isCheckPassed ? passedTrigger : throw new FormDataInvalidException();
+        }
+
         public static void ValidateFormData(Dictionary<string, object> requestFormData, List<string> expectedFormDataKeys)
         {
             expectedFormDataKeys.ForEach(x =>
