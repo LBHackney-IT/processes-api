@@ -34,20 +34,15 @@ namespace ProcessesApi.V1.Services
             _snsGateway = snsGateway;
         }
 
-        protected virtual void SetUpStates()
-        {
-            // All services must implement the following lines to allow the first state to be initialised correctly:
-            // _machine.Configure(SharedProcessStates.ApplicationInitialised)
-            //         .Permit(SharedInternalTriggers.StartApplication, SOME_STATE);
-        }
-
         private void ConfigureStateTransitions()
         {
-            _machine.OnTransitioned(x =>
+            _machine.OnTransitionedAsync(async x =>
             {
                 var processRequest = x.Parameters[0] as ProcessTrigger;
                 var assignment = Assignment.Create("tenants"); // placeholder
-                
+
+                await PublishProcessUpdatedEvent(x).ConfigureAwait(false);
+
                 _currentState = ProcessState.Create(
                     _machine.State,
                     _machine.PermittedTriggers
@@ -59,10 +54,16 @@ namespace ProcessesApi.V1.Services
             });
         }
 
-        protected async Task TriggerStateMachine(ProcessTrigger trigger)
+        private async Task PublishProcessUpdatedEvent(StateMachine<string, string>.Transition transition)
         {
-            var res = _machine.SetTriggerParameters<ProcessTrigger, Process>(trigger.Trigger);
-            await _machine.FireAsync(res, trigger, _process).ConfigureAwait(false);
+            if (transition.Destination != SharedProcessStates.ProcessClosed
+               && transition.Trigger != SharedInternalTriggers.StartApplication)
+            {
+                var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
+                var processSnsMessage = _snsFactory.ProcessStateUpdated(transition, _token);
+
+                await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
+            }
         }
 
         protected async Task PublishProcessStartedEvent()
@@ -73,13 +74,6 @@ namespace ProcessesApi.V1.Services
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
 
-        protected async Task PublishProcessUpdatedEvent(string description)
-        {
-            var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = _snsFactory.ProcessUpdatedWithMessage(_process, _token, description);
-
-            await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
-        }
 
         protected async Task PublishProcessClosedEvent()
         {
@@ -89,6 +83,18 @@ namespace ProcessesApi.V1.Services
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
 
+        protected async Task TriggerStateMachine(ProcessTrigger trigger)
+        {
+            var res = _machine.SetTriggerParameters<ProcessTrigger, Process>(trigger.Trigger);
+            await _machine.FireAsync(res, trigger, _process).ConfigureAwait(false);
+        }
+
+        protected virtual void SetUpStates()
+        {
+            // All services must implement the following lines to allow the first state to be initialised correctly:
+            // _machine.Configure(SharedProcessStates.ApplicationInitialised)
+            //         .Permit(SharedInternalTriggers.StartApplication, SOME_STATE);
+        }
 
         public async Task Process(ProcessTrigger processRequest, Process process, Token token)
         {

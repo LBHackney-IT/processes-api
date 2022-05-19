@@ -8,9 +8,6 @@ using Hackney.Core.Sns;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Services.Exceptions;
-using System.Globalization;
-using System.Linq;
-using ProcessesApi.V1.Infrastructure.Extensions;
 
 namespace ProcessesApi.V1.Services
 {
@@ -77,25 +74,6 @@ namespace ProcessesApi.V1.Services
 
         #region State Transition Actions
 
-        private void AddIncomingTenantId(Stateless.StateMachine<string, string>.Transition x)
-        {
-            var processRequest = x.Parameters[0] as ProcessTrigger;
-            SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.IncomingTenantId });
-
-            //TODO: When doing a POST request from the FE they should created a relatedEntities object with all neccesary values
-            // Once Frontend work is completed the IF statement below should be removed.
-            if (_process.RelatedEntities == null)
-                _process.RelatedEntities = new List<Guid>();
-
-            _process.RelatedEntities.Add(Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()));
-        }
-
-        private async Task OnAutomatedCheckFailed(Stateless.StateMachine<string, string>.Transition x)
-        {
-            AddIncomingTenantId(x);
-            await PublishProcessUpdatedEvent("Automatic eligibility check failed.");
-        }
-
         private async Task OnProcessClosed(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
@@ -114,55 +92,17 @@ namespace ProcessesApi.V1.Services
             }
         }
 
-        private async Task OnManualCheckFailed(Stateless.StateMachine<string, string>.Transition x)
+        private void AddIncomingTenantId(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
-            await PublishProcessUpdatedEvent("Manual Eligibility Check failed.");
-        }
+            SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.IncomingTenantId });
 
-        private async Task OnTenancyBreachCheckFailed(Stateless.StateMachine<string, string>.Transition x)
-        {
-            var processRequest = x.Parameters[0] as ProcessTrigger;
-            await PublishProcessUpdatedEvent("Tenancy Breach Check failed.");
-        }
+            //TODO: When doing a POST request from the FE they should created a relatedEntities object with all neccesary values
+            // Once Frontend work is completed the IF statement below should be removed.
+            if (_process.RelatedEntities == null)
+                _process.RelatedEntities = new List<Guid>();
 
-        private async Task OnDocumentsRequestedDes(Stateless.StateMachine<string, string>.Transition x)
-        {
-            var processRequest = x.Parameters[0] as ProcessTrigger;
-            await PublishProcessUpdatedEvent("Supporting Documents requested through the Document Evidence Store.");
-        }
-
-        private async Task OnRequestDocumentsAppointment(Stateless.StateMachine<string, string>.Transition x)
-        {
-            var processRequest = x.Parameters[0] as ProcessTrigger;
-            SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.AppointmentDateTime });
-            var appointmentDetails = processRequest.FormData[SoleToJointFormDataKeys.AppointmentDateTime];
-
-            if (DateTime.TryParse(appointmentDetails.ToString(), out DateTime appointmentDateTime))
-            {
-                await PublishProcessUpdatedEvent($"Supporting Documents requested via an office appointment on {appointmentDateTime.ToString("dd/MM/yyyy hh:mm tt")}.");
-            }
-            else
-            {
-                throw new FormDataFormatException("appointment datetime", appointmentDetails);
-            }
-        }
-
-        protected async Task PublishProcessUpdatedEventWithRescheduledAppointment(string oldAppointmentTime, string newAppointmentTime)
-        {
-            var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = _snsFactory.ProcessUpdatedWithAppointmentRescheduled(_process, _token, oldAppointmentTime, newAppointmentTime);
-
-            await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
-        }
-
-        private async Task OnDocumentsAppointmentRescheduled(Stateless.StateMachine<string, string>.Transition x)
-        {
-            var processRequest = x.Parameters[0] as ProcessTrigger;
-            var oldAppointmentDateTime = SoleToJointHelpers.GetAppointmentDateTime(_process.CurrentState.ProcessData.FormData);
-            var newAppointmentDateTime = SoleToJointHelpers.GetAppointmentDateTime(processRequest.FormData);
-
-            await PublishProcessUpdatedEventWithRescheduledAppointment(oldAppointmentDateTime.ToString("dd/MM/yyyy hh:mm tt"), newAppointmentDateTime.ToString("dd/MM/yyyy hh:mm tt"));
+            _process.RelatedEntities.Add(Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()));
         }
 
         #endregion
@@ -179,20 +119,18 @@ namespace ProcessesApi.V1.Services
                     .OnEntryAsync(PublishProcessStartedEvent)
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckAutomatedEligibility, CheckAutomatedEligibility)
                     .Permit(SoleToJointInternalTriggers.EligibiltyFailed, SoleToJointStates.AutomatedChecksFailed)
-                    .Permit(SoleToJointInternalTriggers.EligibiltyPassed, SoleToJointStates.AutomatedChecksPassed);
+                    .Permit(SoleToJointInternalTriggers.EligibiltyPassed, SoleToJointStates.AutomatedChecksPassed)
+                    .OnExit(AddIncomingTenantId);
 
             _machine.Configure(SoleToJointStates.AutomatedChecksFailed)
-                    .OnEntryAsync(OnAutomatedCheckFailed)
                     .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.AutomatedChecksPassed)
-                    .OnEntry(AddIncomingTenantId)
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckManualEligibility, CheckManualEligibility)
                     .Permit(SoleToJointInternalTriggers.ManualEligibilityFailed, SoleToJointStates.ManualChecksFailed)
                     .Permit(SoleToJointInternalTriggers.ManualEligibilityPassed, SoleToJointStates.ManualChecksPassed);
 
             _machine.Configure(SoleToJointStates.ManualChecksFailed)
-                    .OnEntryAsync(OnManualCheckFailed)
                     .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.ManualChecksPassed)
@@ -201,7 +139,6 @@ namespace ProcessesApi.V1.Services
                     .Permit(SoleToJointInternalTriggers.BreachChecksFailed, SoleToJointStates.BreachChecksFailed);
 
             _machine.Configure(SoleToJointStates.BreachChecksFailed)
-                    .OnEntryAsync(OnTenancyBreachCheckFailed)
                     .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.BreachChecksPassed)
@@ -209,15 +146,14 @@ namespace ProcessesApi.V1.Services
                     .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment);
 
             _machine.Configure(SoleToJointStates.DocumentsRequestedDes)
-                    .OnEntryAsync(OnDocumentsRequestedDes)
                     .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment);
 
             _machine.Configure(SoleToJointStates.DocumentsRequestedAppointment)
-                    .OnEntryAsync(OnRequestDocumentsAppointment)
+                    .OnEntry(SoleToJointHelpers.ValidateAppointmentDateTime)
                     .Permit(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointStates.DocumentsAppointmentRescheduled);
 
             _machine.Configure(SoleToJointStates.DocumentsAppointmentRescheduled)
-                    .OnEntryAsync(OnDocumentsAppointmentRescheduled)
+                    .OnEntry(SoleToJointHelpers.ValidateAppointmentDateTime)
                     .PermitReentry(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment);
         }
     }

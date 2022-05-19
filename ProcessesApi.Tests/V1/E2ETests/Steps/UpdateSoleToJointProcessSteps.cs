@@ -16,7 +16,6 @@ using Hackney.Core.Sns;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
 using ProcessesApi.V1.Infrastructure.JWT;
 using Hackney.Core.Testing.Sns;
-using ProcessesApi.V1.Factories;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using System.Collections.Generic;
 
@@ -155,9 +154,6 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                 actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
                 actual.EntityId.Should().Be(processId);
 
-                actual.EventData.NewData.Should().NotBeNull();
-                actual.EventData.OldData.Should().BeNull();
-
                 actual.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
                 actual.SourceDomain.Should().Be(ProcessClosedEventConstants.SOURCE_DOMAIN);
                 actual.SourceSystem.Should().Be(ProcessClosedEventConstants.SOURCE_SYSTEM);
@@ -173,39 +169,12 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
         }
 
-        public async Task ThenTheProcessUpdatedEventIsRaised(ISnsFixture snsFixture, Guid processId)
+        public async Task ThenTheProcessUpdatedEventIsRaised(ISnsFixture snsFixture, Guid processId, string oldState, string newState)
         {
-            Action<EntityEventSns> verifyFunc = actual =>
-            {
-                actual.Id.Should().NotBeEmpty();
-                actual.CorrelationId.Should().NotBeEmpty();
-                actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
-                actual.EntityId.Should().Be(processId);
-
-                actual.EventData.NewData.Should().NotBeNull();
-                actual.EventData.OldData.Should().BeNull();
-
-                actual.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
-                actual.SourceDomain.Should().Be(ProcessUpdatedEventConstants.SOURCE_DOMAIN);
-                actual.SourceSystem.Should().Be(ProcessUpdatedEventConstants.SOURCE_SYSTEM);
-                actual.Version.Should().Be(ProcessUpdatedEventConstants.V1_VERSION);
-
-                actual.User.Email.Should().Be(TestToken.UserEmail);
-                actual.User.Name.Should().Be(TestToken.UserName);
-            };
-
-            var snsVerifier = snsFixture.GetSnsEventVerifier<EntityEventSns>();
-            var snsResult = await snsVerifier.VerifySnsEventRaised(verifyFunc);
-
-            if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
-        }
-
-        public async Task ThenTheProcessUpdatedEventWithRescheduledAppointmentIsRaised(ISnsFixture snsFixture, Guid processId)
-        {
-            Action<string> verifyData = (dataAsString) =>
+            Action<string, string> verifyData = (dataAsString, state) =>
             {
                 var dataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(dataAsString, _jsonOptions);
-                dataDic.Should().ContainKey("description");
+                dataDic["state"].ToString().Should().Be(state);
             };
 
             Action<EntityEventSns> verifyFunc = actual =>
@@ -215,10 +184,8 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                 actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
                 actual.EntityId.Should().Be(processId);
 
-                actual.EventData.NewData.Should().NotBeNull();
-                verifyData(actual.EventData.NewData.ToString());
-                actual.EventData.OldData.Should().NotBeNull();
-                verifyData(actual.EventData.OldData.ToString());
+                verifyData(actual.EventData.OldData.ToString(), oldState);
+                verifyData(actual.EventData.NewData.ToString(), newState);
 
                 actual.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
                 actual.SourceDomain.Should().Be(ProcessUpdatedEventConstants.SOURCE_DOMAIN);

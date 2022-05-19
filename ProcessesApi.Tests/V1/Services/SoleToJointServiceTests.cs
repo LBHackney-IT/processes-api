@@ -15,7 +15,6 @@ using ProcessesApi.V1.Services;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Services.Exceptions;
 using System.Globalization;
-using ProcessesApi.V1.Infrastructure.Extensions;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -116,10 +115,12 @@ namespace ProcessesApi.Tests.V1.Services
             process.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
         }
 
-        private void ThenProcessUpdatedEventIsRaised()
+        private void VerifyThatProcessUpdatedEventIsTriggered(string oldState, string newState)
         {
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             _lastSnsEvent.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
+            (_lastSnsEvent.EventData.OldData as ProcessStateChangeData).State.Should().Be(oldState);
+            (_lastSnsEvent.EventData.NewData as ProcessStateChangeData).State.Should().Be(newState);
         }
 
         [Fact]
@@ -233,7 +234,7 @@ namespace ProcessesApi.Tests.V1.Services
                                                  new List<string>() { SoleToJointPermittedTriggers.CloseProcess });
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
             _mockAutomatedEligibilityChecksHelper.Verify(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId), Times.Once());
-            ThenProcessUpdatedEventIsRaised();
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.SelectTenants, SoleToJointStates.AutomatedChecksFailed);
         }
 
         [Fact]
@@ -265,6 +266,7 @@ namespace ProcessesApi.Tests.V1.Services
                                                  new List<string>() { SoleToJointPermittedTriggers.CheckManualEligibility });
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
             _mockAutomatedEligibilityChecksHelper.Verify(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId), Times.Once());
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.SelectTenants, SoleToJointStates.AutomatedChecksPassed);
         }
 
         [Fact]
@@ -309,6 +311,7 @@ namespace ProcessesApi.Tests.V1.Services
                                                  SoleToJointStates.ManualChecksPassed,
                                                  new List<string> { "CheckTenancyBreach" });
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.AutomatedChecksPassed, SoleToJointStates.ManualChecksPassed);
         }
 
         [Theory]
@@ -337,7 +340,7 @@ namespace ProcessesApi.Tests.V1.Services
                                                  SoleToJointStates.ManualChecksFailed,
                                                  new List<string>() { SoleToJointPermittedTriggers.CloseProcess });
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
-            ThenProcessUpdatedEventIsRaised();
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.AutomatedChecksPassed, SoleToJointStates.ManualChecksFailed);
         }
 
         [Fact]
@@ -387,6 +390,7 @@ namespace ProcessesApi.Tests.V1.Services
                 new List<string> { SoleToJointPermittedTriggers.RequestDocumentsDes, SoleToJointPermittedTriggers.RequestDocumentsAppointment });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.ManualChecksPassed);
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.ManualChecksPassed, SoleToJointStates.BreachChecksPassed);
         }
 
         [Theory]
@@ -413,7 +417,7 @@ namespace ProcessesApi.Tests.V1.Services
                 new List<string> { SoleToJointPermittedTriggers.CloseProcess });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.ManualChecksPassed);
-            ThenProcessUpdatedEventIsRaised();
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.ManualChecksPassed, SoleToJointStates.BreachChecksFailed);
         }
 
         [Theory]
@@ -460,7 +464,7 @@ namespace ProcessesApi.Tests.V1.Services
                 new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment /*Add next state here*/ });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
-            ThenProcessUpdatedEventIsRaised();
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.BreachChecksPassed, SoleToJointStates.DocumentsRequestedAppointment);
         }
 
         [Fact]
@@ -516,25 +520,10 @@ namespace ProcessesApi.Tests.V1.Services
                 new List<string> { SoleToJointPermittedTriggers.RequestDocumentsAppointment /* TODO: Update permitted triggers when implemented */ });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.BreachChecksPassed, SoleToJointStates.DocumentsRequestedDes);
         }
 
-        [Fact]
-        public async Task ProcessUpdatedEventIsRaisedWhenDocumentsRequestedViaDes()
-        {
-            // Arrange
-            var process = CreateProcessWithCurrentState(SoleToJointStates.BreachChecksPassed);
-            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.RequestDocumentsDes);
-
-            // Act
-            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
-
-            // Assert
-            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
-            _lastSnsEvent.EventData.NewData.Should().BeOfType<Message>();
-        }
-
-        #endregion Request documents via DES
+        #endregion
 
         #region Request documents via appointment
 
@@ -559,35 +548,10 @@ namespace ProcessesApi.Tests.V1.Services
                 new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment /* TODO: Update permitted when implemented */});
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.BreachChecksPassed, SoleToJointStates.DocumentsRequestedAppointment);
         }
 
-        [Fact]
-        public async Task ProcessUpdatedEventIsRaisedWhenDocumentsRequestedViaAppointment()
-        {
-            // Arrange
-            var appointmentDateTime = DateTime.UtcNow;
-
-            var process = CreateProcessWithCurrentState(SoleToJointStates.BreachChecksPassed);
-            var trigger = CreateProcessTrigger(
-                process, SoleToJointPermittedTriggers.RequestDocumentsAppointment,
-                new Dictionary<string, object>
-                {
-                    { SoleToJointFormDataKeys.AppointmentDateTime, appointmentDateTime }
-                });
-
-            // Act
-            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
-
-            // Assert
-            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-
-            _lastSnsEvent.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
-            _lastSnsEvent.EventData.NewData.Should().BeOfType<Message>();
-
-
-        }
-
-        #endregion Request documents via appointment
+        #endregion
 
         #region Reschedule documents appointment
 
@@ -617,36 +581,9 @@ namespace ProcessesApi.Tests.V1.Services
                 new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment });
 
             process.PreviousStates.Last().State.Should().Be(initialState);
+            VerifyThatProcessUpdatedEventIsTriggered(initialState, SoleToJointStates.DocumentsAppointmentRescheduled);
         }
 
-        [Fact]
-        public async Task ProcessUpdatedEventIsRaisedWhenDocumentsAppointmentIsRescheduled()
-        {
-            // Arrange
-            var oldAppointmentDateTime = DateTime.UtcNow.ToIsoString();
-            var newAppointmentDateTime = DateTime.UtcNow.AddDays(1).ToIsoString();
-
-            var process = CreateProcessWithCurrentState(SoleToJointStates.DocumentsRequestedAppointment, new Dictionary<string, object>
-            {
-                { SoleToJointFormDataKeys.AppointmentDateTime, oldAppointmentDateTime }
-            });
-            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, new Dictionary<string, object>
-            {
-                { SoleToJointFormDataKeys.AppointmentDateTime, newAppointmentDateTime }
-            });
-
-            // Act
-            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
-
-            // Assert
-            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-
-            _lastSnsEvent.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
-            _lastSnsEvent.EventData.OldData.Should().BeOfType<Message>();
-            _lastSnsEvent.EventData.NewData.Should().BeOfType<Message>();
-
-        }
-
-        #endregion Reschedule documents appointment
+        #endregion
     }
 }

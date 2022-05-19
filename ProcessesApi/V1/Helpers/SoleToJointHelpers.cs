@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Services.Exceptions;
@@ -36,18 +35,15 @@ namespace ProcessesApi.V1.Helpers
             });
         }
 
-        public static DateTime GetAppointmentDateTime(Dictionary<string, object> formData)
+        public static void ValidateAppointmentDateTime(Stateless.StateMachine<string, string>.Transition x)
         {
-            formData.TryGetValue(SoleToJointFormDataKeys.AppointmentDateTime, out var dateTimeString);
+            var processRequest = x.Parameters[0] as ProcessTrigger;
 
-            if (dateTimeString != null)
-            {
-                return DateTime
-                    .Parse(dateTimeString.ToString(), null, DateTimeStyles.RoundtripKind)
-                    .ToUniversalTime();
-            }
+            ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.AppointmentDateTime });
+            var appointmentDetails = processRequest.FormData[SoleToJointFormDataKeys.AppointmentDateTime];
 
-            throw new FormDataNotFoundException(formData.Keys.ToList(), new List<string> { SoleToJointFormDataKeys.AppointmentDateTime });
+            if (!DateTime.TryParse(appointmentDetails.ToString(), out DateTime appointmentDateTime))
+                throw new FormDataFormatException("appointment datetime", appointmentDetails);
         }
     }
 }
