@@ -160,11 +160,12 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheIncomingTenantIdIsAddedToRelatedEntities(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToAutomatedEligibilityChecksPassed(_processFixture.UpdateProcessRequest))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, SoleToJointStates.SelectTenants, SoleToJointStates.AutomatedChecksPassed))
                 .BDDfy();
         }
 
         [Fact]
-        public void ProcessStateIsUpdatedToEligibilityChecksFailed()
+        public void ProcessStateIsUpdatedToAutomatedEligibilityChecksFailed()
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.SelectTenants))
                     .And(a => _tenureFixture.GivenASecureTenureExists(_processFixture.Process.TargetId, _processFixture.TenantId, true))
@@ -178,7 +179,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheIncomingTenantIdIsAddedToRelatedEntities(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToAutomatedEligibilityChecksFailed(_processFixture.UpdateProcessRequest))
-                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, SoleToJointStates.SelectTenants, SoleToJointStates.AutomatedChecksFailed))
                 .BDDfy();
         }
 
@@ -194,6 +195,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToManualChecksPassed(_processFixture.UpdateProcessRequest))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, SoleToJointStates.AutomatedChecksPassed, SoleToJointStates.ManualChecksPassed))
                 .BDDfy();
         }
 
@@ -205,7 +207,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToManualChecksFailed(_processFixture.UpdateProcessRequest))
-                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, SoleToJointStates.AutomatedChecksPassed, SoleToJointStates.ManualChecksFailed))
                 .BDDfy();
         }
 
@@ -231,6 +233,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToBreachChecksPassed(_processFixture.UpdateProcessRequest))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, SoleToJointStates.ManualChecksPassed, SoleToJointStates.BreachChecksPassed))
                 .BDDfy();
         }
 
@@ -242,7 +245,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToBreachChecksFailed(_processFixture.UpdateProcessRequest))
-                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, SoleToJointStates.ManualChecksPassed, SoleToJointStates.BreachChecksFailed))
                 .BDDfy();
         }
 
@@ -266,7 +269,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                     .And(a => _processFixture.GivenARequestDocumentsDesRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessStateIsUpdatedToDocumentsRequestedDes(_processFixture.UpdateProcessRequest))
-                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, SoleToJointStates.BreachChecksPassed, SoleToJointStates.DocumentsRequestedDes))
                 .BDDfy();
         }
 
@@ -282,7 +285,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToDocumentsRequestedAppointment(_processFixture.UpdateProcessRequest))
-                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SoleToJointStates.BreachChecksPassed, SoleToJointStates.DocumentsRequestedAppointment))
                 .BDDfy();
         }
 
@@ -306,8 +309,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                     .And(a => _processFixture.GivenARescheduleDocumentsAppointmentRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, _processFixture.Process.VersionNumber))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
-                    .And(a => _steps.ThenTheProcessUpdatedEventWithRescheduledAppointmentIsRaised(_snsFixture, _processFixture.ProcessId))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToDocumentsAppointmentRescheduled(_processFixture.UpdateProcessRequest))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SoleToJointStates.DocumentsRequestedAppointment, SoleToJointStates.DocumentsAppointmentRescheduled))
                 .BDDfy();
         }
 
@@ -318,8 +321,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                     .And(a => _processFixture.GivenARescheduleDocumentsAppointmentRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, _processFixture.Process.VersionNumber))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
-                    .And(a => _steps.ThenTheProcessUpdatedEventWithRescheduledAppointmentIsRaised(_snsFixture, _processFixture.ProcessId))
                     .And(a => _steps.ThenTheProcessStateRemainsDocumentsAppointmentRescheduled(_processFixture.UpdateProcessRequest))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SoleToJointStates.DocumentsAppointmentRescheduled, SoleToJointStates.DocumentsAppointmentRescheduled))
                 .BDDfy();
         }
         #endregion
@@ -337,6 +340,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToDocumentChecksPassed(_processFixture.UpdateProcessRequest, initialState))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, initialState, SoleToJointStates.DocumentChecksPassed))
                 .BDDfy();
         }
 
@@ -349,8 +353,6 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .Then(t => _steps.ThenBadRequestIsReturned())
                 .BDDfy();
         }
-
-
 
         #endregion
     }

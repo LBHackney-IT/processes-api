@@ -110,17 +110,17 @@ See more: https://playbook.hackney.gov.uk/API-Playbook/tdd
 We use the [Stateless](https://github.com/dotnet-state-machine/stateless) NuGet package as a lightweight state machine. This means that this API's structure differs slightly from the [Base API template](https://github.com/LBHackney-IT/lbh-base-api).
 
 ### How to amend an existing workflow:
-1. If adding a new state or trigger to an existing process workflow, update the constants file with your new values. (In [ProcessesApi/V1/Domain](./ProcessesApi/V1/Domain)).
-2. Update the [SetUpStates](#2---overriding-setupstates) method in the specific service class (in ProcessesApi/V1/Services) according to the new business logic. 
+1. If adding a new state or trigger to an existing process workflow, update the constants file with your new values. (In [ProcessesApi/V1/Domain](ProcessesApi/V1/Domain)).
+2. Update the [SetUpStates](#2---overriding-setupstates) method in the specific service class (in [ProcessesApi/V1/Services](ProcessesApi/V1/Services)) according to the new business logic. 
    - This could include adding new [Internal Transitions](#using-internal-transitions) if the API needs to carry out any logic before determining the next state.
-   - This could include adding [State Transition Actions](#using-state-transition-actions), which are functions that run on state transitions (e.g. firing ProcessUpdated Events)
+   - This could include adding [State Transition Actions](#using-state-transition-actions), which are functions that run on state transitions (e.g. firing `ProcessUpdated` Events)
 3. Update relevant tests (Should normally just be the Service tests & E2E tests)
 
 ### How to add a new process workflow:
-1. Update the ProcessName enum (In [ProcessesApi/V1/Domain/Enums.cs](./ProcessesApi/V1/Domain/Enums.cs)) to add the new process name.
+1. Update the ProcessName enum (In [ProcessesApi/V1/Domain/Enums.cs](ProcessesApi/V1/Domain/Enums.cs)) to add the new process name.
 2. Create a constants file for the states and triggers used in your process.
-3. Create a new Service that is derived from the ProcessService base class & implement your steps. See instructions [here](#implementing-a-new-process-service-using-stateless).
-4. Update the `ConfigureProcessServices` function (In [ProcessesApi/V1/ServiceCollectionExtensions.cs](./ProcessesApi/V1/ServiceCollectionExtensions.cs)) to add a new case to the switch statement, which will return your new Service.
+3. Create a new Service that is derived from the [ProcessService](ProcessesApi/V1/Services/ProcessService.cs) base class & implement your steps. See instructions [here](#implementing-a-new-process-service-using-stateless).
+4. Update the `ConfigureProcessServices` function (In [ProcessesApi/V1/ServiceCollectionExtensions.cs](ProcessesApi/V1/ServiceCollectionExtensions.cs)) to add a new case to the switch statement, which will return your new Service.
 
 **Remember to create & update tests as & when necessary**
 
@@ -130,13 +130,20 @@ We use the [Stateless](https://github.com/dotnet-state-machine/stateless) NuGet 
 See the stateless documentation [here](https://github.com/dotnet-state-machine/stateless).
 
 #### 1 - Creating the class
-Create a new class derived from the ProcessService base class. In the constructor, add this line: 
+Create a new class derived from the ProcessService base class. 
 
-```C#
+In the constructor, add the following lines: 
+
+```csharp
 _permittedTriggersType = typeof(**<SOME_TYPE>**);
 ```
 
 With **`<SOME_TYPE>`** being the name of the constant class that you created that stores all permitted triggers for your process.
+
+```csharp
+_ignoredTriggersForProcessUpdated = **<SOME_LIST<string>>**;
+```
+We have configured the state machine to publish `ProcessUpdated` events every time the state is changed, but it will skip the triggers in this list. You may want to avoid some events being published on certain triggers, so add them to this list if this is the case.
 
 #### 2 - Overriding `SetUpStates`
 This method is specific for each process. Within this method, we define the states, what triggers they require based on the business logic, and what conditions need to be met to move to the next state. It should be overridden from the virtual method in the ProcessService base case.
@@ -146,24 +153,17 @@ Internal Transitions are used in this API when it needs to do some logic using t
 
 For example, in the automated eligibility check stage of the Sole To Joint process, the API makes various calls and checks, then updates the state to AutomatedChecksFailed or AutomatedChecksPassed.
 
-![Example configuring internal transitions](./docs/SetUpStates.png)
-
-#### 3 - Overriding `SetUpStateActions`
-This method sets up custom actions that happen when a state transition happens. It consists of many [`Configure` & `ConfigureAsync`](#configure--configureasync) method calls. It should be overridden from the virtual method in the ProcessService base case.
-
 ##### Using State Transition Actions
 State transitions actions are small that happen when a state transition is made. For example, publishing a ProcessClosed event when the process is closed.
 
+![Example about how to configure the state machine](docs/SetUpStates.png)
 -----
-### Methods in the ProcessService base class
+### Methods in the `ProcessService` base class
 There are a number of helper methods in the ProcessService base class:
 
-#### `Configure` & `ConfigureAsync`
-These methods are normally called from the `SetUpStateActions` method. It updates the current state with the correct data, adds assignment data (placeholder for now), and runs any function passed as a parameter. 
-
-Example: 
-
-![Example configuring state transition actions](./docs/SetUpStateActions.png)
+#### `ConfigureStateTransitions`
+Private method - this sets up actions that will happen on every state transition. 
+It publishes `ProcessUpdated` events on every state transition, unless the trigger is one of `_ignoredTriggersForProcessUpdated`.
 
 #### `TriggerStateMachine`
 Allows the state machine to be triggered internally without updating the current state or previous states array. Mostly used in Internal State Transitions.
@@ -176,7 +176,7 @@ The main method that is used by the UseCase to handle all interactions with the 
 
 1. Sets up the current state if it is null to be `ApplicationInitialised`
 2. Sets up the state machine
-3. Calls the SetUpStates & SetUpStateActions methods to configure the process states, triggers and actions on the state machine
+3. Calls the SetUpStates method to configure the process states, triggers and actions on the state machine
 4. Checks if the trigger in the request is permitted & throws an exception if not (e.g. *Can not trigger `CheckDocuments` from `ApplicationInitialised`.*)
 5. Triggers the state machine
 6. Updates the process entity (from the database) with the new current state.

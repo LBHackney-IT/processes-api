@@ -4,6 +4,7 @@ using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Infrastructure.JWT;
 using System;
+using System.Collections.Generic;
 
 namespace ProcessesApi.V1.Factories
 {
@@ -42,71 +43,6 @@ namespace ProcessesApi.V1.Factories
                 Version = ProcessClosedEventConstants.V1_VERSION,
                 SourceDomain = ProcessClosedEventConstants.SOURCE_DOMAIN,
                 SourceSystem = ProcessClosedEventConstants.SOURCE_SYSTEM,
-                EventData = new EventData
-                {
-                    NewData = new Message
-                    {
-                        Description = description
-                    }
-                },
-                User = new User
-                {
-                    Name = token.Name,
-                    Email = token.Email
-                }
-            };
-        }
-
-        public EntityEventSns ProcessUpdatedWithMessage(Process process, Token token, string description)
-        {
-            return new EntityEventSns
-            {
-                CorrelationId = Guid.NewGuid(),
-                DateTime = DateTime.UtcNow,
-                EntityId = process.Id,
-                Id = Guid.NewGuid(),
-                EventType = ProcessUpdatedEventConstants.EVENTTYPE,
-                Version = ProcessUpdatedEventConstants.V1_VERSION,
-                SourceDomain = ProcessUpdatedEventConstants.SOURCE_DOMAIN,
-                SourceSystem = ProcessUpdatedEventConstants.SOURCE_SYSTEM,
-                EventData = new EventData
-                {
-                    NewData = new Message
-                    {
-                        Description = description
-                    }
-                },
-                User = new User
-                {
-                    Name = token.Name,
-                    Email = token.Email
-                }
-            };
-        }
-
-        public EntityEventSns ProcessUpdatedWithAppointmentRescheduled(Process process, Token token, string oldAppointmentTime, string newAppointmentTime)
-        {
-            return new EntityEventSns
-            {
-                CorrelationId = Guid.NewGuid(),
-                DateTime = DateTime.UtcNow,
-                EntityId = process.Id,
-                Id = Guid.NewGuid(),
-                EventType = ProcessUpdatedEventConstants.EVENTTYPE,
-                Version = ProcessUpdatedEventConstants.V1_VERSION,
-                SourceDomain = ProcessUpdatedEventConstants.SOURCE_DOMAIN,
-                SourceSystem = ProcessUpdatedEventConstants.SOURCE_SYSTEM,
-                EventData = new EventData
-                {
-                    OldData = new Message()
-                    {
-                        Description = oldAppointmentTime
-                    },
-                    NewData = new Message
-                    {
-                        Description = newAppointmentTime
-                    }
-                },
                 User = new User
                 {
                     Name = token.Name,
@@ -140,10 +76,44 @@ namespace ProcessesApi.V1.Factories
             };
         }
 
+        public EntityEventSns ProcessStateUpdated(Stateless.StateMachine<string, string>.Transition transition, Dictionary<string, object> stateData, Token token)
+        {
+            var triggerData = transition.Parameters[0] as ProcessTrigger;
+
+            return new EntityEventSns
+            {
+                CorrelationId = Guid.NewGuid(),
+                DateTime = DateTime.UtcNow,
+                EntityId = triggerData.Id,
+                Id = Guid.NewGuid(),
+                EventType = ProcessUpdatedEventConstants.EVENTTYPE,
+                Version = ProcessUpdatedEventConstants.V1_VERSION,
+                SourceDomain = ProcessUpdatedEventConstants.SOURCE_DOMAIN,
+                SourceSystem = ProcessUpdatedEventConstants.SOURCE_SYSTEM,
+                EventData = new EventData
+                {
+                    OldData = new ProcessStateChangeData
+                    {
+                        State = transition.Source
+                    },
+                    NewData = new ProcessStateChangeData
+                    {
+                        State = transition.Destination,
+                        StateData = stateData
+                    }
+                },
+                User = new User
+                {
+                    Name = token.Name,
+                    Email = token.Email
+                }
+            };
+        }
     }
 
-    public class Message
+    public class ProcessStateChangeData
     {
-        public string Description { get; set; }
+        public string State { get; set; }
+        public Dictionary<string, object> StateData { get; set; }
     }
 }
