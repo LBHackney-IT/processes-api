@@ -130,10 +130,10 @@ namespace ProcessesApi.V1.Services
                     .OnEntryAsync(OnProcessClosed);
 
             _machine.Configure(SharedProcessStates.ApplicationInitialised)
-                    .Permit(SharedInternalTriggers.StartApplication, SoleToJointStates.SelectTenants);
+                    .Permit(SharedInternalTriggers.StartApplication, SoleToJointStates.SelectTenants)
+                    .OnExitAsync(PublishProcessStartedEvent);
 
             _machine.Configure(SoleToJointStates.SelectTenants)
-                    .OnEntryAsync(PublishProcessStartedEvent)
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckAutomatedEligibility, CheckAutomatedEligibility)
                     .Permit(SoleToJointInternalTriggers.EligibiltyFailed, SoleToJointStates.AutomatedChecksFailed)
                     .Permit(SoleToJointInternalTriggers.EligibiltyPassed, SoleToJointStates.AutomatedChecksPassed)

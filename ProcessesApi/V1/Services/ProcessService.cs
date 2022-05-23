@@ -58,7 +58,15 @@ namespace ProcessesApi.V1.Services
             });
         }
 
-        private async Task PublishProcessUpdatedEvent(StateMachine<string, string>.Transition transition)
+        protected async Task PublishProcessStartedEvent()
+        {
+            var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
+            var processSnsMessage = _snsFactory.ProcessStarted(_process, _token);
+
+            await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
+        }
+
+        protected async Task PublishProcessUpdatedEvent(StateMachine<string, string>.Transition transition)
         {
             if (!_ignoredTriggersForProcessUpdated.Contains(transition.Trigger))
             {
@@ -68,15 +76,6 @@ namespace ProcessesApi.V1.Services
                 await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
             }
         }
-
-        protected async Task PublishProcessStartedEvent()
-        {
-            var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = _snsFactory.ProcessStarted(_process, _token);
-
-            await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
-        }
-
 
         protected async Task PublishProcessClosedEvent()
         {
