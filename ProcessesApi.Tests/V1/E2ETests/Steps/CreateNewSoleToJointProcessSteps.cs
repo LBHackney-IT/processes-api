@@ -87,7 +87,9 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
                 var expected = dbRecord.ToDomain();
                 var actualNewData = JsonConvert.DeserializeObject<Process>(actual.EventData.NewData.ToString());
-                actualNewData.Should().BeEquivalentTo(expected);
+                actualNewData.Should().BeEquivalentTo(expected, c => c.Excluding(x => x.CurrentState)
+                                                                      .Excluding(x => x.VersionNumber));
+
                 actual.EventData.OldData.Should().BeNull();
 
                 actual.EventType.Should().Be(ProcessStartedEventConstants.EVENTTYPE);
@@ -99,10 +101,10 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                 actual.Version.Should().Be(ProcessStartedEventConstants.V1_VERSION);
             };
 
-            var snsVerifer = snsFixture.GetSnsEventVerifier<EntityEventSns>();
-            var snsResult = await snsVerifer.VerifySnsEventRaised(verifyFunc);
-            if (!snsResult && snsVerifer.LastException != null)
-                throw snsVerifer.LastException;
+            var snsVerifier = snsFixture.GetSnsEventVerifier<EntityEventSns>();
+            var snsResult = await snsVerifier.VerifySnsEventRaised(verifyFunc);
+
+            if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
         }
 
         public void ThenBadRequestIsReturned()
