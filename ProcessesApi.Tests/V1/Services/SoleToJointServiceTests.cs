@@ -466,7 +466,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsRequestedAppointment,
-                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CancelProcess });
+                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CloseProcess });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
             ThenProcessUpdatedEventIsRaised();
@@ -522,7 +522,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsRequestedDes,
-                new List<string> { SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CancelProcess });
+                new List<string> { SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CloseProcess });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
         }
@@ -565,7 +565,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsRequestedAppointment,
-                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CancelProcess });
+                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CloseProcess });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
         }
@@ -623,7 +623,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsAppointmentRescheduled,
-                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CancelProcess });
+                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CloseProcess });
 
             process.PreviousStates.Last().State.Should().Be(initialState);
         }

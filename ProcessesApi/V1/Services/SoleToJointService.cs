@@ -236,19 +236,19 @@ namespace ProcessesApi.V1.Services
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, async (x) => await ReviewDocumentsCheck(x).ConfigureAwait(false))
                     .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
                     .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment)
-                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessCancelled);
+                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.DocumentsRequestedAppointment)
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, async (x) => await ReviewDocumentsCheck(x).ConfigureAwait(false))
                     .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
                     .Permit(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointStates.DocumentsAppointmentRescheduled)
-                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessCancelled);
+                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.DocumentsAppointmentRescheduled)
                     .PermitReentry(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment)
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, async (x) => await ReviewDocumentsCheck(x).ConfigureAwait(false))
                     .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
-                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SoleToJointStates.ProcessCancelled);
+                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
         }
 
         protected override void SetUpStateActions()
