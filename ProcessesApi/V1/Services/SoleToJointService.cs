@@ -233,20 +233,18 @@ namespace ProcessesApi.V1.Services
                     .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment);
 
             _machine.Configure(SoleToJointStates.DocumentsRequestedDes)
-                    .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, async (x) => await ReviewDocumentsCheck(x).ConfigureAwait(false))
-                    .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
-                    .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment)
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
+                    .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed).Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment)
                     .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.DocumentsRequestedAppointment)
-                    .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, async (x) => await ReviewDocumentsCheck(x).ConfigureAwait(false))
-                    .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
-                    .Permit(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointStates.DocumentsAppointmentRescheduled)
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
+                    .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed).Permit(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointStates.DocumentsAppointmentRescheduled)
                     .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.DocumentsAppointmentRescheduled)
                     .PermitReentry(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment)
-                    .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, async (x) => await ReviewDocumentsCheck(x).ConfigureAwait(false))
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
                     .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
                     .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
         }
