@@ -89,7 +89,7 @@ namespace ProcessesApi.V1.Services
                   SoleToJointFormDataKeys.IncomingTenantLivingInProperty
             };
             SoleToJointHelpers.ValidateFormData(formData, expectedFormDataKeys);
-            
+
             processRequest.Trigger = SoleToJointInternalTriggers.DocumentChecksPassed;
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }

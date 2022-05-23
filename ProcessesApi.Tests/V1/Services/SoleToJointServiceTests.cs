@@ -540,10 +540,10 @@ namespace ProcessesApi.Tests.V1.Services
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsRequestedAppointment,
                 new List<string>
-                { 
+                {
                     SoleToJointPermittedTriggers.RescheduleDocumentsAppointment,
                     SoleToJointPermittedTriggers.ReviewDocuments,
-                    SoleToJointPermittedTriggers.CloseProcess 
+                    SoleToJointPermittedTriggers.CloseProcess
                 });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
@@ -581,7 +581,7 @@ namespace ProcessesApi.Tests.V1.Services
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsAppointmentRescheduled,
                 new List<string>
-                { 
+                {
                     SoleToJointPermittedTriggers.ReviewDocuments,
                     SoleToJointPermittedTriggers.RescheduleDocumentsAppointment,
                     SoleToJointPermittedTriggers.CloseProcess
