@@ -7,7 +7,6 @@ namespace ProcessesApi.V1.Domain
         public const string SelectTenants = "SelectTenants";
         public const string AutomatedChecksFailed = "AutomatedChecksFailed";
         public const string AutomatedChecksPassed = "AutomatedChecksPassed";
-        public const string ProcessCancelled = "ProcessCancelled";
         public const string ManualChecksFailed = "ManualChecksFailed";
         public const string ManualChecksPassed = "ManualChecksPassed";
         public const string BreachChecksFailed = "BreachChecksFailed";
@@ -20,8 +19,9 @@ namespace ProcessesApi.V1.Domain
 
     public static class SoleToJointPermittedTriggers
     {
-        public const string CheckAutomatedEligibility = "CheckAutomatedEligibility";
         public const string CancelProcess = "CancelProcess";
+        public const string CloseProcess = "CloseProcess";
+        public const string CheckAutomatedEligibility = "CheckAutomatedEligibility";
         public const string CheckManualEligibility = "CheckManualEligibility";
         public const string RequestDocuments = "RequestDocuments";
         public const string CheckTenancyBreach = "CheckTenancyBreach";
@@ -44,7 +44,7 @@ namespace ProcessesApi.V1.Domain
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     public static class SoleToJointFormDataKeys
     {
-        public const string AppointmentDateTime = "appointmentDateTime";
+        public const string HasNotifiedResident = "hasNotifiedResident";
 
         #region Automated eligibility checks
 
@@ -125,6 +125,8 @@ namespace ProcessesApi.V1.Domain
         public const string BR18 = "br18";
 
         #endregion
+
+        public const string AppointmentDateTime = "appointmentDateTime";
     }
 
 }

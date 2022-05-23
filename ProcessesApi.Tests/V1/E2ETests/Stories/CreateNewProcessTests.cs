@@ -39,8 +39,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         {
             if (disposing && !_disposed)
             {
-                if (_processFixture != null)
-                    _processFixture.Dispose();
+                _processFixture?.Dispose();
+                _snsFixture?.PurgeAllQueueMessages();
 
                 _disposed = true;
             }
@@ -51,8 +51,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         {
             this.Given(g => _processFixture.GivenANewSoleToJointProcessRequest())
                 .When(w => _steps.WhenACreateProcessRequestIsMade(_processFixture.CreateProcessRequest, _processFixture.ProcessName))
-                .Then(t => _steps.ThenTheProcessIsCreated(_processFixture.CreateProcessRequest))
                 .Then(t => _steps.ThenProcessStartedEventIsRaised(_processFixture, _snsFixture))
+                    .And(t => _steps.ThenTheProcessIsCreated(_processFixture.CreateProcessRequest))
                 .BDDfy();
         }
 

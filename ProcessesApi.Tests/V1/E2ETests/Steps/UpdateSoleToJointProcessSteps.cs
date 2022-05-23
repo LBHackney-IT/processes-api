@@ -13,10 +13,12 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Hackney.Core.Sns;
-using Hackney.Core.Testing.Sns;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
 using ProcessesApi.V1.Infrastructure.JWT;
+using Hackney.Core.Testing.Sns;
 using ProcessesApi.V1.Factories;
+using JsonSerializer = System.Text.Json.JsonSerializer;
+using System.Collections.Generic;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {
@@ -87,6 +89,11 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
             var incomingTenantId = Guid.Parse(requestBody.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString());
             dbRecord.RelatedEntities.Should().Contain(incomingTenantId);
+        }
+
+        public async Task ThenTheProcessStateIsUpdatedToProcessClosed(UpdateProcessQuery request, string previousState)
+        {
+            await CheckProcessState(request.Id, SharedProcessStates.ProcessClosed, previousState).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessStateIsUpdatedToAutomatedEligibilityChecksPassed(UpdateProcessQuery request)
@@ -195,6 +202,12 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
         public async Task ThenTheProcessUpdatedEventWithRescheduledAppointmentIsRaised(ISnsFixture snsFixture, Guid processId)
         {
+            Action<string> verifyData = (dataAsString) =>
+            {
+                var dataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(dataAsString, _jsonOptions);
+                dataDic.Should().ContainKey("description");
+            };
+
             Action<EntityEventSns> verifyFunc = actual =>
             {
                 actual.Id.Should().NotBeEmpty();
@@ -203,9 +216,9 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                 actual.EntityId.Should().Be(processId);
 
                 actual.EventData.NewData.Should().NotBeNull();
-                actual.EventData.NewData.Should().BeOfType<Message>();
+                verifyData(actual.EventData.NewData.ToString());
                 actual.EventData.OldData.Should().NotBeNull();
-                actual.EventData.OldData.Should().BeOfType<Message>();
+                verifyData(actual.EventData.OldData.ToString());
 
                 actual.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
                 actual.SourceDomain.Should().Be(ProcessUpdatedEventConstants.SOURCE_DOMAIN);
@@ -230,7 +243,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             dbRecord.PreviousStates.Last().State.Should().Be(previousState);
 
             // Cleanup
-            await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
+            await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(processId).ConfigureAwait(false);
         }
     }
 }

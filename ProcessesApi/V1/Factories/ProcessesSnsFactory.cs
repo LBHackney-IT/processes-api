@@ -1,6 +1,5 @@
 using Hackney.Core.JWT;
 using Hackney.Core.Sns;
-using Newtonsoft.Json;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Infrastructure.JWT;
