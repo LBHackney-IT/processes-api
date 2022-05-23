@@ -50,6 +50,16 @@ namespace ProcessesApi.Tests.V1.Services
             { SoleToJointFormDataKeys.BR18, "false" }
         };
 
+        private Dictionary<string, object> _reviewDocumentCheckPass => new Dictionary<string, object>
+        {
+            { SoleToJointFormDataKeys.SeenPhotographicId, "true" },
+            { SoleToJointFormDataKeys.SeenSecondId, "true" },
+            { SoleToJointFormDataKeys.IsNotInImmigrationControl, "true" },
+            {SoleToJointFormDataKeys.SeenProofOfRelationship, "true" },
+            { SoleToJointFormDataKeys.IncomingTenantLivingInProperty, "true" }
+        };
+
+
         public void Dispose()
         {
             Dispose(true);
@@ -456,7 +466,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsRequestedAppointment,
-                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment /*Add next state here*/ });
+                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CloseProcess });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
             ThenProcessUpdatedEventIsRaised();
@@ -512,25 +522,10 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsRequestedDes,
-                new List<string> { SoleToJointPermittedTriggers.RequestDocumentsAppointment /* TODO: Update permitted triggers when implemented */ });
+                new List<string> { SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CloseProcess });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
-        }
-
-        [Fact]
-        public async Task ProcessUpdatedEventIsRaisedWhenDocumentsRequestedViaDes()
-        {
-            // Arrange
-            var process = CreateProcessWithCurrentState(SoleToJointStates.BreachChecksPassed);
-            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.RequestDocumentsDes);
-
-            // Act
-            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
-
-            // Assert
-            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
-            _lastSnsEvent.EventData.NewData.Should().BeOfType<Message>();
+            ThenProcessUpdatedEventIsRaised();
         }
 
         #endregion Request documents via DES
@@ -555,35 +550,10 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsRequestedAppointment,
-                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment /* TODO: Update permitted when implemented */});
+                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CloseProcess });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
-        }
-
-        [Fact]
-        public async Task ProcessUpdatedEventIsRaisedWhenDocumentsRequestedViaAppointment()
-        {
-            // Arrange
-            var appointmentDateTime = DateTime.UtcNow;
-
-            var process = CreateProcessWithCurrentState(SoleToJointStates.BreachChecksPassed);
-            var trigger = CreateProcessTrigger(
-                process, SoleToJointPermittedTriggers.RequestDocumentsAppointment,
-                new Dictionary<string, object>
-                {
-                    { SoleToJointFormDataKeys.AppointmentDateTime, appointmentDateTime }
-                });
-
-            // Act
-            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
-
-            // Assert
-            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-
-            _lastSnsEvent.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
-            _lastSnsEvent.EventData.NewData.Should().BeOfType<Message>();
-
-
+            ThenProcessUpdatedEventIsRaised();
         }
 
         #endregion Request documents via appointment
@@ -613,39 +583,70 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsAppointmentRescheduled,
-                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment });
+                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CloseProcess });
 
             process.PreviousStates.Last().State.Should().Be(initialState);
-        }
-
-        [Fact]
-        public async Task ProcessUpdatedEventIsRaisedWhenDocumentsAppointmentIsRescheduled()
-        {
-            // Arrange
-            var oldAppointmentDateTime = DateTime.UtcNow.ToIsoString();
-            var newAppointmentDateTime = DateTime.UtcNow.AddDays(1).ToIsoString();
-
-            var process = CreateProcessWithCurrentState(SoleToJointStates.DocumentsRequestedAppointment, new Dictionary<string, object>
-            {
-                { SoleToJointFormDataKeys.AppointmentDateTime, oldAppointmentDateTime }
-            });
-            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, new Dictionary<string, object>
-            {
-                { SoleToJointFormDataKeys.AppointmentDateTime, newAppointmentDateTime }
-            });
-
-            // Act
-            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
-
-            // Assert
-            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-
-            _lastSnsEvent.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
-            _lastSnsEvent.EventData.OldData.Should().BeOfType<Message>();
-            _lastSnsEvent.EventData.NewData.Should().BeOfType<Message>();
-
+            ThenProcessUpdatedEventIsRaised();
         }
 
         #endregion Reschedule documents appointment
+
+        #region Review Documents
+
+        [Theory]
+        [InlineData(SoleToJointStates.DocumentsRequestedDes)]
+        [InlineData(SoleToJointStates.DocumentsRequestedAppointment)]
+        [InlineData(SoleToJointStates.DocumentsAppointmentRescheduled)]
+        public async Task ProcessStateIsUpdatedToDocumentChecksPassed(string initialState)
+        {
+            // Arrange
+
+            var process = CreateProcessWithCurrentState(initialState);
+
+            var formData = _reviewDocumentCheckPass;
+            var triggerObject = CreateProcessTrigger(process,
+                                                     SoleToJointPermittedTriggers.ReviewDocuments,
+                                                     formData);
+            // Act
+            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(process,
+                                                 triggerObject,
+                                                 SoleToJointStates.DocumentChecksPassed,
+                                                 new List<string> { /*Add new state here when implemented*/ });
+            process.PreviousStates.LastOrDefault().State.Should().Be(initialState);
+            ThenProcessUpdatedEventIsRaised();
+        }
+
+        [Theory]
+        [InlineData(SoleToJointStates.DocumentsRequestedDes)]
+        [InlineData(SoleToJointStates.DocumentsRequestedAppointment)]
+        [InlineData(SoleToJointStates.DocumentsAppointmentRescheduled)]
+        public void ThrowsFormDataNotFoundExceptionOnReviewDocumentsTrigger(string initialState)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(initialState);
+
+            var formData = new Dictionary<string, object>
+            {
+                { SoleToJointFormDataKeys.SeenPhotographicId, true },
+                { SoleToJointFormDataKeys.SeenSecondId, true },
+                { SoleToJointFormDataKeys.IsNotInImmigrationControl, true },
+                {SoleToJointFormDataKeys.SeenProofOfRelationship, "true" },
+            };
+
+            var triggerObject = CreateProcessTrigger(process,
+                                                     SoleToJointPermittedTriggers.ReviewDocuments,
+                                                     formData);
+            var expectedErrorMessage = $"The request's FormData is invalid: The form data keys supplied ({String.Join(", ", formData.Keys.ToList())}) do not include the expected values ({SoleToJointFormDataKeys.IncomingTenantLivingInProperty}).";
+            // Act
+            Func<Task> func = async () => await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
+            // Assert
+            func.Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
+        }
+
+
+        #endregion
     }
 }
