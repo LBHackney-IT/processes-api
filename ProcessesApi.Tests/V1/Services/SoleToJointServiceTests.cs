@@ -49,6 +49,16 @@ namespace ProcessesApi.Tests.V1.Services
             { SoleToJointFormDataKeys.BR18, "false" }
         };
 
+        private Dictionary<string, object> _reviewDocumentCheckPass => new Dictionary<string, object>
+        {
+            { SoleToJointFormDataKeys.SeenPhotographicId, "true" },
+            { SoleToJointFormDataKeys.SeenSecondId, "true" },
+            { SoleToJointFormDataKeys.IsNotInImmigrationControl, "true" },
+            {SoleToJointFormDataKeys.SeenProofOfRelationship, "true" },
+            { SoleToJointFormDataKeys.IncomingTenantLivingInProperty, "true" }
+        };
+
+
         public void Dispose()
         {
             Dispose(true);
@@ -462,7 +472,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsRequestedAppointment,
-                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment /*Add next state here*/ });
+                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CloseProcess });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.BreachChecksPassed, SoleToJointStates.DocumentsRequestedAppointment);
@@ -501,7 +511,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsRequestedDes,
-                new List<string> { SoleToJointPermittedTriggers.RequestDocumentsAppointment /* TODO: Update permitted triggers when implemented */ });
+                new List<string> { SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CloseProcess });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.BreachChecksPassed, SoleToJointStates.DocumentsRequestedDes);
@@ -529,7 +539,12 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsRequestedAppointment,
-                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment /* TODO: Update permitted when implemented */});
+                new List<string>
+                { 
+                    SoleToJointPermittedTriggers.RescheduleDocumentsAppointment,
+                    SoleToJointPermittedTriggers.ReviewDocuments,
+                    SoleToJointPermittedTriggers.CloseProcess 
+                });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.BreachChecksPassed, SoleToJointStates.DocumentsRequestedAppointment);
@@ -565,7 +580,12 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsAppointmentRescheduled,
-                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment }
+                new List<string>
+                { 
+                    SoleToJointPermittedTriggers.ReviewDocuments,
+                    SoleToJointPermittedTriggers.RescheduleDocumentsAppointment,
+                    SoleToJointPermittedTriggers.CloseProcess
+                }
             );
             process.PreviousStates.Last().State.Should().Be(initialState);
             VerifyThatProcessUpdatedEventIsTriggered(initialState, SoleToJointStates.DocumentsAppointmentRescheduled);

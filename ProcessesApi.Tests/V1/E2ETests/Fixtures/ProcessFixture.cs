@@ -147,6 +147,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             };
         }
 
+
         public void GivenAFailingCheckManualEligibilityRequest()
         {
             GivenACheckManualEligibilityRequest(false);
@@ -231,6 +232,28 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             GivenAnUpdateProcessByIdRequest();
             UpdateProcessByIdRequestObject.ProcessData.Documents.Add(Guid.Empty);
+        }
+
+
+
+        public void GivenAReviewDocumentsRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.ReviewDocuments);
+
+            UpdateProcessRequestObject.FormData = new Dictionary<string, object>
+            {
+                { SoleToJointFormDataKeys.SeenPhotographicId, "true" },
+                { SoleToJointFormDataKeys.SeenSecondId, "true" },
+                { SoleToJointFormDataKeys.IsNotInImmigrationControl, "true" },
+                {SoleToJointFormDataKeys.SeenProofOfRelationship, "true" },
+                { SoleToJointFormDataKeys.IncomingTenantLivingInProperty, "true" }
+            };
+        }
+
+        public void GivenAReviewDocumentsRequestWithMissingData()
+        {
+            GivenAReviewDocumentsRequest();
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.IncomingTenantLivingInProperty);
         }
 
         public void GivenAnUpdateProcessByIdRequest()

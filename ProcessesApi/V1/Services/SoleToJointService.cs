@@ -76,6 +76,24 @@ namespace ProcessesApi.V1.Services
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
+        private async Task ReviewDocumentsCheck(StateMachine<string, string>.Transition transition)
+        {
+            var processRequest = transition.Parameters[0] as ProcessTrigger;
+            var formData = processRequest.FormData;
+
+            var expectedFormDataKeys = new List<string>{
+                  SoleToJointFormDataKeys.SeenPhotographicId,
+                  SoleToJointFormDataKeys.SeenSecondId,
+                  SoleToJointFormDataKeys.IsNotInImmigrationControl,
+                  SoleToJointFormDataKeys.SeenProofOfRelationship,
+                  SoleToJointFormDataKeys.IncomingTenantLivingInProperty
+            };
+            SoleToJointHelpers.ValidateFormData(formData, expectedFormDataKeys);
+            
+            processRequest.Trigger = SoleToJointInternalTriggers.DocumentChecksPassed;
+            await TriggerStateMachine(processRequest).ConfigureAwait(false);
+        }
+
         #endregion
 
         #region State Transition Actions
@@ -163,15 +181,24 @@ namespace ProcessesApi.V1.Services
                     .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment);
 
             _machine.Configure(SoleToJointStates.DocumentsRequestedDes)
-                    .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment);
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
+                    .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
+                    .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment)
+                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.DocumentsRequestedAppointment)
                     .OnEntry(AddAppointmentDateTimeToEvent)
-                    .Permit(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointStates.DocumentsAppointmentRescheduled);
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
+                    .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
+                    .Permit(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointStates.DocumentsAppointmentRescheduled)
+                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.DocumentsAppointmentRescheduled)
                     .OnEntry(AddAppointmentDateTimeToEvent)
-                    .PermitReentry(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment);
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
+                    .PermitReentry(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment)
+                    .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
+                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
         }
     }
 }
