@@ -763,6 +763,33 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SoleToJointStates.DocumentsRequestedDes)]
         [InlineData(SoleToJointStates.DocumentsRequestedAppointment)]
         [InlineData(SoleToJointStates.DocumentsAppointmentRescheduled)]
+        public async Task ProcessUpdatedEventIsRaisedWhenDocumentsChecksPassed(string initialState)
+        {
+            // Arrange
+
+            var process = CreateProcessWithCurrentState(initialState);
+
+            var formData = _reviewDocumentCheckPass;
+            var triggerObject = CreateProcessTrigger(process,
+                                                     SoleToJointPermittedTriggers.ReviewDocuments,
+                                                     formData);
+
+            // Act
+            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
+
+            // Assert
+            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+
+            _lastSnsEvent.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
+            _lastSnsEvent.EventData.NewData.Should().BeOfType<Message>();
+
+
+        }
+
+        [Theory]
+        [InlineData(SoleToJointStates.DocumentsRequestedDes)]
+        [InlineData(SoleToJointStates.DocumentsRequestedAppointment)]
+        [InlineData(SoleToJointStates.DocumentsAppointmentRescheduled)]
         public void ThrowsFormDataNotFoundExceptionOnReviewDocumentsTrigger(string initialState)
         {
             // Arrange

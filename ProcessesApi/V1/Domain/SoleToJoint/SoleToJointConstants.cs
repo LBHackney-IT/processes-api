@@ -137,29 +137,29 @@ namespace ProcessesApi.V1.Domain
         /// <summary>
         ///     I confirm I have seen a government issue photographic ID
         /// </summary>
-        public const string SeenPhotographicId = "SeenPhotographicId";
+        public const string SeenPhotographicId = "seenPhotographicId";
 
         /// <summary>
         ///     I confirm I have seen a second form of ID (does not have to be photographic)
         /// </summary>
-        public const string SeenSecondId = "SeenSecondId";
+        public const string SeenSecondId = "seenSecondId";
 
         /// <summary>
         ///     I confirm that the prespective tenant is not subject to immigration control under the
         ///     Asylum and Immigration Act 1996
         /// </summary>
-        public const string IsNotInImmigrationControl = "IsNotInImmigrationControl";
+        public const string IsNotInImmigrationControl = "isNotInImmigrationControl";
 
         /// <summary>
         ///     I confirm that I have seen proof of relationship to the existing tenant
         /// </summary>
-        public const string SeenProofOfRelationship = "SeenProofOfRelationship";
+        public const string SeenProofOfRelationship = "seenProofOfRelationship";
 
         /// <summary>
         ///     I confirm that I have seen 3 seperate documents proving the proposed tenant has been
         ///     living at the property for a minimum of 12 months
         /// </summary>
-        public const string IncomingTenantLivingInProperty = "IncomingTenantLivingInProperty";
+        public const string IncomingTenantLivingInProperty = "incomingTenantLivingInProperty";
 
 
 

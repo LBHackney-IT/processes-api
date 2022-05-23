@@ -139,9 +139,9 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             await CheckProcessState(request.Id, SoleToJointStates.DocumentsAppointmentRescheduled, SoleToJointStates.DocumentsAppointmentRescheduled).ConfigureAwait(false);
         }
 
-        public async Task ThenTheProcessStateIsUpdatedToDocumentChecksPassed(UpdateProcessQuery request)
+        public async Task ThenTheProcessStateIsUpdatedToDocumentChecksPassed(UpdateProcessQuery request, string initialState)
         {
-            await CheckProcessState(request.Id, SoleToJointStates.DocumentChecksPassed, SoleToJointStates.DocumentsRequestedDes).ConfigureAwait(false);
+            await CheckProcessState(request.Id, SoleToJointStates.DocumentChecksPassed, initialState).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessClosedEventIsRaised(ISnsFixture snsFixture, Guid processId)
@@ -226,6 +226,8 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
             if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
         }
+
+
 
         private async Task CheckProcessState(Guid processId, string currentState, string previousState)
         {

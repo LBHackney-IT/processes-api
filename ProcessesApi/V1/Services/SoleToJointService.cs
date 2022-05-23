@@ -76,12 +76,20 @@ namespace ProcessesApi.V1.Services
         private async Task ReviewDocumentsCheck(StateMachine<string, string>.Transition transition)
         {
             var processRequest = transition.Parameters[0] as UpdateProcessState;
-            processRequest.ValidateDocumentsReview(SoleToJointInternalTriggers.DocumentChecksPassed,
-                                               (SoleToJointFormDataKeys.SeenPhotographicId, "true"),
-                                               (SoleToJointFormDataKeys.SeenSecondId, "true"),
-                                               (SoleToJointFormDataKeys.IsNotInImmigrationControl, "true"),
-                                               (SoleToJointFormDataKeys.SeenProofOfRelationship, "true"),
-                                               (SoleToJointFormDataKeys.IncomingTenantLivingInProperty, "true"));
+            var expectedFormDataKeys = new List<string>{
+
+                  SoleToJointFormDataKeys.SeenPhotographicId,
+                  SoleToJointFormDataKeys.SeenSecondId,
+                  SoleToJointFormDataKeys.IsNotInImmigrationControl,
+                  SoleToJointFormDataKeys.SeenProofOfRelationship,
+                  SoleToJointFormDataKeys.IncomingTenantLivingInProperty
+            };
+
+
+            var formData = processRequest.FormData;
+
+            SoleToJointHelpers.ValidateFormData(formData, expectedFormDataKeys);
+            processRequest.Trigger = SoleToJointInternalTriggers.DocumentChecksPassed;
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 

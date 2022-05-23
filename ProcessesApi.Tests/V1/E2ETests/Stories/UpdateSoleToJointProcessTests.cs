@@ -309,14 +309,17 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
 
         #region Review documents
 
-        [Fact]
-        public void ProcessStateIsUpdatedToDocumentsChecksPassed()
+        [Theory]
+        [InlineData(SoleToJointStates.DocumentsRequestedDes)]
+        [InlineData(SoleToJointStates.DocumentsRequestedAppointment)]
+        [InlineData(SoleToJointStates.DocumentsAppointmentRescheduled)]
+        public void ProcessStateIsUpdatedToDocumentsChecksPassed(string initialState)
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.DocumentsRequestedDes))
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(initialState))
                     .And(a => _processFixture.GivenAReviewDocumentsRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
-                    .And(a => _steps.ThenTheProcessStateIsUpdatedToDocumentChecksPassed(_processFixture.UpdateProcessRequest))
+                    .And(a => _steps.ThenTheProcessStateIsUpdatedToDocumentChecksPassed(_processFixture.UpdateProcessRequest, initialState))
                 .BDDfy();
         }
 
@@ -331,19 +334,6 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         }
 
 
-        //[Theory]
-        //[InlineData(SoleToJointStates.DocumentsRequestedDes)]
-        //[InlineData(SoleToJointStates.DocumentsRequestedAppointment)]
-        //[InlineData(SoleToJointStates.DocumentsAppointmentRescheduled)]
-        //public void ProcessStateIsUpdatedToDocumentsChecksPassed(string initialState)
-        //{
-        //    this.Given(g => _processFixture.GivenASoleToJointProcessExists(initialState))
-        //            .And(a => _processFixture.GivenAReviewDocumentsRequest())
-        //        .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
-        //        .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
-        //            .And(a => _steps.ThenTheProcessStateIsUpdatedToDocumentChecksPassed(_processFixture.UpdateProcessRequest, initialState))
-        //        .BDDfy();
-        //}
 
         #endregion
     }
