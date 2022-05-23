@@ -17,20 +17,59 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
         }
 
         [Fact]
+        public void RequestShouldErrorWithNullFormData()
+        {
+            //Arrange
+            var model = new UpdateProcessRequestObject
+            {
+                FormData = null,
+                Documents = new List<Guid>()
+            };
+            //Act
+            var result = _classUnderTest.TestValidate(model);
+            //Assert
+            result.ShouldHaveValidationErrorFor(x => x.FormData);
+        }
+
+        [Fact]
+        public void RequestShouldNotErrorWithValidFormData()
+        {
+            //Arrange
+            var model = new UpdateProcessRequestObject
+            {
+                FormData = new Dictionary<string, object>(),
+                Documents = new List<Guid>()
+            };
+            //Act
+            var result = _classUnderTest.TestValidate(model);
+            //Assert
+            result.ShouldNotHaveValidationErrorFor(x => x.FormData);
+        }
+
+        [Fact]
         public void RequestShouldErrorWithEmptyDocumentIDs()
         {
             //Arrange
-            var model = new UpdateProcessRequestObject() { Documents = new List<Guid> { Guid.Empty } };
+            var model = new UpdateProcessRequestObject
+            {
+                FormData = null,
+                Documents = new List<Guid> { Guid.Empty }
+            };
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert
             result.ShouldHaveValidationErrorFor(x => x.Documents);
         }
+
         [Fact]
         public void RequestShouldNotErrorWithValidDocumentIDs()
         {
             //Arrange
-            var model = new UpdateProcessRequestObject() { Documents = new List<Guid> { Guid.NewGuid() } };
+            var model = new UpdateProcessRequestObject
+            {
+                FormData = null,
+                Documents = new List<Guid> { Guid.NewGuid() }
+            };
             //Act
             var result = _classUnderTest.TestValidate(model);
             //Assert
