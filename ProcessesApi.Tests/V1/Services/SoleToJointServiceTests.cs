@@ -595,5 +595,28 @@ namespace ProcessesApi.Tests.V1.Services
         }
 
         #endregion
+
+        #region Submit for tenure investigation
+
+        [Fact]
+        public async Task ProcessStateIsUpdatedToApplicationSubmittedOnSubmitApplicationTrigger()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SoleToJointStates.DocumentChecksPassed);
+            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.SubmitApplication);
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SoleToJointStates.ApplicationSubmitted,
+                new List<string> { /* TODO when tenure investigation trigger is implemented */ });
+
+            process.PreviousStates.Last().State.Should().Be(SoleToJointStates.DocumentChecksPassed);
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.DocumentChecksPassed, SoleToJointStates.ApplicationSubmitted);
+        }
+
+        #endregion
     }
 }

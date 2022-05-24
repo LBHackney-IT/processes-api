@@ -355,5 +355,21 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         }
 
         #endregion
+
+        #region Submit for tenure investigation
+
+        [Fact]
+        public void ProcessStateIsUpdatedToApplicationSubmitted()
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.DocumentChecksPassed))
+                    .And(a => _processFixture.GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.SubmitApplication))
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenTheProcessStateIsUpdatedToApplicationSubmitted(_processFixture.UpdateProcessRequest))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, SoleToJointStates.DocumentChecksPassed, SoleToJointStates.ApplicationSubmitted))
+                .BDDfy();
+        }
+
+
+        #endregion
     }
 }
