@@ -82,6 +82,14 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             dbRecord.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(requestBody.Documents);
         }
 
+        private async Task CheckProcessState(Guid processId, string currentState, string previousState)
+        {
+            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(processId).ConfigureAwait(false);
+
+            dbRecord.CurrentState.State.Should().Be(currentState);
+            dbRecord.PreviousStates.Last().State.Should().Be(previousState);
+        }
+
         public async Task ThenTheIncomingTenantIdIsAddedToRelatedEntities(UpdateProcessQuery request, UpdateProcessRequestObject requestBody)
         {
             var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
@@ -149,6 +157,12 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         {
             await CheckProcessState(request.Id, SoleToJointStates.DocumentChecksPassed, initialState).ConfigureAwait(false);
         }
+
+        public async Task ThenTheProcessStateIsUpdatedToApplicationSubmitted(UpdateProcessQuery request)
+        {
+            await CheckProcessState(request.Id, SoleToJointStates.ApplicationSubmitted, SoleToJointStates.DocumentChecksPassed).ConfigureAwait(false);
+        }
+
 
         public async Task ThenTheProcessClosedEventIsRaised(ISnsFixture snsFixture, Guid processId)
         {
@@ -222,16 +236,6 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                 stateData.Should().ContainKey(SoleToJointFormDataKeys.AppointmentDateTime);
             };
             await VerifyProcessUpdatedEventIsRaised(snsFixture, processId, oldState, newState, verifyData).ConfigureAwait(false);
-        }
-
-
-
-        private async Task CheckProcessState(Guid processId, string currentState, string previousState)
-        {
-            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(processId).ConfigureAwait(false);
-
-            dbRecord.CurrentState.State.Should().Be(currentState);
-            dbRecord.PreviousStates.Last().State.Should().Be(previousState);
         }
     }
 }

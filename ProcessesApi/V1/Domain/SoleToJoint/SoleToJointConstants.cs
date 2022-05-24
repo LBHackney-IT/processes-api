@@ -15,6 +15,7 @@ namespace ProcessesApi.V1.Domain
         public const string DocumentsRequestedAppointment = "DocumentsRequestedAppointment";
         public const string DocumentsAppointmentRescheduled = "DocumentsAppointmentRescheduled";
         public const string DocumentChecksPassed = "DocumentChecksPassed";
+        public const string ApplicationSubmitted = "ApplicationSubmitted";
     }
 
     public static class SoleToJointPermittedTriggers
@@ -28,10 +29,8 @@ namespace ProcessesApi.V1.Domain
         public const string RequestDocumentsDes = "RequestDocumentsDes";
         public const string RequestDocumentsAppointment = "RequestDocumentsAppointment";
         public const string RescheduleDocumentsAppointment = "RescheduleDocumentsAppointment";
-        public const string SubmitApplication = "SubmitApplication";
         public const string ReviewDocuments = "ReviewDocuments";
-
-
+        public const string SubmitApplication = "SubmitApplication";
     }
 
     public static class SoleToJointInternalTriggers
@@ -132,6 +131,8 @@ namespace ProcessesApi.V1.Domain
 
         #endregion
 
+        public const string AppointmentDateTime = "appointmentDateTime";
+
         #region ReviewDocuments
 
         /// <summary>
@@ -162,7 +163,6 @@ namespace ProcessesApi.V1.Domain
         public const string IncomingTenantLivingInProperty = "incomingTenantLivingInProperty";
 
         #endregion
-        public const string AppointmentDateTime = "appointmentDateTime";
     }
 
 }

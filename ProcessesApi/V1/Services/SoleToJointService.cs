@@ -199,6 +199,9 @@ namespace ProcessesApi.V1.Services
                     .PermitReentry(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment)
                     .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
                     .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
+
+            _machine.Configure(SoleToJointStates.DocumentChecksPassed)
+                    .Permit(SoleToJointPermittedTriggers.SubmitApplication, SoleToJointStates.ApplicationSubmitted);
         }
     }
 }
