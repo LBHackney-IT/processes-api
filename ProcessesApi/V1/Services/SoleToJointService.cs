@@ -94,6 +94,36 @@ namespace ProcessesApi.V1.Services
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
+        private async Task CheckTenureInvestigation(StateMachine<string, string>.Transition transition)
+        {
+            var processRequest = transition.Parameters[0] as ProcessTrigger;
+            var formData = processRequest.FormData;
+
+            var expectedFormDataKeys = new List<string> { SoleToJointFormDataKeys.TenureInvestigationRecommendation };
+            SoleToJointHelpers.ValidateFormData(formData, expectedFormDataKeys);
+            var tenureInvestigationRecommendation = formData[SoleToJointFormDataKeys.TenureInvestigationRecommendation].ToString();
+
+            switch (tenureInvestigationRecommendation)
+            {
+                case SoleToJointFormDataValues.Appointment:
+                    processRequest.Trigger = SoleToJointInternalTriggers.TenureInvestigationPassedWithInt;
+                    break;
+                case SoleToJointFormDataValues.Approve:
+                    processRequest.Trigger = SoleToJointInternalTriggers.TenureInvestigationPassed;
+                    break;
+                case SoleToJointFormDataValues.Decline:
+                    processRequest.Trigger = SoleToJointInternalTriggers.TenureInvestigationFailed;
+                    break; 
+                default:
+                    throw new FormDataInvalidException(String.Format("Tenure Investigation Recommendation must be one of: [{0}, {1}, {2}], but the value provided was: '{3}'.",
+                                                                     SoleToJointFormDataValues.Appointment,
+                                                                     SoleToJointFormDataValues.Approve,
+                                                                     SoleToJointFormDataValues.Decline,
+                                                                     tenureInvestigationRecommendation));
+            }
+            await TriggerStateMachine(processRequest).ConfigureAwait(false);
+        }
+
         #endregion
 
         #region State Transition Actions
@@ -202,6 +232,12 @@ namespace ProcessesApi.V1.Services
 
             _machine.Configure(SoleToJointStates.DocumentChecksPassed)
                     .Permit(SoleToJointPermittedTriggers.SubmitApplication, SoleToJointStates.ApplicationSubmitted);
+
+            _machine.Configure(SoleToJointStates.ApplicationSubmitted)
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.TenureInvestigation, CheckTenureInvestigation)
+                    .Permit(SoleToJointInternalTriggers.TenureInvestigationFailed, SoleToJointStates.TenureInvestigationFailed)
+                    .Permit(SoleToJointInternalTriggers.TenureInvestigationPassed, SoleToJointStates.TenureInvestigationPassed)
+                    .Permit(SoleToJointInternalTriggers.TenureInvestigationPassedWithInt, SoleToJointStates.TenureInvestigationPassedWithInt);
         }
     }
 }

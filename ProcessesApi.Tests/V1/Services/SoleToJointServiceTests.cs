@@ -596,7 +596,7 @@ namespace ProcessesApi.Tests.V1.Services
 
         #endregion
 
-        #region Submit for tenure investigation
+        #region Tenure Investigation
 
         [Fact]
         public async Task ProcessStateIsUpdatedToApplicationSubmittedOnSubmitApplicationTrigger()
@@ -611,10 +611,76 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.ApplicationSubmitted,
-                new List<string> { /* TODO when tenure investigation trigger is implemented */ });
+                new List<string> { SoleToJointPermittedTriggers.TenureInvestigation });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.DocumentChecksPassed);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.DocumentChecksPassed, SoleToJointStates.ApplicationSubmitted);
+        }
+
+        [Theory]
+        [InlineData(SoleToJointFormDataValues.Appointment, SoleToJointStates.TenureInvestigationPassedWithInt)]
+        [InlineData(SoleToJointFormDataValues.Approve, SoleToJointStates.TenureInvestigationPassed)]
+        [InlineData(SoleToJointFormDataValues.Decline, SoleToJointStates.TenureInvestigationFailed)]
+        public async Task ProcessStateIsUpdatedOnTenureInvestigationTrigger(string tenureInvestigationRecommendation, string expectedState)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SoleToJointStates.ApplicationSubmitted);
+            var formData = new Dictionary<string, object>
+            {
+                {  SoleToJointFormDataKeys.TenureInvestigationRecommendation, tenureInvestigationRecommendation }
+            };
+            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.TenureInvestigation, formData);
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, expectedState,
+                new List<string> { /* TODO when next trigger is implemented */ }
+            );
+            process.PreviousStates.Last().State.Should().Be(SoleToJointStates.ApplicationSubmitted);
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.ApplicationSubmitted, expectedState);
+        }
+
+        [Fact]
+        public void ThrowsFormDataNotFoundExceptionOnTenureInvestigationWhenRecommendationIsNull()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SoleToJointStates.ApplicationSubmitted);
+            var formData = new Dictionary<string, object>();
+            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.TenureInvestigation, formData);
+
+            var expectedErrorMessage = $"The request's FormData is invalid: The form data keys supplied () do not include the expected values ({SoleToJointFormDataKeys.TenureInvestigationRecommendation}).";
+
+            // Act & assert
+            _classUnderTest
+                .Invoking(cut => cut.Process(trigger, process, _token))
+                .Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
+        }
+
+        [Fact]
+        public void ThrowsFormDataInvalidExceptionOnTenureInvestigationWhenRecommendationIsNotOneOfCorrectValues()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SoleToJointStates.ApplicationSubmitted);
+            var invalidRecommendation = "some invalid value";
+            var formData = new Dictionary<string, object>
+            {
+                {  SoleToJointFormDataKeys.TenureInvestigationRecommendation, invalidRecommendation }
+            };
+            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.TenureInvestigation, formData);
+
+            var expectedErrorMessage = String.Format("The request's FormData is invalid: Tenure Investigation Recommendation must be one of: [{0}, {1}, {2}], but the value provided was: '{3}'.",
+                                                     SoleToJointFormDataValues.Appointment,
+                                                     SoleToJointFormDataValues.Approve,
+                                                     SoleToJointFormDataValues.Decline,
+                                                     invalidRecommendation);
+
+            // Act & assert
+            _classUnderTest
+                .Invoking(cut => cut.Process(trigger, process, _token))
+                .Should().Throw<FormDataInvalidException>().WithMessage(expectedErrorMessage);
         }
 
         #endregion

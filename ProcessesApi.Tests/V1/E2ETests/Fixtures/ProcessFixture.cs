@@ -256,6 +256,27 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.IncomingTenantLivingInProperty);
         }
 
+        public void GivenATenureInvestigationRequest(string tenureInvestigationRecommendation)
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.TenureInvestigation);
+
+            UpdateProcessRequestObject.FormData = new Dictionary<string, object>
+            {
+                { SoleToJointFormDataKeys.TenureInvestigationRecommendation, tenureInvestigationRecommendation }
+            };
+        }
+
+        public void GivenATenureInvestigationRequestWithMissingData()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.TenureInvestigation);
+        }
+
+        public void GivenATenureInvestigationRequestWithInvalidData()
+        {
+            GivenATenureInvestigationRequest("invalid value");
+        }
+
+
         public void GivenAnUpdateProcessByIdRequest()
         {
             UpdateProcessByIdRequest = new ProcessQuery
