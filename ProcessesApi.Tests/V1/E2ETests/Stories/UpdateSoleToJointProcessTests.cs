@@ -369,36 +369,17 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .BDDfy();
         }
 
-        [Fact]
-        public void ProcessStateIsUpdatedToTenureInvestigationPassed()
+        [Theory]
+        [InlineData(SoleToJointFormDataValues.Appointment, SoleToJointStates.TenureInvestigationPassedWithInt)]
+        [InlineData(SoleToJointFormDataValues.Approve, SoleToJointStates.TenureInvestigationPassed)]
+        [InlineData(SoleToJointFormDataValues.Decline, SoleToJointStates.TenureInvestigationFailed)]
+        public void ProcessStateIsUpdatedToShowResultOfTenureInvestigation(string tenureInvestigationRecommendation, string destinationState)
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.ApplicationSubmitted))
-                    .And(a => _processFixture.GivenATenureInvestigationRequest(SoleToJointFormDataValues.Approve))
+                    .And(a => _processFixture.GivenATenureInvestigationRequest(tenureInvestigationRecommendation))
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
-                .Then(a => _steps.ThenTheProcessStateIsUpdatedToTenureInvestigationPassed(_processFixture.UpdateProcessRequest))
-                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, SoleToJointStates.ApplicationSubmitted, SoleToJointStates.TenureInvestigationPassed))
-                .BDDfy();
-        }
-
-        [Fact]
-        public void ProcessStateIsUpdatedToTenureInvestigationPassedWithInterview()
-        {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.ApplicationSubmitted))
-                    .And(a => _processFixture.GivenATenureInvestigationRequest(SoleToJointFormDataValues.Appointment))
-                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
-                .Then(a => _steps.ThenTheProcessStateIsUpdatedToTenureInvestigationPassedWithInterview(_processFixture.UpdateProcessRequest))
-                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, SoleToJointStates.ApplicationSubmitted, SoleToJointStates.TenureInvestigationPassedWithInt))
-                .BDDfy();
-        }
-
-        [Fact]
-        public void ProcessStateIsUpdatedToTenureInvestigationFailed()
-        {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.ApplicationSubmitted))
-                    .And(a => _processFixture.GivenATenureInvestigationRequest(SoleToJointFormDataValues.Decline))
-                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
-                .Then(a => _steps.ThenTheProcessStateIsUpdatedToTenureInvestigationFailed(_processFixture.UpdateProcessRequest))
-                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, SoleToJointStates.ApplicationSubmitted, SoleToJointStates.TenureInvestigationFailed))
+                .Then(a => _steps.ThenTheProcessStateIsUpdatedToShowResultsOfTenureInvestigation(_processFixture.UpdateProcessRequest, destinationState))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, SoleToJointStates.ApplicationSubmitted, destinationState))
                 .BDDfy();
         }
 

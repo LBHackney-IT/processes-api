@@ -163,19 +163,9 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             await CheckProcessState(request.Id, SoleToJointStates.ApplicationSubmitted, SoleToJointStates.DocumentChecksPassed).ConfigureAwait(false);
         }
 
-        public async Task ThenTheProcessStateIsUpdatedToTenureInvestigationFailed(UpdateProcessQuery request)
+        public async Task ThenTheProcessStateIsUpdatedToShowResultsOfTenureInvestigation(UpdateProcessQuery request, string destinationState)
         {
-            await CheckProcessState(request.Id, SoleToJointStates.TenureInvestigationFailed, SoleToJointStates.ApplicationSubmitted).ConfigureAwait(false);
-        }
-
-        public async Task ThenTheProcessStateIsUpdatedToTenureInvestigationPassed(UpdateProcessQuery request)
-        {
-            await CheckProcessState(request.Id, SoleToJointStates.TenureInvestigationPassed, SoleToJointStates.ApplicationSubmitted).ConfigureAwait(false);
-        }
-
-        public async Task ThenTheProcessStateIsUpdatedToTenureInvestigationPassedWithInterview(UpdateProcessQuery request)
-        {
-            await CheckProcessState(request.Id, SoleToJointStates.TenureInvestigationPassedWithInt, SoleToJointStates.ApplicationSubmitted).ConfigureAwait(false);
+            await CheckProcessState(request.Id, destinationState, SoleToJointStates.ApplicationSubmitted).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessClosedEventIsRaised(ISnsFixture snsFixture, Guid processId)
