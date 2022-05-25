@@ -113,7 +113,7 @@ namespace ProcessesApi.V1.Services
                     break;
                 case SoleToJointFormDataValues.Decline:
                     processRequest.Trigger = SoleToJointInternalTriggers.TenureInvestigationFailed;
-                    break; 
+                    break;
                 default:
                     throw new FormDataInvalidException(String.Format("Tenure Investigation Recommendation must be one of: [{0}, {1}, {2}], but the value provided was: '{3}'.",
                                                                      SoleToJointFormDataValues.Appointment,
