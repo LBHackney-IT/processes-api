@@ -40,8 +40,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         {
             if (disposing && !_disposed)
             {
-                if (_processFixture != null)
-                    _processFixture.Dispose();
+                _processFixture?.Dispose();
+                _snsFixture?.PurgeAllQueueMessages();
 
                 _disposed = true;
             }

@@ -18,12 +18,16 @@ namespace ProcessesApi.V1.Services
         protected StateMachine<string, string> _machine;
         protected ProcessState _currentState;
         protected Process _process;
+
         protected Type _permittedTriggersType;
         protected List<string> _permittedTriggers => _permittedTriggersType
                                                     .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
                                                     .Where(fi => fi.IsLiteral && !fi.IsInitOnly && fi.FieldType == typeof(string))
                                                     .Select(x => (string) x.GetRawConstantValue())
                                                     .ToList();
+        protected List<string> _ignoredTriggersForProcessUpdated;
+        protected Dictionary<string, object> _eventData;
+
         protected ISnsFactory _snsFactory;
         protected ISnsGateway _snsGateway;
         protected Token _token;
@@ -34,59 +38,24 @@ namespace ProcessesApi.V1.Services
             _snsGateway = snsGateway;
         }
 
-        protected virtual void SetUpStates()
+        private void ConfigureStateTransitions()
         {
-            // All services must implement the following lines to allow the first state to be initialised correctly:
-            // _machine.Configure(SharedProcessStates.ApplicationInitialised)
-            //         .Permit(SharedInternalTriggers.StartApplication, SOME_STATE);
-        }
+            _machine.OnTransitionCompletedAsync(async x =>
+            {
+                var processRequest = x.Parameters[0] as ProcessTrigger;
+                var assignment = Assignment.Create("tenants"); // placeholder
 
-        protected virtual void SetUpStateActions()
-        {
-        }
+                await PublishProcessUpdatedEvent(x).ConfigureAwait(false);
 
-        protected void Configure(string state, Assignment assignment, Action<UpdateProcessState> func = null)
-        {
-            _machine.Configure(state)
-                .OnEntry(x =>
-                {
-                    var processRequest = x.Parameters[0] as UpdateProcessState;
-                    SwitchProcessState(assignment, processRequest);
-
-                    func?.Invoke(processRequest);
-                });
-        }
-
-        protected void ConfigureAsync(string state, Assignment assignment, Func<UpdateProcessState, Task> func = null)
-        {
-            _machine.Configure(state)
-                .OnEntryAsync(async x =>
-                {
-                    var processRequest = x.Parameters[0] as UpdateProcessState;
-                    SwitchProcessState(assignment, processRequest);
-
-                    if (func != null)
-                    {
-                        await func.Invoke(processRequest).ConfigureAwait(false);
-                    }
-                });
-        }
-
-        private void SwitchProcessState(Assignment assignment, UpdateProcessState processRequest)
-        {
-            _currentState = ProcessState.Create(
-                _machine.State,
-                _machine.PermittedTriggers
-                    .Where(trigger => _permittedTriggers.Contains(trigger)).ToList(),
-                assignment,
-                ProcessData.Create(processRequest.FormData, processRequest.Documents),
-                DateTime.UtcNow, DateTime.UtcNow);
-        }
-
-        protected async Task TriggerStateMachine(UpdateProcessState trigger)
-        {
-            var res = _machine.SetTriggerParameters<UpdateProcessState, Process>(trigger.Trigger);
-            await _machine.FireAsync(res, trigger, _process).ConfigureAwait(false);
+                _currentState = ProcessState.Create(
+                    _machine.State,
+                    _machine.PermittedTriggers
+                        .Where(trigger => _permittedTriggers.Contains(trigger)).ToList(),
+                    assignment,
+                    ProcessData.Create(processRequest.FormData, processRequest.Documents),
+                    DateTime.UtcNow, DateTime.UtcNow
+                );
+            });
         }
 
         protected async Task PublishProcessStartedEvent()
@@ -97,33 +66,39 @@ namespace ProcessesApi.V1.Services
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
 
-        protected async Task PublishProcessUpdatedEvent(string description)
+        protected async Task PublishProcessUpdatedEvent(StateMachine<string, string>.Transition transition)
+        {
+            if (!_ignoredTriggersForProcessUpdated.Contains(transition.Trigger))
+            {
+                var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
+                var processSnsMessage = _snsFactory.ProcessStateUpdated(transition, _eventData, _token);
+
+                await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
+            }
+        }
+
+        protected async Task PublishProcessClosedEvent()
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = _snsFactory.ProcessUpdatedWithMessage(_process, _token, description);
+            var processSnsMessage = _snsFactory.ProcessClosed(_process, _token, "Process Closed. The resident has been notified.");
 
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
 
-        protected async Task PublishProcessUpdatedEventWithRescheduledAppointment(string oldAppointmentTime, string newAppointmentTime)
+        protected async Task TriggerStateMachine(ProcessTrigger trigger)
         {
-            var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = _snsFactory.ProcessUpdatedWithAppointmentRescheduled(_process, _token, oldAppointmentTime, newAppointmentTime);
-
-            await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
+            var res = _machine.SetTriggerParameters<ProcessTrigger, Process>(trigger.Trigger);
+            await _machine.FireAsync(res, trigger, _process).ConfigureAwait(false);
         }
 
-        protected async Task PublishProcessClosedEvent(string description)
+        protected virtual void SetUpStates()
         {
-            var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = _snsFactory.ProcessClosed(_process, _token, description);
-
-            await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
+            // All services must implement the following lines to allow the first state to be initialised correctly:
+            // _machine.Configure(SharedProcessStates.ApplicationInitialised)
+            //         .Permit(SharedInternalTriggers.StartApplication, SOME_STATE);
         }
 
-
-
-        public async Task Process(UpdateProcessState processRequest, Process process, Token token)
+        public async Task Process(ProcessTrigger processRequest, Process process, Token token)
         {
             _process = process;
             _token = token;
@@ -131,10 +106,10 @@ namespace ProcessesApi.V1.Services
             var state = process.CurrentState is null ? SharedProcessStates.ApplicationInitialised : process.CurrentState.State;
 
             _machine = new StateMachine<string, string>(() => state, s => state = s);
-            var res = _machine.SetTriggerParameters<UpdateProcessState, Process>(processRequest.Trigger);
+            var res = _machine.SetTriggerParameters<ProcessTrigger, Process>(processRequest.Trigger);
 
+            ConfigureStateTransitions();
             SetUpStates();
-            SetUpStateActions();
 
             var triggerIsPermitted = _permittedTriggers.Contains(processRequest.Trigger) || processRequest.Trigger == SharedInternalTriggers.StartApplication;
             var canFire = triggerIsPermitted && _machine.CanFire(processRequest.Trigger);

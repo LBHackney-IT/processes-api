@@ -1,7 +1,5 @@
-using Amazon.DynamoDBv2.DataModel;
 using AutoFixture;
 using FluentAssertions;
-using Hackney.Core.Testing.DynamoDb;
 using Moq;
 using ProcessesApi.V1.Domain;
 using System;
@@ -17,7 +15,6 @@ using ProcessesApi.V1.Services;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Services.Exceptions;
 using System.Globalization;
-using ProcessesApi.V1.Infrastructure.Extensions;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -26,8 +23,12 @@ namespace ProcessesApi.Tests.V1.Services
     {
         public SoleToJointService _classUnderTest;
         public Fixture _fixture = new Fixture();
-        private readonly IDynamoDbFixture _dbFixture;
-        private IDynamoDBContext _dynamoDb => _dbFixture.DynamoDbContext;
+        private readonly List<Action> _cleanup = new List<Action>();
+
+        private Mock<ISoleToJointAutomatedEligibilityChecksHelper> _mockAutomatedEligibilityChecksHelper;
+        private Mock<ISnsGateway> _mockSnsGateway;
+        private readonly Token _token = new Token();
+        private EntityEventSns _lastSnsEvent = new EntityEventSns();
 
         private Dictionary<string, object> _manualEligibilityPassData => new Dictionary<string, object>
         {
@@ -48,12 +49,15 @@ namespace ProcessesApi.Tests.V1.Services
             { SoleToJointFormDataKeys.BR18, "false" }
         };
 
-        private Mock<ISoleToJointAutomatedEligibilityChecksHelper> _mockAutomatedEligibilityChecksHelper;
-        private Mock<ISnsGateway> _mockSnsGateway;
+        private Dictionary<string, object> _reviewDocumentCheckPass => new Dictionary<string, object>
+        {
+            { SoleToJointFormDataKeys.SeenPhotographicId, "true" },
+            { SoleToJointFormDataKeys.SeenSecondId, "true" },
+            { SoleToJointFormDataKeys.IsNotInImmigrationControl, "true" },
+            {SoleToJointFormDataKeys.SeenProofOfRelationship, "true" },
+            { SoleToJointFormDataKeys.IncomingTenantLivingInProperty, "true" }
+        };
 
-        private readonly List<Action> _cleanup = new List<Action>();
-        private readonly Token _token = new Token();
-        private EntityEventSns _lastSnsEvent = new EntityEventSns();
 
         public void Dispose()
         {
@@ -76,7 +80,6 @@ namespace ProcessesApi.Tests.V1.Services
 
         public SoleToJointServiceTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
-            _dbFixture = appFactory.DynamoDbFixture;
             _mockSnsGateway = new Mock<ISnsGateway>();
             _mockAutomatedEligibilityChecksHelper = new Mock<ISoleToJointAutomatedEligibilityChecksHelper>();
 
@@ -101,20 +104,18 @@ namespace ProcessesApi.Tests.V1.Services
                             .Create();
         }
 
-        private UpdateProcessState CreateProcessTrigger(Process process, string trigger, Dictionary<string, object> formData = null)
+        private ProcessTrigger CreateProcessTrigger(Process process, string trigger, Dictionary<string, object> formData = null)
         {
-            return UpdateProcessState.Create
+            return ProcessTrigger.Create
             (
                 process.Id,
-                process.TargetId,
                 trigger,
                 formData,
-                _fixture.Create<List<Guid>>(),
-                process.RelatedEntities
+                _fixture.Create<List<Guid>>()
             );
         }
 
-        private void CurrentStateShouldContainCorrectData(Process process, UpdateProcessState triggerObject, string expectedCurrentState, List<string> expectedTriggers)
+        private void CurrentStateShouldContainCorrectData(Process process, ProcessTrigger triggerObject, string expectedCurrentState, List<string> expectedTriggers)
         {
             process.CurrentState.State.Should().Be(expectedCurrentState);
             process.CurrentState.PermittedTriggers.Should().BeEquivalentTo(expectedTriggers);
@@ -124,8 +125,49 @@ namespace ProcessesApi.Tests.V1.Services
             process.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
         }
 
+        private void VerifyThatProcessUpdatedEventIsTriggered(string oldState, string newState)
+        {
+            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _lastSnsEvent.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
+            (_lastSnsEvent.EventData.OldData as ProcessStateChangeData).State.Should().Be(oldState);
+            (_lastSnsEvent.EventData.NewData as ProcessStateChangeData).State.Should().Be(newState);
+        }
+
+        // List all states that CloseProcess can be triggered from
+        [Theory]
+        [InlineData(SoleToJointStates.AutomatedChecksFailed)]
+        [InlineData(SoleToJointStates.ManualChecksFailed)]
+        [InlineData(SoleToJointStates.BreachChecksFailed)]
+        public async Task ProcessStateIsUpdatedToProcessClosedAndProcessClosedEventIsRaised(string fromState)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(fromState);
+            var formData = new Dictionary<string, object>()
+        {
+                { SoleToJointFormDataKeys.HasNotifiedResident, true }
+            };
+
+            var triggerObject = CreateProcessTrigger(process,
+                                                     SoleToJointPermittedTriggers.CloseProcess,
+                                                     formData);
+
+            // Act
+            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(process,
+                                                 triggerObject,
+                                                 SharedProcessStates.ProcessClosed,
+                                                 new List<string>());
+            process.PreviousStates.LastOrDefault().State.Should().Be(fromState);
+
+            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _lastSnsEvent.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
+        }
+
+
         [Fact]
-        public async Task InitialiseStateToSelectTenantsIfCurrentStateIsNotDefined()
+        public async Task InitialiseStateToSelectTenantsIfCurrentStateIsNotDefinedAndTriggerProcessStartedEvent()
         {
             // Arrange
             var process = _fixture.Build<Process>()
@@ -143,28 +185,9 @@ namespace ProcessesApi.Tests.V1.Services
                                                  SoleToJointStates.SelectTenants,
                                                  new List<string>() { SoleToJointPermittedTriggers.CheckAutomatedEligibility });
             process.PreviousStates.Should().BeEmpty();
-        }
 
-        // List all states where CancelProcess can be triggered from
-        [Theory]
-        [InlineData(SoleToJointStates.AutomatedChecksFailed)]
-        [InlineData(SoleToJointStates.ManualChecksFailed)]
-        [InlineData(SoleToJointStates.BreachChecksFailed)]
-        public async Task ProcessStateIsUpdatedToCloseProcess(string fromState)
-        {
-            // Arrange
-            var process = CreateProcessWithCurrentState(fromState);
-
-            var triggerObject = CreateProcessTrigger(process,
-                                                     SoleToJointPermittedTriggers.CancelProcess,
-                                                     new Dictionary<string, object>());
-            // Act
-            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
-
-            // Assert
-            CurrentStateShouldContainCorrectData(process,
-                                                 triggerObject, SoleToJointStates.ProcessCancelled, new List<string>());
-            process.PreviousStates.LastOrDefault().State.Should().Be(fromState);
+            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _lastSnsEvent.EventType.Should().Be(ProcessStartedEventConstants.EVENTTYPE);
         }
 
         #region Automated eligibility checks
@@ -219,9 +242,10 @@ namespace ProcessesApi.Tests.V1.Services
             CurrentStateShouldContainCorrectData(process,
                                                  triggerObject,
                                                  SoleToJointStates.AutomatedChecksFailed,
-                                                 new List<string>() { SoleToJointPermittedTriggers.CancelProcess });
+                                                 new List<string>() { SoleToJointPermittedTriggers.CloseProcess });
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
             _mockAutomatedEligibilityChecksHelper.Verify(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId), Times.Once());
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.SelectTenants, SoleToJointStates.AutomatedChecksFailed);
         }
 
         [Fact]
@@ -253,6 +277,7 @@ namespace ProcessesApi.Tests.V1.Services
                                                  new List<string>() { SoleToJointPermittedTriggers.CheckManualEligibility });
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
             _mockAutomatedEligibilityChecksHelper.Verify(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId), Times.Once());
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.SelectTenants, SoleToJointStates.AutomatedChecksPassed);
         }
 
         [Fact]
@@ -272,38 +297,6 @@ namespace ProcessesApi.Tests.V1.Services
             Func<Task> func = async () => await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
             // Assert
             func.Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
-        }
-
-        [Fact]
-        public async Task ProcessClosedEventIsRaisedWhenAutomaticEligibilityChecksFail()
-        {
-            // Arrange
-            var process = CreateProcessWithCurrentState(SoleToJointStates.SelectTenants);
-            var incomingTenantId = Guid.NewGuid();
-            var tenantId = Guid.NewGuid();
-
-            var triggerObject = CreateProcessTrigger(
-                process,
-                SoleToJointPermittedTriggers.CheckAutomatedEligibility,
-                new Dictionary<string, object>
-                {
-                    { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId },
-                    { SoleToJointFormDataKeys.TenantId, tenantId }
-                });
-
-            var snsEvent = new EntityEventSns();
-
-            _mockAutomatedEligibilityChecksHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(false);
-            _mockSnsGateway
-                .Setup(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()))
-                .Callback<EntityEventSns, string, string>((ev, s1, s2) => snsEvent = ev);
-
-            // Act
-            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
-
-            // Assert
-            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            snsEvent.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
         }
 
         #endregion
@@ -329,6 +322,7 @@ namespace ProcessesApi.Tests.V1.Services
                                                  SoleToJointStates.ManualChecksPassed,
                                                  new List<string> { "CheckTenancyBreach" });
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.AutomatedChecksPassed, SoleToJointStates.ManualChecksPassed);
         }
 
         [Theory]
@@ -355,8 +349,9 @@ namespace ProcessesApi.Tests.V1.Services
             CurrentStateShouldContainCorrectData(process,
                                                  triggerObject,
                                                  SoleToJointStates.ManualChecksFailed,
-                                                 new List<string>() { SoleToJointPermittedTriggers.CancelProcess });
+                                                 new List<string>() { SoleToJointPermittedTriggers.CloseProcess });
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.AutomatedChecksPassed, SoleToJointStates.ManualChecksFailed);
         }
 
         [Fact]
@@ -385,28 +380,6 @@ namespace ProcessesApi.Tests.V1.Services
             func.Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
         }
 
-
-        [Fact]
-        public async Task ProcessClosedEventIsRaisedWhenManualEligibilityChecksFail()
-        {
-            // Arrange
-            var process = CreateProcessWithCurrentState(SoleToJointStates.AutomatedChecksPassed);
-
-            var eligibilityFormData = _manualEligibilityPassData;
-            eligibilityFormData[SoleToJointFormDataKeys.BR11] = "false";
-
-            var triggerObject = CreateProcessTrigger(process,
-                SoleToJointPermittedTriggers.CheckManualEligibility,
-                eligibilityFormData);
-
-            // Act
-            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
-
-            // Assert
-            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
-        }
-
         #endregion
 
         #region Tenancy breach checks
@@ -428,6 +401,7 @@ namespace ProcessesApi.Tests.V1.Services
                 new List<string> { SoleToJointPermittedTriggers.RequestDocumentsDes, SoleToJointPermittedTriggers.RequestDocumentsAppointment });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.ManualChecksPassed);
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.ManualChecksPassed, SoleToJointStates.BreachChecksPassed);
         }
 
         [Theory]
@@ -451,9 +425,10 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.BreachChecksFailed,
-                new List<string> { SoleToJointPermittedTriggers.CancelProcess });
+                new List<string> { SoleToJointPermittedTriggers.CloseProcess });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.ManualChecksPassed);
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.ManualChecksPassed, SoleToJointStates.BreachChecksFailed);
         }
 
         [Theory]
@@ -479,25 +454,6 @@ namespace ProcessesApi.Tests.V1.Services
                 .Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
         }
 
-        [Fact]
-        public async Task ProcessClosedEventIsRaisedWhenTenancyBreachChecksFail()
-        {
-            // Arrange
-            var process = CreateProcessWithCurrentState(SoleToJointStates.ManualChecksPassed);
-
-            _tenancyBreachPassData[SoleToJointFormDataKeys.BR5] = "true";
-
-            var trigger = CreateProcessTrigger(
-                process, SoleToJointPermittedTriggers.CheckTenancyBreach, _tenancyBreachPassData);
-
-            // Act
-            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
-
-            // Assert
-            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
-        }
-
         #endregion
 
         #region Request Documents
@@ -516,25 +472,10 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsRequestedAppointment,
-                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment /*Add next state here*/ });
+                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CloseProcess });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
-        }
-
-        [Fact]
-        public async Task ProcessUpdatedEventIsRasiedWhenDocumentsRequestedAppointmentIsBooked()
-        {
-            // Arrange
-            var process = CreateProcessWithCurrentState(SoleToJointStates.BreachChecksPassed);
-            var formData = new Dictionary<string, object>() { { SoleToJointFormDataKeys.AppointmentDateTime, _fixture.Create<DateTime>() } };
-            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.RequestDocumentsAppointment, formData);
-
-            // Act
-            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
-
-            // Assert
-            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.BreachChecksPassed, SoleToJointStates.DocumentsRequestedAppointment);
         }
 
         [Fact]
@@ -551,23 +492,6 @@ namespace ProcessesApi.Tests.V1.Services
             _classUnderTest
                 .Invoking(cut => cut.Process(trigger, process, _token))
                 .Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
-        }
-
-        [Fact]
-        public void ThrowsFormDataFormatExceptionOnRequestDocumentsAppointmentWhenAppointmentDateTimeIsNotCorrectFormat()
-        {
-            // Arrange
-            var process = CreateProcessWithCurrentState(SoleToJointStates.BreachChecksPassed);
-            var incorrectDateTime = _fixture.Create<int>();
-            var formData = new Dictionary<string, object>() { { SoleToJointFormDataKeys.AppointmentDateTime, incorrectDateTime } };
-            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.RequestDocumentsAppointment, formData);
-
-            var expectedErrorMessage = $"The request's FormData is invalid: The appointment datetime provided ({incorrectDateTime}) is not in the correct format.";
-
-            // Act & assert
-            _classUnderTest
-                .Invoking(cut => cut.Process(trigger, process, _token))
-                .Should().Throw<FormDataFormatException>().WithMessage(expectedErrorMessage);
         }
 
         #endregion
@@ -587,28 +511,13 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsRequestedDes,
-                new List<string> { SoleToJointPermittedTriggers.RequestDocumentsAppointment /* TODO: Update permitted triggers when implemented */ });
+                new List<string> { SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CloseProcess });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.BreachChecksPassed, SoleToJointStates.DocumentsRequestedDes);
         }
 
-        [Fact]
-        public async Task ProcessUpdatedEventIsRaisedWhenDocumentsRequestedViaDes()
-        {
-            // Arrange
-            var process = CreateProcessWithCurrentState(SoleToJointStates.BreachChecksPassed);
-            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.RequestDocumentsDes);
-
-            // Act
-            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
-
-            // Assert
-            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
-            _lastSnsEvent.EventData.NewData.Should().BeOfType<Message>();
-        }
-
-        #endregion Request documents via DES
+        #endregion
 
         #region Request documents via appointment
 
@@ -630,38 +539,21 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsRequestedAppointment,
-                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment /* TODO: Update permitted when implemented */});
-
-            process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
-        }
-
-        [Fact]
-        public async Task ProcessUpdatedEventIsRaisedWhenDocumentsRequestedViaAppointment()
-        {
-            // Arrange
-            var appointmentDateTime = DateTime.UtcNow;
-
-            var process = CreateProcessWithCurrentState(SoleToJointStates.BreachChecksPassed);
-            var trigger = CreateProcessTrigger(
-                process, SoleToJointPermittedTriggers.RequestDocumentsAppointment,
-                new Dictionary<string, object>
+                new List<string>
                 {
-                    { SoleToJointFormDataKeys.AppointmentDateTime, appointmentDateTime }
+                    SoleToJointPermittedTriggers.RescheduleDocumentsAppointment,
+                    SoleToJointPermittedTriggers.ReviewDocuments,
+                    SoleToJointPermittedTriggers.CloseProcess
                 });
 
-            // Act
-            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+            process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.BreachChecksPassed, SoleToJointStates.DocumentsRequestedAppointment);
 
-            // Assert
-            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-
-            _lastSnsEvent.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
-            _lastSnsEvent.EventData.NewData.Should().BeOfType<Message>();
-
-
+            var stateData = (_lastSnsEvent.EventData.NewData as ProcessStateChangeData).StateData;
+            stateData.Should().ContainKey(SoleToJointFormDataKeys.AppointmentDateTime);
         }
 
-        #endregion Request documents via appointment
+        #endregion
 
         #region Reschedule documents appointment
 
@@ -688,39 +580,43 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsAppointmentRescheduled,
-                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment });
-
+                new List<string>
+                {
+                    SoleToJointPermittedTriggers.ReviewDocuments,
+                    SoleToJointPermittedTriggers.RescheduleDocumentsAppointment,
+                    SoleToJointPermittedTriggers.CloseProcess
+                }
+            );
             process.PreviousStates.Last().State.Should().Be(initialState);
+            VerifyThatProcessUpdatedEventIsTriggered(initialState, SoleToJointStates.DocumentsAppointmentRescheduled);
+
+            var stateData = (_lastSnsEvent.EventData.NewData as ProcessStateChangeData).StateData;
+            stateData.Should().ContainKey(SoleToJointFormDataKeys.AppointmentDateTime);
         }
 
+        #endregion
+
+        #region Submit for tenure investigation
+
         [Fact]
-        public async Task ProcessUpdatedEventIsRaisedWhenDocumentsAppointmentIsRescheduled()
+        public async Task ProcessStateIsUpdatedToApplicationSubmittedOnSubmitApplicationTrigger()
         {
             // Arrange
-            var oldAppointmentDateTime = DateTime.UtcNow.ToIsoString();
-            var newAppointmentDateTime = DateTime.UtcNow.AddDays(1).ToIsoString();
-
-            var process = CreateProcessWithCurrentState(SoleToJointStates.DocumentsRequestedAppointment, new Dictionary<string, object>
-            {
-                { SoleToJointFormDataKeys.AppointmentDateTime, oldAppointmentDateTime }
-            });
-            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, new Dictionary<string, object>
-            {
-                { SoleToJointFormDataKeys.AppointmentDateTime, newAppointmentDateTime }
-            });
+            var process = CreateProcessWithCurrentState(SoleToJointStates.DocumentChecksPassed);
+            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.SubmitApplication);
 
             // Act
             await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
 
             // Assert
-            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SoleToJointStates.ApplicationSubmitted,
+                new List<string> { /* TODO when tenure investigation trigger is implemented */ });
 
-            _lastSnsEvent.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
-            _lastSnsEvent.EventData.OldData.Should().BeOfType<Message>();
-            _lastSnsEvent.EventData.NewData.Should().BeOfType<Message>();
-
+            process.PreviousStates.Last().State.Should().Be(SoleToJointStates.DocumentChecksPassed);
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.DocumentChecksPassed, SoleToJointStates.ApplicationSubmitted);
         }
 
-        #endregion Reschedule documents appointment
+        #endregion
     }
 }

@@ -7,7 +7,6 @@ namespace ProcessesApi.V1.Domain
         public const string SelectTenants = "SelectTenants";
         public const string AutomatedChecksFailed = "AutomatedChecksFailed";
         public const string AutomatedChecksPassed = "AutomatedChecksPassed";
-        public const string ProcessCancelled = "ProcessCancelled";
         public const string ManualChecksFailed = "ManualChecksFailed";
         public const string ManualChecksPassed = "ManualChecksPassed";
         public const string BreachChecksFailed = "BreachChecksFailed";
@@ -15,19 +14,23 @@ namespace ProcessesApi.V1.Domain
         public const string DocumentsRequestedDes = "DocumentsRequestedDes";
         public const string DocumentsRequestedAppointment = "DocumentsRequestedAppointment";
         public const string DocumentsAppointmentRescheduled = "DocumentsAppointmentRescheduled";
-        public const string ConfirmAppointmentScheduled = "ConfirmAppointmentScheduled";
+        public const string DocumentChecksPassed = "DocumentChecksPassed";
+        public const string ApplicationSubmitted = "ApplicationSubmitted";
     }
 
     public static class SoleToJointPermittedTriggers
     {
-        public const string CheckAutomatedEligibility = "CheckAutomatedEligibility";
         public const string CancelProcess = "CancelProcess";
+        public const string CloseProcess = "CloseProcess";
+        public const string CheckAutomatedEligibility = "CheckAutomatedEligibility";
         public const string CheckManualEligibility = "CheckManualEligibility";
         public const string RequestDocuments = "RequestDocuments";
         public const string CheckTenancyBreach = "CheckTenancyBreach";
         public const string RequestDocumentsDes = "RequestDocumentsDes";
         public const string RequestDocumentsAppointment = "RequestDocumentsAppointment";
         public const string RescheduleDocumentsAppointment = "RescheduleDocumentsAppointment";
+        public const string ReviewDocuments = "ReviewDocuments";
+        public const string SubmitApplication = "SubmitApplication";
     }
 
     public static class SoleToJointInternalTriggers
@@ -38,13 +41,15 @@ namespace ProcessesApi.V1.Domain
         public const string ManualEligibilityPassed = "ManualEligibilityPassed";
         public const string BreachChecksFailed = "BreachChecksFailed";
         public const string BreachChecksPassed = "BreachChecksPassed";
+        public const string DocumentChecksPassed = "DocumentChecksPassed";
+
     }
 
     // NOTE: Form data key values must be camelCase to avoid issues with Json Serialiser in E2E tests
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     public static class SoleToJointFormDataKeys
     {
-        public const string AppointmentDateTime = "appointmentDateTime";
+        public const string HasNotifiedResident = "hasNotifiedResident";
 
         #region Automated eligibility checks
 
@@ -123,6 +128,39 @@ namespace ProcessesApi.V1.Domain
         ///     Other than a NOSP, does the tenant have any live notices against the tenure, e.g. a breach of tenancy?
         /// </summary>
         public const string BR18 = "br18";
+
+        #endregion
+
+        public const string AppointmentDateTime = "appointmentDateTime";
+
+        #region ReviewDocuments
+
+        /// <summary>
+        ///     I confirm I have seen a government issue photographic ID
+        /// </summary>
+        public const string SeenPhotographicId = "seenPhotographicId";
+
+        /// <summary>
+        ///     I confirm I have seen a second form of ID (does not have to be photographic)
+        /// </summary>
+        public const string SeenSecondId = "seenSecondId";
+
+        /// <summary>
+        ///     I confirm that the prespective tenant is not subject to immigration control under the
+        ///     Asylum and Immigration Act 1996
+        /// </summary>
+        public const string IsNotInImmigrationControl = "isNotInImmigrationControl";
+
+        /// <summary>
+        ///     I confirm that I have seen proof of relationship to the existing tenant
+        /// </summary>
+        public const string SeenProofOfRelationship = "seenProofOfRelationship";
+
+        /// <summary>
+        ///     I confirm that I have seen 3 seperate documents proving the proposed tenant has been
+        ///     living at the property for a minimum of 12 months
+        /// </summary>
+        public const string IncomingTenantLivingInProperty = "incomingTenantLivingInProperty";
 
         #endregion
     }

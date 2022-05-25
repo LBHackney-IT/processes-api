@@ -47,7 +47,7 @@ namespace ProcessesApi.Tests.V1.Helpers
         public void ValidateManualCheckChoosesFailedTriggerIfFormDataDoesNotMatchExpectedValues()
         {
             // Arrange
-            var processRequest = _fixture.Create<UpdateProcessState>();
+            var processRequest = _fixture.Create<ProcessTrigger>();
             var checkId = "some-check-id";
             var checkSuccessValue = "some-expected-value";
             processRequest.FormData.Add(checkId, "some-other-value");
@@ -67,7 +67,7 @@ namespace ProcessesApi.Tests.V1.Helpers
         public void ValidateManualCheckChoosesPassedTriggerIfFormDataMatchesExpectedValues()
         {
             // Arrange
-            var processRequest = _fixture.Create<UpdateProcessState>();
+            var processRequest = _fixture.Create<ProcessTrigger>();
             var checkId = "some-check-id";
             var checkSuccessValue = "some-expected-value";
             processRequest.FormData.Add(checkId, checkSuccessValue);

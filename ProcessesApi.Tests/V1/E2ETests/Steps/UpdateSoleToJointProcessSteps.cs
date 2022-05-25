@@ -13,10 +13,11 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Hackney.Core.Sns;
-using Hackney.Core.Testing.Sns;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
 using ProcessesApi.V1.Infrastructure.JWT;
-using ProcessesApi.V1.Factories;
+using Hackney.Core.Testing.Sns;
+using JsonSerializer = System.Text.Json.JsonSerializer;
+using System.Collections.Generic;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {
@@ -81,12 +82,25 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             dbRecord.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(requestBody.Documents);
         }
 
+        private async Task CheckProcessState(Guid processId, string currentState, string previousState)
+        {
+            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(processId).ConfigureAwait(false);
+
+            dbRecord.CurrentState.State.Should().Be(currentState);
+            dbRecord.PreviousStates.Last().State.Should().Be(previousState);
+        }
+
         public async Task ThenTheIncomingTenantIdIsAddedToRelatedEntities(UpdateProcessQuery request, UpdateProcessRequestObject requestBody)
         {
             var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
 
             var incomingTenantId = Guid.Parse(requestBody.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString());
             dbRecord.RelatedEntities.Should().Contain(incomingTenantId);
+        }
+
+        public async Task ThenTheProcessStateIsUpdatedToProcessClosed(UpdateProcessQuery request, string previousState)
+        {
+            await CheckProcessState(request.Id, SharedProcessStates.ProcessClosed, previousState).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessStateIsUpdatedToAutomatedEligibilityChecksPassed(UpdateProcessQuery request)
@@ -139,6 +153,17 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             await CheckProcessState(request.Id, SoleToJointStates.DocumentsAppointmentRescheduled, SoleToJointStates.DocumentsAppointmentRescheduled).ConfigureAwait(false);
         }
 
+        public async Task ThenTheProcessStateIsUpdatedToDocumentChecksPassed(UpdateProcessQuery request, string initialState)
+        {
+            await CheckProcessState(request.Id, SoleToJointStates.DocumentChecksPassed, initialState).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheProcessStateIsUpdatedToApplicationSubmitted(UpdateProcessQuery request)
+        {
+            await CheckProcessState(request.Id, SoleToJointStates.ApplicationSubmitted, SoleToJointStates.DocumentChecksPassed).ConfigureAwait(false);
+        }
+
+
         public async Task ThenTheProcessClosedEventIsRaised(ISnsFixture snsFixture, Guid processId)
         {
             Action<EntityEventSns> verifyFunc = actual =>
@@ -147,9 +172,6 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                 actual.CorrelationId.Should().NotBeEmpty();
                 actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
                 actual.EntityId.Should().Be(processId);
-
-                actual.EventData.NewData.Should().NotBeNull();
-                actual.EventData.OldData.Should().BeNull();
 
                 actual.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
                 actual.SourceDomain.Should().Be(ProcessClosedEventConstants.SOURCE_DOMAIN);
@@ -166,8 +188,14 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
         }
 
-        public async Task ThenTheProcessUpdatedEventIsRaised(ISnsFixture snsFixture, Guid processId)
+        public async Task VerifyProcessUpdatedEventIsRaised(ISnsFixture snsFixture, Guid processId, string oldState, string newState, Action<string> verifyNewStateData = null)
         {
+            Action<string, string> verifyData = (dataAsString, state) =>
+            {
+                var dataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(dataAsString, _jsonOptions);
+                dataDic["state"].ToString().Should().Be(state);
+            };
+
             Action<EntityEventSns> verifyFunc = actual =>
             {
                 actual.Id.Should().NotBeEmpty();
@@ -175,8 +203,9 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                 actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
                 actual.EntityId.Should().Be(processId);
 
-                actual.EventData.NewData.Should().NotBeNull();
-                actual.EventData.OldData.Should().BeNull();
+                verifyData(actual.EventData.OldData.ToString(), oldState);
+                verifyData(actual.EventData.NewData.ToString(), newState);
+                verifyNewStateData?.Invoke(actual.EventData.NewData.ToString());
 
                 actual.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
                 actual.SourceDomain.Should().Be(ProcessUpdatedEventConstants.SOURCE_DOMAIN);
@@ -193,44 +222,20 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
         }
 
-        public async Task ThenTheProcessUpdatedEventWithRescheduledAppointmentIsRaised(ISnsFixture snsFixture, Guid processId)
+        public async Task ThenTheProcessUpdatedEventIsRaised(ISnsFixture snsFixture, Guid processId, string oldState, string newState)
         {
-            Action<EntityEventSns> verifyFunc = actual =>
-            {
-                actual.Id.Should().NotBeEmpty();
-                actual.CorrelationId.Should().NotBeEmpty();
-                actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
-                actual.EntityId.Should().Be(processId);
-
-                actual.EventData.NewData.Should().NotBeNull();
-                actual.EventData.NewData.Should().BeOfType<Message>();
-                actual.EventData.OldData.Should().NotBeNull();
-                actual.EventData.OldData.Should().BeOfType<Message>();
-
-                actual.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
-                actual.SourceDomain.Should().Be(ProcessUpdatedEventConstants.SOURCE_DOMAIN);
-                actual.SourceSystem.Should().Be(ProcessUpdatedEventConstants.SOURCE_SYSTEM);
-                actual.Version.Should().Be(ProcessUpdatedEventConstants.V1_VERSION);
-
-                actual.User.Email.Should().Be(TestToken.UserEmail);
-                actual.User.Name.Should().Be(TestToken.UserName);
-            };
-
-            var snsVerifier = snsFixture.GetSnsEventVerifier<EntityEventSns>();
-            var snsResult = await snsVerifier.VerifySnsEventRaised(verifyFunc);
-
-            if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
+            await VerifyProcessUpdatedEventIsRaised(snsFixture, processId, oldState, newState).ConfigureAwait(false);
         }
 
-        private async Task CheckProcessState(Guid processId, string currentState, string previousState)
+        public async Task ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(ISnsFixture snsFixture, Guid processId, string oldState, string newState)
         {
-            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(processId).ConfigureAwait(false);
-
-            dbRecord.CurrentState.State.Should().Be(currentState);
-            dbRecord.PreviousStates.Last().State.Should().Be(previousState);
-
-            // Cleanup
-            await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
+            Action<string> verifyData = (dataAsString) =>
+            {
+                var dataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(dataAsString, _jsonOptions);
+                var stateData = JsonSerializer.Deserialize<Dictionary<string, object>>(dataDic["stateData"].ToString(), _jsonOptions);
+                stateData.Should().ContainKey(SoleToJointFormDataKeys.AppointmentDateTime);
+            };
+            await VerifyProcessUpdatedEventIsRaised(snsFixture, processId, oldState, newState, verifyData).ConfigureAwait(false);
         }
     }
 }
