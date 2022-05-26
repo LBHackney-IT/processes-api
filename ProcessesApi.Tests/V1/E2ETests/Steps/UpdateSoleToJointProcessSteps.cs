@@ -163,6 +163,10 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             await CheckProcessState(request.Id, SoleToJointStates.ApplicationSubmitted, SoleToJointStates.DocumentChecksPassed).ConfigureAwait(false);
         }
 
+        public async Task ThenTheProcessStateIsUpdatedToShowResultsOfTenureInvestigation(UpdateProcessQuery request, string destinationState)
+        {
+            await CheckProcessState(request.Id, destinationState, SoleToJointStates.ApplicationSubmitted).ConfigureAwait(false);
+        }
 
         public async Task ThenTheProcessClosedEventIsRaised(ISnsFixture snsFixture, Guid processId)
         {
