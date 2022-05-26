@@ -111,10 +111,17 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             UpdateProcessRequestObject = _fixture.Create<UpdateProcessRequestObject>();
         }
 
-        public void GivenACloseProcessRequest()
+        public void GivenACloseProcessRequestWithoutReason()
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CloseProcess);
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.HasNotifiedResident, true);
+        }
+        public void GivenACloseProcessRequestWithReason()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CloseProcess);
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.HasNotifiedResident, true);
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.Reason, "This is a reason");
+
         }
 
         public void GivenACheckAutomatedEligibilityRequest()

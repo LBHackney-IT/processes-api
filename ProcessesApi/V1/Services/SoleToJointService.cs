@@ -133,12 +133,21 @@ namespace ProcessesApi.V1.Services
             var processRequest = x.Parameters[0] as ProcessTrigger;
 
             SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.HasNotifiedResident });
+
+            if (processRequest.FormData.ContainsKey(SoleToJointFormDataKeys.Reason))
+            {
+                _eventData = new Dictionary<string, object>()
+                {
+                    { SoleToJointFormDataKeys.Reason, processRequest.FormData[SoleToJointFormDataKeys.Reason] }
+                };
+            }
             var hasNotifiedResidentString = processRequest.FormData[SoleToJointFormDataKeys.HasNotifiedResident];
 
             if (Boolean.TryParse(hasNotifiedResidentString.ToString(), out bool hasNotifiedResident))
             {
                 if (!hasNotifiedResident) throw new FormDataInvalidException("Housing Officer must notify the resident before closing this process.");
-                await PublishProcessClosedEvent().ConfigureAwait(false);
+
+                await PublishProcessClosedEvent(x).ConfigureAwait(false);
             }
             else
             {

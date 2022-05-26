@@ -143,8 +143,40 @@ namespace ProcessesApi.Tests.V1.Services
             // Arrange
             var process = CreateProcessWithCurrentState(fromState);
             var formData = new Dictionary<string, object>()
-        {
+            {
                 { SoleToJointFormDataKeys.HasNotifiedResident, true }
+            };
+
+            var triggerObject = CreateProcessTrigger(process,
+                                                     SoleToJointPermittedTriggers.CloseProcess,
+                                                     formData);
+
+            // Act
+            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(process,
+                                                 triggerObject,
+                                                 SharedProcessStates.ProcessClosed,
+                                                 new List<string>());
+            process.PreviousStates.LastOrDefault().State.Should().Be(fromState);
+
+            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _lastSnsEvent.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
+        }
+
+        [Theory]
+        [InlineData(SoleToJointStates.AutomatedChecksFailed)]
+        [InlineData(SoleToJointStates.ManualChecksFailed)]
+        [InlineData(SoleToJointStates.BreachChecksFailed)]
+        public async Task ProcessStateIsUpdatedToProcessClosedWithReasonAndProcessClosedEventIsRaised(string fromState)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(fromState);
+            var formData = new Dictionary<string, object>()
+            {
+                { SoleToJointFormDataKeys.HasNotifiedResident, true },
+                {SoleToJointFormDataKeys.Reason, "This is a reason"}
             };
 
             var triggerObject = CreateProcessTrigger(process,
