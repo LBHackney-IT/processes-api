@@ -99,14 +99,29 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [InlineData(SoleToJointStates.AutomatedChecksFailed)]
         [InlineData(SoleToJointStates.ManualChecksFailed)]
         [InlineData(SoleToJointStates.BreachChecksFailed)]
-        public void ProcessStateIsUpdatedToProcessClosed(string fromState)
+        public void ProcessStateIsUpdatedToProcessClosedWithReason(string fromState)
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(fromState))
-                    .And(a => _processFixture.GivenACloseProcessRequest())
+                    .And(a => _processFixture.GivenACloseProcessRequestWithReason())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToProcessClosed(_processFixture.UpdateProcessRequest, fromState))
-                    .And(a => _steps.ThenTheProcessClosedEventIsRaised(_snsFixture, _processFixture.ProcessId))
+                    .And(a => _steps.ThenTheProcessClosedEventIsRaisedWithReason(_snsFixture, _processFixture.ProcessId, SharedProcessStates.ProcessClosed))
+                .BDDfy();
+        }
+
+        [Theory]
+        [InlineData(SoleToJointStates.AutomatedChecksFailed)]
+        [InlineData(SoleToJointStates.ManualChecksFailed)]
+        [InlineData(SoleToJointStates.BreachChecksFailed)]
+        public void ProcessStateIsUpdatedToProcessClosedWithoutReason(string fromState)
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(fromState))
+                    .And(a => _processFixture.GivenACloseProcessRequestWithoutReason())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheProcessStateIsUpdatedToProcessClosed(_processFixture.UpdateProcessRequest, fromState))
+                    .And(a => _steps.ThenTheProcessClosedEventIsRaisedWithoutReason(_snsFixture, _processFixture.ProcessId, SharedProcessStates.ProcessClosed))
                 .BDDfy();
         }
 
