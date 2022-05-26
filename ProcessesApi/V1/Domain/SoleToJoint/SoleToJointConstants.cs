@@ -16,6 +16,9 @@ namespace ProcessesApi.V1.Domain
         public const string DocumentsAppointmentRescheduled = "DocumentsAppointmentRescheduled";
         public const string DocumentChecksPassed = "DocumentChecksPassed";
         public const string ApplicationSubmitted = "ApplicationSubmitted";
+        public const string TenureInvestigationFailed = "TenureInvestigationFailed";
+        public const string TenureInvestigationPassed = "TenureInvestigationPassed";
+        public const string TenureInvestigationPassedWithInt = "TenureInvestigationPassedWithInt";
     }
 
     public static class SoleToJointPermittedTriggers
@@ -31,6 +34,7 @@ namespace ProcessesApi.V1.Domain
         public const string RescheduleDocumentsAppointment = "RescheduleDocumentsAppointment";
         public const string ReviewDocuments = "ReviewDocuments";
         public const string SubmitApplication = "SubmitApplication";
+        public const string TenureInvestigation = "TenureInvestigation";
     }
 
     public static class SoleToJointInternalTriggers
@@ -42,7 +46,9 @@ namespace ProcessesApi.V1.Domain
         public const string BreachChecksFailed = "BreachChecksFailed";
         public const string BreachChecksPassed = "BreachChecksPassed";
         public const string DocumentChecksPassed = "DocumentChecksPassed";
-
+        public const string TenureInvestigationFailed = "TenureInvestigationFailed";
+        public const string TenureInvestigationPassed = "TenureInvestigationPassed";
+        public const string TenureInvestigationPassedWithInt = "TenureInvestigationPassedWithInt";
     }
 
     // NOTE: Form data key values must be camelCase to avoid issues with Json Serialiser in E2E tests
@@ -163,6 +169,21 @@ namespace ProcessesApi.V1.Domain
         public const string IncomingTenantLivingInProperty = "incomingTenantLivingInProperty";
 
         #endregion
-    }
 
+        #region Tenure Investigation
+
+        public const string TenureInvestigationRecommendation = "tenureInvestigationRecommendation";
+
+        #endregion
+    }
+    public static class SoleToJointFormDataValues
+    {
+        #region Tenure Investigation
+
+        public const string Approve = "approve";
+        public const string Decline = "decline";
+        public const string Appointment = "appointment";
+
+        #endregion
+    }
 }
