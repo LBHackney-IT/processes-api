@@ -107,26 +107,20 @@ namespace ProcessesApi.V1.Services
                 SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.HasNotifiedResident, SoleToJointFormDataKeys.Reason });
                 var expectedFormDataKeys = new Dictionary<string, object>()
                 {
-                    { SoleToJointFormDataKeys.HasNotifiedResident, processRequest.FormData[SoleToJointFormDataKeys.HasNotifiedResident] },
                     { SoleToJointFormDataKeys.Reason, processRequest.FormData[SoleToJointFormDataKeys.Reason] }
                 };
                 _eventData = expectedFormDataKeys;
             }
             else
             {
-                SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.HasNotifiedResident});
-                var expectedFormDataKeys = new Dictionary<string, object>()
-                {
-                    { SoleToJointFormDataKeys.HasNotifiedResident, processRequest.FormData[SoleToJointFormDataKeys.HasNotifiedResident] },
-                };
-                _eventData = expectedFormDataKeys;
+                SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.HasNotifiedResident });
             }
             var hasNotifiedResidentString = processRequest.FormData[SoleToJointFormDataKeys.HasNotifiedResident];
 
             if (Boolean.TryParse(hasNotifiedResidentString.ToString(), out bool hasNotifiedResident))
             {
                 if (!hasNotifiedResident) throw new FormDataInvalidException("Housing Officer must notify the resident before closing this process.");
-               
+
                 await PublishProcessClosedEvent(x).ConfigureAwait(false);
             }
             else
