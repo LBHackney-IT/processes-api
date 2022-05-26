@@ -102,18 +102,14 @@ namespace ProcessesApi.V1.Services
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
 
+            SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.HasNotifiedResident });
+
             if (processRequest.FormData.ContainsKey(SoleToJointFormDataKeys.Reason))
             {
-                SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.HasNotifiedResident, SoleToJointFormDataKeys.Reason });
-                var expectedFormDataKeys = new Dictionary<string, object>()
+                _eventData = new Dictionary<string, object>()
                 {
                     { SoleToJointFormDataKeys.Reason, processRequest.FormData[SoleToJointFormDataKeys.Reason] }
                 };
-                _eventData = expectedFormDataKeys;
-            }
-            else
-            {
-                SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.HasNotifiedResident });
             }
             var hasNotifiedResidentString = processRequest.FormData[SoleToJointFormDataKeys.HasNotifiedResident];
 

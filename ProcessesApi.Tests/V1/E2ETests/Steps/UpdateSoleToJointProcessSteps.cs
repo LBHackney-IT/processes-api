@@ -164,7 +164,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         }
 
 
-        public async Task VerifyProcessClosedEventIsRaised(ISnsFixture snsFixture, Guid processId, string newState, Action<string> verifyNewStateData = null)
+        public async Task VerifyProcessClosedEventIsRaised(ISnsFixture snsFixture, Guid processId, Action<string> verifyNewStateData = null)
         {
             Action<string, string> verifyData = (dataAsString, state) =>
             {
@@ -176,10 +176,12 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             {
                 actual.Id.Should().NotBeEmpty();
                 actual.CorrelationId.Should().NotBeEmpty();
-                actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
+                //actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
                 actual.EntityId.Should().Be(processId);
-                verifyData(actual.EventData.NewData.ToString(), newState);
+
+                verifyData(actual.EventData.NewData.ToString(), SharedProcessStates.ProcessClosed);
                 verifyNewStateData?.Invoke(actual.EventData.NewData.ToString());
+
                 actual.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
                 actual.SourceDomain.Should().Be(ProcessClosedEventConstants.SOURCE_DOMAIN);
                 actual.SourceSystem.Should().Be(ProcessClosedEventConstants.SOURCE_SYSTEM);
@@ -245,7 +247,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             await VerifyProcessUpdatedEventIsRaised(snsFixture, processId, oldState, newState, verifyData).ConfigureAwait(false);
         }
 
-        public async Task ThenTheProcessClosedEventIsRaisedWithReason(ISnsFixture snsFixture, Guid processId, string newState)
+        public async Task ThenTheProcessClosedEventIsRaisedWithReason(ISnsFixture snsFixture, Guid processId)
         {
             Action<string> verifyData = (dataAsString) =>
             {
@@ -254,7 +256,12 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                 stateData.Should().ContainKey(SoleToJointFormDataKeys.Reason);
 
             };
-            await VerifyProcessClosedEventIsRaised(snsFixture, processId, newState, verifyData).ConfigureAwait(false);
+            await VerifyProcessClosedEventIsRaised(snsFixture, processId, verifyData).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheProcessClosedEventIsRaisedWithoutReason(ISnsFixture snsFixture, Guid processId)
+        {
+            await VerifyProcessClosedEventIsRaised(snsFixture, processId).ConfigureAwait(false);
         }
     }
 }
