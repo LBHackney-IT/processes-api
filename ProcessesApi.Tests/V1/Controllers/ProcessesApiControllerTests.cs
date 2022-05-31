@@ -100,7 +100,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         {
             var queryObject = _fixture.Create<UpdateProcessRequestObject>();
             var processName = ProcessName.soletojoint;
-            var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), null, processName, null);
+            var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), TargetType.tenure, null, processName, null);
             var query = _fixture.Build<UpdateProcessQuery>()
                                 .With(x => x.ProcessName, processResponse.ProcessName)
                                 .With(x => x.Id, processResponse.Id)
@@ -113,7 +113,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             var queryObject = _fixture.Create<UpdateProcessByIdRequestObject>();
             var processName = ProcessName.soletojoint;
             var currentProcessState = _fixture.Create<ProcessState>();
-            var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), currentProcessState, Guid.NewGuid(), null, processName, null);
+            var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), currentProcessState, Guid.NewGuid(), TargetType.tenure, null, processName, null);
             var query = _fixture.Build<ProcessQuery>()
                                 .With(x => x.ProcessName, processResponse.ProcessName)
                                 .With(x => x.Id, processResponse.Id)
@@ -129,7 +129,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             var controllerContext = new ControllerContext(new ActionContext(stubHttpContext, new RouteData(), new ControllerActionDescriptor()));
             _classUnderTest.ControllerContext = controllerContext;
 
-            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), new List<Guid>(), ProcessName.soletojoint, null);
+            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(),TargetType.tenure, new List<RelatedEntities>(), ProcessName.soletojoint, null);
             var query = ConstructQuery(process.Id);
             _mockGetByIdUseCase.Setup(x => x.Execute(query)).ReturnsAsync(process);
 
@@ -184,10 +184,10 @@ namespace ProcessesApi.Tests.V1.Controllers
             // Arrange
             var request = ConstructPostRequest();
             var processName = ProcessName.soletojoint;
-            var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, request.TargetId, request.RelatedEntities, processName, null);
+            var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, request.TargetId, request.TargetType, request.RelatedEntities, processName, null);
 
             _mockProcessUseCase.Setup(x => x.Execute(It.IsAny<Guid>(), SharedInternalTriggers.StartApplication,
-             request.TargetId, request.RelatedEntities, request.FormData, request.Documents, processName, It.IsAny<int?>(), It.IsAny<Token>()))
+             request.TargetId, request.TargetType, request.RelatedEntities, request.FormData, request.Documents, processName, It.IsAny<int?>(), It.IsAny<Token>()))
              .ReturnsAsync(processResponse);
 
             // Act
@@ -209,7 +209,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             var exception = Activator.CreateInstance(exceptionType) as Exception;
 
             _mockProcessUseCase.Setup(x => x.Execute(It.IsAny<Guid>(), SharedInternalTriggers.StartApplication,
-              request.TargetId, request.RelatedEntities, request.FormData, request.Documents, processName, It.IsAny<int?>(), It.IsAny<Token>())).ThrowsAsync(exception);
+              request.TargetId, request.TargetType, request.RelatedEntities, request.FormData, request.Documents, processName, It.IsAny<int?>(), It.IsAny<Token>())).ThrowsAsync(exception);
 
             var response = await _classUnderTest.CreateNewProcess(request, processName).ConfigureAwait(false);
 
@@ -223,7 +223,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             var processName = ProcessName.soletojoint;
             var exception = new ApplicationException("Test exception");
             _mockProcessUseCase.Setup(x => x.Execute(It.IsAny<Guid>(), SharedInternalTriggers.StartApplication,
-              request.TargetId, request.RelatedEntities, request.FormData, request.Documents, processName, It.IsAny<int?>(), It.IsAny<Token>())).ThrowsAsync(exception);
+              request.TargetId, request.TargetType, request.RelatedEntities, request.FormData, request.Documents, processName, It.IsAny<int?>(), It.IsAny<Token>())).ThrowsAsync(exception);
 
             Func<Task<IActionResult>> func = async () => await _classUnderTest.CreateNewProcess(request, processName).ConfigureAwait(false);
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
@@ -235,7 +235,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             // Arrange
             (var processResponse, var request, var requestObject) = ConstructPatchRequest();
             _mockProcessUseCase.Setup(x => x.Execute(request.Id, request.ProcessTrigger,
-              null, null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
+              null, processResponse.TargetType,  null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
                 .ReturnsAsync(processResponse);
             // Act
             var response = await _classUnderTest.UpdateProcessState(requestObject, request).ConfigureAwait(false);
@@ -249,7 +249,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             // Arrange
             (var processResponse, var request, var requestObject) = ConstructPatchRequest();
             _mockProcessUseCase.Setup(x => x.Execute(request.Id, SharedInternalTriggers.StartApplication,
-              null, null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
+              null, processResponse.TargetType, null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
                 .ReturnsAsync((Process) null);
             // Act
             var response = await _classUnderTest.UpdateProcessState(requestObject, request).ConfigureAwait(false);
@@ -267,7 +267,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             var exception = Activator.CreateInstance(exceptionType) as Exception;
 
             _mockProcessUseCase.Setup(x => x.Execute(request.Id, request.ProcessTrigger,
-              null, null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
+              null, processResponse.TargetType, null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
                 .ThrowsAsync(exception);
 
             var response = await _classUnderTest.UpdateProcessState(requestObject, request).ConfigureAwait(false);
@@ -282,7 +282,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             var exception = new VersionNumberConflictException(1, 2);
 
             _mockProcessUseCase.Setup(x => x.Execute(request.Id, request.ProcessTrigger,
-              null, null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
+              null, processResponse.TargetType, null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
                 .ThrowsAsync(exception);
 
             var response = await _classUnderTest.UpdateProcessState(requestObject, request).ConfigureAwait(false);
@@ -297,7 +297,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             var exception = new ApplicationException("Test exception");
             (var processResponse, var request, var requestObject) = ConstructPatchRequest();
             _mockProcessUseCase.Setup(x => x.Execute(request.Id, request.ProcessTrigger,
-              null, null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
+              null, processResponse.TargetType, null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
                 .ThrowsAsync(exception);
             // Act
             Func<Task<IActionResult>> func = async () => await _classUnderTest.UpdateProcessState(requestObject, request).ConfigureAwait(false);

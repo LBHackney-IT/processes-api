@@ -38,17 +38,6 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
             result.ShouldHaveValidationErrorFor(x => x.TargetId);
         }
 
-        [Fact]
-        public void RequestShouldErrorWithEmptyRelatedEntity()
-        {
-            //Arrange
-            var query = new CreateProcess() { RelatedEntities = new List<Guid> { Guid.Empty } };
-            //Act
-            var result = _classUnderTest.TestValidate(query);
-            //Assert
-            result.ShouldHaveValidationErrorFor(x => x.RelatedEntities);
-        }
-
         [Fact(Skip = "TO DO once FE logic is completed")]
         public void RequestShouldErrorWithNullRelatedEntity()
         {

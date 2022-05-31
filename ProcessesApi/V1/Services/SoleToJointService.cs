@@ -163,9 +163,17 @@ namespace ProcessesApi.V1.Services
             //TODO: When doing a POST request from the FE they should created a relatedEntities object with all neccesary values
             // Once Frontend work is completed the IF statement below should be removed.
             if (_process.RelatedEntities == null)
-                _process.RelatedEntities = new List<Guid>();
+            {
 
-            _process.RelatedEntities.Add(Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()));
+                var incomingTenantId = Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString());
+                var relatedEntities = new RelatedEntities()
+                {
+                    Id = incomingTenantId
+                };
+            _process.RelatedEntities = new List<RelatedEntities>();
+            _process.RelatedEntities.Add(relatedEntities);
+            }
+
         }
 
         public void AddAppointmentDateTimeToEvent(Stateless.StateMachine<string, string>.Transition transition)

@@ -245,7 +245,7 @@ namespace ProcessesApi.Tests.V1.Services
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 
             // Assert
-            process.RelatedEntities.Should().Contain(incomingTenantId);
+            process.RelatedEntities.First().Id.Should().Be(incomingTenantId);
         }
 
         [Fact]

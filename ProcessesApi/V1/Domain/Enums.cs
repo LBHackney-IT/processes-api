@@ -7,4 +7,19 @@ namespace ProcessesApi.V1.Domain
     {
         soletojoint
     }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum TargetType
+    {
+        tenure,
+        person,
+        asset
+    }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum SubType
+    {
+        tenant,
+        householdMember
+    }
 }

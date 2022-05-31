@@ -22,7 +22,7 @@ namespace ProcessesApi.V1.UseCase
             _processServiceProvider = processServiceProvider;
         }
 
-        public async Task<Process> Execute(Guid id, string processTrigger, Guid? targetId, List<Guid> relatedEntities, Dictionary<string, object> formData, List<Guid> documents, ProcessName processName, int? ifMatch, Token token)
+        public async Task<Process> Execute(Guid id, string processTrigger, Guid? targetId, TargetType? targetType, List<RelatedEntities> relatedEntities, Dictionary<string, object> formData, List<Guid> documents, ProcessName processName, int? ifMatch, Token token)
         {
             var triggerObject = ProcessTrigger.Create(id, processTrigger, formData, documents);
 
@@ -30,7 +30,7 @@ namespace ProcessesApi.V1.UseCase
 
             if (processTrigger == SharedInternalTriggers.StartApplication)
             {
-                process = Process.Create(id, new List<ProcessState>(), null, targetId.Value, relatedEntities, processName, null);
+                process = Process.Create(id, new List<ProcessState>(), null, targetId.Value, targetType.Value, relatedEntities, processName, null);
             }
             else
             {
