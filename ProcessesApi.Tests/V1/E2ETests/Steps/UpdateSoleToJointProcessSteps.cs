@@ -1,23 +1,23 @@
 using FluentAssertions;
+using Hackney.Core.Sns;
 using Hackney.Core.Testing.DynamoDb;
 using Hackney.Core.Testing.Shared.E2E;
+using Hackney.Core.Testing.Sns;
 using Newtonsoft.Json;
+using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
 using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Infrastructure;
+using ProcessesApi.V1.Infrastructure.JWT;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Hackney.Core.Sns;
-using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
-using ProcessesApi.V1.Infrastructure.JWT;
-using Hackney.Core.Testing.Sns;
 using JsonSerializer = System.Text.Json.JsonSerializer;
-using System.Collections.Generic;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {
@@ -168,14 +168,23 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             await CheckProcessState(request.Id, destinationState, SoleToJointStates.ApplicationSubmitted).ConfigureAwait(false);
         }
 
-        public async Task ThenTheProcessClosedEventIsRaised(ISnsFixture snsFixture, Guid processId)
+        public async Task VerifyProcessClosedEventIsRaised(ISnsFixture snsFixture, Guid processId, Action<string> verifyNewStateData = null)
         {
+            Action<string, string> verifyData = (dataAsString, state) =>
+            {
+                var dataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(dataAsString, _jsonOptions);
+
+                dataDic["state"].ToString().Should().Be(state);
+            };
             Action<EntityEventSns> verifyFunc = actual =>
             {
                 actual.Id.Should().NotBeEmpty();
                 actual.CorrelationId.Should().NotBeEmpty();
                 actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
                 actual.EntityId.Should().Be(processId);
+
+                verifyData(actual.EventData.NewData.ToString(), SharedProcessStates.ProcessClosed);
+                verifyNewStateData?.Invoke(actual.EventData.NewData.ToString());
 
                 actual.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
                 actual.SourceDomain.Should().Be(ProcessClosedEventConstants.SOURCE_DOMAIN);
@@ -240,6 +249,23 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                 stateData.Should().ContainKey(SoleToJointFormDataKeys.AppointmentDateTime);
             };
             await VerifyProcessUpdatedEventIsRaised(snsFixture, processId, oldState, newState, verifyData).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheProcessClosedEventIsRaisedWithReason(ISnsFixture snsFixture, Guid processId)
+        {
+            Action<string> verifyData = (dataAsString) =>
+            {
+                var dataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(dataAsString, _jsonOptions);
+                var stateData = JsonSerializer.Deserialize<Dictionary<string, object>>(dataDic["stateData"].ToString(), _jsonOptions);
+                stateData.Should().ContainKey(SoleToJointFormDataKeys.Reason);
+
+            };
+            await VerifyProcessClosedEventIsRaised(snsFixture, processId, verifyData).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheProcessClosedEventIsRaisedWithoutReason(ISnsFixture snsFixture, Guid processId)
+        {
+            await VerifyProcessClosedEventIsRaised(snsFixture, processId).ConfigureAwait(false);
         }
     }
 }

@@ -31,18 +31,32 @@ namespace ProcessesApi.V1.Factories
             };
         }
 
-        public EntityEventSns ProcessClosed(Process process, Token token, string description)
+        public EntityEventSns ProcessClosed(Stateless.StateMachine<string, string>.Transition transition, Dictionary<string, object> stateData, Token token)
         {
+            var triggerData = transition.Parameters[0] as ProcessTrigger;
+
             return new EntityEventSns
             {
                 CorrelationId = Guid.NewGuid(),
                 DateTime = DateTime.UtcNow,
-                EntityId = process.Id,
+                EntityId = triggerData.Id,
                 Id = Guid.NewGuid(),
                 EventType = ProcessClosedEventConstants.EVENTTYPE,
                 Version = ProcessClosedEventConstants.V1_VERSION,
                 SourceDomain = ProcessClosedEventConstants.SOURCE_DOMAIN,
                 SourceSystem = ProcessClosedEventConstants.SOURCE_SYSTEM,
+                EventData = new EventData
+                {
+                    OldData = new ProcessStateChangeData
+                    {
+                        State = transition.Source
+                    },
+                    NewData = new ProcessStateChangeData
+                    {
+                        State = transition.Destination,
+                        StateData = stateData
+                    }
+                },
                 User = new User
                 {
                     Name = token.Name,

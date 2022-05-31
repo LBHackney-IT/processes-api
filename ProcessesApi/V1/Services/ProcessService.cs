@@ -77,10 +77,10 @@ namespace ProcessesApi.V1.Services
             }
         }
 
-        protected async Task PublishProcessClosedEvent()
+        protected async Task PublishProcessClosedEvent(StateMachine<string, string>.Transition transition)
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = _snsFactory.ProcessClosed(_process, _token, "Process Closed. The resident has been notified.");
+            var processSnsMessage = _snsFactory.ProcessClosed(transition, _eventData, _token);
 
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
