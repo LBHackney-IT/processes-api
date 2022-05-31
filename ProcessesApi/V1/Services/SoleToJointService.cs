@@ -166,13 +166,13 @@ namespace ProcessesApi.V1.Services
             {
                 _process.RelatedEntities = new List<RelatedEntities>();
             }
-                var incomingTenantId = Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString());
-                var relatedEntities = new RelatedEntities()
-                {
-                    Id = incomingTenantId
-                };
-                _process.RelatedEntities.Add(relatedEntities);
-            
+            var incomingTenantId = Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString());
+            var relatedEntities = new RelatedEntities()
+            {
+                Id = incomingTenantId
+            };
+            _process.RelatedEntities.Add(relatedEntities);
+
 
         }
 

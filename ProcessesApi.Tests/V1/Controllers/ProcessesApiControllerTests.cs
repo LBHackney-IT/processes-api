@@ -129,7 +129,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             var controllerContext = new ControllerContext(new ActionContext(stubHttpContext, new RouteData(), new ControllerActionDescriptor()));
             _classUnderTest.ControllerContext = controllerContext;
 
-            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(),TargetType.tenure, new List<RelatedEntities>(), ProcessName.soletojoint, null);
+            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), TargetType.tenure, new List<RelatedEntities>(), ProcessName.soletojoint, null);
             var query = ConstructQuery(process.Id);
             _mockGetByIdUseCase.Setup(x => x.Execute(query)).ReturnsAsync(process);
 
@@ -235,7 +235,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             // Arrange
             (var processResponse, var request, var requestObject) = ConstructPatchRequest();
             _mockProcessUseCase.Setup(x => x.Execute(request.Id, request.ProcessTrigger,
-              null, null,  null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
+              null, null, null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
                 .ReturnsAsync(processResponse);
             // Act
             var response = await _classUnderTest.UpdateProcessState(requestObject, request).ConfigureAwait(false);

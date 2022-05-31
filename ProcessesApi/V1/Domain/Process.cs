@@ -18,7 +18,7 @@ namespace ProcessesApi.V1.Domain
 
 
         public Process(Guid id, List<ProcessState> previousStates,
-            ProcessState currentState, Guid targetId,TargetType targetType,
+            ProcessState currentState, Guid targetId, TargetType targetType,
             List<RelatedEntities> relatedEntities, ProcessName processName, int? versionNumber)
         {
             Id = id;
