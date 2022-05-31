@@ -164,15 +164,15 @@ namespace ProcessesApi.V1.Services
             // Once Frontend work is completed the IF statement below should be removed.
             if (_process.RelatedEntities == null)
             {
-
+                _process.RelatedEntities = new List<RelatedEntities>();
+            }
                 var incomingTenantId = Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString());
                 var relatedEntities = new RelatedEntities()
                 {
                     Id = incomingTenantId
                 };
-            _process.RelatedEntities = new List<RelatedEntities>();
-            _process.RelatedEntities.Add(relatedEntities);
-            }
+                _process.RelatedEntities.Add(relatedEntities);
+            
 
         }
 

@@ -95,7 +95,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
 
             var incomingTenantId = Guid.Parse(requestBody.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString());
-            dbRecord.RelatedEntities.First().Id.Should().Be(incomingTenantId);
+            dbRecord.RelatedEntities.Should().Contain(x => x.Id == incomingTenantId);
         }
 
         public async Task ThenTheProcessStateIsUpdatedToProcessClosed(UpdateProcessQuery request, string previousState)
