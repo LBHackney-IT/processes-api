@@ -12,7 +12,7 @@ namespace ProcessesApi.V1.UseCase.Interfaces
                               string processTrigger,
                               Guid? targetId,
                               TargetType? targetType,
-                              List<RelatedEntities> relatedEntities,
+                              List<RelatedEntity> relatedEntities,
                               Dictionary<string, object> formData,
                               List<Guid> documents,
                               ProcessName processName,

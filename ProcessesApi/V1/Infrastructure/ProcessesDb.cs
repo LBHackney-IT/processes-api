@@ -22,8 +22,8 @@ namespace ProcessesApi.V1.Infrastructure
         [DynamoDBProperty(Converter = typeof(DynamoDbEnumConverter<ProcessName>))]
         public ProcessName ProcessName { get; set; }
 
-        [DynamoDBProperty(Converter = typeof(DynamoDbObjectListConverter<RelatedEntities>))]
-        public List<RelatedEntities> RelatedEntities { get; set; }
+        [DynamoDBProperty(Converter = typeof(DynamoDbObjectListConverter<RelatedEntity>))]
+        public List<RelatedEntity> RelatedEntities { get; set; }
 
         [DynamoDBProperty(Converter = typeof(DynamoDbObjectConverter<ProcessState>))]
         public ProcessState CurrentState { get; set; }

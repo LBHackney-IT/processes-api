@@ -8,19 +8,28 @@ using Hackney.Core.Sns;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Services.Exceptions;
+using ProcessesApi.V1.Gateways;
+using ProcessesApi.V1.Gateways.Exceptions;
+using Hackney.Shared.Person;
 
 namespace ProcessesApi.V1.Services
 {
     public class SoleToJointService : ProcessService, ISoleToJointService
     {
         private readonly ISoleToJointAutomatedEligibilityChecksHelper _automatedcheckshelper;
+        private readonly IPersonDbGateway _personDbGateway;
 
-        public SoleToJointService(ISnsFactory snsFactory, ISnsGateway snsGateway, ISoleToJointAutomatedEligibilityChecksHelper automatedChecksHelper)
+
+        public SoleToJointService(ISnsFactory snsFactory,
+                                  ISnsGateway snsGateway,
+                                  ISoleToJointAutomatedEligibilityChecksHelper automatedChecksHelper,
+                                  IPersonDbGateway personDbGateway)
             : base(snsFactory, snsGateway)
         {
             _snsFactory = snsFactory;
             _snsGateway = snsGateway;
             _automatedcheckshelper = automatedChecksHelper;
+            _personDbGateway = personDbGateway;
 
             _permittedTriggersType = typeof(SoleToJointPermittedTriggers);
             _ignoredTriggersForProcessUpdated = new List<string>
@@ -161,19 +170,31 @@ namespace ProcessesApi.V1.Services
             SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.IncomingTenantId });
 
             //TODO: When doing a POST request from the FE they should created a relatedEntities object with all neccesary values
-            // Once Frontend work is completed the IF statement below should be removed.
+            // Once Frontend work is completed the code below should be removed.
             if (_process.RelatedEntities == null)
             {
-                _process.RelatedEntities = new List<RelatedEntities>();
+                _process.RelatedEntities = new List<RelatedEntity>();
             }
             var incomingTenantId = Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString());
-            var relatedEntities = new RelatedEntities()
+
+            var person = GetPersonById(incomingTenantId).GetAwaiter().GetResult();
+            var relatedEntities = new RelatedEntity()
             {
-                Id = incomingTenantId
+                Id = incomingTenantId,
+                TargetType = TargetType.person,
+                SubType = SubType.householdMember,
+                Description = $"{person.FirstName} {person.Surname}"
             };
             _process.RelatedEntities.Add(relatedEntities);
 
 
+        }
+
+        private async Task<Person> GetPersonById(Guid incomingTenantId)
+        {
+            var person = await _personDbGateway.GetPersonById(incomingTenantId).ConfigureAwait(false);
+            if (person is null) throw new PersonNotFoundException(incomingTenantId);
+            return person;
         }
 
         public void AddAppointmentDateTimeToEvent(Stateless.StateMachine<string, string>.Transition transition)

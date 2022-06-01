@@ -2,7 +2,7 @@ using System;
 
 namespace ProcessesApi.V1.Domain
 {
-    public class RelatedEntities
+    public class RelatedEntity
     {
         public Guid Id { get; set; }
         public TargetType TargetType { get; set; }
