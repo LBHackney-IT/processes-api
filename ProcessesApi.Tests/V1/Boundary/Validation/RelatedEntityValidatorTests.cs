@@ -28,7 +28,7 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
             result.ShouldHaveValidationErrorFor(x => x.Id);
         }
         [Fact]
-        public void RequestShouldNotErrorWithValidDocumentIDs()
+        public void RequestShouldNotErrorWithValidId()
         {
             //Arrange
             var model = new RelatedEntity() { Id = Guid.NewGuid() };

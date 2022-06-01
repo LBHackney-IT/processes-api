@@ -96,10 +96,11 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
 
             var incomingTenantId = Guid.Parse(requestBody.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString());
-            dbRecord.RelatedEntities.Should().Contain(x => x.Id == incomingTenantId);
-            dbRecord.RelatedEntities.Should().Contain(x => x.TargetType == TargetType.person);
-            dbRecord.RelatedEntities.Should().Contain(x => x.SubType == SubType.householdMember);
-            dbRecord.RelatedEntities.Should().Contain(x => x.Description == $"{person.FirstName} {person.Surname}");
+            var relatedEntity = dbRecord.RelatedEntities.Find(x => x.Id == incomingTenantId);
+            relatedEntity.Should().NotBeNull();
+            relatedEntity.TargetType.Should().Be(TargetType.person);
+            relatedEntity.SubType.Should().Be(SubType.householdMember);
+            relatedEntity.Description.Should().Be($"{person.FirstName} {person.Surname}");
         }
 
         public async Task ThenTheProcessStateIsUpdatedToProcessClosed(UpdateProcessQuery request, string previousState)

@@ -17,20 +17,19 @@ namespace ProcessesApi.V1.Services
     public class SoleToJointService : ProcessService, ISoleToJointService
     {
         private readonly ISoleToJointAutomatedEligibilityChecksHelper _automatedcheckshelper;
-        private readonly IPersonDbGateway _personDbGateway;
+        private readonly IGetPersonByIdHelper _personByIdHelper;
 
 
         public SoleToJointService(ISnsFactory snsFactory,
                                   ISnsGateway snsGateway,
                                   ISoleToJointAutomatedEligibilityChecksHelper automatedChecksHelper,
-                                  IPersonDbGateway personDbGateway)
+                                  IGetPersonByIdHelper getPersonByIdHelper)
             : base(snsFactory, snsGateway)
         {
             _snsFactory = snsFactory;
             _snsGateway = snsGateway;
             _automatedcheckshelper = automatedChecksHelper;
-            _personDbGateway = personDbGateway;
-
+            _personByIdHelper = getPersonByIdHelper;
             _permittedTriggersType = typeof(SoleToJointPermittedTriggers);
             _ignoredTriggersForProcessUpdated = new List<string>
             {
@@ -177,7 +176,7 @@ namespace ProcessesApi.V1.Services
             }
             var incomingTenantId = Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString());
 
-            var person = GetPersonById(incomingTenantId).GetAwaiter().GetResult();
+            var person = _personByIdHelper.GetPersonById(incomingTenantId).GetAwaiter().GetResult();
             var relatedEntities = new RelatedEntity()
             {
                 Id = incomingTenantId,
@@ -188,13 +187,6 @@ namespace ProcessesApi.V1.Services
             _process.RelatedEntities.Add(relatedEntities);
 
 
-        }
-
-        private async Task<Person> GetPersonById(Guid incomingTenantId)
-        {
-            var person = await _personDbGateway.GetPersonById(incomingTenantId).ConfigureAwait(false);
-            if (person is null) throw new PersonNotFoundException(incomingTenantId);
-            return person;
         }
 
         public void AddAppointmentDateTimeToEvent(Stateless.StateMachine<string, string>.Transition transition)

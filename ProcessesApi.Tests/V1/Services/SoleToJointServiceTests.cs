@@ -28,7 +28,7 @@ namespace ProcessesApi.Tests.V1.Services
         private readonly List<Action> _cleanup = new List<Action>();
 
         private Mock<ISoleToJointAutomatedEligibilityChecksHelper> _mockAutomatedEligibilityChecksHelper;
-        private Mock<IPersonDbGateway> _mockPersonGateway;
+        private Mock<IGetPersonByIdHelper> _mockPersonByIdHelper;
         private Mock<ISnsGateway> _mockSnsGateway;
         private readonly Token _token = new Token();
         private EntityEventSns _lastSnsEvent = new EntityEventSns();
@@ -84,13 +84,13 @@ namespace ProcessesApi.Tests.V1.Services
         public SoleToJointServiceTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
             _mockSnsGateway = new Mock<ISnsGateway>();
-            _mockPersonGateway = new Mock<IPersonDbGateway>();
+            _mockPersonByIdHelper = new Mock<IGetPersonByIdHelper>();
             _mockAutomatedEligibilityChecksHelper = new Mock<ISoleToJointAutomatedEligibilityChecksHelper>();
 
             _classUnderTest = new SoleToJointService(new ProcessesSnsFactory(),
                                                      _mockSnsGateway.Object,
                                                      _mockAutomatedEligibilityChecksHelper.Object,
-                                                     _mockPersonGateway.Object);
+                                                     _mockPersonByIdHelper.Object);
 
             _mockSnsGateway
                 .Setup(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()))
@@ -255,15 +255,16 @@ namespace ProcessesApi.Tests.V1.Services
                                                     });
             _mockAutomatedEligibilityChecksHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(true);
             var person = CreatePerson(incomingTenantId);
-            _mockPersonGateway.Setup(x => x.GetPersonById(incomingTenantId)).ReturnsAsync(person);
+            _mockPersonByIdHelper.Setup(x => x.GetPersonById(incomingTenantId)).ReturnsAsync(person);
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 
             // Assert
-            process.RelatedEntities.Should().Contain(x => x.Id == incomingTenantId);
-            process.RelatedEntities.Should().Contain(x => x.TargetType == TargetType.person);
-            process.RelatedEntities.Should().Contain(x => x.SubType == SubType.householdMember);
-            process.RelatedEntities.Should().Contain(x => x.Description == $"{person.FirstName} {person.Surname}");
+            var relatedEntity = process.RelatedEntities.Find(x => x.Id == incomingTenantId);
+            relatedEntity.Should().NotBeNull();
+            relatedEntity.TargetType.Should().Be(TargetType.person);
+            relatedEntity.SubType.Should().Be(SubType.householdMember);
+            relatedEntity.Description.Should().Be($"{person.FirstName} {person.Surname}");
         }
 
         [Fact]
@@ -286,7 +287,7 @@ namespace ProcessesApi.Tests.V1.Services
 
             _mockAutomatedEligibilityChecksHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(false);
             var person = CreatePerson(incomingTenantId);
-            _mockPersonGateway.Setup(x => x.GetPersonById(incomingTenantId)).ReturnsAsync(person);
+            _mockPersonByIdHelper.Setup(x => x.GetPersonById(incomingTenantId)).ReturnsAsync(person);
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 
@@ -319,7 +320,7 @@ namespace ProcessesApi.Tests.V1.Services
                                                      formData);
             _mockAutomatedEligibilityChecksHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(true);
             var person = CreatePerson(incomingTenantId);
-            _mockPersonGateway.Setup(x => x.GetPersonById(incomingTenantId)).ReturnsAsync(person);
+            _mockPersonByIdHelper.Setup(x => x.GetPersonById(incomingTenantId)).ReturnsAsync(person);
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 
