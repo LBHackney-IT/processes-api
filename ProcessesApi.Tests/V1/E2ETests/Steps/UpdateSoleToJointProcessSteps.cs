@@ -3,6 +3,7 @@ using Hackney.Core.Sns;
 using Hackney.Core.Testing.DynamoDb;
 using Hackney.Core.Testing.Shared.E2E;
 using Hackney.Core.Testing.Sns;
+using Hackney.Shared.Person;
 using Newtonsoft.Json;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
 using ProcessesApi.V1.Boundary.Constants;
@@ -90,12 +91,16 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             dbRecord.PreviousStates.Last().State.Should().Be(previousState);
         }
 
-        public async Task ThenTheIncomingTenantIdIsAddedToRelatedEntities(UpdateProcessQuery request, UpdateProcessRequestObject requestBody)
+        public async Task ThenTheIncomingTenantIdIsAddedToRelatedEntities(UpdateProcessQuery request, UpdateProcessRequestObject requestBody, Person person)
         {
             var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
 
             var incomingTenantId = Guid.Parse(requestBody.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString());
-            dbRecord.RelatedEntities.Should().Contain(incomingTenantId);
+            var relatedEntity = dbRecord.RelatedEntities.Find(x => x.Id == incomingTenantId);
+            relatedEntity.Should().NotBeNull();
+            relatedEntity.TargetType.Should().Be(TargetType.person);
+            relatedEntity.SubType.Should().Be(SubType.householdMember);
+            relatedEntity.Description.Should().Be($"{person.FirstName} {person.Surname}");
         }
 
         public async Task ThenTheProcessStateIsUpdatedToProcessClosed(UpdateProcessQuery request, string previousState)

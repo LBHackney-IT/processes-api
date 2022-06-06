@@ -195,6 +195,7 @@ namespace ProcessesApi
         private static void RegisterHelpers(IServiceCollection services)
         {
             services.AddScoped<ISoleToJointAutomatedEligibilityChecksHelper, SoleToJointAutomatedEligibilityChecksHelper>();
+            services.AddScoped<IGetPersonByIdHelper, GetPersonByIdHelper>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

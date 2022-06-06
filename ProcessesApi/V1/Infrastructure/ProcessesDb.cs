@@ -16,11 +16,14 @@ namespace ProcessesApi.V1.Infrastructure
         [DynamoDBProperty]
         public Guid TargetId { get; set; }
 
+        [DynamoDBProperty(Converter = typeof(DynamoDbEnumConverter<TargetType>))]
+        public TargetType TargetType { get; set; }
+
         [DynamoDBProperty(Converter = typeof(DynamoDbEnumConverter<ProcessName>))]
         public ProcessName ProcessName { get; set; }
 
-        [DynamoDBProperty]
-        public List<Guid> RelatedEntities { get; set; }
+        [DynamoDBProperty(Converter = typeof(DynamoDbObjectListConverter<RelatedEntity>))]
+        public List<RelatedEntity> RelatedEntities { get; set; }
 
         [DynamoDBProperty(Converter = typeof(DynamoDbObjectConverter<ProcessState>))]
         public ProcessState CurrentState { get; set; }

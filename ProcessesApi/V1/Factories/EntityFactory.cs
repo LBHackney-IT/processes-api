@@ -13,6 +13,7 @@ namespace ProcessesApi.V1.Factories
                     entity.PreviousStates,
                     entity.CurrentState,
                     entity.TargetId,
+                    entity.TargetType,
                     entity.RelatedEntities,
                     entity.ProcessName,
                     entity.VersionNumber);
@@ -25,6 +26,7 @@ namespace ProcessesApi.V1.Factories
             {
                 Id = entity.Id,
                 TargetId = entity.TargetId,
+                TargetType = entity.TargetType,
                 RelatedEntities = entity.RelatedEntities,
                 ProcessName = entity.ProcessName,
                 CurrentState = entity.CurrentState,

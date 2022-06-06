@@ -12,6 +12,7 @@ namespace ProcessesApi.V1.Factories
             {
                 Id = domain.Id,
                 TargetId = domain.TargetId,
+                TargetType = domain.TargetType,
                 RelatedEntities = domain.RelatedEntities,
                 ProcessName = domain.ProcessName,
                 CurrentState = domain.CurrentState,

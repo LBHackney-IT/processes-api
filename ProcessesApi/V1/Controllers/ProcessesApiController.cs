@@ -90,6 +90,7 @@ namespace ProcessesApi.V1.Controllers
                 var result = await _processUseCase.Execute(Guid.NewGuid(),
                                                         SharedInternalTriggers.StartApplication,
                                                         request.TargetId,
+                                                        request.TargetType,
                                                         request.RelatedEntities,
                                                         request.FormData,
                                                         request.Documents,
@@ -130,6 +131,7 @@ namespace ProcessesApi.V1.Controllers
             {
                 var result = await _processUseCase.Execute(query.Id,
                                                            query.ProcessTrigger,
+                                                           null,
                                                            null,
                                                            null,
                                                            requestObject.FormData,

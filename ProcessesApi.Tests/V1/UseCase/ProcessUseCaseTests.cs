@@ -52,7 +52,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             // Act
             var response = await _classUnderTest.Execute(
                 processId, SharedInternalTriggers.StartApplication,
-                createProcessQuery.TargetId, createProcessQuery.RelatedEntities, createProcessQuery.FormData,
+                createProcessQuery.TargetId, createProcessQuery.TargetType, createProcessQuery.RelatedEntities, createProcessQuery.FormData,
                 createProcessQuery.Documents, processName, null, token).ConfigureAwait(false);
             // Assert
             _mockProcessService.Verify(x => x.Process(It.IsAny<ProcessTrigger>(), It.IsAny<Process>(), token), Times.Once);
@@ -69,7 +69,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         {
             //Arrange
             var createProcessQuery = _fixture.Create<CreateProcess>();
-            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, createProcessQuery.TargetId, createProcessQuery.RelatedEntities, ProcessName.soletojoint, null);
+            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, createProcessQuery.TargetId, createProcessQuery.TargetType, createProcessQuery.RelatedEntities, ProcessName.soletojoint, null);
             var token = new Token();
             var exception = new ApplicationException("Test Exception");
             _mockGateway.Setup(x => x.SaveProcess(It.IsAny<Process>())).ThrowsAsync(exception);
@@ -77,7 +77,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             //Act
             Func<Task<Process>> func = async () => await _classUnderTest.Execute(
                 process.Id, SharedInternalTriggers.StartApplication,
-                process.TargetId, process.RelatedEntities, createProcessQuery.FormData,
+                process.TargetId, process.TargetType, process.RelatedEntities, createProcessQuery.FormData,
                 createProcessQuery.Documents, process.ProcessName, null, token).ConfigureAwait(false);
 
             //Assert
@@ -96,7 +96,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             // Act
             var response = await _classUnderTest.Execute(
                 process.Id, SoleToJointPermittedTriggers.CheckAutomatedEligibility,
-                process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
+                process.TargetId, process.TargetType, process.RelatedEntities, updateProcessQuery.FormData,
                 updateProcessQuery.Documents, process.ProcessName, 0, token).ConfigureAwait(false);
 
             // Assert
@@ -122,7 +122,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             // Act
             Func<Task<Process>> func = async () => await _classUnderTest.Execute(
                 process.Id, SoleToJointPermittedTriggers.CheckAutomatedEligibility,
-                process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
+                process.TargetId, process.TargetType, process.RelatedEntities, updateProcessQuery.FormData,
                 updateProcessQuery.Documents, process.ProcessName, suppliedVersion, token).ConfigureAwait(false);
 
             //Assert
@@ -142,7 +142,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             //Act
             Func<Task<Process>> func = async () => await _classUnderTest.Execute(
                 process.Id, SoleToJointPermittedTriggers.CheckAutomatedEligibility,
-                process.TargetId, process.RelatedEntities, updateProcessQuery.FormData,
+                process.TargetId, process.TargetType, process.RelatedEntities, updateProcessQuery.FormData,
                 updateProcessQuery.Documents, process.ProcessName, 0, token).ConfigureAwait(false);
 
             //Assert
