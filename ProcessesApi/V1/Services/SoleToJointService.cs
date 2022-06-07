@@ -1,4 +1,5 @@
 using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Domain.SoleToJoint;
 using ProcessesApi.V1.Services.Interfaces;
 using Stateless;
 using System;

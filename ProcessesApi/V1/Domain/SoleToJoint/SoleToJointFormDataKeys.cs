@@ -1,56 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace ProcessesApi.V1.Domain
+namespace ProcessesApi.V1.Domain.SoleToJoint
 {
-    public static class SoleToJointStates
-    {
-        public const string SelectTenants = "SelectTenants";
-        public const string AutomatedChecksFailed = "AutomatedChecksFailed";
-        public const string AutomatedChecksPassed = "AutomatedChecksPassed";
-        public const string ManualChecksFailed = "ManualChecksFailed";
-        public const string ManualChecksPassed = "ManualChecksPassed";
-        public const string BreachChecksFailed = "BreachChecksFailed";
-        public const string BreachChecksPassed = "BreachChecksPassed";
-        public const string DocumentsRequestedDes = "DocumentsRequestedDes";
-        public const string DocumentsRequestedAppointment = "DocumentsRequestedAppointment";
-        public const string DocumentsAppointmentRescheduled = "DocumentsAppointmentRescheduled";
-        public const string DocumentChecksPassed = "DocumentChecksPassed";
-        public const string ApplicationSubmitted = "ApplicationSubmitted";
-        public const string TenureInvestigationFailed = "TenureInvestigationFailed";
-        public const string TenureInvestigationPassed = "TenureInvestigationPassed";
-        public const string TenureInvestigationPassedWithInt = "TenureInvestigationPassedWithInt";
-    }
-
-    public static class SoleToJointPermittedTriggers
-    {
-        public const string CancelProcess = "CancelProcess";
-        public const string CloseProcess = "CloseProcess";
-        public const string CheckAutomatedEligibility = "CheckAutomatedEligibility";
-        public const string CheckManualEligibility = "CheckManualEligibility";
-        public const string RequestDocuments = "RequestDocuments";
-        public const string CheckTenancyBreach = "CheckTenancyBreach";
-        public const string RequestDocumentsDes = "RequestDocumentsDes";
-        public const string RequestDocumentsAppointment = "RequestDocumentsAppointment";
-        public const string RescheduleDocumentsAppointment = "RescheduleDocumentsAppointment";
-        public const string ReviewDocuments = "ReviewDocuments";
-        public const string SubmitApplication = "SubmitApplication";
-        public const string TenureInvestigation = "TenureInvestigation";
-    }
-
-    public static class SoleToJointInternalTriggers
-    {
-        public const string EligibiltyPassed = "EligibiltyPassed";
-        public const string EligibiltyFailed = "EligibiltyFailed";
-        public const string ManualEligibilityFailed = "ManualEligibilityFailed";
-        public const string ManualEligibilityPassed = "ManualEligibilityPassed";
-        public const string BreachChecksFailed = "BreachChecksFailed";
-        public const string BreachChecksPassed = "BreachChecksPassed";
-        public const string DocumentChecksPassed = "DocumentChecksPassed";
-        public const string TenureInvestigationFailed = "TenureInvestigationFailed";
-        public const string TenureInvestigationPassed = "TenureInvestigationPassed";
-        public const string TenureInvestigationPassedWithInt = "TenureInvestigationPassedWithInt";
-    }
-
     // NOTE: Form data key values must be camelCase to avoid issues with Json Serialiser in E2E tests
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     public static class SoleToJointFormDataKeys
@@ -179,16 +130,6 @@ namespace ProcessesApi.V1.Domain
         #region Tenure Investigation
 
         public const string TenureInvestigationRecommendation = "tenureInvestigationRecommendation";
-
-        #endregion
-    }
-    public static class SoleToJointFormDataValues
-    {
-        #region Tenure Investigation
-
-        public const string Approve = "approve";
-        public const string Decline = "decline";
-        public const string Appointment = "appointment";
 
         #endregion
     }

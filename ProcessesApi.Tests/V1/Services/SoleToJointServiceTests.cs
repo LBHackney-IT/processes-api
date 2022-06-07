@@ -2,6 +2,7 @@ using AutoFixture;
 using FluentAssertions;
 using Moq;
 using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Domain.SoleToJoint;
 using System;
 using System.Collections.Generic;
 using System.Linq;

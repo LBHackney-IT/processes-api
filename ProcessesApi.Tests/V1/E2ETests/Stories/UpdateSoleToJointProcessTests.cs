@@ -6,6 +6,7 @@ using TestStack.BDDfy;
 using Xunit;
 using ProcessesApi.V1.Domain;
 using Hackney.Core.Testing.Sns;
+using ProcessesApi.V1.Domain.SoleToJoint;
 
 namespace ProcessesApi.Tests.V1.E2E.Stories
 {
