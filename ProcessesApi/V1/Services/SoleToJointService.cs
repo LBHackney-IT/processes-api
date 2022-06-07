@@ -8,9 +8,6 @@ using Hackney.Core.Sns;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Services.Exceptions;
-using ProcessesApi.V1.Gateways;
-using ProcessesApi.V1.Gateways.Exceptions;
-using Hackney.Shared.Person;
 
 namespace ProcessesApi.V1.Services
 {
@@ -34,6 +31,7 @@ namespace ProcessesApi.V1.Services
             _ignoredTriggersForProcessUpdated = new List<string>
             {
                 SoleToJointPermittedTriggers.CloseProcess,
+                SoleToJointPermittedTriggers.CancelProcess,
                 SharedInternalTriggers.StartApplication
             };
         }
@@ -149,6 +147,7 @@ namespace ProcessesApi.V1.Services
                     { SoleToJointFormDataKeys.Reason, processRequest.FormData[SoleToJointFormDataKeys.Reason] }
                 };
             }
+
             var hasNotifiedResidentString = processRequest.FormData[SoleToJointFormDataKeys.HasNotifiedResident];
 
             if (Boolean.TryParse(hasNotifiedResidentString.ToString(), out bool hasNotifiedResident))
@@ -161,6 +160,18 @@ namespace ProcessesApi.V1.Services
             {
                 throw new FormDataFormatException("boolean", hasNotifiedResidentString);
             }
+        }
+
+        private async Task OnProcessCancelled(Stateless.StateMachine<string, string>.Transition x)
+        {
+            var processRequest = x.Parameters[0] as ProcessTrigger;
+            SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.Comment });
+            _eventData = new Dictionary<string, object>()
+            {
+                { SoleToJointFormDataKeys.Comment, processRequest.FormData[SoleToJointFormDataKeys.Comment] }
+            };
+
+            await PublishProcessClosedEvent(x).ConfigureAwait(false);
         }
 
         private void AddIncomingTenantId(Stateless.StateMachine<string, string>.Transition x)
@@ -207,6 +218,9 @@ namespace ProcessesApi.V1.Services
             _machine.Configure(SharedProcessStates.ProcessClosed)
                     .OnEntryAsync(OnProcessClosed);
 
+            _machine.Configure(SharedProcessStates.ProcessCancelled)
+                    .OnEntryAsync(OnProcessCancelled);
+
             _machine.Configure(SharedProcessStates.ApplicationInitialised)
                     .Permit(SharedInternalTriggers.StartApplication, SoleToJointStates.SelectTenants)
                     .OnExitAsync(PublishProcessStartedEvent);
@@ -244,21 +258,21 @@ namespace ProcessesApi.V1.Services
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
                     .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
                     .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment)
-                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
+                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
 
             _machine.Configure(SoleToJointStates.DocumentsRequestedAppointment)
                     .OnEntry(AddAppointmentDateTimeToEvent)
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
                     .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
                     .Permit(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointStates.DocumentsAppointmentRescheduled)
-                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
+                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
 
             _machine.Configure(SoleToJointStates.DocumentsAppointmentRescheduled)
                     .OnEntry(AddAppointmentDateTimeToEvent)
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
                     .PermitReentry(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment)
                     .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
-                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
+                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
 
             _machine.Configure(SoleToJointStates.DocumentChecksPassed)
                     .Permit(SoleToJointPermittedTriggers.SubmitApplication, SoleToJointStates.ApplicationSubmitted);

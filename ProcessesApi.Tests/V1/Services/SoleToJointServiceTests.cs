@@ -15,7 +15,6 @@ using ProcessesApi.V1.Services;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Services.Exceptions;
 using System.Globalization;
-using ProcessesApi.V1.Gateways;
 using Hackney.Shared.Person;
 
 namespace ProcessesApi.Tests.V1.Services
@@ -179,6 +178,7 @@ namespace ProcessesApi.Tests.V1.Services
             _lastSnsEvent.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
         }
 
+        // List all states that CloseProcess can be triggered from
         [Theory]
         [InlineData(SoleToJointStates.AutomatedChecksFailed)]
         [InlineData(SoleToJointStates.ManualChecksFailed)]
@@ -204,6 +204,38 @@ namespace ProcessesApi.Tests.V1.Services
             CurrentStateShouldContainCorrectData(process,
                                                  triggerObject,
                                                  SharedProcessStates.ProcessClosed,
+                                                 new List<string>());
+            process.PreviousStates.LastOrDefault().State.Should().Be(fromState);
+
+            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _lastSnsEvent.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
+        }
+
+        // List all states that CancelProcess can be triggered from
+        [Theory]
+        [InlineData(SoleToJointStates.DocumentsRequestedDes)]
+        [InlineData(SoleToJointStates.DocumentsRequestedAppointment)]
+        [InlineData(SoleToJointStates.DocumentsAppointmentRescheduled)]
+        public async Task ProcessStateIsUpdatedToProcessCancelleddAndProcessClosedEventIsRaised(string fromState)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(fromState);
+            var formData = new Dictionary<string, object>()
+            {
+                { SoleToJointFormDataKeys.Comment, "Some comment" }
+            };
+
+            var triggerObject = CreateProcessTrigger(process,
+                                                     SoleToJointPermittedTriggers.CancelProcess,
+                                                     formData);
+
+            // Act
+            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(process,
+                                                 triggerObject,
+                                                 SharedProcessStates.ProcessCancelled,
                                                  new List<string>());
             process.PreviousStates.LastOrDefault().State.Should().Be(fromState);
 
@@ -526,7 +558,12 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsRequestedAppointment,
-                new List<string> { SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CloseProcess });
+                new List<string>
+                {
+                    SoleToJointPermittedTriggers.RescheduleDocumentsAppointment,
+                    SoleToJointPermittedTriggers.ReviewDocuments,
+                    SoleToJointPermittedTriggers.CancelProcess
+                });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.BreachChecksPassed, SoleToJointStates.DocumentsRequestedAppointment);
@@ -565,7 +602,12 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.DocumentsRequestedDes,
-                new List<string> { SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointPermittedTriggers.ReviewDocuments, SoleToJointPermittedTriggers.CloseProcess });
+                new List<string>
+                {
+                    SoleToJointPermittedTriggers.RequestDocumentsAppointment,
+                    SoleToJointPermittedTriggers.ReviewDocuments,
+                    SoleToJointPermittedTriggers.CancelProcess
+                });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.BreachChecksPassed, SoleToJointStates.DocumentsRequestedDes);
@@ -597,7 +639,7 @@ namespace ProcessesApi.Tests.V1.Services
                 {
                     SoleToJointPermittedTriggers.RescheduleDocumentsAppointment,
                     SoleToJointPermittedTriggers.ReviewDocuments,
-                    SoleToJointPermittedTriggers.CloseProcess
+                    SoleToJointPermittedTriggers.CancelProcess
                 });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
@@ -638,7 +680,7 @@ namespace ProcessesApi.Tests.V1.Services
                 {
                     SoleToJointPermittedTriggers.ReviewDocuments,
                     SoleToJointPermittedTriggers.RescheduleDocumentsAppointment,
-                    SoleToJointPermittedTriggers.CloseProcess
+                    SoleToJointPermittedTriggers.CancelProcess
                 }
             );
             process.PreviousStates.Last().State.Should().Be(initialState);

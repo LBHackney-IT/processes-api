@@ -55,9 +55,10 @@ namespace ProcessesApi.V1.Domain
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     public static class SoleToJointFormDataKeys
     {
-        #region CloseProcess
+        #region Close or Cancel Process
         public const string HasNotifiedResident = "hasNotifiedResident";
         public const string Reason = "reason";
+        public const string Comment = "comment";
 
         #endregion
 
