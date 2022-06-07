@@ -142,12 +142,7 @@ namespace ProcessesApi.V1.Services
             SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.HasNotifiedResident });
 
             if (processRequest.FormData.ContainsKey(SoleToJointFormDataKeys.Reason))
-            {
-                _eventData = new Dictionary<string, object>()
-                {
-                    { SoleToJointFormDataKeys.Reason, processRequest.FormData[SoleToJointFormDataKeys.Reason] }
-                };
-            }
+                _eventData = SoleToJointHelpers.CreateEventData(processRequest.FormData, new List<string> { SoleToJointFormDataKeys.Reason });
 
             var hasNotifiedResidentString = processRequest.FormData[SoleToJointFormDataKeys.HasNotifiedResident];
 
@@ -167,49 +162,23 @@ namespace ProcessesApi.V1.Services
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
             SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.Comment });
-            _eventData = new Dictionary<string, object>()
-            {
-                { SoleToJointFormDataKeys.Comment, processRequest.FormData[SoleToJointFormDataKeys.Comment] }
-            };
 
+            _eventData = SoleToJointHelpers.CreateEventData(processRequest.FormData, new List<string> { SoleToJointFormDataKeys.Comment });
             await PublishProcessClosedEvent(x).ConfigureAwait(false);
         }
 
-        private void AddIncomingTenantId(Stateless.StateMachine<string, string>.Transition x)
+        private void AddIncomingTenantIdToRelatedEntities(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
-            SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.IncomingTenantId });
-
-            //TODO: When doing a POST request from the FE they should created a relatedEntities object with all neccesary values
-            // Once Frontend work is completed the code below should be removed.
-            if (_process.RelatedEntities == null)
-            {
-                _process.RelatedEntities = new List<RelatedEntity>();
-            }
-            var incomingTenantId = Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString());
-
-            var person = _personByIdHelper.GetPersonById(incomingTenantId).GetAwaiter().GetResult();
-            var relatedEntities = new RelatedEntity()
-            {
-                Id = incomingTenantId,
-                TargetType = TargetType.person,
-                SubType = SubType.householdMember,
-                Description = $"{person.FirstName} {person.Surname}"
-            };
-            _process.RelatedEntities.Add(relatedEntities);
-
-
+            SoleToJointHelpers.AddIncomingTenantToRelatedEntities(processRequest.FormData, _process, _personByIdHelper);
         }
 
         public void AddAppointmentDateTimeToEvent(Stateless.StateMachine<string, string>.Transition transition)
         {
             var trigger = transition.Parameters[0] as ProcessTrigger;
             SoleToJointHelpers.ValidateFormData(trigger.FormData, new List<string>() { SoleToJointFormDataKeys.AppointmentDateTime });
-            var appointmentDetails = new Dictionary<string, object>
-            {
-                { SoleToJointFormDataKeys.AppointmentDateTime, trigger.FormData[SoleToJointFormDataKeys.AppointmentDateTime] }
-            };
-            _eventData = appointmentDetails;
+
+            _eventData = SoleToJointHelpers.CreateEventData(trigger.FormData, new List<string> { SoleToJointFormDataKeys.AppointmentDateTime });
         }
 
         #endregion
@@ -230,7 +199,7 @@ namespace ProcessesApi.V1.Services
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckAutomatedEligibility, CheckAutomatedEligibility)
                     .Permit(SoleToJointInternalTriggers.EligibiltyFailed, SoleToJointStates.AutomatedChecksFailed)
                     .Permit(SoleToJointInternalTriggers.EligibiltyPassed, SoleToJointStates.AutomatedChecksPassed)
-                    .OnExit(AddIncomingTenantId);
+                    .OnExit(AddIncomingTenantIdToRelatedEntities);
 
             _machine.Configure(SoleToJointStates.AutomatedChecksFailed)
                     .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
