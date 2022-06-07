@@ -147,12 +147,43 @@ namespace ProcessesApi.Tests.V1.Services
             (_lastSnsEvent.EventData.NewData as ProcessStateChangeData).State.Should().Be(newState);
         }
 
+        // List states & triggers that expect certain form data values
+        [Theory]
+        [InlineData(SoleToJointStates.AutomatedChecksFailed, SoleToJointPermittedTriggers.CloseProcess, new string[] { SoleToJointFormDataKeys.HasNotifiedResident })]
+        [InlineData(SoleToJointStates.DocumentsRequestedDes, SoleToJointPermittedTriggers.CancelProcess, new string[] { SoleToJointFormDataKeys.Comment })]
+        [InlineData(SoleToJointStates.SelectTenants, SoleToJointPermittedTriggers.CheckAutomatedEligibility, new string[] { SoleToJointFormDataKeys.IncomingTenantId, SoleToJointFormDataKeys.TenantId })]
+        [InlineData(SoleToJointStates.AutomatedChecksPassed, SoleToJointPermittedTriggers.CheckManualEligibility, new string[] { SoleToJointFormDataKeys.BR11, SoleToJointFormDataKeys.BR12, SoleToJointFormDataKeys.BR13,
+                                                                                                                                SoleToJointFormDataKeys.BR15, SoleToJointFormDataKeys.BR16, SoleToJointFormDataKeys.BR7, SoleToJointFormDataKeys.BR8 })]
+        [InlineData(SoleToJointStates.ManualChecksPassed, SoleToJointPermittedTriggers.CheckTenancyBreach, new string[] { SoleToJointFormDataKeys.BR5, SoleToJointFormDataKeys.BR10, SoleToJointFormDataKeys.BR17, SoleToJointFormDataKeys.BR18 })]
+        [InlineData(SoleToJointStates.BreachChecksPassed, SoleToJointPermittedTriggers.RequestDocumentsAppointment, new string[] { SoleToJointFormDataKeys.AppointmentDateTime })]
+        [InlineData(SoleToJointStates.ApplicationSubmitted, SoleToJointPermittedTriggers.TenureInvestigation, new string[] { SoleToJointFormDataKeys.TenureInvestigationRecommendation })]
+
+        public void ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(initialState);
+
+            var triggerObject = CreateProcessTrigger(process,
+                                                     trigger,
+                                                     new Dictionary<string, object>());
+
+            var expectedErrorMessage = $"The request's FormData is invalid: The form data keys supplied () do not include the expected values ({String.Join(", ", expectedFormDataKeys)}).";
+            // Act + Assert
+            _classUnderTest.Invoking(x => x.Process(triggerObject, process, _token))
+                           .Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
+        }
+
+        #region Close or Cancel Process
+
         // List all states that CloseProcess can be triggered from
         [Theory]
-        [InlineData(SoleToJointStates.AutomatedChecksFailed)]
-        [InlineData(SoleToJointStates.ManualChecksFailed)]
-        [InlineData(SoleToJointStates.BreachChecksFailed)]
-        public async Task ProcessStateIsUpdatedToProcessClosedAndProcessClosedEventIsRaised(string fromState)
+        [InlineData(SoleToJointStates.AutomatedChecksFailed, true)]
+        [InlineData(SoleToJointStates.ManualChecksFailed, true)]
+        [InlineData(SoleToJointStates.BreachChecksFailed, true)]
+        [InlineData(SoleToJointStates.AutomatedChecksFailed, false)]
+        [InlineData(SoleToJointStates.ManualChecksFailed, false)]
+        [InlineData(SoleToJointStates.BreachChecksFailed, false)]
+        public async Task ProcessStateIsUpdatedToProcessClosedAndEventIsRaised(string fromState, bool hasReason)
         {
             // Arrange
             var process = CreateProcessWithCurrentState(fromState);
@@ -160,39 +191,7 @@ namespace ProcessesApi.Tests.V1.Services
             {
                 { SoleToJointFormDataKeys.HasNotifiedResident, true }
             };
-
-            var triggerObject = CreateProcessTrigger(process,
-                                                     SoleToJointPermittedTriggers.CloseProcess,
-                                                     formData);
-
-            // Act
-            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
-
-            // Assert
-            CurrentStateShouldContainCorrectData(process,
-                                                 triggerObject,
-                                                 SharedProcessStates.ProcessClosed,
-                                                 new List<string>());
-            process.PreviousStates.LastOrDefault().State.Should().Be(fromState);
-
-            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
-        }
-
-        // List all states that CloseProcess can be triggered from
-        [Theory]
-        [InlineData(SoleToJointStates.AutomatedChecksFailed)]
-        [InlineData(SoleToJointStates.ManualChecksFailed)]
-        [InlineData(SoleToJointStates.BreachChecksFailed)]
-        public async Task ProcessStateIsUpdatedToProcessClosedWithReasonAndProcessClosedEventIsRaised(string fromState)
-        {
-            // Arrange
-            var process = CreateProcessWithCurrentState(fromState);
-            var formData = new Dictionary<string, object>()
-            {
-                { SoleToJointFormDataKeys.HasNotifiedResident, true },
-                {SoleToJointFormDataKeys.Reason, "This is a reason"}
-            };
+            if (hasReason) formData.Add(SoleToJointFormDataKeys.Reason, "this is a reason.");
 
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.CloseProcess,
@@ -217,7 +216,7 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SoleToJointStates.DocumentsRequestedDes)]
         [InlineData(SoleToJointStates.DocumentsRequestedAppointment)]
         [InlineData(SoleToJointStates.DocumentsAppointmentRescheduled)]
-        public async Task ProcessStateIsUpdatedToProcessCancelleddAndProcessClosedEventIsRaised(string fromState)
+        public async Task ProcessStateIsUpdatedToProcessCancelledAndProcessClosedEventIsRaised(string fromState)
         {
             // Arrange
             var process = CreateProcessWithCurrentState(fromState);
@@ -244,6 +243,7 @@ namespace ProcessesApi.Tests.V1.Services
             _lastSnsEvent.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
         }
 
+        # endregion
 
         [Fact]
         public async Task InitialiseStateToSelectTenantsIfCurrentStateIsNotDefinedAndTriggerProcessStartedEvent()
@@ -367,25 +367,6 @@ namespace ProcessesApi.Tests.V1.Services
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.SelectTenants, SoleToJointStates.AutomatedChecksPassed);
         }
 
-        [Fact]
-        public void ThrowsFormDataNotFoundExceptionOnCheckAutomatedEligibilityTrigger()
-        {
-            // Arrange
-            var process = CreateProcessWithCurrentState(SoleToJointStates.SelectTenants);
-
-            var tenantId = Guid.NewGuid();
-            var formData = new Dictionary<string, object> { { SoleToJointFormDataKeys.TenantId, tenantId } };
-
-            var triggerObject = CreateProcessTrigger(process,
-                                                     SoleToJointPermittedTriggers.CheckAutomatedEligibility,
-                                                     formData);
-            var expectedErrorMessage = $"The request's FormData is invalid: The form data keys supplied ({SoleToJointFormDataKeys.TenantId}) do not include the expected values ({SoleToJointFormDataKeys.IncomingTenantId}).";
-            // Act
-            Func<Task> func = async () => await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
-            // Assert
-            func.Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
-        }
-
         #endregion
 
         #region Manual eligibility checks
@@ -441,32 +422,6 @@ namespace ProcessesApi.Tests.V1.Services
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.AutomatedChecksPassed, SoleToJointStates.ManualChecksFailed);
         }
 
-        [Fact]
-        public void ThrowsFormDataNotFoundExceptionOnCheckManualEligibilityTrigger()
-        {
-            // Arrange
-            var process = CreateProcessWithCurrentState(SoleToJointStates.AutomatedChecksPassed);
-
-            var formData = new Dictionary<string, object>
-            {
-                { SoleToJointFormDataKeys.BR12, true },
-                { SoleToJointFormDataKeys.BR13, true },
-                { SoleToJointFormDataKeys.BR15, true },
-                { SoleToJointFormDataKeys.BR16, true },
-                { SoleToJointFormDataKeys.BR7, "false" },
-                { SoleToJointFormDataKeys.BR8, "false" }
-            };
-
-            var triggerObject = CreateProcessTrigger(process,
-                                                     SoleToJointPermittedTriggers.CheckManualEligibility,
-                                                     formData);
-            var expectedErrorMessage = $"The request's FormData is invalid: The form data keys supplied ({String.Join(", ", formData.Keys.ToList())}) do not include the expected values ({SoleToJointFormDataKeys.BR11}).";
-            // Act
-            Func<Task> func = async () => await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
-            // Assert
-            func.Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
-        }
-
         #endregion
 
         #region Tenancy breach checks
@@ -518,29 +473,6 @@ namespace ProcessesApi.Tests.V1.Services
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.ManualChecksPassed, SoleToJointStates.BreachChecksFailed);
         }
 
-        [Theory]
-        [InlineData(SoleToJointFormDataKeys.BR5)]
-        [InlineData(SoleToJointFormDataKeys.BR10)]
-        [InlineData(SoleToJointFormDataKeys.BR17)]
-        [InlineData(SoleToJointFormDataKeys.BR18)]
-        public void ThrowsFormDataNotFoundExceptionOnOnTenancyBreachCheckWhenCheckIsMissed(string checkId)
-        {
-            // Arrange
-            var process = CreateProcessWithCurrentState(SoleToJointStates.ManualChecksPassed);
-
-            _tenancyBreachPassData.Remove(checkId);
-
-            var triggerObject = CreateProcessTrigger(
-                process, SoleToJointPermittedTriggers.CheckTenancyBreach, _tenancyBreachPassData);
-
-            var expectedErrorMessage = $"The request's FormData is invalid: The form data keys supplied ({String.Join(", ", _tenancyBreachPassData.Keys.ToList())}) do not include the expected values ({checkId}).";
-
-            // Act & assert
-            _classUnderTest
-                .Invoking(cut => cut.Process(triggerObject, process, _token))
-                .Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
-        }
-
         #endregion
 
         #region Request Documents
@@ -568,22 +500,6 @@ namespace ProcessesApi.Tests.V1.Services
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.BreachChecksPassed, SoleToJointStates.DocumentsRequestedAppointment);
-        }
-
-        [Fact]
-        public void ThrowsFormDataNotFoundExceptionOnRequestDocumentsAppointmentWhenAppointmentDetailsAreNull()
-        {
-            // Arrange
-            var process = CreateProcessWithCurrentState(SoleToJointStates.BreachChecksPassed);
-            var formData = new Dictionary<string, object>();
-            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.RequestDocumentsAppointment, formData);
-
-            var expectedErrorMessage = $"The request's FormData is invalid: The form data keys supplied () do not include the expected values ({SoleToJointFormDataKeys.AppointmentDateTime}).";
-
-            // Act & assert
-            _classUnderTest
-                .Invoking(cut => cut.Process(trigger, process, _token))
-                .Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
         }
 
         #endregion
@@ -738,22 +654,6 @@ namespace ProcessesApi.Tests.V1.Services
             );
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.ApplicationSubmitted);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.ApplicationSubmitted, expectedState);
-        }
-
-        [Fact]
-        public void ThrowsFormDataNotFoundExceptionOnTenureInvestigationWhenRecommendationIsNull()
-        {
-            // Arrange
-            var process = CreateProcessWithCurrentState(SoleToJointStates.ApplicationSubmitted);
-            var formData = new Dictionary<string, object>();
-            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.TenureInvestigation, formData);
-
-            var expectedErrorMessage = $"The request's FormData is invalid: The form data keys supplied () do not include the expected values ({SoleToJointFormDataKeys.TenureInvestigationRecommendation}).";
-
-            // Act & assert
-            _classUnderTest
-                .Invoking(cut => cut.Process(trigger, process, _token))
-                .Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
         }
 
         [Fact]
