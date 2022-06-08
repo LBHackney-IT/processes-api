@@ -19,6 +19,7 @@ namespace ProcessesApi.V1.Domain
         public const string TenureInvestigationFailed = "TenureInvestigationFailed";
         public const string TenureInvestigationPassed = "TenureInvestigationPassed";
         public const string TenureInvestigationPassedWithInt = "TenureInvestigationPassedWithInt";
+        public const string InterviewScheduled = "InterviewScheduled";
     }
 
     public static class SoleToJointPermittedTriggers
@@ -35,6 +36,7 @@ namespace ProcessesApi.V1.Domain
         public const string ReviewDocuments = "ReviewDocuments";
         public const string SubmitApplication = "SubmitApplication";
         public const string TenureInvestigation = "TenureInvestigation";
+        public const string ScheduleInterview = "ScheduleInterview";
     }
 
     public static class SoleToJointInternalTriggers
