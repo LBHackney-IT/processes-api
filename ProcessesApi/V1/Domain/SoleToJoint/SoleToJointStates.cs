@@ -18,5 +18,6 @@ namespace ProcessesApi.V1.Domain.SoleToJoint
         public const string TenureInvestigationPassed = "TenureInvestigationPassed";
         public const string TenureInvestigationPassedWithInt = "TenureInvestigationPassedWithInt";
         public const string InterviewScheduled = "InterviewScheduled";
+        public const string InterviewRescheduled = "InterviewRescheduled";
     }
 }

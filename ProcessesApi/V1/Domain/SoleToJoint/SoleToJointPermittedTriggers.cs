@@ -15,5 +15,6 @@ namespace ProcessesApi.V1.Domain.SoleToJoint
         public const string SubmitApplication = "SubmitApplication";
         public const string TenureInvestigation = "TenureInvestigation";
         public const string ScheduleInterview = "ScheduleInterview";
+        public const string RescheduleInterview = "RescheduleInterview";
     }
 }
