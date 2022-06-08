@@ -698,8 +698,8 @@ namespace ProcessesApi.Tests.V1.Services
 
         [Theory]
         [InlineData(SoleToJointFormDataValues.Appointment)]
-        //[InlineData(SoleToJointFormDataValues.Approve)]
-        //[InlineData(SoleToJointFormDataValues.Decline)]
+        [InlineData(SoleToJointFormDataValues.Approve)]
+        [InlineData(SoleToJointFormDataValues.Decline)]
         public async Task ProcessStateIsUpdatedOnTenureInvestigationWithIntTrigger(string tenureInvestigationRecommendation)
         {
             // Arrange
