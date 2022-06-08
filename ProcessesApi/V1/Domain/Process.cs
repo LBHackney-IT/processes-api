@@ -11,19 +11,21 @@ namespace ProcessesApi.V1.Domain
         public ProcessState CurrentState { get; set; }
         public List<ProcessState> PreviousStates { get; set; }
         public Guid TargetId { get; set; }
-        public List<Guid> RelatedEntities { get; set; }
+        public TargetType TargetType { get; set; }
+        public List<RelatedEntity> RelatedEntities { get; set; }
         public ProcessName ProcessName { get; set; }
         public int? VersionNumber { get; set; }
 
 
         public Process(Guid id, List<ProcessState> previousStates,
-            ProcessState currentState, Guid targetId,
-            List<Guid> relatedEntities, ProcessName processName, int? versionNumber)
+            ProcessState currentState, Guid targetId, TargetType targetType,
+            List<RelatedEntity> relatedEntities, ProcessName processName, int? versionNumber)
         {
             Id = id;
             CurrentState = currentState;
             PreviousStates = previousStates;
             TargetId = targetId;
+            TargetType = targetType;
             RelatedEntities = relatedEntities;
             ProcessName = processName;
             VersionNumber = versionNumber;
@@ -41,11 +43,11 @@ namespace ProcessesApi.V1.Domain
 
         public static Process Create(Guid id,
            List<ProcessState> previousStates,
-           ProcessState currentState, Guid targetId,
-           List<Guid> relatedEntities, ProcessName processName, int? versionNumber)
+           ProcessState currentState, Guid targetId, TargetType targetType,
+           List<RelatedEntity> relatedEntities, ProcessName processName, int? versionNumber)
         {
 
-            return new Process(id, previousStates, currentState, targetId, relatedEntities, processName, versionNumber);
+            return new Process(id, previousStates, currentState, targetId, targetType, relatedEntities, processName, versionNumber);
         }
     }
 }

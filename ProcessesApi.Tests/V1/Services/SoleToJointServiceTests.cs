@@ -15,6 +15,8 @@ using ProcessesApi.V1.Services;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Services.Exceptions;
 using System.Globalization;
+using ProcessesApi.V1.Gateways;
+using Hackney.Shared.Person;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -26,6 +28,7 @@ namespace ProcessesApi.Tests.V1.Services
         private readonly List<Action> _cleanup = new List<Action>();
 
         private Mock<ISoleToJointAutomatedEligibilityChecksHelper> _mockAutomatedEligibilityChecksHelper;
+        private Mock<IGetPersonByIdHelper> _mockPersonByIdHelper;
         private Mock<ISnsGateway> _mockSnsGateway;
         private readonly Token _token = new Token();
         private EntityEventSns _lastSnsEvent = new EntityEventSns();
@@ -81,15 +84,26 @@ namespace ProcessesApi.Tests.V1.Services
         public SoleToJointServiceTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
             _mockSnsGateway = new Mock<ISnsGateway>();
+            _mockPersonByIdHelper = new Mock<IGetPersonByIdHelper>();
             _mockAutomatedEligibilityChecksHelper = new Mock<ISoleToJointAutomatedEligibilityChecksHelper>();
 
-            _classUnderTest = new SoleToJointService(new ProcessesSnsFactory(), _mockSnsGateway.Object, _mockAutomatedEligibilityChecksHelper.Object);
+            _classUnderTest = new SoleToJointService(new ProcessesSnsFactory(),
+                                                     _mockSnsGateway.Object,
+                                                     _mockAutomatedEligibilityChecksHelper.Object,
+                                                     _mockPersonByIdHelper.Object);
 
             _mockSnsGateway
                 .Setup(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()))
                 .Callback<EntityEventSns, string, string>((ev, s1, s2) => _lastSnsEvent = ev);
         }
 
+        private Person CreatePerson(Guid incomingTenantId)
+        {
+            return _fixture.Build<Person>()
+                           .With(x => x.Id, incomingTenantId)
+                           .Create();
+
+        }
         private Process CreateProcessWithCurrentState(string currentState, Dictionary<string, object> formData = null)
         {
             return _fixture.Build<Process>()
@@ -239,13 +253,18 @@ namespace ProcessesApi.Tests.V1.Services
                                                         { SoleToJointFormDataKeys.IncomingTenantId, incomingTenantId },
                                                         { SoleToJointFormDataKeys.TenantId, tenantId },
                                                     });
-
             _mockAutomatedEligibilityChecksHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(true);
+            var person = CreatePerson(incomingTenantId);
+            _mockPersonByIdHelper.Setup(x => x.GetPersonById(incomingTenantId)).ReturnsAsync(person);
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 
             // Assert
-            process.RelatedEntities.Should().Contain(incomingTenantId);
+            var relatedEntity = process.RelatedEntities.Find(x => x.Id == incomingTenantId);
+            relatedEntity.Should().NotBeNull();
+            relatedEntity.TargetType.Should().Be(TargetType.person);
+            relatedEntity.SubType.Should().Be(SubType.householdMember);
+            relatedEntity.Description.Should().Be($"{person.FirstName} {person.Surname}");
         }
 
         [Fact]
@@ -267,6 +286,8 @@ namespace ProcessesApi.Tests.V1.Services
                                                      formData);
 
             _mockAutomatedEligibilityChecksHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(false);
+            var person = CreatePerson(incomingTenantId);
+            _mockPersonByIdHelper.Setup(x => x.GetPersonById(incomingTenantId)).ReturnsAsync(person);
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 
@@ -298,7 +319,8 @@ namespace ProcessesApi.Tests.V1.Services
                                                      SoleToJointPermittedTriggers.CheckAutomatedEligibility,
                                                      formData);
             _mockAutomatedEligibilityChecksHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(true);
-
+            var person = CreatePerson(incomingTenantId);
+            _mockPersonByIdHelper.Setup(x => x.GetPersonById(incomingTenantId)).ReturnsAsync(person);
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 

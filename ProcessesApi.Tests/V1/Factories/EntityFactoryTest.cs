@@ -16,12 +16,13 @@ namespace ProcessesApi.Tests.V1.Factories
         public void CanMapADatabaseEntityToADomainObject()
         {
 
-            var entity = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), new List<Guid>(), ProcessName.soletojoint, null);
+            var entity = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), TargetType.tenure, new List<RelatedEntity>(), ProcessName.soletojoint, null);
             var databaseEntity = entity.ToDatabase();
             var domain = databaseEntity.ToDomain();
 
             domain.Id.Should().Be(entity.Id);
             domain.TargetId.Should().Be(entity.TargetId);
+            domain.TargetType.Should().Be(entity.TargetType);
             domain.RelatedEntities.Should().BeEquivalentTo(entity.RelatedEntities);
             domain.ProcessName.Should().Be(entity.ProcessName);
             domain.CurrentState.Should().BeEquivalentTo(entity.CurrentState);
@@ -31,11 +32,12 @@ namespace ProcessesApi.Tests.V1.Factories
         [Fact]
         public void CanMapADomainEntityToADatabaseObject()
         {
-            var entity = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), new List<Guid>(), ProcessName.soletojoint, null);
+            var entity = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), TargetType.asset, new List<RelatedEntity>(), ProcessName.soletojoint, null);
             var databaseEntity = entity.ToDatabase();
 
             databaseEntity.Id.Should().Be(entity.Id.ToString());
             databaseEntity.TargetId.Should().Be(entity.TargetId.ToString());
+            databaseEntity.TargetType.Should().Be(entity.TargetType);
             databaseEntity.RelatedEntities.Should().BeEquivalentTo(entity.RelatedEntities);
             databaseEntity.ProcessName.Should().Be(entity.ProcessName);
             databaseEntity.CurrentState.Should().BeEquivalentTo(entity.CurrentState);

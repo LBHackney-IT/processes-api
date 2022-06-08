@@ -11,10 +11,10 @@ namespace ProcessesApi.V1.Boundary.Request.Validation
                             .NotEqual(Guid.Empty);
             // Uncomment when frontend has added relatedEntities as part of the CreateProcess Request
             //RuleFor(x => x.RelatedEntities).NotNull();
-            RuleForEach(x => x.RelatedEntities)
-                            .NotEqual(Guid.Empty);
             RuleForEach(x => x.Documents).NotNull()
                             .NotEqual(Guid.Empty);
+            RuleForEach(x => x.RelatedEntities).SetValidator(new RelatedEntityValidator());
+
         }
     }
 }
