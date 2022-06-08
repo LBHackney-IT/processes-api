@@ -252,6 +252,9 @@ namespace ProcessesApi.V1.Services
                     .Permit(SoleToJointInternalTriggers.TenureInvestigationFailed, SoleToJointStates.TenureInvestigationFailed)
                     .Permit(SoleToJointInternalTriggers.TenureInvestigationPassed, SoleToJointStates.TenureInvestigationPassed)
                     .Permit(SoleToJointInternalTriggers.TenureInvestigationPassedWithInt, SoleToJointStates.TenureInvestigationPassedWithInt);
+
+            _machine.Configure(SoleToJointStates.TenureInvestigationPassedWithInt)
+                .Permit(SoleToJointPermittedTriggers.ScheduleInterview, SoleToJointStates.InterviewScheduled);
         }
     }
 }
