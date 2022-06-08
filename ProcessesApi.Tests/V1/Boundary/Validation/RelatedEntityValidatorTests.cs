@@ -1,9 +1,7 @@
-using AutoFixture;
 using FluentValidation.TestHelper;
 using ProcessesApi.V1.Boundary.Request.Validation;
 using ProcessesApi.V1.Domain;
 using System;
-using System.Collections.Generic;
 using Xunit;
 
 namespace ProcessesApi.Tests.V1.Boundary.Validation

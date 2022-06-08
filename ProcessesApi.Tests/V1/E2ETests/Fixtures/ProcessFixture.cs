@@ -9,6 +9,7 @@ using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Infrastructure.Extensions;
+using ProcessesApi.V1.Domain.SoleToJoint;
 
 namespace ProcessesApi.Tests.V1.E2E.Fixtures
 {
@@ -116,12 +117,18 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CloseProcess);
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.HasNotifiedResident, true);
         }
+
         public void GivenACloseProcessRequestWithReason()
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CloseProcess);
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.HasNotifiedResident, true);
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.Reason, "This is a reason");
+        }
 
+        public void GivenACancelProcessRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CancelProcess);
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.Comment, "This is a comment");
         }
 
         public void GivenACheckAutomatedEligibilityRequest()
