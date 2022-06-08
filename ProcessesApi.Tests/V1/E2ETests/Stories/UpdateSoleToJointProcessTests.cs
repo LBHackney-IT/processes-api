@@ -426,10 +426,10 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         public void ProcessStateIsUpdatedToInterviewScheduled()
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.TenureInvestigationPassedWithInt))
-                    .And(a => _processFixture.GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.ScheduleInterview))
+                    .And(a => _processFixture.GivenAScheduleInterviewRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessStateIsUpdatedToInterviewScheduled(_processFixture.UpdateProcessRequest))
-                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, SoleToJointStates.TenureInvestigationPassedWithInt, SoleToJointStates.InterviewScheduled))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SoleToJointStates.TenureInvestigationPassedWithInt, SoleToJointStates.InterviewScheduled))
                 .BDDfy();
         }
         #endregion
@@ -439,11 +439,11 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [Fact]
         public void ProcessStateIsUpdatedToInterviewRescheduled()
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.InterviewRescheduled))
-                    .And(a => _processFixture.GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RescheduleInterview))
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.InterviewScheduled))
+                    .And(a => _processFixture.GivenARescheduleInterviewRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessStateIsUpdatedToInterviewRescheduled(_processFixture.UpdateProcessRequest))
-                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, SoleToJointStates.InterviewScheduled, SoleToJointStates.InterviewRescheduled))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SoleToJointStates.InterviewScheduled, SoleToJointStates.InterviewRescheduled))
                 .BDDfy();
         }
         #endregion

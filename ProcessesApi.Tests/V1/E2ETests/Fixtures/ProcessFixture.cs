@@ -293,5 +293,19 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             };
             UpdateProcessByIdRequestObject = _fixture.Create<UpdateProcessByIdRequestObject>();
         }
+
+        public void GivenAScheduleInterviewRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.ScheduleInterview);
+
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+        }
+
+        public void GivenARescheduleInterviewRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RescheduleInterview);
+
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+        }
     }
 }
