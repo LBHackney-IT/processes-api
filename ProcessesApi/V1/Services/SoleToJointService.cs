@@ -271,6 +271,9 @@ namespace ProcessesApi.V1.Services
 
             _machine.Configure(SoleToJointStates.TenureInvestigationPassedWithInt)
                 .Permit(SoleToJointPermittedTriggers.ScheduleInterview, SoleToJointStates.InterviewScheduled);
+
+            _machine.Configure(SoleToJointStates.InterviewScheduled)
+                .Permit(SoleToJointPermittedTriggers.RescheduleInterview, SoleToJointStates.InterviewRescheduled);
         }
     }
 }

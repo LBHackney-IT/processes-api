@@ -779,10 +779,33 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.InterviewScheduled,
-                new List<string> { /* TODO when next trigger is implemented */ });
+                new List<string> {SoleToJointPermittedTriggers.RescheduleInterview /*TODO Add next trigger when implemented*/});
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.TenureInvestigationPassedWithInt);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.TenureInvestigationPassedWithInt, SoleToJointStates.InterviewScheduled);
+        }
+
+        #endregion
+
+        #region Reschedule Interview
+
+        [Fact]
+        public async Task ProcessStateIsUpdatedToInterviewRescheduledOnScheduleInterview()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SoleToJointStates.InterviewScheduled);
+            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.RescheduleInterview);
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SoleToJointStates.InterviewRescheduled,
+                new List<string> { /* TODO when next trigger is implemented */ });
+
+            process.PreviousStates.Last().State.Should().Be(SoleToJointStates.InterviewScheduled);
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.InterviewScheduled, SoleToJointStates.InterviewRescheduled);
         }
 
         #endregion
