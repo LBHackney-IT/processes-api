@@ -696,17 +696,14 @@ namespace ProcessesApi.Tests.V1.Services
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.ApplicationSubmitted, expectedState);
         }
 
-        [Theory]
-        [InlineData(SoleToJointFormDataValues.Appointment)]
-        [InlineData(SoleToJointFormDataValues.Approve)]
-        [InlineData(SoleToJointFormDataValues.Decline)]
-        public async Task ProcessStateIsUpdatedOnTenureInvestigationWithIntTrigger(string tenureInvestigationRecommendation)
+        [Fact]
+        public async Task ProcessStateIsUpdatedOnTenureInvestigationWithIntTrigger()
         {
             // Arrange
             var process = CreateProcessWithCurrentState(SoleToJointStates.ApplicationSubmitted);
             var formData = new Dictionary<string, object>
             {
-                {  SoleToJointFormDataKeys.TenureInvestigationRecommendation, tenureInvestigationRecommendation }
+                {  SoleToJointFormDataKeys.TenureInvestigationRecommendation, SoleToJointFormDataValues.Appointment}
             };
             var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.TenureInvestigation, formData);
 
