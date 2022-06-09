@@ -254,7 +254,21 @@ namespace ProcessesApi.V1.Services
                     .Permit(SoleToJointInternalTriggers.TenureInvestigationPassedWithInt, SoleToJointStates.TenureInvestigationPassedWithInt);
 
             _machine.Configure(SoleToJointStates.TenureInvestigationPassedWithInt)
-                .Permit(SoleToJointPermittedTriggers.ScheduleInterview, SoleToJointStates.InterviewScheduled);
+                    .Permit(SoleToJointPermittedTriggers.ScheduleInterview, SoleToJointStates.InterviewScheduled);
+
+            _machine.Configure(SoleToJointStates.TenureInvestigationPassed)
+                   .Permit(SoleToJointPermittedTriggers.ScheduleInterview, SoleToJointStates.InterviewScheduled);
+
+            _machine.Configure(SoleToJointStates.TenureInvestigationFailed)
+                    .Permit(SoleToJointPermittedTriggers.ScheduleInterview, SoleToJointStates.InterviewScheduled);
+
+            _machine.Configure(SoleToJointStates.InterviewScheduled)
+                    .OnEntry(AddAppointmentDateTimeToEvent)
+                    .Permit(SoleToJointPermittedTriggers.RescheduleInterview, SoleToJointStates.InterviewRescheduled);
+
+            _machine.Configure(SoleToJointStates.InterviewRescheduled)
+                    .OnEntry(AddAppointmentDateTimeToEvent);
+            //Add next permitted trigger here
         }
     }
 }

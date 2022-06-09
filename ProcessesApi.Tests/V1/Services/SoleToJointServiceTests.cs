@@ -632,6 +632,7 @@ namespace ProcessesApi.Tests.V1.Services
         [Theory]
         [InlineData(SoleToJointFormDataValues.Approve, SoleToJointStates.TenureInvestigationPassed)]
         [InlineData(SoleToJointFormDataValues.Decline, SoleToJointStates.TenureInvestigationFailed)]
+        [InlineData(SoleToJointFormDataValues.Appointment, SoleToJointStates.TenureInvestigationPassedWithInt)]
         public async Task ProcessStateIsUpdatedOnTenureInvestigationTrigger(string tenureInvestigationRecommendation, string expectedState)
         {
             // Arrange
@@ -648,33 +649,10 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, expectedState,
-                new List<string> { /*TODO when next trigger is implemented*/ }
-            );
-            process.PreviousStates.Last().State.Should().Be(SoleToJointStates.ApplicationSubmitted);
-            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.ApplicationSubmitted, expectedState);
-        }
-
-        [Fact]
-        public async Task ProcessStateIsUpdatedOnTenureInvestigationWithIntTrigger()
-        {
-            // Arrange
-            var process = CreateProcessWithCurrentState(SoleToJointStates.ApplicationSubmitted);
-            var formData = new Dictionary<string, object>
-            {
-                {  SoleToJointFormDataKeys.TenureInvestigationRecommendation, SoleToJointFormDataValues.Appointment}
-            };
-            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.TenureInvestigation, formData);
-
-            // Act
-            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
-
-            // Assert
-            CurrentStateShouldContainCorrectData(
-                process, trigger, SoleToJointStates.TenureInvestigationPassedWithInt,
                 new List<string> { SoleToJointPermittedTriggers.ScheduleInterview }
             );
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.ApplicationSubmitted);
-            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.ApplicationSubmitted, SoleToJointStates.TenureInvestigationPassedWithInt);
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.ApplicationSubmitted, expectedState);
         }
 
         [Fact]
@@ -709,8 +687,12 @@ namespace ProcessesApi.Tests.V1.Services
         public async Task ProcessStateIsUpdatedToInterviewScheduledOnScheduleInterviewTrigger()
         {
             // Arrange
+            var appointmentDateTime = DateTime.UtcNow.ToString("s", CultureInfo.InvariantCulture);
             var process = CreateProcessWithCurrentState(SoleToJointStates.TenureInvestigationPassedWithInt);
-            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.ScheduleInterview);
+            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.ScheduleInterview, new Dictionary<string, object>
+            {
+                { SoleToJointFormDataKeys.AppointmentDateTime, appointmentDateTime }
+            });
 
             // Act
             await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
@@ -718,10 +700,37 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.InterviewScheduled,
-                new List<string> { /* TODO when next trigger is implemented */ });
+                new List<string> { SoleToJointPermittedTriggers.RescheduleInterview /*TODO Add next trigger when implemented*/});
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.TenureInvestigationPassedWithInt);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.TenureInvestigationPassedWithInt, SoleToJointStates.InterviewScheduled);
+        }
+
+        #endregion
+
+        #region Reschedule Interview
+
+        [Fact]
+        public async Task ProcessStateIsUpdatedToInterviewRescheduledOnScheduleInterview()
+        {
+            // Arrange
+            var appointmentDateTime = DateTime.UtcNow.ToString("s", CultureInfo.InvariantCulture);
+            var process = CreateProcessWithCurrentState(SoleToJointStates.InterviewScheduled);
+            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.RescheduleInterview, new Dictionary<string, object>
+            {
+                { SoleToJointFormDataKeys.AppointmentDateTime, appointmentDateTime }
+            });
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SoleToJointStates.InterviewRescheduled,
+                new List<string> { /* TODO when next trigger is implemented */ });
+
+            process.PreviousStates.Last().State.Should().Be(SoleToJointStates.InterviewScheduled);
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.InterviewScheduled, SoleToJointStates.InterviewRescheduled);
         }
 
         #endregion
