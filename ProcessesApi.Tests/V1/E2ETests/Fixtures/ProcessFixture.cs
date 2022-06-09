@@ -314,5 +314,25 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
+
+        public void GivenAHOApprovalRequest(string housingOfficerRecommendation)
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.HOApproval);
+
+            UpdateProcessRequestObject.FormData = new Dictionary<string, object>
+            {
+                { SoleToJointFormDataKeys.HORecommendation, housingOfficerRecommendation }
+            };
+        }
+
+        public void GivenAHOApprovalRequestWithMissingData()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.HOApproval);
+        }
+
+        public void GivenAHOApprovalRequestWithInvalidData()
+        {
+            GivenATenureInvestigationRequest("invalid value");
+        }
     }
 }

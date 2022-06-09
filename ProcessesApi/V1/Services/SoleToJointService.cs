@@ -131,6 +131,33 @@ namespace ProcessesApi.V1.Services
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
+        private async Task CheckHOApproval(StateMachine<string, string>.Transition transition)
+        {
+            var processRequest = transition.Parameters[0] as ProcessTrigger;
+            var formData = processRequest.FormData;
+
+            var expectedFormDataKeys = new List<string> { SoleToJointFormDataKeys.HORecommendation };
+            SoleToJointHelpers.ValidateFormData(formData, expectedFormDataKeys);
+            var housingOfficerRecommendation = formData[SoleToJointFormDataKeys.HORecommendation].ToString();
+
+            switch (housingOfficerRecommendation)
+            {
+
+                case SoleToJointFormDataValues.Approve:
+                    processRequest.Trigger = SoleToJointInternalTriggers.HOApprovalPassed;
+                    break;
+                case SoleToJointFormDataValues.Decline:
+                    processRequest.Trigger = SoleToJointInternalTriggers.HOApprovalFailed;
+                    break;
+                default:
+                    throw new FormDataInvalidException(String.Format("Housing Officer Recommendation must be one of: [{0}, {1}] but the value provided was: '{2}'.",
+                                                                     SoleToJointFormDataValues.Approve,
+                                                                     SoleToJointFormDataValues.Decline,
+                                                                     housingOfficerRecommendation));
+            }
+            await TriggerStateMachine(processRequest).ConfigureAwait(false);
+        }
+
         #endregion
 
         #region State Transition Actions
@@ -264,10 +291,18 @@ namespace ProcessesApi.V1.Services
 
             _machine.Configure(SoleToJointStates.InterviewScheduled)
                     .OnEntry(AddAppointmentDateTimeToEvent)
-                    .Permit(SoleToJointPermittedTriggers.RescheduleInterview, SoleToJointStates.InterviewRescheduled);
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.HOApproval, CheckHOApproval)
+                    .Permit(SoleToJointPermittedTriggers.RescheduleInterview, SoleToJointStates.InterviewRescheduled)
+                    .Permit(SoleToJointInternalTriggers.HOApprovalFailed, SoleToJointStates.HOApprovalFailed)
+                    .Permit(SoleToJointInternalTriggers.HOApprovalPassed, SoleToJointStates.HOApprovalPassed);
 
             _machine.Configure(SoleToJointStates.InterviewRescheduled)
-                    .OnEntry(AddAppointmentDateTimeToEvent);
+                    .OnEntry(AddAppointmentDateTimeToEvent)
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.HOApproval, CheckHOApproval)
+                    .Permit(SoleToJointInternalTriggers.HOApprovalFailed, SoleToJointStates.HOApprovalFailed)
+                    .Permit(SoleToJointInternalTriggers.HOApprovalPassed, SoleToJointStates.HOApprovalPassed)
+                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
+
             //Add next permitted trigger here
         }
     }
