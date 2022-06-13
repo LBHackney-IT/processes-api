@@ -511,5 +511,20 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         }
 
         #endregion
+
+        #region Schedule Tenure Appointment
+
+        [Fact]
+        public void ProcessStateIsUpdatedToScheduleTenureAppointment()
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.HOApprovalPassed))
+                    .And(a => _processFixture.GivenAScheduleTenureAppointmentRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenTheProcessStateIsUpdatedToScheduleTenureAppointment(_processFixture.UpdateProcessRequest))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SoleToJointStates.HOApprovalPassed, SoleToJointStates.TenureAppointmentScheduled))
+                .BDDfy();
+        }
+
+        #endregion
     }
 }

@@ -334,5 +334,12 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             GivenATenureInvestigationRequest("invalid value");
         }
+
+        public void GivenAScheduleTenureAppointmentRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.ScheduleTenureAppointment);
+
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+        }
     }
 }
