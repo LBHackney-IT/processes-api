@@ -157,6 +157,8 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SoleToJointStates.ManualChecksPassed, SoleToJointPermittedTriggers.CheckTenancyBreach, new string[] { SoleToJointFormDataKeys.BR5, SoleToJointFormDataKeys.BR10, SoleToJointFormDataKeys.BR17, SoleToJointFormDataKeys.BR18 })]
         [InlineData(SoleToJointStates.BreachChecksPassed, SoleToJointPermittedTriggers.RequestDocumentsAppointment, new string[] { SoleToJointFormDataKeys.AppointmentDateTime })]
         [InlineData(SoleToJointStates.ApplicationSubmitted, SoleToJointPermittedTriggers.TenureInvestigation, new string[] { SoleToJointFormDataKeys.TenureInvestigationRecommendation })]
+        [InlineData(SoleToJointStates.InterviewScheduled, SoleToJointPermittedTriggers.HOApproval, new string[] { SoleToJointFormDataKeys.HORecommendation })]
+        [InlineData(SoleToJointStates.InterviewRescheduled, SoleToJointPermittedTriggers.HOApproval, new string[] { SoleToJointFormDataKeys.HORecommendation })]
         public void ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
         {
             // Arrange
@@ -667,7 +669,7 @@ namespace ProcessesApi.Tests.V1.Services
             };
             var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.TenureInvestigation, formData);
 
-            var expectedErrorMessage = String.Format("The request's FormData is invalid: Tenure Investigation Recommendation must be one of: [{0}, {1}, {2}], but the value provided was: '{3}'.",
+            var expectedErrorMessage = String.Format("The request's FormData is invalid: Recommendation must be one of: [{0}, {1}, {2}], but the value provided was: '{3}'.",
                                                      SoleToJointFormDataValues.Appointment,
                                                      SoleToJointFormDataValues.Approve,
                                                      SoleToJointFormDataValues.Decline,
@@ -767,24 +769,6 @@ namespace ProcessesApi.Tests.V1.Services
         [Theory]
         [InlineData(SoleToJointStates.InterviewScheduled)]
         [InlineData(SoleToJointStates.InterviewRescheduled)]
-        public void ThrowsFormDataNotFoundExceptionOnHOApprovalWhenRecommendationIsNull(string initialState)
-        {
-            // Arrange
-            var process = CreateProcessWithCurrentState(initialState);
-            var formData = new Dictionary<string, object>();
-            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.HOApproval, formData);
-
-            var expectedErrorMessage = $"The request's FormData is invalid: The form data keys supplied () do not include the expected values ({SoleToJointFormDataKeys.HORecommendation}).";
-
-            // Act & assert
-            _classUnderTest
-                .Invoking(cut => cut.Process(trigger, process, _token))
-                .Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
-        }
-
-        [Theory]
-        [InlineData(SoleToJointStates.InterviewScheduled)]
-        [InlineData(SoleToJointStates.InterviewRescheduled)]
         public void ThrowsFormDataInvalidExceptionOnHousingApprovalWhenRecommendationIsNotOneOfCorrectValues(string initialState)
         {
             // Arrange
@@ -796,7 +780,7 @@ namespace ProcessesApi.Tests.V1.Services
             };
             var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.HOApproval, formData);
 
-            var expectedErrorMessage = String.Format("The request's FormData is invalid: Housing Officer Recommendation must be one of: [{0}, {1}] but the value provided was: '{2}'.",
+            var expectedErrorMessage = String.Format("The request's FormData is invalid: Recommendation must be one of: [{0}, {1}] but the value provided was: '{2}'.",
                                                      SoleToJointFormDataValues.Approve,
                                                      SoleToJointFormDataValues.Decline,
                                                      invalidRecommendation);

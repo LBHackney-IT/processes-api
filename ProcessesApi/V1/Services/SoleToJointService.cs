@@ -110,24 +110,16 @@ namespace ProcessesApi.V1.Services
             SoleToJointHelpers.ValidateFormData(formData, expectedFormDataKeys);
             var tenureInvestigationRecommendation = formData[SoleToJointFormDataKeys.TenureInvestigationRecommendation].ToString();
 
-            switch (tenureInvestigationRecommendation)
+            var mapping = new Dictionary<string, string>
             {
-                case SoleToJointFormDataValues.Appointment:
-                    processRequest.Trigger = SoleToJointInternalTriggers.TenureInvestigationPassedWithInt;
-                    break;
-                case SoleToJointFormDataValues.Approve:
-                    processRequest.Trigger = SoleToJointInternalTriggers.TenureInvestigationPassed;
-                    break;
-                case SoleToJointFormDataValues.Decline:
-                    processRequest.Trigger = SoleToJointInternalTriggers.TenureInvestigationFailed;
-                    break;
-                default:
-                    throw new FormDataInvalidException(String.Format("Tenure Investigation Recommendation must be one of: [{0}, {1}, {2}], but the value provided was: '{3}'.",
-                                                                     SoleToJointFormDataValues.Appointment,
-                                                                     SoleToJointFormDataValues.Approve,
-                                                                     SoleToJointFormDataValues.Decline,
-                                                                     tenureInvestigationRecommendation));
-            }
+                {SoleToJointFormDataValues.Appointment, SoleToJointInternalTriggers.TenureInvestigationPassedWithInt },
+                { SoleToJointFormDataValues.Approve, SoleToJointInternalTriggers.TenureInvestigationPassed },
+                { SoleToJointFormDataValues.Decline, SoleToJointInternalTriggers.TenureInvestigationFailed }
+            };
+            SoleToJointHelpers.ValidateRecommendation(processRequest,
+                                                        mapping,
+                                                        tenureInvestigationRecommendation);
+           
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
@@ -140,21 +132,14 @@ namespace ProcessesApi.V1.Services
             SoleToJointHelpers.ValidateFormData(formData, expectedFormDataKeys);
             var housingOfficerRecommendation = formData[SoleToJointFormDataKeys.HORecommendation].ToString();
 
-            switch (housingOfficerRecommendation)
+            var mapping = new Dictionary<string, string>
             {
-
-                case SoleToJointFormDataValues.Approve:
-                    processRequest.Trigger = SoleToJointInternalTriggers.HOApprovalPassed;
-                    break;
-                case SoleToJointFormDataValues.Decline:
-                    processRequest.Trigger = SoleToJointInternalTriggers.HOApprovalFailed;
-                    break;
-                default:
-                    throw new FormDataInvalidException(String.Format("Housing Officer Recommendation must be one of: [{0}, {1}] but the value provided was: '{2}'.",
-                                                                     SoleToJointFormDataValues.Approve,
-                                                                     SoleToJointFormDataValues.Decline,
-                                                                     housingOfficerRecommendation));
-            }
+                { SoleToJointFormDataValues.Approve, SoleToJointInternalTriggers.HOApprovalPassed },
+                { SoleToJointFormDataValues.Decline, SoleToJointInternalTriggers.HOApprovalFailed }
+            };
+            SoleToJointHelpers.ValidateRecommendation(processRequest,
+                                                        mapping,
+                                                        housingOfficerRecommendation);
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 

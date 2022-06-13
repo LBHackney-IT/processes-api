@@ -63,5 +63,26 @@ namespace ProcessesApi.V1.Helpers
             return requestFormData.Where(x => selectedKeys.Contains(x.Key))
                                   .ToDictionary(val => val.Key, val => val.Value);
         }
+        public static void ValidateRecommendation(this ProcessTrigger processRequest, Dictionary<string, string> mappings, string recommendation)
+        {
+
+            if (!mappings.ContainsKey(recommendation))
+            {
+                object itemKey = null;
+                //for (int index = 0; index < mappings.Count; index++)
+                //{
+                //    var item = mappings.ElementAt(index);
+                //    itemKey = item.Key;
+                //    //var itemValue = item.Value;
+                //}
+                foreach (var item in mappings)
+                {
+                    itemKey = item.Key;
+                }
+                throw new FormDataInvalidException($"Recommendation must be one of: '[{itemKey}]' but the value provided was : '{recommendation}'");
+            }
+            processRequest.Trigger = mappings[recommendation];
+
+        }
     }
 }
