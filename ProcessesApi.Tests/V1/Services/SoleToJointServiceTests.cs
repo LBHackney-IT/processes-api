@@ -850,12 +850,39 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.TenureAppointmentScheduled,
-                new List<string> { /* TODO when next trigger is implemented */ });
+                new List<string> { SoleToJointPermittedTriggers.RescheduleTenureAppointment }
+             );
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.HOApprovalPassed);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.HOApprovalPassed, SoleToJointStates.TenureAppointmentScheduled);
         }
 
+
+        #endregion
+
+        #region Reschedule Tenure Appointment
+        [Fact]
+        public async Task ProcessStateIsUpdatedToRescheduleTenureAppointmentOnHOApprovalPassed()
+        {
+            // Arrange
+            var appointmentDateTime = DateTime.UtcNow.ToString("s", CultureInfo.InvariantCulture);
+            var process = CreateProcessWithCurrentState(SoleToJointStates.TenureAppointmentScheduled);
+            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.RescheduleTenureAppointment, new Dictionary<string, object>
+            {
+                { SoleToJointFormDataKeys.AppointmentDateTime, appointmentDateTime }
+            });
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SoleToJointStates.TenureAppointmentRescheduled,
+                new List<string> { /* TODO when next trigger is implemented */ });
+
+            process.PreviousStates.Last().State.Should().Be(SoleToJointStates.TenureAppointmentScheduled);
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.TenureAppointmentScheduled, SoleToJointStates.TenureAppointmentRescheduled);
+        }
 
         #endregion
     }

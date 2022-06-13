@@ -310,7 +310,13 @@ namespace ProcessesApi.V1.Services
                     .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
 
             _machine.Configure(SoleToJointStates.TenureAppointmentScheduled)
+                     .OnEntry(AddAppointmentDateTimeToEvent)
+                     .Permit(SoleToJointPermittedTriggers.RescheduleTenureAppointment, SoleToJointStates.TenureAppointmentRescheduled);
+
+            _machine.Configure(SoleToJointStates.TenureAppointmentRescheduled)
                      .OnEntry(AddAppointmentDateTimeToEvent);
+
+
 
             //Add next permitted trigger here
         }
