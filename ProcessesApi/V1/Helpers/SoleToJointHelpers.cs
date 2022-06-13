@@ -65,21 +65,23 @@ namespace ProcessesApi.V1.Helpers
         }
         public static void ValidateRecommendation(this ProcessTrigger processRequest, Dictionary<string, string> mappings, string recommendation)
         {
-
             if (!mappings.ContainsKey(recommendation))
             {
-                object itemKey = null;
-                //for (int index = 0; index < mappings.Count; index++)
-                //{
-                //    var item = mappings.ElementAt(index);
-                //    itemKey = item.Key;
-                //    //var itemValue = item.Value;
-                //}
-                foreach (var item in mappings)
+                if (mappings.Count == 3)
                 {
-                    itemKey = item.Key;
+                    throw new FormDataInvalidException(String.Format("Tenure Investigation recommendation must be one of: [{0}, {1}, {2}], but the value provided was: '{3}'.",
+                                                                     SoleToJointFormDataValues.Appointment,
+                                                                     SoleToJointFormDataValues.Approve,
+                                                                     SoleToJointFormDataValues.Decline,
+                                                                     recommendation));
                 }
-                throw new FormDataInvalidException($"Recommendation must be one of: '[{itemKey}]' but the value provided was : '{recommendation}'");
+                else
+                {
+                    throw new FormDataInvalidException(String.Format("Housing Officer recommendation must be one of: [{0}, {1}] but the value provided was: '{2}'.",
+                                                                     SoleToJointFormDataValues.Approve,
+                                                                     SoleToJointFormDataValues.Decline,
+                                                                     recommendation));
+                }
             }
             processRequest.Trigger = mappings[recommendation];
 

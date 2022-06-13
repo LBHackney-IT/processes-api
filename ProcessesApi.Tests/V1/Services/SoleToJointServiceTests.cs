@@ -669,7 +669,7 @@ namespace ProcessesApi.Tests.V1.Services
             };
             var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.TenureInvestigation, formData);
 
-            var expectedErrorMessage = String.Format("The request's FormData is invalid: Recommendation must be one of: [{0}, {1}, {2}], but the value provided was: '{3}'.",
+            var expectedErrorMessage = String.Format("The request's FormData is invalid: Tenure Investigation recommendation must be one of: [{0}, {1}, {2}], but the value provided was: '{3}'.",
                                                      SoleToJointFormDataValues.Appointment,
                                                      SoleToJointFormDataValues.Approve,
                                                      SoleToJointFormDataValues.Decline,
@@ -780,7 +780,7 @@ namespace ProcessesApi.Tests.V1.Services
             };
             var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.HOApproval, formData);
 
-            var expectedErrorMessage = String.Format("The request's FormData is invalid: Recommendation must be one of: [{0}, {1}] but the value provided was: '{2}'.",
+            var expectedErrorMessage = String.Format("The request's FormData is invalid: Housing Officer recommendation must be one of: [{0}, {1}] but the value provided was: '{2}'.",
                                                      SoleToJointFormDataValues.Approve,
                                                      SoleToJointFormDataValues.Decline,
                                                      invalidRecommendation);

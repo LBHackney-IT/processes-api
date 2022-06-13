@@ -119,7 +119,7 @@ namespace ProcessesApi.V1.Services
             SoleToJointHelpers.ValidateRecommendation(processRequest,
                                                         mapping,
                                                         tenureInvestigationRecommendation);
-           
+
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
