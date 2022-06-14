@@ -540,6 +540,16 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .BDDfy();
         }
 
+        [Fact]
+        public void BadRequestIsReturnedWhenRescheduleTenureAppointmentDataIsMissing()
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.TenureAppointmentScheduled))
+                    .And(a => _processFixture.GivenAReschduleTenureAppointmentRequestWithMissingData())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(t => _steps.ThenBadRequestIsReturned())
+                .BDDfy();
+        }
+
         #endregion
     }
 }

@@ -348,5 +348,11 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
+
+        public void GivenAReschduleTenureAppointmentRequestWithMissingData()
+        {
+            GivenARescheduleTenureAppointmentRequest();
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.AppointmentDateTime);
+        }
     }
 }
