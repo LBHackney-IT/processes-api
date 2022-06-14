@@ -104,11 +104,6 @@ namespace ProcessesApi.V1.Services
         private async Task CheckTenureInvestigation(StateMachine<string, string>.Transition transition)
         {
             var processRequest = transition.Parameters[0] as ProcessTrigger;
-            var formData = processRequest.FormData;
-
-            var expectedFormDataKeys = new List<string> { SoleToJointFormDataKeys.TenureInvestigationRecommendation };
-            SoleToJointHelpers.ValidateFormData(formData, expectedFormDataKeys);
-            var tenureInvestigationRecommendation = formData[SoleToJointFormDataKeys.TenureInvestigationRecommendation].ToString();
 
             var triggerMappings = new Dictionary<string, string>
             {
@@ -118,7 +113,7 @@ namespace ProcessesApi.V1.Services
             };
             SoleToJointHelpers.ValidateRecommendation(processRequest,
                                                         triggerMappings,
-                                                        tenureInvestigationRecommendation);
+                                                        SoleToJointFormDataKeys.TenureInvestigationRecommendation);
 
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
@@ -126,11 +121,7 @@ namespace ProcessesApi.V1.Services
         private async Task CheckHOApproval(StateMachine<string, string>.Transition transition)
         {
             var processRequest = transition.Parameters[0] as ProcessTrigger;
-            var formData = processRequest.FormData;
 
-            var expectedFormDataKeys = new List<string> { SoleToJointFormDataKeys.HORecommendation };
-            SoleToJointHelpers.ValidateFormData(formData, expectedFormDataKeys);
-            var housingOfficerRecommendation = formData[SoleToJointFormDataKeys.HORecommendation].ToString();
 
             var triggerMappings = new Dictionary<string, string>
             {
@@ -139,7 +130,7 @@ namespace ProcessesApi.V1.Services
             };
             SoleToJointHelpers.ValidateRecommendation(processRequest,
                                                         triggerMappings,
-                                                        housingOfficerRecommendation);
+                                                        SoleToJointFormDataKeys.HORecommendation);
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 

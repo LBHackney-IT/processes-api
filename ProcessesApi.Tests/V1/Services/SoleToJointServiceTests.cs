@@ -668,17 +668,21 @@ namespace ProcessesApi.Tests.V1.Services
                 {  SoleToJointFormDataKeys.TenureInvestigationRecommendation, invalidRecommendation }
             };
             var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.TenureInvestigation, formData);
-
-            var expectedErrorMessage = String.Format("The request's FormData is invalid: Tenure Investigation recommendation must be one of: [{0}, {1}, {2}], but the value provided was: '{3}'.",
-                                                     SoleToJointFormDataValues.Appointment,
-                                                     SoleToJointFormDataValues.Approve,
-                                                     SoleToJointFormDataValues.Decline,
-                                                     invalidRecommendation);
+            var expectedRecommendationValues = new List<string>()
+            {
+                SoleToJointFormDataValues.Appointment,
+                SoleToJointFormDataValues.Approve,
+                SoleToJointFormDataValues.Decline
+            };
+            var expectedErrorMessage = String.Format("The request's FormData is invalid: The form data value supplied for key {0} does not match any of the expected values ({1}). The value supplied was: {2}",
+                                                    SoleToJointFormDataKeys.TenureInvestigationRecommendation,
+                                                    String.Join(", ", expectedRecommendationValues),
+                                                    invalidRecommendation);
 
             // Act & assert
             _classUnderTest
                 .Invoking(cut => cut.Process(trigger, process, _token))
-                .Should().Throw<FormDataInvalidException>().WithMessage(expectedErrorMessage);
+                .Should().Throw<FormDataValueInvalidException>().WithMessage(expectedErrorMessage);
         }
 
         #endregion
@@ -779,11 +783,16 @@ namespace ProcessesApi.Tests.V1.Services
                 {  SoleToJointFormDataKeys.HORecommendation, invalidRecommendation }
             };
             var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.HOApproval, formData);
+            var expectedRecommendationValues = new List<string>()
+            {
+                SoleToJointFormDataValues.Approve,
+                SoleToJointFormDataValues.Decline
+            };
 
-            var expectedErrorMessage = String.Format("The request's FormData is invalid: Housing Officer recommendation must be one of: [{0}, {1}] but the value provided was: '{2}'.",
-                                                     SoleToJointFormDataValues.Approve,
-                                                     SoleToJointFormDataValues.Decline,
-                                                     invalidRecommendation);
+            var expectedErrorMessage = String.Format("The request's FormData is invalid: The form data value supplied for key {0} does not match any of the expected values ({1}). The value supplied was: {2}",
+                                                    SoleToJointFormDataKeys.HORecommendation,
+                                                    String.Join(", ", expectedRecommendationValues),
+                                                    invalidRecommendation);
 
             // Act & assert
             _classUnderTest

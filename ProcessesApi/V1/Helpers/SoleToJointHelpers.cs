@@ -63,26 +63,16 @@ namespace ProcessesApi.V1.Helpers
             return requestFormData.Where(x => selectedKeys.Contains(x.Key))
                                   .ToDictionary(val => val.Key, val => val.Value);
         }
-        public static void ValidateRecommendation(this ProcessTrigger processRequest, Dictionary<string, string> triggerMappings, string recommendation)
+        public static void ValidateRecommendation(this ProcessTrigger processRequest, Dictionary<string, string> triggerMappings, string keyName)
         {
+            var formData = processRequest.FormData;
+
+            var expectedFormDataKeys = new List<string> { keyName };
+            ValidateFormData(formData, expectedFormDataKeys);
+            var recommendation = formData[keyName].ToString();
+
             if (!triggerMappings.ContainsKey(recommendation))
-            {
-                if (triggerMappings.Count == 3)
-                {
-                    throw new FormDataInvalidException(String.Format("Tenure Investigation recommendation must be one of: [{0}, {1}, {2}], but the value provided was: '{3}'.",
-                                                                     SoleToJointFormDataValues.Appointment,
-                                                                     SoleToJointFormDataValues.Approve,
-                                                                     SoleToJointFormDataValues.Decline,
-                                                                     recommendation));
-                }
-                else
-                {
-                    throw new FormDataInvalidException(String.Format("Housing Officer recommendation must be one of: [{0}, {1}] but the value provided was: '{2}'.",
-                                                                     SoleToJointFormDataValues.Approve,
-                                                                     SoleToJointFormDataValues.Decline,
-                                                                     recommendation));
-                }
-            }
+                throw new FormDataValueInvalidException(keyName, recommendation, triggerMappings.Keys.ToList());
             processRequest.Trigger = triggerMappings[recommendation];
 
         }
