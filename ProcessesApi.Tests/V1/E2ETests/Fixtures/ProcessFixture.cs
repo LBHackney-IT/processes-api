@@ -308,11 +308,23 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
 
+        public void GivenARequestScheduleInterviewRequestWithMissingData()
+        {
+            GivenAScheduleInterviewRequest();
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.AppointmentDateTime);
+        }
+
         public void GivenARescheduleInterviewRequest()
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RescheduleInterview);
 
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+        }
+
+        public void GivenARequestRescheduleInterviewRequestWithMissingData()
+        {
+            GivenARescheduleInterviewRequest();
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.AppointmentDateTime);
         }
 
         public void GivenAHOApprovalRequest(string housingOfficerRecommendation)
@@ -333,6 +345,19 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public void GivenAHOApprovalRequestWithInvalidData()
         {
             GivenAHOApprovalRequest("invalid value");
+        }
+
+        public void GivenAScheduleTenureAppointmentRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.ScheduleTenureAppointment);
+
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+        }
+
+        public void GivenARequestTenureAppointmentRequestWithMissingData()
+        {
+            GivenAScheduleTenureAppointmentRequest();
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.AppointmentDateTime);
         }
     }
 }

@@ -270,7 +270,9 @@ namespace ProcessesApi.V1.Services
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.HOApproval, CheckHOApproval)
                     .Permit(SoleToJointPermittedTriggers.RescheduleInterview, SoleToJointStates.InterviewRescheduled)
                     .Permit(SoleToJointInternalTriggers.HOApprovalFailed, SoleToJointStates.HOApprovalFailed)
-                    .Permit(SoleToJointInternalTriggers.HOApprovalPassed, SoleToJointStates.HOApprovalPassed);
+                    .Permit(SoleToJointInternalTriggers.HOApprovalPassed, SoleToJointStates.HOApprovalPassed)
+                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
+
 
             _machine.Configure(SoleToJointStates.InterviewRescheduled)
                     .OnEntry(AddAppointmentDateTimeToEvent)
@@ -278,6 +280,19 @@ namespace ProcessesApi.V1.Services
                     .Permit(SoleToJointInternalTriggers.HOApprovalFailed, SoleToJointStates.HOApprovalFailed)
                     .Permit(SoleToJointInternalTriggers.HOApprovalPassed, SoleToJointStates.HOApprovalPassed)
                     .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
+
+            _machine.Configure(SoleToJointStates.HOApprovalPassed)
+                    .Permit(SoleToJointPermittedTriggers.ScheduleTenureAppointment, SoleToJointStates.TenureAppointmentScheduled)
+                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
+
+
+            _machine.Configure(SoleToJointStates.HOApprovalFailed)
+                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
+
+            _machine.Configure(SoleToJointStates.TenureAppointmentScheduled)
+                     .OnEntry(AddAppointmentDateTimeToEvent)
+                     .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
+
 
             //Add next permitted trigger here
         }
