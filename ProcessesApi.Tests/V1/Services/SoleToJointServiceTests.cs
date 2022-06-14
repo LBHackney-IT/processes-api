@@ -888,5 +888,42 @@ namespace ProcessesApi.Tests.V1.Services
         }
 
         #endregion
+
+        #region Update Tenure
+
+        [Theory]
+        [InlineData(SoleToJointStates.TenureAppointmentScheduled, true)]
+        [InlineData(SoleToJointStates.TenureAppointmentRescheduled, true)]
+        [InlineData(SoleToJointStates.TenureAppointmentScheduled, false)]
+        [InlineData(SoleToJointStates.TenureAppointmentRescheduled, false)]
+        public async Task ProcessStateIsUpdatedToProcessCompletedAndEventIsRaisedOnUpdateTenure(string initialState, bool hasReason)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(initialState);
+            var formData = new Dictionary<string, object>()
+            {
+                { SoleToJointFormDataKeys.HasNotifiedResident, true }
+            };
+            if (hasReason) formData.Add(SoleToJointFormDataKeys.Reason, "this is a reason.");
+
+            var triggerObject = CreateProcessTrigger(process,
+                                                     SoleToJointPermittedTriggers.UpdateTenure,
+                                                     formData);
+
+            // Act
+            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(process,
+                                                 triggerObject,
+                                                 SoleToJointStates.TenureUpdated,
+                                                 new List<string>());
+            process.PreviousStates.LastOrDefault().State.Should().Be(initialState);
+
+            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _lastSnsEvent.EventType.Should().Be(ProcessCompletedEventConstants.EVENTTYPE);
+        }
+
+        #endregion
     }
 }

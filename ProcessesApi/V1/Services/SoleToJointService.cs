@@ -345,7 +345,7 @@ namespace ProcessesApi.V1.Services
 
 
             _machine.Configure(SoleToJointStates.TenureUpdated)
-                    .OnEntryAsync(OnProcessCompleted);
+                    .OnExitAsync(OnProcessCompleted);
 
 
             //Add next permitted trigger here
