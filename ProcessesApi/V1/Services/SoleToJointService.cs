@@ -33,7 +33,8 @@ namespace ProcessesApi.V1.Services
             {
                 SoleToJointPermittedTriggers.CloseProcess,
                 SoleToJointPermittedTriggers.CancelProcess,
-                SharedInternalTriggers.StartApplication
+                SharedInternalTriggers.StartApplication,
+                SoleToJointPermittedTriggers.UpdateTenure
             };
         }
 
@@ -345,7 +346,7 @@ namespace ProcessesApi.V1.Services
 
 
             _machine.Configure(SoleToJointStates.TenureUpdated)
-                    .OnExitAsync(OnProcessCompleted);
+                    .OnEntryAsync(OnProcessCompleted);
 
 
             //Add next permitted trigger here
