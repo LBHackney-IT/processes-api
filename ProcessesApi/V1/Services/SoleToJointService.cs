@@ -104,57 +104,33 @@ namespace ProcessesApi.V1.Services
         private async Task CheckTenureInvestigation(StateMachine<string, string>.Transition transition)
         {
             var processRequest = transition.Parameters[0] as ProcessTrigger;
-            var formData = processRequest.FormData;
 
-            var expectedFormDataKeys = new List<string> { SoleToJointFormDataKeys.TenureInvestigationRecommendation };
-            SoleToJointHelpers.ValidateFormData(formData, expectedFormDataKeys);
-            var tenureInvestigationRecommendation = formData[SoleToJointFormDataKeys.TenureInvestigationRecommendation].ToString();
-
-            switch (tenureInvestigationRecommendation)
+            var triggerMappings = new Dictionary<string, string>
             {
-                case SoleToJointFormDataValues.Appointment:
-                    processRequest.Trigger = SoleToJointInternalTriggers.TenureInvestigationPassedWithInt;
-                    break;
-                case SoleToJointFormDataValues.Approve:
-                    processRequest.Trigger = SoleToJointInternalTriggers.TenureInvestigationPassed;
-                    break;
-                case SoleToJointFormDataValues.Decline:
-                    processRequest.Trigger = SoleToJointInternalTriggers.TenureInvestigationFailed;
-                    break;
-                default:
-                    throw new FormDataInvalidException(String.Format("Tenure Investigation Recommendation must be one of: [{0}, {1}, {2}], but the value provided was: '{3}'.",
-                                                                     SoleToJointFormDataValues.Appointment,
-                                                                     SoleToJointFormDataValues.Approve,
-                                                                     SoleToJointFormDataValues.Decline,
-                                                                     tenureInvestigationRecommendation));
-            }
+                {SoleToJointFormDataValues.Appointment, SoleToJointInternalTriggers.TenureInvestigationPassedWithInt },
+                { SoleToJointFormDataValues.Approve, SoleToJointInternalTriggers.TenureInvestigationPassed },
+                { SoleToJointFormDataValues.Decline, SoleToJointInternalTriggers.TenureInvestigationFailed }
+            };
+            SoleToJointHelpers.ValidateRecommendation(processRequest,
+                                                        triggerMappings,
+                                                        SoleToJointFormDataKeys.TenureInvestigationRecommendation);
+
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
         private async Task CheckHOApproval(StateMachine<string, string>.Transition transition)
         {
             var processRequest = transition.Parameters[0] as ProcessTrigger;
-            var formData = processRequest.FormData;
 
-            var expectedFormDataKeys = new List<string> { SoleToJointFormDataKeys.HORecommendation };
-            SoleToJointHelpers.ValidateFormData(formData, expectedFormDataKeys);
-            var housingOfficerRecommendation = formData[SoleToJointFormDataKeys.HORecommendation].ToString();
 
-            switch (housingOfficerRecommendation)
+            var triggerMappings = new Dictionary<string, string>
             {
-
-                case SoleToJointFormDataValues.Approve:
-                    processRequest.Trigger = SoleToJointInternalTriggers.HOApprovalPassed;
-                    break;
-                case SoleToJointFormDataValues.Decline:
-                    processRequest.Trigger = SoleToJointInternalTriggers.HOApprovalFailed;
-                    break;
-                default:
-                    throw new FormDataInvalidException(String.Format("Housing Officer Recommendation must be one of: [{0}, {1}] but the value provided was: '{2}'.",
-                                                                     SoleToJointFormDataValues.Approve,
-                                                                     SoleToJointFormDataValues.Decline,
-                                                                     housingOfficerRecommendation));
-            }
+                { SoleToJointFormDataValues.Approve, SoleToJointInternalTriggers.HOApprovalPassed },
+                { SoleToJointFormDataValues.Decline, SoleToJointInternalTriggers.HOApprovalFailed }
+            };
+            SoleToJointHelpers.ValidateRecommendation(processRequest,
+                                                        triggerMappings,
+                                                        SoleToJointFormDataKeys.HORecommendation);
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 

@@ -332,7 +332,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenAHOApprovalRequestWithInvalidData()
         {
-            GivenATenureInvestigationRequest("invalid value");
+            GivenAHOApprovalRequest("invalid value");
         }
 
         public void GivenAScheduleTenureAppointmentRequest()
