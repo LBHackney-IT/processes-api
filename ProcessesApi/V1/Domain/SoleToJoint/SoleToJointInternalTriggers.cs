@@ -14,7 +14,6 @@ namespace ProcessesApi.V1.Domain.SoleToJoint
         public const string TenureInvestigationPassedWithInt = "TenureInvestigationPassedWithInt";
         public const string HOApprovalFailed = "HOApprovalFailed";
         public const string HOApprovalPassed = "HOApprovalPassed";
-        public const string UpdateTenure = "UpdateTenure";
 
     }
 }

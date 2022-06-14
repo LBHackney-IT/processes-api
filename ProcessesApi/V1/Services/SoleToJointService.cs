@@ -335,12 +335,14 @@ namespace ProcessesApi.V1.Services
             _machine.Configure(SoleToJointStates.TenureAppointmentScheduled)
                      .OnEntry(AddAppointmentDateTimeToEvent)
                      .Permit(SoleToJointPermittedTriggers.RescheduleTenureAppointment, SoleToJointStates.TenureAppointmentRescheduled)
-                     .Permit(SoleToJointInternalTriggers.UpdateTenure, SoleToJointStates.TenureUpdated);
+                     .Permit(SoleToJointPermittedTriggers.UpdateTenure, SoleToJointStates.TenureUpdated);
 
 
             _machine.Configure(SoleToJointStates.TenureAppointmentRescheduled)
                      .OnEntry(AddAppointmentDateTimeToEvent)
-                     .Permit(SoleToJointInternalTriggers.UpdateTenure, SoleToJointStates.TenureUpdated);
+                     .Permit(SoleToJointPermittedTriggers.UpdateTenure, SoleToJointStates.TenureUpdated)
+                     .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
+
 
             _machine.Configure(SoleToJointStates.TenureUpdated)
                     .OnEntryAsync(OnProcessCompleted);
