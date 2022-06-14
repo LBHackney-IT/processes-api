@@ -468,5 +468,48 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .BDDfy();
         }
         #endregion
+
+        #region HOApproval
+
+        [Theory]
+        [InlineData(SoleToJointFormDataValues.Approve, SoleToJointStates.HOApprovalPassed, SoleToJointStates.InterviewScheduled)]
+        [InlineData(SoleToJointFormDataValues.Decline, SoleToJointStates.HOApprovalFailed, SoleToJointStates.InterviewScheduled)]
+        [InlineData(SoleToJointFormDataValues.Approve, SoleToJointStates.HOApprovalPassed, SoleToJointStates.InterviewRescheduled)]
+        [InlineData(SoleToJointFormDataValues.Decline, SoleToJointStates.HOApprovalFailed, SoleToJointStates.InterviewRescheduled)]
+        public void ProcessStateIsUpdatedToShowResultOfHOApproval(string housingOfficerRecommendation, string destinationState, string initialState)
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(initialState))
+                    .And(a => _processFixture.GivenAHOApprovalRequest(housingOfficerRecommendation))
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenTheProcessStateIsUpdatedToShowResultsOfHOApproval(_processFixture.UpdateProcessRequest, destinationState, initialState))
+                .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, initialState, destinationState))
+                .BDDfy();
+        }
+
+        [Theory]
+        [InlineData(SoleToJointStates.InterviewScheduled)]
+        [InlineData(SoleToJointStates.InterviewRescheduled)]
+        public void BadRequestIsReturnedWhenHORecommendationIsMissing(string initialState)
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(initialState))
+                    .And(a => _processFixture.GivenAHOApprovalRequestWithMissingData())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenBadRequestIsReturned())
+                .BDDfy();
+        }
+
+        [Theory]
+        [InlineData(SoleToJointStates.InterviewScheduled)]
+        [InlineData(SoleToJointStates.InterviewRescheduled)]
+        public void BadRequestIsReturnedWhenHORecommendationIsInvalid(string initialState)
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(initialState))
+                    .And(a => _processFixture.GivenAHOApprovalRequestWithInvalidData())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenBadRequestIsReturned())
+                .BDDfy();
+        }
+
+        #endregion
     }
 }

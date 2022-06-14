@@ -132,5 +132,10 @@ namespace ProcessesApi.V1.Domain.SoleToJoint
         public const string TenureInvestigationRecommendation = "tenureInvestigationRecommendation";
 
         #endregion
+
+        #region HOApproval
+        public const string HORecommendation = "hoRecommendation";
+
+        #endregion
     }
 }

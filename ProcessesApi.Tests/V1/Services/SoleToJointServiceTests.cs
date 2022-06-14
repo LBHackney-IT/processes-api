@@ -157,6 +157,8 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SoleToJointStates.ManualChecksPassed, SoleToJointPermittedTriggers.CheckTenancyBreach, new string[] { SoleToJointFormDataKeys.BR5, SoleToJointFormDataKeys.BR10, SoleToJointFormDataKeys.BR17, SoleToJointFormDataKeys.BR18 })]
         [InlineData(SoleToJointStates.BreachChecksPassed, SoleToJointPermittedTriggers.RequestDocumentsAppointment, new string[] { SoleToJointFormDataKeys.AppointmentDateTime })]
         [InlineData(SoleToJointStates.ApplicationSubmitted, SoleToJointPermittedTriggers.TenureInvestigation, new string[] { SoleToJointFormDataKeys.TenureInvestigationRecommendation })]
+        [InlineData(SoleToJointStates.InterviewScheduled, SoleToJointPermittedTriggers.HOApproval, new string[] { SoleToJointFormDataKeys.HORecommendation })]
+        [InlineData(SoleToJointStates.InterviewRescheduled, SoleToJointPermittedTriggers.HOApproval, new string[] { SoleToJointFormDataKeys.HORecommendation })]
         public void ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
         {
             // Arrange
@@ -666,17 +668,21 @@ namespace ProcessesApi.Tests.V1.Services
                 {  SoleToJointFormDataKeys.TenureInvestigationRecommendation, invalidRecommendation }
             };
             var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.TenureInvestigation, formData);
-
-            var expectedErrorMessage = String.Format("The request's FormData is invalid: Tenure Investigation Recommendation must be one of: [{0}, {1}, {2}], but the value provided was: '{3}'.",
-                                                     SoleToJointFormDataValues.Appointment,
-                                                     SoleToJointFormDataValues.Approve,
-                                                     SoleToJointFormDataValues.Decline,
-                                                     invalidRecommendation);
+            var expectedRecommendationValues = new List<string>()
+            {
+                SoleToJointFormDataValues.Appointment,
+                SoleToJointFormDataValues.Approve,
+                SoleToJointFormDataValues.Decline
+            };
+            var expectedErrorMessage = String.Format("The request's FormData is invalid: The form data value supplied for key {0} does not match any of the expected values ({1}). The value supplied was: {2}",
+                                                    SoleToJointFormDataKeys.TenureInvestigationRecommendation,
+                                                    String.Join(", ", expectedRecommendationValues),
+                                                    invalidRecommendation);
 
             // Act & assert
             _classUnderTest
                 .Invoking(cut => cut.Process(trigger, process, _token))
-                .Should().Throw<FormDataInvalidException>().WithMessage(expectedErrorMessage);
+                .Should().Throw<FormDataValueInvalidException>().WithMessage(expectedErrorMessage);
         }
 
         #endregion
@@ -700,7 +706,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.InterviewScheduled,
-                new List<string> { SoleToJointPermittedTriggers.RescheduleInterview /*TODO Add next trigger when implemented*/});
+                new List<string> { SoleToJointPermittedTriggers.RescheduleInterview, SoleToJointPermittedTriggers.HOApproval });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.TenureInvestigationPassedWithInt);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.TenureInvestigationPassedWithInt, SoleToJointStates.InterviewScheduled);
@@ -727,10 +733,71 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.InterviewRescheduled,
-                new List<string> { /* TODO when next trigger is implemented */ });
+                new List<string> { SoleToJointPermittedTriggers.HOApproval, SoleToJointPermittedTriggers.CancelProcess });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.InterviewScheduled);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.InterviewScheduled, SoleToJointStates.InterviewRescheduled);
+        }
+
+        #endregion
+
+        #region HOApproval
+
+        [Theory]
+        [InlineData(SoleToJointFormDataValues.Approve, SoleToJointStates.HOApprovalPassed, SoleToJointStates.InterviewScheduled)]
+        [InlineData(SoleToJointFormDataValues.Decline, SoleToJointStates.HOApprovalFailed, SoleToJointStates.InterviewScheduled)]
+        [InlineData(SoleToJointFormDataValues.Approve, SoleToJointStates.HOApprovalPassed, SoleToJointStates.InterviewRescheduled)]
+        [InlineData(SoleToJointFormDataValues.Decline, SoleToJointStates.HOApprovalFailed, SoleToJointStates.InterviewRescheduled)]
+        public async Task ProcessStateIsUpdatedOnHOApprovalTrigger(string housingOfficerRecommendation, string expectedState, string initialState)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(initialState);
+            var formData = new Dictionary<string, object>
+            {
+                {  SoleToJointFormDataKeys.HORecommendation, housingOfficerRecommendation }
+            };
+            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.HOApproval, formData);
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, expectedState,
+                new List<string> { /* TODO when next trigger is implemented */ }
+            );
+            process.PreviousStates.Last().State.Should().Be(initialState);
+            VerifyThatProcessUpdatedEventIsTriggered(initialState, expectedState);
+        }
+
+        [Theory]
+        [InlineData(SoleToJointStates.InterviewScheduled)]
+        [InlineData(SoleToJointStates.InterviewRescheduled)]
+        public void ThrowsFormDataInvalidExceptionOnHousingApprovalWhenRecommendationIsNotOneOfCorrectValues(string initialState)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(initialState);
+            var invalidRecommendation = "some invalid value";
+            var formData = new Dictionary<string, object>
+            {
+                {  SoleToJointFormDataKeys.HORecommendation, invalidRecommendation }
+            };
+            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.HOApproval, formData);
+            var expectedRecommendationValues = new List<string>()
+            {
+                SoleToJointFormDataValues.Approve,
+                SoleToJointFormDataValues.Decline
+            };
+
+            var expectedErrorMessage = String.Format("The request's FormData is invalid: The form data value supplied for key {0} does not match any of the expected values ({1}). The value supplied was: {2}",
+                                                    SoleToJointFormDataKeys.HORecommendation,
+                                                    String.Join(", ", expectedRecommendationValues),
+                                                    invalidRecommendation);
+
+            // Act & assert
+            _classUnderTest
+                .Invoking(cut => cut.Process(trigger, process, _token))
+                .Should().Throw<FormDataInvalidException>().WithMessage(expectedErrorMessage);
         }
 
         #endregion
