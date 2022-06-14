@@ -850,7 +850,8 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.TenureAppointmentScheduled,
-                new List<string> { SoleToJointPermittedTriggers.RescheduleTenureAppointment }
+                new List<string> { SoleToJointPermittedTriggers.RescheduleTenureAppointment, SoleToJointInternalTriggers.UpdateTenure }
+
              );
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.HOApprovalPassed);
@@ -878,7 +879,8 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.TenureAppointmentRescheduled,
-                new List<string> { /* TODO when next trigger is implemented */ });
+                new List<string> { SoleToJointInternalTriggers.UpdateTenure }
+            );
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.TenureAppointmentScheduled);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.TenureAppointmentScheduled, SoleToJointStates.TenureAppointmentRescheduled);

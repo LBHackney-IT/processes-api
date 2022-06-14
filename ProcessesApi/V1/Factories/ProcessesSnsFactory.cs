@@ -65,6 +65,40 @@ namespace ProcessesApi.V1.Factories
             };
         }
 
+        public EntityEventSns ProcessCompleted(Stateless.StateMachine<string, string>.Transition transition, Dictionary<string, object> stateData, Token token)
+        {
+            var triggerData = transition.Parameters[0] as ProcessTrigger;
+
+            return new EntityEventSns
+            {
+                CorrelationId = Guid.NewGuid(),
+                DateTime = DateTime.UtcNow,
+                EntityId = triggerData.Id,
+                Id = Guid.NewGuid(),
+                EventType = ProcessCompletedEventConstants.EVENTTYPE,
+                Version = ProcessCompletedEventConstants.V1_VERSION,
+                SourceDomain = ProcessCompletedEventConstants.SOURCE_DOMAIN,
+                SourceSystem = ProcessCompletedEventConstants.SOURCE_SYSTEM,
+                EventData = new EventData
+                {
+                    OldData = new ProcessStateChangeData
+                    {
+                        State = transition.Source
+                    },
+                    NewData = new ProcessStateChangeData
+                    {
+                        State = transition.Destination,
+                        StateData = stateData
+                    }
+                },
+                User = new User
+                {
+                    Name = token.Name,
+                    Email = token.Email
+                }
+            };
+        }
+
         public EntityEventSns ProcessUpdated(Guid id, UpdateEntityResult<ProcessState> updateResult, Token token)
         {
             return new EntityEventSns

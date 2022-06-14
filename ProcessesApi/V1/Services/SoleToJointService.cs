@@ -194,6 +194,29 @@ namespace ProcessesApi.V1.Services
             await PublishProcessClosedEvent(x).ConfigureAwait(false);
         }
 
+        private async Task OnProcessCompleted(Stateless.StateMachine<string, string>.Transition x)
+        {
+            var processRequest = x.Parameters[0] as ProcessTrigger;
+
+            SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.HasNotifiedResident });
+
+            if (processRequest.FormData.ContainsKey(SoleToJointFormDataKeys.Reason))
+                _eventData = SoleToJointHelpers.CreateEventData(processRequest.FormData, new List<string> { SoleToJointFormDataKeys.Reason });
+
+            var hasNotifiedResidentString = processRequest.FormData[SoleToJointFormDataKeys.HasNotifiedResident];
+
+            if (Boolean.TryParse(hasNotifiedResidentString.ToString(), out bool hasNotifiedResident))
+            {
+                if (!hasNotifiedResident) throw new FormDataInvalidException("Housing Officer must notify the resident before completing this process.");
+
+                await PublishProcessCompletedEvent(x).ConfigureAwait(false);
+            }
+            else
+            {
+                throw new FormDataFormatException("boolean", hasNotifiedResidentString);
+            }
+        }
+
         private void AddIncomingTenantIdToRelatedEntities(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
@@ -311,11 +334,16 @@ namespace ProcessesApi.V1.Services
 
             _machine.Configure(SoleToJointStates.TenureAppointmentScheduled)
                      .OnEntry(AddAppointmentDateTimeToEvent)
-                     .Permit(SoleToJointPermittedTriggers.RescheduleTenureAppointment, SoleToJointStates.TenureAppointmentRescheduled);
+                     .Permit(SoleToJointPermittedTriggers.RescheduleTenureAppointment, SoleToJointStates.TenureAppointmentRescheduled)
+                     .Permit(SoleToJointInternalTriggers.UpdateTenure, SoleToJointStates.TenureUpdated);
+
 
             _machine.Configure(SoleToJointStates.TenureAppointmentRescheduled)
-                     .OnEntry(AddAppointmentDateTimeToEvent);
+                     .OnEntry(AddAppointmentDateTimeToEvent)
+                     .Permit(SoleToJointInternalTriggers.UpdateTenure, SoleToJointStates.TenureUpdated);
 
+            _machine.Configure(SoleToJointStates.TenureUpdated)
+                    .OnEntryAsync(OnProcessCompleted);
 
 
             //Add next permitted trigger here

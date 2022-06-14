@@ -85,6 +85,14 @@ namespace ProcessesApi.V1.Services
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
 
+        protected async Task PublishProcessCompletedEvent(StateMachine<string, string>.Transition transition)
+        {
+            var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
+            var processSnsMessage = _snsFactory.ProcessCompleted(transition, _eventData, _token);
+
+            await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
+        }
+
         protected async Task TriggerStateMachine(ProcessTrigger trigger)
         {
             var res = _machine.SetTriggerParameters<ProcessTrigger, Process>(trigger.Trigger);
