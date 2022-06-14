@@ -110,14 +110,14 @@ namespace ProcessesApi.V1.Services
             SoleToJointHelpers.ValidateFormData(formData, expectedFormDataKeys);
             var tenureInvestigationRecommendation = formData[SoleToJointFormDataKeys.TenureInvestigationRecommendation].ToString();
 
-            var mapping = new Dictionary<string, string>
+            var triggerMappings = new Dictionary<string, string>
             {
                 {SoleToJointFormDataValues.Appointment, SoleToJointInternalTriggers.TenureInvestigationPassedWithInt },
                 { SoleToJointFormDataValues.Approve, SoleToJointInternalTriggers.TenureInvestigationPassed },
                 { SoleToJointFormDataValues.Decline, SoleToJointInternalTriggers.TenureInvestigationFailed }
             };
             SoleToJointHelpers.ValidateRecommendation(processRequest,
-                                                        mapping,
+                                                        triggerMappings,
                                                         tenureInvestigationRecommendation);
 
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
@@ -132,13 +132,13 @@ namespace ProcessesApi.V1.Services
             SoleToJointHelpers.ValidateFormData(formData, expectedFormDataKeys);
             var housingOfficerRecommendation = formData[SoleToJointFormDataKeys.HORecommendation].ToString();
 
-            var mapping = new Dictionary<string, string>
+            var triggerMappings = new Dictionary<string, string>
             {
                 { SoleToJointFormDataValues.Approve, SoleToJointInternalTriggers.HOApprovalPassed },
                 { SoleToJointFormDataValues.Decline, SoleToJointInternalTriggers.HOApprovalFailed }
             };
             SoleToJointHelpers.ValidateRecommendation(processRequest,
-                                                        mapping,
+                                                        triggerMappings,
                                                         housingOfficerRecommendation);
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }

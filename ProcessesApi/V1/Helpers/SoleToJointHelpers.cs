@@ -63,11 +63,11 @@ namespace ProcessesApi.V1.Helpers
             return requestFormData.Where(x => selectedKeys.Contains(x.Key))
                                   .ToDictionary(val => val.Key, val => val.Value);
         }
-        public static void ValidateRecommendation(this ProcessTrigger processRequest, Dictionary<string, string> mappings, string recommendation)
+        public static void ValidateRecommendation(this ProcessTrigger processRequest, Dictionary<string, string> triggerMappings, string recommendation)
         {
-            if (!mappings.ContainsKey(recommendation))
+            if (!triggerMappings.ContainsKey(recommendation))
             {
-                if (mappings.Count == 3)
+                if (triggerMappings.Count == 3)
                 {
                     throw new FormDataInvalidException(String.Format("Tenure Investigation recommendation must be one of: [{0}, {1}, {2}], but the value provided was: '{3}'.",
                                                                      SoleToJointFormDataValues.Appointment,
@@ -83,7 +83,7 @@ namespace ProcessesApi.V1.Helpers
                                                                      recommendation));
                 }
             }
-            processRequest.Trigger = mappings[recommendation];
+            processRequest.Trigger = triggerMappings[recommendation];
 
         }
     }
