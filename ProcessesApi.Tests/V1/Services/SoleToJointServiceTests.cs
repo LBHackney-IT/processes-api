@@ -215,6 +215,8 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SoleToJointStates.DocumentsRequestedDes)]
         [InlineData(SoleToJointStates.DocumentsRequestedAppointment)]
         [InlineData(SoleToJointStates.DocumentsAppointmentRescheduled)]
+        [InlineData(SoleToJointStates.TenureAppointmentScheduled)]
+        [InlineData(SoleToJointStates.TenureAppointmentRescheduled)]
         public async Task ProcessStateIsUpdatedToProcessCancelledAndProcessClosedEventIsRaised(string fromState)
         {
             // Arrange
@@ -850,7 +852,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.TenureAppointmentScheduled,
-                new List<string> { SoleToJointPermittedTriggers.RescheduleTenureAppointment }
+                new List<string> { SoleToJointPermittedTriggers.RescheduleTenureAppointment, SoleToJointPermittedTriggers.CancelProcess}
              );
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.HOApprovalPassed);
@@ -878,7 +880,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.TenureAppointmentRescheduled,
-                new List<string> { /* TODO when next trigger is implemented */ });
+                new List<string> { SoleToJointPermittedTriggers.CancelProcess });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.TenureAppointmentScheduled);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.TenureAppointmentScheduled, SoleToJointStates.TenureAppointmentRescheduled);
