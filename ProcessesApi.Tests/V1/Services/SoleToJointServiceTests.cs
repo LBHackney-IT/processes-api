@@ -764,7 +764,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.HOApprovalPassed,
-                new List<string> { SoleToJointPermittedTriggers.ScheduleTenureAppointment }
+                new List<string> { SoleToJointPermittedTriggers.ScheduleTenureAppointment, SoleToJointPermittedTriggers.CancelProcess }
             );
             process.PreviousStates.Last().State.Should().Be(initialState);
             VerifyThatProcessUpdatedEventIsTriggered(initialState, SoleToJointStates.HOApprovalPassed);
