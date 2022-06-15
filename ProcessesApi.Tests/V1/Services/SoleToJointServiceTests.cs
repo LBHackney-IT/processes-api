@@ -223,6 +223,7 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SoleToJointStates.InterviewScheduled)]
         [InlineData(SoleToJointStates.InterviewRescheduled)]
         [InlineData(SoleToJointStates.TenureAppointmentScheduled)]
+        [InlineData(SoleToJointStates.TenureAppointmentRescheduled)]
 
         public async Task ProcessStateIsUpdatedToProcessCancelledAndProcessClosedEventIsRaised(string fromState)
         {
@@ -850,12 +851,44 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.TenureAppointmentScheduled,
-                new List<string> { SoleToJointPermittedTriggers.CancelProcess });
+                new List<string> { SoleToJointPermittedTriggers.RescheduleTenureAppointment, SoleToJointPermittedTriggers.CancelProcess }
+             );
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.HOApprovalPassed);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.HOApprovalPassed, SoleToJointStates.TenureAppointmentScheduled);
         }
 
+
+        #endregion
+
+        #region Reschedule Tenure Appointment
+        [Theory]
+        [InlineData(SoleToJointStates.TenureAppointmentScheduled)]
+        [InlineData(SoleToJointStates.TenureAppointmentRescheduled)]
+        public async Task ProcessStateIsUpdatedToRescheduleTenureAppointmentOnScheduleAppointment(string initialState)
+        {
+            // Arrange
+            var appointmentDateTime = DateTime.UtcNow.ToString("s", CultureInfo.InvariantCulture);
+            var process = CreateProcessWithCurrentState(initialState, new Dictionary<string, object>
+            {
+                { SoleToJointFormDataKeys.AppointmentDateTime, appointmentDateTime }
+            });
+            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.RescheduleTenureAppointment, new Dictionary<string, object>
+            {
+                { SoleToJointFormDataKeys.AppointmentDateTime, appointmentDateTime }
+            });
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SoleToJointStates.TenureAppointmentRescheduled,
+                new List<string> { SoleToJointPermittedTriggers.CancelProcess, SoleToJointPermittedTriggers.RescheduleTenureAppointment });
+
+            process.PreviousStates.Last().State.Should().Be(initialState);
+            VerifyThatProcessUpdatedEventIsTriggered(initialState, SoleToJointStates.TenureAppointmentRescheduled);
+        }
 
         #endregion
     }

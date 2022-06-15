@@ -198,6 +198,16 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         {
             await CheckProcessState(request.Id, SoleToJointStates.TenureAppointmentScheduled, SoleToJointStates.HOApprovalPassed).ConfigureAwait(false);
         }
+
+        public async Task ThenTheProcessStateIsUpdatedToRescheduleTenureAppointment(UpdateProcessQuery request)
+        {
+            await CheckProcessState(request.Id, SoleToJointStates.TenureAppointmentRescheduled, SoleToJointStates.TenureAppointmentScheduled).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheProcessStateRemainsTenureAppointmentRescheduled(UpdateProcessQuery request)
+        {
+            await CheckProcessState(request.Id, SoleToJointStates.TenureAppointmentRescheduled, SoleToJointStates.TenureAppointmentRescheduled).ConfigureAwait(false);
+        }
         public async Task VerifyProcessUpdatedEventIsRaised(ISnsFixture snsFixture, Guid processId, string oldState, string newState, Action<string> verifyNewStateData = null)
         {
             Action<string, string> verifyData = (dataAsString, state) =>

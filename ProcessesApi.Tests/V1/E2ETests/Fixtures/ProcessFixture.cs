@@ -359,5 +359,18 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             GivenAScheduleTenureAppointmentRequest();
             UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.AppointmentDateTime);
         }
+
+        public void GivenARescheduleTenureAppointmentRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RescheduleTenureAppointment);
+
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+        }
+
+        public void GivenARescheduleTenureAppointmentRequestWithMissingData()
+        {
+            GivenARescheduleTenureAppointmentRequest();
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.AppointmentDateTime);
+        }
     }
 }
