@@ -133,6 +133,12 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [InlineData(SoleToJointStates.DocumentsRequestedDes)]
         [InlineData(SoleToJointStates.DocumentsRequestedAppointment)]
         [InlineData(SoleToJointStates.DocumentsAppointmentRescheduled)]
+        [InlineData(SoleToJointStates.HOApprovalPassed)]
+        [InlineData(SoleToJointStates.HOApprovalFailed)]
+        [InlineData(SoleToJointStates.InterviewScheduled)]
+        [InlineData(SoleToJointStates.InterviewRescheduled)]
+        [InlineData(SoleToJointStates.TenureAppointmentScheduled)]
+        [InlineData(SoleToJointStates.TenureAppointmentRescheduled)]
         public void ProcessStateIsUpdatedToProcessCancelled(string fromState)
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(fromState))
@@ -453,6 +459,16 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                     .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SoleToJointStates.TenureInvestigationPassedWithInt, SoleToJointStates.InterviewScheduled))
                 .BDDfy();
         }
+
+        [Fact]
+        public void BadRequestIsReturnedWhenScheduleInterviewAppointmentDataIsMissing()
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.TenureInvestigationPassed))
+                    .And(a => _processFixture.GivenARequestScheduleInterviewRequestWithMissingData())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(t => _steps.ThenBadRequestIsReturned())
+                .BDDfy();
+        }
         #endregion
 
         #region Reschedule Interview
@@ -467,6 +483,28 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                     .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SoleToJointStates.InterviewScheduled, SoleToJointStates.InterviewRescheduled))
                 .BDDfy();
         }
+
+        [Fact]
+        public void MultipleInterviewReschedulesArePermitted()
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.InterviewRescheduled))
+                    .And(a => _processFixture.GivenARescheduleInterviewRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, _processFixture.Process.VersionNumber))
+                .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheProcessStateRemainsInterviewRescheduled(_processFixture.UpdateProcessRequest))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SoleToJointStates.InterviewRescheduled, SoleToJointStates.InterviewRescheduled))
+                .BDDfy();
+        }
+
+        [Fact]
+        public void BadRequestIsReturnedWhenRescheduleInterviewAppointmentDataIsMissing()
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.InterviewScheduled))
+                    .And(a => _processFixture.GivenARequestRescheduleInterviewRequestWithMissingData())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(t => _steps.ThenBadRequestIsReturned())
+                .BDDfy();
+        }
         #endregion
 
         #region HOApproval
@@ -476,13 +514,19 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [InlineData(SoleToJointFormDataValues.Decline, SoleToJointStates.HOApprovalFailed, SoleToJointStates.InterviewScheduled)]
         [InlineData(SoleToJointFormDataValues.Approve, SoleToJointStates.HOApprovalPassed, SoleToJointStates.InterviewRescheduled)]
         [InlineData(SoleToJointFormDataValues.Decline, SoleToJointStates.HOApprovalFailed, SoleToJointStates.InterviewRescheduled)]
+        [InlineData(SoleToJointFormDataValues.Approve, SoleToJointStates.HOApprovalPassed, SoleToJointStates.TenureInvestigationPassed)]
+        [InlineData(SoleToJointFormDataValues.Approve, SoleToJointStates.HOApprovalPassed, SoleToJointStates.TenureInvestigationFailed)]
+        [InlineData(SoleToJointFormDataValues.Approve, SoleToJointStates.HOApprovalPassed, SoleToJointStates.TenureInvestigationPassedWithInt)]
+        [InlineData(SoleToJointFormDataValues.Decline, SoleToJointStates.HOApprovalFailed, SoleToJointStates.TenureInvestigationPassed)]
+        [InlineData(SoleToJointFormDataValues.Decline, SoleToJointStates.HOApprovalFailed, SoleToJointStates.TenureInvestigationFailed)]
+        [InlineData(SoleToJointFormDataValues.Decline, SoleToJointStates.HOApprovalFailed, SoleToJointStates.TenureInvestigationPassedWithInt)]
         public void ProcessStateIsUpdatedToShowResultOfHOApproval(string housingOfficerRecommendation, string destinationState, string initialState)
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(initialState))
                     .And(a => _processFixture.GivenAHOApprovalRequest(housingOfficerRecommendation))
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessStateIsUpdatedToShowResultsOfHOApproval(_processFixture.UpdateProcessRequest, destinationState, initialState))
-                //.And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, initialState, destinationState))
+                .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, initialState, destinationState))
                 .BDDfy();
         }
 
@@ -525,6 +569,16 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .BDDfy();
         }
 
+        [Fact]
+        public void BadRequestIsReturnedWhenScheduleTenureAppointmentDataIsMissing()
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.HOApprovalPassed))
+                    .And(a => _processFixture.GivenARequestTenureAppointmentRequestWithMissingData())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(t => _steps.ThenBadRequestIsReturned())
+                .BDDfy();
+        }
+
         #endregion
 
         #region Reschedule Tenure Appointment
@@ -537,6 +591,28 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessStateIsUpdatedToRescheduleTenureAppointment(_processFixture.UpdateProcessRequest))
                     .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SoleToJointStates.TenureAppointmentScheduled, SoleToJointStates.TenureAppointmentRescheduled))
+                .BDDfy();
+        }
+
+        [Fact]
+        public void MultipleTenureAppointmentReschedulesArePermitted()
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.TenureAppointmentRescheduled))
+                    .And(a => _processFixture.GivenARescheduleTenureAppointmentRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, _processFixture.Process.VersionNumber))
+                .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheProcessStateRemainsTenureAppointmentRescheduled(_processFixture.UpdateProcessRequest))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SoleToJointStates.TenureAppointmentRescheduled, SoleToJointStates.TenureAppointmentRescheduled))
+                .BDDfy();
+        }
+
+        [Fact]
+        public void BadRequestIsReturnedWhenRescheduleTenureAppointmentDataIsMissing()
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.TenureAppointmentScheduled))
+                    .And(a => _processFixture.GivenARescheduleTenureAppointmentRequestWithMissingData())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(t => _steps.ThenBadRequestIsReturned())
                 .BDDfy();
         }
 
