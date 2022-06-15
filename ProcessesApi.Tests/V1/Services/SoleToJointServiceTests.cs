@@ -724,12 +724,14 @@ namespace ProcessesApi.Tests.V1.Services
 
         #region Reschedule Interview
 
-        [Fact]
-        public async Task ProcessStateIsUpdatedToInterviewRescheduledOnScheduleInterview()
+        [Theory]
+        [InlineData(SoleToJointStates.InterviewScheduled)]
+        [InlineData(SoleToJointStates.InterviewRescheduled)]
+        public async Task ProcessStateIsUpdatedToInterviewRescheduledOnScheduleInterview(string initialState)
         {
             // Arrange
             var appointmentDateTime = DateTime.UtcNow.ToString("s", CultureInfo.InvariantCulture);
-            var process = CreateProcessWithCurrentState(SoleToJointStates.InterviewScheduled);
+            var process = CreateProcessWithCurrentState(initialState);
             var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.RescheduleInterview, new Dictionary<string, object>
             {
                 { SoleToJointFormDataKeys.AppointmentDateTime, appointmentDateTime }
@@ -741,10 +743,10 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.InterviewRescheduled,
-                new List<string> { SoleToJointPermittedTriggers.HOApproval, SoleToJointPermittedTriggers.CancelProcess });
+                new List<string> { SoleToJointPermittedTriggers.HOApproval, SoleToJointPermittedTriggers.RescheduleInterview, SoleToJointPermittedTriggers.CancelProcess });
 
-            process.PreviousStates.Last().State.Should().Be(SoleToJointStates.InterviewScheduled);
-            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.InterviewScheduled, SoleToJointStates.InterviewRescheduled);
+            process.PreviousStates.Last().State.Should().Be(initialState);
+            VerifyThatProcessUpdatedEventIsTriggered(initialState, SoleToJointStates.InterviewRescheduled);
         }
 
         #endregion
