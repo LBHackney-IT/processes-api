@@ -105,6 +105,7 @@ namespace ProcessesApi.V1.Services
         {
             var processRequest = transition.Parameters[0] as ProcessTrigger;
 
+
             var triggerMappings = new Dictionary<string, string>
             {
                 {SoleToJointFormDataValues.Appointment, SoleToJointInternalTriggers.TenureInvestigationPassedWithInt },
@@ -113,7 +114,8 @@ namespace ProcessesApi.V1.Services
             };
             SoleToJointHelpers.ValidateRecommendation(processRequest,
                                                         triggerMappings,
-                                                        SoleToJointFormDataKeys.TenureInvestigationRecommendation);
+                                                        SoleToJointFormDataKeys.TenureInvestigationRecommendation,
+                                                        null);
 
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
@@ -122,7 +124,6 @@ namespace ProcessesApi.V1.Services
         {
             var processRequest = transition.Parameters[0] as ProcessTrigger;
 
-
             var triggerMappings = new Dictionary<string, string>
             {
                 { SoleToJointFormDataValues.Approve, SoleToJointInternalTriggers.HOApprovalPassed },
@@ -130,7 +131,8 @@ namespace ProcessesApi.V1.Services
             };
             SoleToJointHelpers.ValidateRecommendation(processRequest,
                                                         triggerMappings,
-                                                        SoleToJointFormDataKeys.HORecommendation);
+                                                        SoleToJointFormDataKeys.HORecommendation,
+                                                        SoleToJointFormDataKeys.HousingAreaManagerName);
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
@@ -257,13 +259,22 @@ namespace ProcessesApi.V1.Services
                     .Permit(SoleToJointInternalTriggers.TenureInvestigationPassedWithInt, SoleToJointStates.TenureInvestigationPassedWithInt);
 
             _machine.Configure(SoleToJointStates.TenureInvestigationPassedWithInt)
-                    .Permit(SoleToJointPermittedTriggers.ScheduleInterview, SoleToJointStates.InterviewScheduled);
+                    .Permit(SoleToJointPermittedTriggers.ScheduleInterview, SoleToJointStates.InterviewScheduled)
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.HOApproval, CheckHOApproval)
+                    .Permit(SoleToJointInternalTriggers.HOApprovalFailed, SoleToJointStates.HOApprovalFailed)
+                    .Permit(SoleToJointInternalTriggers.HOApprovalPassed, SoleToJointStates.HOApprovalPassed);
 
             _machine.Configure(SoleToJointStates.TenureInvestigationPassed)
-                   .Permit(SoleToJointPermittedTriggers.ScheduleInterview, SoleToJointStates.InterviewScheduled);
+                   .Permit(SoleToJointPermittedTriggers.ScheduleInterview, SoleToJointStates.InterviewScheduled)
+                   .InternalTransitionAsync(SoleToJointPermittedTriggers.HOApproval, CheckHOApproval)
+                   .Permit(SoleToJointInternalTriggers.HOApprovalFailed, SoleToJointStates.HOApprovalFailed)
+                   .Permit(SoleToJointInternalTriggers.HOApprovalPassed, SoleToJointStates.HOApprovalPassed); ;
 
             _machine.Configure(SoleToJointStates.TenureInvestigationFailed)
-                    .Permit(SoleToJointPermittedTriggers.ScheduleInterview, SoleToJointStates.InterviewScheduled);
+                    .Permit(SoleToJointPermittedTriggers.ScheduleInterview, SoleToJointStates.InterviewScheduled)
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.HOApproval, CheckHOApproval)
+                    .Permit(SoleToJointInternalTriggers.HOApprovalFailed, SoleToJointStates.HOApprovalFailed)
+                    .Permit(SoleToJointInternalTriggers.HOApprovalPassed, SoleToJointStates.HOApprovalPassed); ;
 
             _machine.Configure(SoleToJointStates.InterviewScheduled)
                     .OnEntry(AddAppointmentDateTimeToEvent)

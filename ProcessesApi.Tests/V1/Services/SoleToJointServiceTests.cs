@@ -157,8 +157,8 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SoleToJointStates.ManualChecksPassed, SoleToJointPermittedTriggers.CheckTenancyBreach, new string[] { SoleToJointFormDataKeys.BR5, SoleToJointFormDataKeys.BR10, SoleToJointFormDataKeys.BR17, SoleToJointFormDataKeys.BR18 })]
         [InlineData(SoleToJointStates.BreachChecksPassed, SoleToJointPermittedTriggers.RequestDocumentsAppointment, new string[] { SoleToJointFormDataKeys.AppointmentDateTime })]
         [InlineData(SoleToJointStates.ApplicationSubmitted, SoleToJointPermittedTriggers.TenureInvestigation, new string[] { SoleToJointFormDataKeys.TenureInvestigationRecommendation })]
-        [InlineData(SoleToJointStates.InterviewScheduled, SoleToJointPermittedTriggers.HOApproval, new string[] { SoleToJointFormDataKeys.HORecommendation })]
-        [InlineData(SoleToJointStates.InterviewRescheduled, SoleToJointPermittedTriggers.HOApproval, new string[] { SoleToJointFormDataKeys.HORecommendation })]
+        [InlineData(SoleToJointStates.InterviewScheduled, SoleToJointPermittedTriggers.HOApproval, new string[] { SoleToJointFormDataKeys.HORecommendation, SoleToJointFormDataKeys.HousingAreaManagerName })]
+        [InlineData(SoleToJointStates.InterviewRescheduled, SoleToJointPermittedTriggers.HOApproval, new string[] { SoleToJointFormDataKeys.HORecommendation, SoleToJointFormDataKeys.HousingAreaManagerName })]
         [InlineData(SoleToJointStates.HOApprovalPassed, SoleToJointPermittedTriggers.ScheduleTenureAppointment, new string[] { SoleToJointFormDataKeys.AppointmentDateTime })]
         public void ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
         {
@@ -659,7 +659,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, expectedState,
-                new List<string> { SoleToJointPermittedTriggers.ScheduleInterview }
+                new List<string> { SoleToJointPermittedTriggers.ScheduleInterview, SoleToJointPermittedTriggers.HOApproval }
             );
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.ApplicationSubmitted);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.ApplicationSubmitted, expectedState);
@@ -756,6 +756,10 @@ namespace ProcessesApi.Tests.V1.Services
         [Theory]
         [InlineData(SoleToJointStates.InterviewScheduled)]
         [InlineData(SoleToJointStates.InterviewRescheduled)]
+        [InlineData(SoleToJointStates.TenureInvestigationPassedWithInt)]
+        [InlineData(SoleToJointStates.TenureInvestigationPassed)]
+        [InlineData(SoleToJointStates.TenureInvestigationFailed)]
+
         public async Task ProcessStateIsUpdatedToHOApprovalPassed(string initialState)
         {
             // Arrange
@@ -763,6 +767,7 @@ namespace ProcessesApi.Tests.V1.Services
             var formData = new Dictionary<string, object>
             {
                 {  SoleToJointFormDataKeys.HORecommendation, SoleToJointFormDataValues.Approve },
+                {  SoleToJointFormDataKeys.HousingAreaManagerName, "ManagerName"  }
             };
             var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.HOApproval, formData);
 
@@ -787,7 +792,8 @@ namespace ProcessesApi.Tests.V1.Services
             var process = CreateProcessWithCurrentState(initialState);
             var formData = new Dictionary<string, object>
             {
-                {  SoleToJointFormDataKeys.HORecommendation, SoleToJointFormDataValues.Decline }
+                {  SoleToJointFormDataKeys.HORecommendation, SoleToJointFormDataValues.Decline },
+                { SoleToJointFormDataKeys.HousingAreaManagerName, "ManagerName"}
             };
             var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.HOApproval, formData);
 
@@ -813,7 +819,8 @@ namespace ProcessesApi.Tests.V1.Services
             var invalidRecommendation = "some invalid value";
             var formData = new Dictionary<string, object>
             {
-                {  SoleToJointFormDataKeys.HORecommendation, invalidRecommendation }
+                {  SoleToJointFormDataKeys.HORecommendation, invalidRecommendation },
+                { SoleToJointFormDataKeys.HousingAreaManagerName, "ManagerName"}
             };
             var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.HOApproval, formData);
             var expectedRecommendationValues = new List<string>()
