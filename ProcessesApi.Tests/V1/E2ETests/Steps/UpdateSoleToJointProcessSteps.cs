@@ -316,7 +316,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             Action<EventData> verifyData = (eventData) =>
             {
                 var newDataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(eventData.NewData.ToString(), _jsonOptions);
-                newDataDic["state"].ToString().Should().Be(SoleToJointStates.TenureUpdated);
+                newDataDic["state"].ToString().Should().Be(SharedProcessStates.ProcessClosed);
             };
 
             await VerifyProcessClosedEventIsRaised(snsFixture, processId, verifyData).ConfigureAwait(false);
@@ -360,7 +360,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
         public async Task ThenTheProcessCompletedEventIsRaised(ISnsFixture snsFixture, Guid processId)
         {
-            await VerifyProcessCompletedEventIsRaisedWithStateData(snsFixture, processId, SharedProcessStates.ProcessClosed, SoleToJointFormDataKeys.Reason).ConfigureAwait(false);
+            await VerifyProcessCompletedEventIsRaisedWithStateData(snsFixture, processId, SoleToJointStates.TenureUpdated, SoleToJointFormDataKeys.Reason).ConfigureAwait(false);
         }
     }
 }
