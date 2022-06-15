@@ -277,6 +277,7 @@ namespace ProcessesApi.V1.Services
             _machine.Configure(SoleToJointStates.InterviewRescheduled)
                     .OnEntry(AddAppointmentDateTimeToEvent)
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.HOApproval, CheckHOApproval)
+                    .PermitReentry(SoleToJointPermittedTriggers.RescheduleInterview)
                     .Permit(SoleToJointInternalTriggers.HOApprovalFailed, SoleToJointStates.HOApprovalFailed)
                     .Permit(SoleToJointInternalTriggers.HOApprovalPassed, SoleToJointStates.HOApprovalPassed)
                     .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
