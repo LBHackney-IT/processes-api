@@ -63,12 +63,14 @@ namespace ProcessesApi.V1.Helpers
             return requestFormData.Where(x => selectedKeys.Contains(x.Key))
                                   .ToDictionary(val => val.Key, val => val.Value);
         }
-        public static void ValidateRecommendation(this ProcessTrigger processRequest, Dictionary<string, string> triggerMappings, string keyName)
+        public static void ValidateRecommendation(this ProcessTrigger processRequest, Dictionary<string, string> triggerMappings, string keyName, List<string> otherExpectedFormDataKeys)
         {
             var formData = processRequest.FormData;
 
-            var expectedFormDataKeys = new List<string> { keyName };
+            var expectedFormDataKeys = otherExpectedFormDataKeys ?? new List<string>();
+            expectedFormDataKeys.Add(keyName);
             ValidateFormData(formData, expectedFormDataKeys);
+
             var recommendation = formData[keyName].ToString();
 
             if (!triggerMappings.ContainsKey(recommendation))

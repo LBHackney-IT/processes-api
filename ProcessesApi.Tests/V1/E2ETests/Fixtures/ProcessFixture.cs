@@ -333,7 +333,8 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
-                { SoleToJointFormDataKeys.HORecommendation, housingOfficerRecommendation }
+                { SoleToJointFormDataKeys.HORecommendation, housingOfficerRecommendation },
+                { SoleToJointFormDataKeys.HousingAreaManagerName, "ManagerName" }
             };
         }
 
