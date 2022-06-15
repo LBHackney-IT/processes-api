@@ -203,6 +203,12 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         {
             await CheckProcessState(request.Id, SoleToJointStates.TenureAppointmentRescheduled, SoleToJointStates.TenureAppointmentScheduled).ConfigureAwait(false);
         }
+
+        public async Task ThenTheProcessStateIsUpdatedToUpdateTenure(UpdateProcessQuery request, string initialState)
+        {
+            await CheckProcessState(request.Id, SoleToJointStates.TenureUpdated, initialState).ConfigureAwait(false);
+        }
+
         public async Task VerifyProcessUpdatedEventIsRaised(ISnsFixture snsFixture, Guid processId, string oldState, string newState, Action<string> verifyNewStateData = null)
         {
             Action<string, string> verifyData = (dataAsString, state) =>
@@ -279,12 +285,38 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
         }
 
+        public async Task VerifyProcessCompletedEventIsRaised(ISnsFixture snsFixture, Guid processId, Action<EventData> verifyStateData)
+        {
+            Action<EntityEventSns> verifyFunc = actual =>
+            {
+                actual.Id.Should().NotBeEmpty();
+                actual.CorrelationId.Should().NotBeEmpty();
+                actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
+                actual.EntityId.Should().Be(processId);
+
+                verifyStateData(actual.EventData);
+
+                actual.EventType.Should().Be(ProcessCompletedEventConstants.EVENTTYPE);
+                actual.SourceDomain.Should().Be(ProcessCompletedEventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(ProcessCompletedEventConstants.SOURCE_SYSTEM);
+                actual.Version.Should().Be(ProcessCompletedEventConstants.V1_VERSION);
+
+                actual.User.Email.Should().Be(TestToken.UserEmail);
+                actual.User.Name.Should().Be(TestToken.UserName);
+            };
+
+            var snsVerifier = snsFixture.GetSnsEventVerifier<EntityEventSns>();
+            var snsResult = await snsVerifier.VerifySnsEventRaised(verifyFunc);
+
+            if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
+        }
+
         public async Task ThenTheProcessClosedEventIsRaisedWithoutReason(ISnsFixture snsFixture, Guid processId)
         {
             Action<EventData> verifyData = (eventData) =>
             {
                 var newDataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(eventData.NewData.ToString(), _jsonOptions);
-                newDataDic["state"].ToString().Should().Be(SharedProcessStates.ProcessClosed);
+                newDataDic["state"].ToString().Should().Be(SoleToJointStates.TenureUpdated);
             };
 
             await VerifyProcessClosedEventIsRaised(snsFixture, processId, verifyData).ConfigureAwait(false);
@@ -303,6 +335,19 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             await VerifyProcessClosedEventIsRaised(snsFixture, processId, verifyData).ConfigureAwait(false);
         }
 
+        private async Task VerifyProcessCompletedEventIsRaisedWithStateData(ISnsFixture snsFixture, Guid processId, string newState, string key)
+        {
+            Action<EventData> verifyData = (eventData) =>
+            {
+                var newDataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(eventData.NewData.ToString(), _jsonOptions);
+                newDataDic["state"].ToString().Should().Be(newState);
+
+                var stateData = JsonSerializer.Deserialize<Dictionary<string, object>>(newDataDic["stateData"].ToString(), _jsonOptions);
+                stateData.Should().ContainKey(key);
+            };
+            await VerifyProcessCompletedEventIsRaised(snsFixture, processId, verifyData).ConfigureAwait(false);
+        }
+
         public async Task ThenTheProcessClosedEventIsRaisedWithReason(ISnsFixture snsFixture, Guid processId)
         {
             await VerifyProcessClosedEventIsRaisedWithStateData(snsFixture, processId, SharedProcessStates.ProcessClosed, SoleToJointFormDataKeys.Reason).ConfigureAwait(false);
@@ -311,6 +356,11 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         public async Task ThenTheProcessClosedEventIsRaisedWithComment(ISnsFixture snsFixture, Guid processId)
         {
             await VerifyProcessClosedEventIsRaisedWithStateData(snsFixture, processId, SharedProcessStates.ProcessCancelled, SoleToJointFormDataKeys.Comment).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheProcessCompletedEventIsRaised(ISnsFixture snsFixture, Guid processId)
+        {
+            await VerifyProcessCompletedEventIsRaisedWithStateData(snsFixture, processId, SharedProcessStates.ProcessClosed, SoleToJointFormDataKeys.Reason).ConfigureAwait(false);
         }
     }
 }
