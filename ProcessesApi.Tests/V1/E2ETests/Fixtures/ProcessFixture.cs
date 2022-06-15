@@ -9,6 +9,7 @@ using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Infrastructure.Extensions;
+using ProcessesApi.V1.Domain.SoleToJoint;
 
 namespace ProcessesApi.Tests.V1.E2E.Fixtures
 {
@@ -116,12 +117,18 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CloseProcess);
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.HasNotifiedResident, true);
         }
+
         public void GivenACloseProcessRequestWithReason()
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CloseProcess);
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.HasNotifiedResident, true);
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.Reason, "This is a reason");
+        }
 
+        public void GivenACancelProcessRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CancelProcess);
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.Comment, "This is a comment");
         }
 
         public void GivenACheckAutomatedEligibilityRequest()
@@ -292,6 +299,78 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                 Id = ProcessId
             };
             UpdateProcessByIdRequestObject = _fixture.Create<UpdateProcessByIdRequestObject>();
+        }
+
+        public void GivenAScheduleInterviewRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.ScheduleInterview);
+
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+        }
+
+        public void GivenARequestScheduleInterviewRequestWithMissingData()
+        {
+            GivenAScheduleInterviewRequest();
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.AppointmentDateTime);
+        }
+
+        public void GivenARescheduleInterviewRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RescheduleInterview);
+
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+        }
+
+        public void GivenARequestRescheduleInterviewRequestWithMissingData()
+        {
+            GivenARescheduleInterviewRequest();
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.AppointmentDateTime);
+        }
+
+        public void GivenAHOApprovalRequest(string housingOfficerRecommendation)
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.HOApproval);
+
+            UpdateProcessRequestObject.FormData = new Dictionary<string, object>
+            {
+                { SoleToJointFormDataKeys.HORecommendation, housingOfficerRecommendation }
+            };
+        }
+
+        public void GivenAHOApprovalRequestWithMissingData()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.HOApproval);
+        }
+
+        public void GivenAHOApprovalRequestWithInvalidData()
+        {
+            GivenAHOApprovalRequest("invalid value");
+        }
+
+        public void GivenAScheduleTenureAppointmentRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.ScheduleTenureAppointment);
+
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+        }
+
+        public void GivenARequestTenureAppointmentRequestWithMissingData()
+        {
+            GivenAScheduleTenureAppointmentRequest();
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.AppointmentDateTime);
+        }
+
+        public void GivenARescheduleTenureAppointmentRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RescheduleTenureAppointment);
+
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+        }
+
+        public void GivenARescheduleTenureAppointmentRequestWithMissingData()
+        {
+            GivenARescheduleTenureAppointmentRequest();
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.AppointmentDateTime);
         }
     }
 }
