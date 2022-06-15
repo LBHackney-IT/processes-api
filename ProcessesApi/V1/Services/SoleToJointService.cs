@@ -132,7 +132,7 @@ namespace ProcessesApi.V1.Services
             SoleToJointHelpers.ValidateRecommendation(processRequest,
                                                         triggerMappings,
                                                         SoleToJointFormDataKeys.HORecommendation,
-                                                        SoleToJointFormDataKeys.HousingAreaManagerName);
+                                                        new List<string> { SoleToJointFormDataKeys.HousingAreaManagerName });
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
