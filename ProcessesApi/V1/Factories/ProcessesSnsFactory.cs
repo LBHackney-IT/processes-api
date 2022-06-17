@@ -18,10 +18,10 @@ namespace ProcessesApi.V1.Factories
                 DateTime = DateTime.UtcNow,
                 EntityId = process.Id,
                 Id = Guid.NewGuid(),
-                EventType = ProcessStartedEventConstants.EVENTTYPE,
-                Version = ProcessStartedEventConstants.V1_VERSION,
-                SourceDomain = ProcessStartedEventConstants.SOURCE_DOMAIN,
-                SourceSystem = ProcessStartedEventConstants.SOURCE_SYSTEM,
+                EventType = ProcessEventConstants.PROCESS_STARTED_EVENT,
+                Version = ProcessEventConstants.V1_VERSION,
+                SourceDomain = ProcessEventConstants.SOURCE_DOMAIN,
+                SourceSystem = ProcessEventConstants.SOURCE_SYSTEM,
                 EventData = new EventData
                 {
                     NewData = process
@@ -30,75 +30,6 @@ namespace ProcessesApi.V1.Factories
 
             };
         }
-
-        public EntityEventSns ProcessClosed(Stateless.StateMachine<string, string>.Transition transition, Dictionary<string, object> stateData, Token token)
-        {
-            var triggerData = transition.Parameters[0] as ProcessTrigger;
-
-            return new EntityEventSns
-            {
-                CorrelationId = Guid.NewGuid(),
-                DateTime = DateTime.UtcNow,
-                EntityId = triggerData.Id,
-                Id = Guid.NewGuid(),
-                EventType = ProcessClosedEventConstants.EVENTTYPE,
-                Version = ProcessClosedEventConstants.V1_VERSION,
-                SourceDomain = ProcessClosedEventConstants.SOURCE_DOMAIN,
-                SourceSystem = ProcessClosedEventConstants.SOURCE_SYSTEM,
-                EventData = new EventData
-                {
-                    OldData = new ProcessStateChangeData
-                    {
-                        State = transition.Source
-                    },
-                    NewData = new ProcessStateChangeData
-                    {
-                        State = transition.Destination,
-                        StateData = stateData
-                    }
-                },
-                User = new User
-                {
-                    Name = token.Name,
-                    Email = token.Email
-                }
-            };
-        }
-
-        public EntityEventSns ProcessCompleted(Stateless.StateMachine<string, string>.Transition transition, Dictionary<string, object> stateData, Token token)
-        {
-            var triggerData = transition.Parameters[0] as ProcessTrigger;
-
-            return new EntityEventSns
-            {
-                CorrelationId = Guid.NewGuid(),
-                DateTime = DateTime.UtcNow,
-                EntityId = triggerData.Id,
-                Id = Guid.NewGuid(),
-                EventType = ProcessCompletedEventConstants.EVENTTYPE,
-                Version = ProcessCompletedEventConstants.V1_VERSION,
-                SourceDomain = ProcessCompletedEventConstants.SOURCE_DOMAIN,
-                SourceSystem = ProcessCompletedEventConstants.SOURCE_SYSTEM,
-                EventData = new EventData
-                {
-                    OldData = new ProcessStateChangeData
-                    {
-                        State = transition.Source
-                    },
-                    NewData = new ProcessStateChangeData
-                    {
-                        State = transition.Destination,
-                        StateData = stateData
-                    }
-                },
-                User = new User
-                {
-                    Name = token.Name,
-                    Email = token.Email
-                }
-            };
-        }
-
         public EntityEventSns ProcessUpdated(Guid id, UpdateEntityResult<ProcessState> updateResult, Token token)
         {
             return new EntityEventSns
@@ -107,10 +38,10 @@ namespace ProcessesApi.V1.Factories
                 DateTime = DateTime.UtcNow,
                 EntityId = id,
                 Id = Guid.NewGuid(),
-                EventType = ProcessUpdatedEventConstants.EVENTTYPE,
-                Version = ProcessUpdatedEventConstants.V1_VERSION,
-                SourceDomain = ProcessUpdatedEventConstants.SOURCE_DOMAIN,
-                SourceSystem = ProcessUpdatedEventConstants.SOURCE_SYSTEM,
+                EventType = ProcessEventConstants.PROCESS_UPDATED_EVENT,
+                Version = ProcessEventConstants.V1_VERSION,
+                SourceDomain = ProcessEventConstants.SOURCE_DOMAIN,
+                SourceSystem = ProcessEventConstants.SOURCE_SYSTEM,
                 EventData = new EventData
                 {
                     OldData = updateResult.OldValues,
@@ -124,7 +55,7 @@ namespace ProcessesApi.V1.Factories
             };
         }
 
-        public EntityEventSns ProcessStateUpdated(Stateless.StateMachine<string, string>.Transition transition, Dictionary<string, object> stateData, Token token)
+        public EntityEventSns ProcessStateUpdated(Stateless.StateMachine<string, string>.Transition transition, Dictionary<string, object> stateData, Token token, string eventType)
         {
             var triggerData = transition.Parameters[0] as ProcessTrigger;
 
@@ -134,10 +65,10 @@ namespace ProcessesApi.V1.Factories
                 DateTime = DateTime.UtcNow,
                 EntityId = triggerData.Id,
                 Id = Guid.NewGuid(),
-                EventType = ProcessUpdatedEventConstants.EVENTTYPE,
-                Version = ProcessUpdatedEventConstants.V1_VERSION,
-                SourceDomain = ProcessUpdatedEventConstants.SOURCE_DOMAIN,
-                SourceSystem = ProcessUpdatedEventConstants.SOURCE_SYSTEM,
+                EventType = eventType,
+                Version = ProcessEventConstants.V1_VERSION,
+                SourceDomain = ProcessEventConstants.SOURCE_DOMAIN,
+                SourceSystem = ProcessEventConstants.SOURCE_SYSTEM,
                 EventData = new EventData
                 {
                     OldData = new ProcessStateChangeData

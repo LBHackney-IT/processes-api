@@ -144,12 +144,9 @@ namespace ProcessesApi.V1.Services
         private async Task OnProcessClosed(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
+            SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
 
-            SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.HasNotifiedResident });
-
-            if (processRequest.FormData.ContainsKey(SoleToJointFormDataKeys.Reason))
-                _eventData = SoleToJointHelpers.CreateEventData(processRequest.FormData, new List<string> { SoleToJointFormDataKeys.Reason });
-
+            _eventData = SoleToJointHelpers._eventData;
             var hasNotifiedResidentString = processRequest.FormData[SoleToJointFormDataKeys.HasNotifiedResident];
 
             if (Boolean.TryParse(hasNotifiedResidentString.ToString(), out bool hasNotifiedResident))
@@ -176,12 +173,9 @@ namespace ProcessesApi.V1.Services
         private async Task OnProcessCompleted(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
+            SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
 
-            SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.HasNotifiedResident });
-
-            if (processRequest.FormData.ContainsKey(SoleToJointFormDataKeys.Reason))
-                _eventData = SoleToJointHelpers.CreateEventData(processRequest.FormData, new List<string> { SoleToJointFormDataKeys.Reason });
-
+            _eventData = SoleToJointHelpers._eventData;
             var hasNotifiedResidentString = processRequest.FormData[SoleToJointFormDataKeys.HasNotifiedResident];
 
             if (Boolean.TryParse(hasNotifiedResidentString.ToString(), out bool hasNotifiedResident))

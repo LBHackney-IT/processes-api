@@ -142,7 +142,7 @@ namespace ProcessesApi.Tests.V1.Services
         private void VerifyThatProcessUpdatedEventIsTriggered(string oldState, string newState)
         {
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
+            _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_UPDATED_EVENT);
             (_lastSnsEvent.EventData.OldData as ProcessStateChangeData).State.Should().Be(oldState);
             (_lastSnsEvent.EventData.NewData as ProcessStateChangeData).State.Should().Be(newState);
         }
@@ -213,7 +213,7 @@ namespace ProcessesApi.Tests.V1.Services
             process.PreviousStates.LastOrDefault().State.Should().Be(fromState);
 
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
+            _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_CLOSED_EVENT);
         }
 
         // List all states that CancelProcess can be triggered from
@@ -252,7 +252,7 @@ namespace ProcessesApi.Tests.V1.Services
             process.PreviousStates.LastOrDefault().State.Should().Be(fromState);
 
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
+            _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_CLOSED_EVENT);
         }
 
         # endregion
@@ -278,7 +278,7 @@ namespace ProcessesApi.Tests.V1.Services
             process.PreviousStates.Should().BeEmpty();
 
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessStartedEventConstants.EVENTTYPE);
+            _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_STARTED_EVENT);
         }
 
         #region Automated eligibility checks
@@ -937,7 +937,7 @@ namespace ProcessesApi.Tests.V1.Services
             process.PreviousStates.LastOrDefault().State.Should().Be(initialState);
 
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessCompletedEventConstants.EVENTTYPE);
+            _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_COMPLETED_EVENT);
         }
 
         #endregion

@@ -235,10 +235,10 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                 verifyData(actual.EventData.NewData.ToString(), newState);
                 verifyNewStateData?.Invoke(actual.EventData.NewData.ToString());
 
-                actual.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
-                actual.SourceDomain.Should().Be(ProcessUpdatedEventConstants.SOURCE_DOMAIN);
-                actual.SourceSystem.Should().Be(ProcessUpdatedEventConstants.SOURCE_SYSTEM);
-                actual.Version.Should().Be(ProcessUpdatedEventConstants.V1_VERSION);
+                actual.EventType.Should().Be(ProcessEventConstants.PROCESS_UPDATED_EVENT);
+                actual.SourceDomain.Should().Be(ProcessEventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(ProcessEventConstants.SOURCE_SYSTEM);
+                actual.Version.Should().Be(ProcessEventConstants.V1_VERSION);
 
                 actual.User.Email.Should().Be(TestToken.UserEmail);
                 actual.User.Name.Should().Be(TestToken.UserName);
@@ -277,10 +277,10 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
                 verifyStateData(actual.EventData);
 
-                actual.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
-                actual.SourceDomain.Should().Be(ProcessClosedEventConstants.SOURCE_DOMAIN);
-                actual.SourceSystem.Should().Be(ProcessClosedEventConstants.SOURCE_SYSTEM);
-                actual.Version.Should().Be(ProcessClosedEventConstants.V1_VERSION);
+                actual.EventType.Should().Be(ProcessEventConstants.PROCESS_CLOSED_EVENT);
+                actual.SourceDomain.Should().Be(ProcessEventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(ProcessEventConstants.SOURCE_SYSTEM);
+                actual.Version.Should().Be(ProcessEventConstants.V1_VERSION);
 
                 actual.User.Email.Should().Be(TestToken.UserEmail);
                 actual.User.Name.Should().Be(TestToken.UserName);
@@ -303,10 +303,10 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
                 verifyStateData(actual.EventData);
 
-                actual.EventType.Should().Be(ProcessCompletedEventConstants.EVENTTYPE);
-                actual.SourceDomain.Should().Be(ProcessCompletedEventConstants.SOURCE_DOMAIN);
-                actual.SourceSystem.Should().Be(ProcessCompletedEventConstants.SOURCE_SYSTEM);
-                actual.Version.Should().Be(ProcessCompletedEventConstants.V1_VERSION);
+                actual.EventType.Should().Be(ProcessEventConstants.PROCESS_COMPLETED_EVENT);
+                actual.SourceDomain.Should().Be(ProcessEventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(ProcessEventConstants.SOURCE_SYSTEM);
+                actual.Version.Should().Be(ProcessEventConstants.V1_VERSION);
 
                 actual.User.Email.Should().Be(TestToken.UserEmail);
                 actual.User.Name.Should().Be(TestToken.UserName);

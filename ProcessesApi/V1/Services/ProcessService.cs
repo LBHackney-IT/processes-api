@@ -2,6 +2,7 @@ using Hackney.Core.JWT;
 using Hackney.Core.Sns;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
+using ProcessesApi.V1.Infrastructure.JWT;
 using ProcessesApi.V1.Services.Exceptions;
 using ProcessesApi.V1.Services.Interfaces;
 using Stateless;
@@ -71,7 +72,7 @@ namespace ProcessesApi.V1.Services
             if (!_ignoredTriggersForProcessUpdated.Contains(transition.Trigger))
             {
                 var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-                var processSnsMessage = _snsFactory.ProcessStateUpdated(transition, _eventData, _token);
+                var processSnsMessage = _snsFactory.ProcessStateUpdated(transition, _eventData, _token, ProcessEventConstants.PROCESS_UPDATED_EVENT);
 
                 await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
             }
@@ -80,7 +81,7 @@ namespace ProcessesApi.V1.Services
         protected async Task PublishProcessClosedEvent(StateMachine<string, string>.Transition transition)
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = _snsFactory.ProcessClosed(transition, _eventData, _token);
+            var processSnsMessage = _snsFactory.ProcessStateUpdated(transition, _eventData, _token, ProcessEventConstants.PROCESS_CLOSED_EVENT);
 
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
@@ -88,7 +89,7 @@ namespace ProcessesApi.V1.Services
         protected async Task PublishProcessCompletedEvent(StateMachine<string, string>.Transition transition)
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = _snsFactory.ProcessCompleted(transition, _eventData, _token);
+            var processSnsMessage = _snsFactory.ProcessStateUpdated(transition, _eventData, _token, ProcessEventConstants.PROCESS_COMPLETED_EVENT);
 
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }

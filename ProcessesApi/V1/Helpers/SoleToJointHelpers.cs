@@ -9,6 +9,8 @@ namespace ProcessesApi.V1.Helpers
 {
     public static class SoleToJointHelpers
     {
+        public static Dictionary<string, object> _eventData;
+
         public static void ValidateManualCheck(this ProcessTrigger processRequest,
                                                string passedTrigger,
                                                string failedTrigger,
@@ -77,6 +79,16 @@ namespace ProcessesApi.V1.Helpers
                 throw new FormDataValueInvalidException(keyName, recommendation, triggerMappings.Keys.ToList());
             processRequest.Trigger = triggerMappings[recommendation];
 
+        }
+
+        public static void ValidateHasNotifiedResident(this ProcessTrigger processRequest)
+        {
+            var formData = processRequest.FormData;
+
+            ValidateFormData(formData, new List<string>() { SoleToJointFormDataKeys.HasNotifiedResident });
+
+            if (formData.ContainsKey(SoleToJointFormDataKeys.Reason))
+                _eventData = SoleToJointHelpers.CreateEventData(formData, new List<string> { SoleToJointFormDataKeys.Reason });
         }
     }
 }
