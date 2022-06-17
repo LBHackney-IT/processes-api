@@ -89,6 +89,17 @@ namespace ProcessesApi.V1.Helpers
 
             if (formData.ContainsKey(SoleToJointFormDataKeys.Reason))
                 _eventData = SoleToJointHelpers.CreateEventData(formData, new List<string> { SoleToJointFormDataKeys.Reason });
+
+            var hasNotifiedResidentString = processRequest.FormData[SoleToJointFormDataKeys.HasNotifiedResident];
+
+            if (Boolean.TryParse(hasNotifiedResidentString.ToString(), out bool hasNotifiedResident))
+            {
+                if (!hasNotifiedResident) throw new FormDataInvalidException("Housing Officer must notify the resident before closing this process.");
+            }
+            else
+            {
+                throw new FormDataFormatException("boolean", hasNotifiedResidentString);
+            }
         }
     }
 }

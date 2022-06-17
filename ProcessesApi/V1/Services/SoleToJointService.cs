@@ -147,18 +147,7 @@ namespace ProcessesApi.V1.Services
             SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
 
             _eventData = SoleToJointHelpers._eventData;
-            var hasNotifiedResidentString = processRequest.FormData[SoleToJointFormDataKeys.HasNotifiedResident];
-
-            if (Boolean.TryParse(hasNotifiedResidentString.ToString(), out bool hasNotifiedResident))
-            {
-                if (!hasNotifiedResident) throw new FormDataInvalidException("Housing Officer must notify the resident before closing this process.");
-
-                await PublishProcessClosedEvent(x).ConfigureAwait(false);
-            }
-            else
-            {
-                throw new FormDataFormatException("boolean", hasNotifiedResidentString);
-            }
+            await PublishProcessClosedEvent(x).ConfigureAwait(false);
         }
 
         private async Task OnProcessCancelled(Stateless.StateMachine<string, string>.Transition x)
@@ -176,18 +165,7 @@ namespace ProcessesApi.V1.Services
             SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
 
             _eventData = SoleToJointHelpers._eventData;
-            var hasNotifiedResidentString = processRequest.FormData[SoleToJointFormDataKeys.HasNotifiedResident];
-
-            if (Boolean.TryParse(hasNotifiedResidentString.ToString(), out bool hasNotifiedResident))
-            {
-                if (!hasNotifiedResident) throw new FormDataInvalidException("Housing Officer must notify the resident before completing this process.");
-
-                await PublishProcessCompletedEvent(x).ConfigureAwait(false);
-            }
-            else
-            {
-                throw new FormDataFormatException("boolean", hasNotifiedResidentString);
-            }
+            await PublishProcessCompletedEvent(x).ConfigureAwait(false);
         }
 
         private void AddIncomingTenantIdToRelatedEntities(Stateless.StateMachine<string, string>.Transition x)
