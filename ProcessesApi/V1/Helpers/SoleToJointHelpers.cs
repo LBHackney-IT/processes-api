@@ -88,7 +88,7 @@ namespace ProcessesApi.V1.Helpers
             ValidateFormData(formData, new List<string>() { SoleToJointFormDataKeys.HasNotifiedResident });
 
             if (formData.ContainsKey(SoleToJointFormDataKeys.Reason))
-                _eventData = SoleToJointHelpers.CreateEventData(formData, new List<string> { SoleToJointFormDataKeys.Reason });
+                _eventData = CreateEventData(formData, new List<string> { SoleToJointFormDataKeys.Reason });
 
             var hasNotifiedResidentString = processRequest.FormData[SoleToJointFormDataKeys.HasNotifiedResident];
 
