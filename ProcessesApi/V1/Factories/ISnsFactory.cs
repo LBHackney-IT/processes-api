@@ -10,8 +10,7 @@ namespace ProcessesApi.V1.Factories
     public interface ISnsFactory
     {
         EntityEventSns ProcessStarted(Process process, Token token);
-        public EntityEventSns ProcessClosed(Stateless.StateMachine<string, string>.Transition transition, Dictionary<string, object> eventData, Token token);
         EntityEventSns ProcessUpdated(Guid id, UpdateEntityResult<ProcessState> updateResult, Token token);
-        public EntityEventSns ProcessStateUpdated(Stateless.StateMachine<string, string>.Transition transition, Dictionary<string, object> eventData, Token token);
+        EntityEventSns ProcessStateUpdated(Stateless.StateMachine<string, string>.Transition transition, Dictionary<string, object> eventData, Token token, string eventType);
     }
 }

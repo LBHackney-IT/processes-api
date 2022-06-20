@@ -33,7 +33,8 @@ namespace ProcessesApi.V1.Services
             {
                 SoleToJointPermittedTriggers.CloseProcess,
                 SoleToJointPermittedTriggers.CancelProcess,
-                SharedInternalTriggers.StartApplication
+                SharedInternalTriggers.StartApplication,
+                SoleToJointPermittedTriggers.UpdateTenure
             };
         }
 
@@ -143,24 +144,10 @@ namespace ProcessesApi.V1.Services
         private async Task OnProcessClosed(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
+            SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
 
-            SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.HasNotifiedResident });
-
-            if (processRequest.FormData.ContainsKey(SoleToJointFormDataKeys.Reason))
-                _eventData = SoleToJointHelpers.CreateEventData(processRequest.FormData, new List<string> { SoleToJointFormDataKeys.Reason });
-
-            var hasNotifiedResidentString = processRequest.FormData[SoleToJointFormDataKeys.HasNotifiedResident];
-
-            if (Boolean.TryParse(hasNotifiedResidentString.ToString(), out bool hasNotifiedResident))
-            {
-                if (!hasNotifiedResident) throw new FormDataInvalidException("Housing Officer must notify the resident before closing this process.");
-
-                await PublishProcessClosedEvent(x).ConfigureAwait(false);
-            }
-            else
-            {
-                throw new FormDataFormatException("boolean", hasNotifiedResidentString);
-            }
+            _eventData = SoleToJointHelpers._eventData;
+            await PublishProcessClosedEvent(x).ConfigureAwait(false);
         }
 
         private async Task OnProcessCancelled(Stateless.StateMachine<string, string>.Transition x)
@@ -170,6 +157,15 @@ namespace ProcessesApi.V1.Services
 
             _eventData = SoleToJointHelpers.CreateEventData(processRequest.FormData, new List<string> { SoleToJointFormDataKeys.Comment });
             await PublishProcessClosedEvent(x).ConfigureAwait(false);
+        }
+
+        private async Task OnProcessCompleted(Stateless.StateMachine<string, string>.Transition x)
+        {
+            var processRequest = x.Parameters[0] as ProcessTrigger;
+            SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
+
+            _eventData = SoleToJointHelpers._eventData;
+            await PublishProcessCompletedEvent(x).ConfigureAwait(false);
         }
 
         private void AddIncomingTenantIdToRelatedEntities(Stateless.StateMachine<string, string>.Transition x)
@@ -304,17 +300,17 @@ namespace ProcessesApi.V1.Services
             _machine.Configure(SoleToJointStates.TenureAppointmentScheduled)
                      .OnEntry(AddAppointmentDateTimeToEvent)
                      .Permit(SoleToJointPermittedTriggers.RescheduleTenureAppointment, SoleToJointStates.TenureAppointmentRescheduled)
+                     .Permit(SoleToJointPermittedTriggers.UpdateTenure, SoleToJointStates.TenureUpdated)
                      .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
 
             _machine.Configure(SoleToJointStates.TenureAppointmentRescheduled)
                      .OnEntry(AddAppointmentDateTimeToEvent)
                      .PermitReentry(SoleToJointPermittedTriggers.RescheduleTenureAppointment)
+                     .Permit(SoleToJointPermittedTriggers.UpdateTenure, SoleToJointStates.TenureUpdated)
                      .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
 
-
-
-
-            //Add next permitted trigger here
+            _machine.Configure(SoleToJointStates.TenureUpdated)
+                    .OnEntryAsync(OnProcessCompleted);
         }
     }
 }
