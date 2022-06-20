@@ -18,7 +18,7 @@ ENV SONAR_TOKEN=$SONAR_TOKEN
 WORKDIR /app
 
 # Install and run sonar cloud scanner
-RUN apt-get update && apt-get install -y openjdk-11-jdk
+RUN apt-get update && apt-get install -y openjdk-11-jdk && apk add openjdk11-jre
 RUN dotnet tool install --global dotnet-sonarscanner 
 ENV PATH="$PATH:/root/.dotnet/tools"
 
