@@ -19,7 +19,7 @@ WORKDIR /app
 
 # Install and run sonar cloud scanner
 RUN apt-get update && apt-get install -y openjdk-11-jdk
-RUN dotnet tool install --global dotnet-sonarscanner 
+RUN dotnet tool install --global dotnet-sonarscanner 5.5.3
 ENV PATH="$PATH:/root/.dotnet/tools"
 
 RUN dotnet sonarscanner begin /k:"LBHackney-IT_processes-api" /o:"lbhackney-it" /d:sonar.host.url=https://sonarcloud.io /d:sonar.login="${SONAR_TOKEN}"
