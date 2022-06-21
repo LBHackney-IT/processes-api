@@ -18,6 +18,7 @@ using ProcessesApi.V1.Services.Exceptions;
 using System.Globalization;
 using Hackney.Shared.Person;
 using ProcessesApi.V1.Gateways;
+using Hackney.Shared.Tenure.Domain;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -148,6 +149,13 @@ namespace ProcessesApi.Tests.V1.Services
             _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_UPDATED_EVENT);
             (_lastSnsEvent.EventData.OldData as ProcessStateChangeData).State.Should().Be(oldState);
             (_lastSnsEvent.EventData.NewData as ProcessStateChangeData).State.Should().Be(newState);
+        }
+
+        private bool VerifyEndExistingTenure(TenureInformation updated, Process process)
+        {
+            updated.Id.Should().Be(process.TargetId);
+            updated.EndOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            return true;
         }
 
         // List states & triggers that expect certain form data values
@@ -940,6 +948,7 @@ namespace ProcessesApi.Tests.V1.Services
             process.PreviousStates.LastOrDefault().State.Should().Be(initialState);
 
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _mockTenureDb.Verify(g => g.UpdateTenureById(It.Is<TenureInformation>(x => VerifyEndExistingTenure(x, process))), Times.Once);
             _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_COMPLETED_EVENT);
         }
 
