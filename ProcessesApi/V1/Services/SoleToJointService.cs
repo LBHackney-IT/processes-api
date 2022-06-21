@@ -11,6 +11,7 @@ using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Services.Exceptions;
 using Hackney.Shared.Tenure.Domain;
 using ProcessesApi.V1.Gateways;
+using Hackney.Shared.Tenure.Boundary.Requests;
 
 namespace ProcessesApi.V1.Services
 {
@@ -180,6 +181,12 @@ namespace ProcessesApi.V1.Services
                 EndOfTenureDate = DateTime.UtcNow
             };
             await _tenureDbGateway.UpdateTenureById(tenureInfoRequest).ConfigureAwait(false);
+
+            var createTenureRequest = new CreateTenureRequestObject()
+            {
+                StartOfTenureDate = DateTime.UtcNow
+            };
+            await _tenureDbGateway.PostNewTenureAsync(createTenureRequest).ConfigureAwait(false);
         }
 
         private void AddIncomingTenantIdToRelatedEntities(Stateless.StateMachine<string, string>.Transition x)

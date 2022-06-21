@@ -19,6 +19,9 @@ using System.Globalization;
 using Hackney.Shared.Person;
 using ProcessesApi.V1.Gateways;
 using Hackney.Shared.Tenure.Domain;
+using Hackney.Shared.Tenure.Boundary.Requests;
+using Hackney.Shared.Tenure.Infrastructure;
+using Hackney.Shared.Tenure.Factories;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -155,6 +158,13 @@ namespace ProcessesApi.Tests.V1.Services
         {
             updated.Id.Should().Be(process.TargetId);
             updated.EndOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            return true;
+        }
+
+        private bool VerifyNewTenure(CreateTenureRequestObject created)
+        {
+            created.ToDatabase();
+            created.StartOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 2000);
             return true;
         }
 
@@ -949,6 +959,7 @@ namespace ProcessesApi.Tests.V1.Services
 
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             _mockTenureDb.Verify(g => g.UpdateTenureById(It.Is<TenureInformation>(x => VerifyEndExistingTenure(x, process))), Times.Once);
+            _mockTenureDb.Verify(g => g.PostNewTenureAsync(It.Is<CreateTenureRequestObject>(y => VerifyNewTenure(y))), Times.Once);
             _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_COMPLETED_EVENT);
         }
 

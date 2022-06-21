@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
+using Hackney.Shared.Tenure.Boundary.Requests;
 using Hackney.Shared.Tenure.Domain;
+using Hackney.Shared.Tenure.Infrastructure;
 
 namespace ProcessesApi.V1.Gateways
 {
@@ -8,5 +10,6 @@ namespace ProcessesApi.V1.Gateways
     {
         Task<TenureInformation> GetTenureById(Guid id);
         Task UpdateTenureById(TenureInformation tenureInformation);
+        Task<TenureInformationDb> PostNewTenureAsync(CreateTenureRequestObject createTenureRequestObject);
     }
 }
