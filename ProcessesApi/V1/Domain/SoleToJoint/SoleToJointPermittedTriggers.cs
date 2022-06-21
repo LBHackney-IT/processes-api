@@ -19,5 +19,7 @@ namespace ProcessesApi.V1.Domain.SoleToJoint
         public const string HOApproval = "HOApproval";
         public const string ScheduleTenureAppointment = "ScheduleTenureAppointment";
         public const string RescheduleTenureAppointment = "RescheduleTenureAppointment";
+        public const string UpdateTenure = "UpdateTenure";
+
     }
 }

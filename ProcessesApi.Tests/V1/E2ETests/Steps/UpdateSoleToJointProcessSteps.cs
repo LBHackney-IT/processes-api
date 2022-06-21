@@ -208,10 +208,13 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         {
             await CheckProcessState(request.Id, SoleToJointStates.TenureAppointmentRescheduled, SoleToJointStates.TenureAppointmentScheduled).ConfigureAwait(false);
         }
-
         public async Task ThenTheProcessStateRemainsTenureAppointmentRescheduled(UpdateProcessQuery request)
         {
             await CheckProcessState(request.Id, SoleToJointStates.TenureAppointmentRescheduled, SoleToJointStates.TenureAppointmentRescheduled).ConfigureAwait(false);
+        }
+        public async Task ThenTheProcessStateIsUpdatedToUpdateTenure(UpdateProcessQuery request, string initialState)
+        {
+            await CheckProcessState(request.Id, SoleToJointStates.TenureUpdated, initialState).ConfigureAwait(false);
         }
         public async Task VerifyProcessUpdatedEventIsRaised(ISnsFixture snsFixture, Guid processId, string oldState, string newState, Action<string> verifyNewStateData = null)
         {
@@ -232,10 +235,10 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                 verifyData(actual.EventData.NewData.ToString(), newState);
                 verifyNewStateData?.Invoke(actual.EventData.NewData.ToString());
 
-                actual.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
-                actual.SourceDomain.Should().Be(ProcessUpdatedEventConstants.SOURCE_DOMAIN);
-                actual.SourceSystem.Should().Be(ProcessUpdatedEventConstants.SOURCE_SYSTEM);
-                actual.Version.Should().Be(ProcessUpdatedEventConstants.V1_VERSION);
+                actual.EventType.Should().Be(ProcessEventConstants.PROCESS_UPDATED_EVENT);
+                actual.SourceDomain.Should().Be(ProcessEventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(ProcessEventConstants.SOURCE_SYSTEM);
+                actual.Version.Should().Be(ProcessEventConstants.V1_VERSION);
 
                 actual.User.Email.Should().Be(TestToken.UserEmail);
                 actual.User.Name.Should().Be(TestToken.UserName);
@@ -274,10 +277,36 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
                 verifyStateData(actual.EventData);
 
-                actual.EventType.Should().Be(ProcessClosedEventConstants.EVENTTYPE);
-                actual.SourceDomain.Should().Be(ProcessClosedEventConstants.SOURCE_DOMAIN);
-                actual.SourceSystem.Should().Be(ProcessClosedEventConstants.SOURCE_SYSTEM);
-                actual.Version.Should().Be(ProcessClosedEventConstants.V1_VERSION);
+                actual.EventType.Should().Be(ProcessEventConstants.PROCESS_CLOSED_EVENT);
+                actual.SourceDomain.Should().Be(ProcessEventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(ProcessEventConstants.SOURCE_SYSTEM);
+                actual.Version.Should().Be(ProcessEventConstants.V1_VERSION);
+
+                actual.User.Email.Should().Be(TestToken.UserEmail);
+                actual.User.Name.Should().Be(TestToken.UserName);
+            };
+
+            var snsVerifier = snsFixture.GetSnsEventVerifier<EntityEventSns>();
+            var snsResult = await snsVerifier.VerifySnsEventRaised(verifyFunc);
+
+            if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
+        }
+
+        public async Task VerifyProcessCompletedEventIsRaised(ISnsFixture snsFixture, Guid processId, Action<EventData> verifyStateData)
+        {
+            Action<EntityEventSns> verifyFunc = actual =>
+            {
+                actual.Id.Should().NotBeEmpty();
+                actual.CorrelationId.Should().NotBeEmpty();
+                actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
+                actual.EntityId.Should().Be(processId);
+
+                verifyStateData(actual.EventData);
+
+                actual.EventType.Should().Be(ProcessEventConstants.PROCESS_COMPLETED_EVENT);
+                actual.SourceDomain.Should().Be(ProcessEventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(ProcessEventConstants.SOURCE_SYSTEM);
+                actual.Version.Should().Be(ProcessEventConstants.V1_VERSION);
 
                 actual.User.Email.Should().Be(TestToken.UserEmail);
                 actual.User.Name.Should().Be(TestToken.UserName);
@@ -313,6 +342,19 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             await VerifyProcessClosedEventIsRaised(snsFixture, processId, verifyData).ConfigureAwait(false);
         }
 
+        private async Task VerifyProcessCompletedEventIsRaisedWithStateData(ISnsFixture snsFixture, Guid processId, string newState, string key)
+        {
+            Action<EventData> verifyData = (eventData) =>
+            {
+                var newDataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(eventData.NewData.ToString(), _jsonOptions);
+                newDataDic["state"].ToString().Should().Be(newState);
+
+                var stateData = JsonSerializer.Deserialize<Dictionary<string, object>>(newDataDic["stateData"].ToString(), _jsonOptions);
+                stateData.Should().ContainKey(key);
+            };
+            await VerifyProcessCompletedEventIsRaised(snsFixture, processId, verifyData).ConfigureAwait(false);
+        }
+
         public async Task ThenTheProcessClosedEventIsRaisedWithReason(ISnsFixture snsFixture, Guid processId)
         {
             await VerifyProcessClosedEventIsRaisedWithStateData(snsFixture, processId, SharedProcessStates.ProcessClosed, SoleToJointFormDataKeys.Reason).ConfigureAwait(false);
@@ -321,6 +363,11 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         public async Task ThenTheProcessClosedEventIsRaisedWithComment(ISnsFixture snsFixture, Guid processId)
         {
             await VerifyProcessClosedEventIsRaisedWithStateData(snsFixture, processId, SharedProcessStates.ProcessCancelled, SoleToJointFormDataKeys.Comment).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheProcessCompletedEventIsRaised(ISnsFixture snsFixture, Guid processId)
+        {
+            await VerifyProcessCompletedEventIsRaisedWithStateData(snsFixture, processId, SoleToJointStates.TenureUpdated, SoleToJointFormDataKeys.Reason).ConfigureAwait(false);
         }
     }
 }
