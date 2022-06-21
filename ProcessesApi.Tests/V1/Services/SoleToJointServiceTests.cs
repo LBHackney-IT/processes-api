@@ -188,8 +188,8 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SoleToJointStates.AutomatedChecksFailed, false)]
         [InlineData(SoleToJointStates.ManualChecksFailed, false)]
         [InlineData(SoleToJointStates.BreachChecksFailed, false)]
-        [InlineData(SoleToJointStates.DocumentsRequestedDes, true )]
-        [InlineData(SoleToJointStates.DocumentsRequestedAppointment, true )]
+        [InlineData(SoleToJointStates.DocumentsRequestedDes, true)]
+        [InlineData(SoleToJointStates.DocumentsRequestedAppointment, true)]
         [InlineData(SoleToJointStates.DocumentsAppointmentRescheduled, true)]
         public async Task ProcessStateIsUpdatedToProcessClosedAndEventIsRaised(string fromState, bool hasReason)
         {
