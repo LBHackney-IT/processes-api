@@ -9,6 +9,8 @@ using Hackney.Core.Sns;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Services.Exceptions;
+using Hackney.Shared.Tenure.Domain;
+using ProcessesApi.V1.Gateways;
 
 namespace ProcessesApi.V1.Services
 {
@@ -16,18 +18,21 @@ namespace ProcessesApi.V1.Services
     {
         private readonly ISoleToJointAutomatedEligibilityChecksHelper _automatedcheckshelper;
         private readonly IGetPersonByIdHelper _personByIdHelper;
+        private readonly ITenureDbGateway _tenureDbGateway;
 
 
         public SoleToJointService(ISnsFactory snsFactory,
                                   ISnsGateway snsGateway,
                                   ISoleToJointAutomatedEligibilityChecksHelper automatedChecksHelper,
-                                  IGetPersonByIdHelper getPersonByIdHelper)
+                                  IGetPersonByIdHelper getPersonByIdHelper,
+                                  ITenureDbGateway tenureDbGateway)
             : base(snsFactory, snsGateway)
         {
             _snsFactory = snsFactory;
             _snsGateway = snsGateway;
             _automatedcheckshelper = automatedChecksHelper;
             _personByIdHelper = getPersonByIdHelper;
+            _tenureDbGateway = tenureDbGateway;
             _permittedTriggersType = typeof(SoleToJointPermittedTriggers);
             _ignoredTriggersForProcessUpdated = new List<string>
             {
@@ -166,6 +171,15 @@ namespace ProcessesApi.V1.Services
 
             _eventData = SoleToJointHelpers._eventData;
             await PublishProcessCompletedEvent(x).ConfigureAwait(false);
+
+            var process = x.Parameters[1] as Process;
+
+            var tenureInfoRequest = new TenureInformation()
+            {
+                Id = process.TargetId,
+                EndOfTenureDate = DateTime.UtcNow
+            };
+            await _tenureDbGateway.UpdateTenureById(tenureInfoRequest).ConfigureAwait(false);
         }
 
         private void AddIncomingTenantIdToRelatedEntities(Stateless.StateMachine<string, string>.Transition x)

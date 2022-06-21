@@ -17,6 +17,7 @@ using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Services.Exceptions;
 using System.Globalization;
 using Hackney.Shared.Person;
+using ProcessesApi.V1.Gateways;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -29,6 +30,7 @@ namespace ProcessesApi.Tests.V1.Services
 
         private Mock<ISoleToJointAutomatedEligibilityChecksHelper> _mockAutomatedEligibilityChecksHelper;
         private Mock<IGetPersonByIdHelper> _mockPersonByIdHelper;
+        private Mock<ITenureDbGateway> _mockTenureDb;
         private Mock<ISnsGateway> _mockSnsGateway;
         private readonly Token _token = new Token();
         private EntityEventSns _lastSnsEvent = new EntityEventSns();
@@ -86,11 +88,12 @@ namespace ProcessesApi.Tests.V1.Services
             _mockSnsGateway = new Mock<ISnsGateway>();
             _mockPersonByIdHelper = new Mock<IGetPersonByIdHelper>();
             _mockAutomatedEligibilityChecksHelper = new Mock<ISoleToJointAutomatedEligibilityChecksHelper>();
-
+            _mockTenureDb = new Mock<ITenureDbGateway>();
             _classUnderTest = new SoleToJointService(new ProcessesSnsFactory(),
                                                      _mockSnsGateway.Object,
                                                      _mockAutomatedEligibilityChecksHelper.Object,
-                                                     _mockPersonByIdHelper.Object);
+                                                     _mockPersonByIdHelper.Object,
+                                                     _mockTenureDb.Object);
 
             _mockSnsGateway
                 .Setup(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()))
