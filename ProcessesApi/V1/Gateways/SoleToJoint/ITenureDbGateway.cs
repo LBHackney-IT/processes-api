@@ -6,6 +6,7 @@ namespace ProcessesApi.V1.Gateways
 {
     public interface ITenureDbGateway
     {
-        public Task<TenureInformation> GetTenureById(Guid id);
+        Task<TenureInformation> GetTenureById(Guid id);
+        Task UpdateTenureById(TenureInformation tenureInformation);
     }
 }

@@ -29,5 +29,12 @@ namespace ProcessesApi.V1.Gateways
             var result = await _dynamoDbContext.LoadAsync<TenureInformationDb>(id).ConfigureAwait(false);
             return result?.ToDomain();
         }
+
+        [LogCall]
+        public async Task UpdateTenureById(TenureInformation tenureInformation)
+        {
+            _logger.LogDebug($"Calling IDynamoDBContext.SaveAsync for id {tenureInformation.Id}");
+            await _dynamoDbContext.SaveAsync(tenureInformation.ToDatabase()).ConfigureAwait(false);
+        }
     }
 }
