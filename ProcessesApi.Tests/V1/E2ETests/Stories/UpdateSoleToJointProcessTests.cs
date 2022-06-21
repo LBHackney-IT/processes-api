@@ -130,9 +130,6 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
 
         // List all states that CancelProcess can be triggered from
         [Theory]
-        [InlineData(SoleToJointStates.DocumentsRequestedDes)]
-        [InlineData(SoleToJointStates.DocumentsRequestedAppointment)]
-        [InlineData(SoleToJointStates.DocumentsAppointmentRescheduled)]
         [InlineData(SoleToJointStates.HOApprovalPassed)]
         [InlineData(SoleToJointStates.HOApprovalFailed)]
         [InlineData(SoleToJointStates.InterviewScheduled)]
