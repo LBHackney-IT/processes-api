@@ -69,10 +69,10 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
                 verifyData(actual.EventData.OldData.ToString(), processFixture.Process.ToDatabase());
                 verifyData(actual.EventData.NewData.ToString(), dbEntity);
 
-                actual.EventType.Should().Be(ProcessUpdatedEventConstants.EVENTTYPE);
-                actual.SourceDomain.Should().Be(ProcessUpdatedEventConstants.SOURCE_DOMAIN);
-                actual.SourceSystem.Should().Be(ProcessUpdatedEventConstants.SOURCE_SYSTEM);
-                actual.Version.Should().Be(ProcessUpdatedEventConstants.V1_VERSION);
+                actual.EventType.Should().Be(ProcessEventConstants.PROCESS_UPDATED_EVENT);
+                actual.SourceDomain.Should().Be(ProcessEventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(ProcessEventConstants.SOURCE_SYSTEM);
+                actual.Version.Should().Be(ProcessEventConstants.V1_VERSION);
 
                 actual.User.Email.Should().Be(TestToken.UserEmail);
                 actual.User.Name.Should().Be(TestToken.UserName);

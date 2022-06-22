@@ -33,7 +33,8 @@ namespace ProcessesApi.V1.Services
             {
                 SoleToJointPermittedTriggers.CloseProcess,
                 SoleToJointPermittedTriggers.CancelProcess,
-                SharedInternalTriggers.StartApplication
+                SharedInternalTriggers.StartApplication,
+                SoleToJointPermittedTriggers.UpdateTenure
             };
         }
 
@@ -105,6 +106,7 @@ namespace ProcessesApi.V1.Services
         {
             var processRequest = transition.Parameters[0] as ProcessTrigger;
 
+
             var triggerMappings = new Dictionary<string, string>
             {
                 {SoleToJointFormDataValues.Appointment, SoleToJointInternalTriggers.TenureInvestigationPassedWithInt },
@@ -113,7 +115,8 @@ namespace ProcessesApi.V1.Services
             };
             SoleToJointHelpers.ValidateRecommendation(processRequest,
                                                         triggerMappings,
-                                                        SoleToJointFormDataKeys.TenureInvestigationRecommendation);
+                                                        SoleToJointFormDataKeys.TenureInvestigationRecommendation,
+                                                        null);
 
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
@@ -122,7 +125,6 @@ namespace ProcessesApi.V1.Services
         {
             var processRequest = transition.Parameters[0] as ProcessTrigger;
 
-
             var triggerMappings = new Dictionary<string, string>
             {
                 { SoleToJointFormDataValues.Approve, SoleToJointInternalTriggers.HOApprovalPassed },
@@ -130,7 +132,8 @@ namespace ProcessesApi.V1.Services
             };
             SoleToJointHelpers.ValidateRecommendation(processRequest,
                                                         triggerMappings,
-                                                        SoleToJointFormDataKeys.HORecommendation);
+                                                        SoleToJointFormDataKeys.HORecommendation,
+                                                        new List<string> { SoleToJointFormDataKeys.HousingAreaManagerName });
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
@@ -141,24 +144,10 @@ namespace ProcessesApi.V1.Services
         private async Task OnProcessClosed(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
+            SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
 
-            SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.HasNotifiedResident });
-
-            if (processRequest.FormData.ContainsKey(SoleToJointFormDataKeys.Reason))
-                _eventData = SoleToJointHelpers.CreateEventData(processRequest.FormData, new List<string> { SoleToJointFormDataKeys.Reason });
-
-            var hasNotifiedResidentString = processRequest.FormData[SoleToJointFormDataKeys.HasNotifiedResident];
-
-            if (Boolean.TryParse(hasNotifiedResidentString.ToString(), out bool hasNotifiedResident))
-            {
-                if (!hasNotifiedResident) throw new FormDataInvalidException("Housing Officer must notify the resident before closing this process.");
-
-                await PublishProcessClosedEvent(x).ConfigureAwait(false);
-            }
-            else
-            {
-                throw new FormDataFormatException("boolean", hasNotifiedResidentString);
-            }
+            _eventData = SoleToJointHelpers._eventData;
+            await PublishProcessClosedEvent(x).ConfigureAwait(false);
         }
 
         private async Task OnProcessCancelled(Stateless.StateMachine<string, string>.Transition x)
@@ -168,6 +157,15 @@ namespace ProcessesApi.V1.Services
 
             _eventData = SoleToJointHelpers.CreateEventData(processRequest.FormData, new List<string> { SoleToJointFormDataKeys.Comment });
             await PublishProcessClosedEvent(x).ConfigureAwait(false);
+        }
+
+        private async Task OnProcessCompleted(Stateless.StateMachine<string, string>.Transition x)
+        {
+            var processRequest = x.Parameters[0] as ProcessTrigger;
+            SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
+
+            _eventData = SoleToJointHelpers._eventData;
+            await PublishProcessCompletedEvent(x).ConfigureAwait(false);
         }
 
         private void AddIncomingTenantIdToRelatedEntities(Stateless.StateMachine<string, string>.Transition x)
@@ -231,21 +229,21 @@ namespace ProcessesApi.V1.Services
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
                     .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
                     .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment)
-                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
+                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.DocumentsRequestedAppointment)
                     .OnEntry(AddAppointmentDateTimeToEvent)
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
                     .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
                     .Permit(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointStates.DocumentsAppointmentRescheduled)
-                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
+                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.DocumentsAppointmentRescheduled)
                     .OnEntry(AddAppointmentDateTimeToEvent)
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
                     .PermitReentry(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment)
                     .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
-                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
+                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.DocumentChecksPassed)
                     .Permit(SoleToJointPermittedTriggers.SubmitApplication, SoleToJointStates.ApplicationSubmitted);
@@ -257,13 +255,22 @@ namespace ProcessesApi.V1.Services
                     .Permit(SoleToJointInternalTriggers.TenureInvestigationPassedWithInt, SoleToJointStates.TenureInvestigationPassedWithInt);
 
             _machine.Configure(SoleToJointStates.TenureInvestigationPassedWithInt)
-                    .Permit(SoleToJointPermittedTriggers.ScheduleInterview, SoleToJointStates.InterviewScheduled);
+                    .Permit(SoleToJointPermittedTriggers.ScheduleInterview, SoleToJointStates.InterviewScheduled)
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.HOApproval, CheckHOApproval)
+                    .Permit(SoleToJointInternalTriggers.HOApprovalFailed, SoleToJointStates.HOApprovalFailed)
+                    .Permit(SoleToJointInternalTriggers.HOApprovalPassed, SoleToJointStates.HOApprovalPassed);
 
             _machine.Configure(SoleToJointStates.TenureInvestigationPassed)
-                   .Permit(SoleToJointPermittedTriggers.ScheduleInterview, SoleToJointStates.InterviewScheduled);
+                   .Permit(SoleToJointPermittedTriggers.ScheduleInterview, SoleToJointStates.InterviewScheduled)
+                   .InternalTransitionAsync(SoleToJointPermittedTriggers.HOApproval, CheckHOApproval)
+                   .Permit(SoleToJointInternalTriggers.HOApprovalFailed, SoleToJointStates.HOApprovalFailed)
+                   .Permit(SoleToJointInternalTriggers.HOApprovalPassed, SoleToJointStates.HOApprovalPassed); ;
 
             _machine.Configure(SoleToJointStates.TenureInvestigationFailed)
-                    .Permit(SoleToJointPermittedTriggers.ScheduleInterview, SoleToJointStates.InterviewScheduled);
+                    .Permit(SoleToJointPermittedTriggers.ScheduleInterview, SoleToJointStates.InterviewScheduled)
+                    .InternalTransitionAsync(SoleToJointPermittedTriggers.HOApproval, CheckHOApproval)
+                    .Permit(SoleToJointInternalTriggers.HOApprovalFailed, SoleToJointStates.HOApprovalFailed)
+                    .Permit(SoleToJointInternalTriggers.HOApprovalPassed, SoleToJointStates.HOApprovalPassed); ;
 
             _machine.Configure(SoleToJointStates.InterviewScheduled)
                     .OnEntry(AddAppointmentDateTimeToEvent)
@@ -293,17 +300,17 @@ namespace ProcessesApi.V1.Services
             _machine.Configure(SoleToJointStates.TenureAppointmentScheduled)
                      .OnEntry(AddAppointmentDateTimeToEvent)
                      .Permit(SoleToJointPermittedTriggers.RescheduleTenureAppointment, SoleToJointStates.TenureAppointmentRescheduled)
+                     .Permit(SoleToJointPermittedTriggers.UpdateTenure, SoleToJointStates.TenureUpdated)
                      .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
 
             _machine.Configure(SoleToJointStates.TenureAppointmentRescheduled)
                      .OnEntry(AddAppointmentDateTimeToEvent)
                      .PermitReentry(SoleToJointPermittedTriggers.RescheduleTenureAppointment)
+                     .Permit(SoleToJointPermittedTriggers.UpdateTenure, SoleToJointStates.TenureUpdated)
                      .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
 
-
-
-
-            //Add next permitted trigger here
+            _machine.Configure(SoleToJointStates.TenureUpdated)
+                    .OnEntryAsync(OnProcessCompleted);
         }
     }
 }

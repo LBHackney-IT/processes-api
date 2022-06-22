@@ -135,7 +135,7 @@ namespace ProcessesApi.V1.Domain.SoleToJoint
 
         #region HOApproval
         public const string HORecommendation = "hoRecommendation";
-
+        public const string HousingAreaManagerName = "housingAreaManagerName";
         #endregion
     }
 }

@@ -9,6 +9,8 @@ namespace ProcessesApi.V1.Helpers
 {
     public static class SoleToJointHelpers
     {
+        public static Dictionary<string, object> _eventData;
+
         public static void ValidateManualCheck(this ProcessTrigger processRequest,
                                                string passedTrigger,
                                                string failedTrigger,
@@ -63,18 +65,41 @@ namespace ProcessesApi.V1.Helpers
             return requestFormData.Where(x => selectedKeys.Contains(x.Key))
                                   .ToDictionary(val => val.Key, val => val.Value);
         }
-        public static void ValidateRecommendation(this ProcessTrigger processRequest, Dictionary<string, string> triggerMappings, string keyName)
+        public static void ValidateRecommendation(this ProcessTrigger processRequest, Dictionary<string, string> triggerMappings, string keyName, List<string> otherExpectedFormDataKeys)
         {
             var formData = processRequest.FormData;
 
-            var expectedFormDataKeys = new List<string> { keyName };
+            var expectedFormDataKeys = otherExpectedFormDataKeys ?? new List<string>();
+            expectedFormDataKeys.Add(keyName);
             ValidateFormData(formData, expectedFormDataKeys);
+
             var recommendation = formData[keyName].ToString();
 
             if (!triggerMappings.ContainsKey(recommendation))
                 throw new FormDataValueInvalidException(keyName, recommendation, triggerMappings.Keys.ToList());
             processRequest.Trigger = triggerMappings[recommendation];
 
+        }
+
+        public static void ValidateHasNotifiedResident(this ProcessTrigger processRequest)
+        {
+            var formData = processRequest.FormData;
+
+            ValidateFormData(formData, new List<string>() { SoleToJointFormDataKeys.HasNotifiedResident });
+
+            if (formData.ContainsKey(SoleToJointFormDataKeys.Reason))
+                _eventData = CreateEventData(formData, new List<string> { SoleToJointFormDataKeys.Reason });
+
+            var hasNotifiedResidentString = processRequest.FormData[SoleToJointFormDataKeys.HasNotifiedResident];
+
+            if (Boolean.TryParse(hasNotifiedResidentString.ToString(), out bool hasNotifiedResident))
+            {
+                if (!hasNotifiedResident) throw new FormDataInvalidException("Housing Officer must notify the resident before closing this process.");
+            }
+            else
+            {
+                throw new FormDataFormatException("boolean", hasNotifiedResidentString);
+            }
         }
     }
 }

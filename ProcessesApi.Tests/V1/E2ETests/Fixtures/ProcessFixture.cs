@@ -333,7 +333,8 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
-                { SoleToJointFormDataKeys.HORecommendation, housingOfficerRecommendation }
+                { SoleToJointFormDataKeys.HORecommendation, housingOfficerRecommendation },
+                { SoleToJointFormDataKeys.HousingAreaManagerName, "ManagerName" }
             };
         }
 
@@ -371,6 +372,12 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             GivenARescheduleTenureAppointmentRequest();
             UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.AppointmentDateTime);
+        }
+        public void GivenAUpdateTenureRequest()
+        {
+            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.UpdateTenure);
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.HasNotifiedResident, true);
+            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.Reason, "This is a reason");
         }
     }
 }

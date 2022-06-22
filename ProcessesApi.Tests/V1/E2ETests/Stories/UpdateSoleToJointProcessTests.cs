@@ -102,6 +102,9 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [InlineData(SoleToJointStates.AutomatedChecksFailed)]
         [InlineData(SoleToJointStates.ManualChecksFailed)]
         [InlineData(SoleToJointStates.BreachChecksFailed)]
+        [InlineData(SoleToJointStates.DocumentsRequestedDes)]
+        [InlineData(SoleToJointStates.DocumentsRequestedAppointment)]
+        [InlineData(SoleToJointStates.DocumentsAppointmentRescheduled)]
         public void ProcessStateIsUpdatedToProcessClosedWithReason(string fromState)
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(fromState))
@@ -130,9 +133,6 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
 
         // List all states that CancelProcess can be triggered from
         [Theory]
-        [InlineData(SoleToJointStates.DocumentsRequestedDes)]
-        [InlineData(SoleToJointStates.DocumentsRequestedAppointment)]
-        [InlineData(SoleToJointStates.DocumentsAppointmentRescheduled)]
         [InlineData(SoleToJointStates.HOApprovalPassed)]
         [InlineData(SoleToJointStates.HOApprovalFailed)]
         [InlineData(SoleToJointStates.InterviewScheduled)]
@@ -514,6 +514,12 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [InlineData(SoleToJointFormDataValues.Decline, SoleToJointStates.HOApprovalFailed, SoleToJointStates.InterviewScheduled)]
         [InlineData(SoleToJointFormDataValues.Approve, SoleToJointStates.HOApprovalPassed, SoleToJointStates.InterviewRescheduled)]
         [InlineData(SoleToJointFormDataValues.Decline, SoleToJointStates.HOApprovalFailed, SoleToJointStates.InterviewRescheduled)]
+        [InlineData(SoleToJointFormDataValues.Approve, SoleToJointStates.HOApprovalPassed, SoleToJointStates.TenureInvestigationPassed)]
+        [InlineData(SoleToJointFormDataValues.Approve, SoleToJointStates.HOApprovalPassed, SoleToJointStates.TenureInvestigationFailed)]
+        [InlineData(SoleToJointFormDataValues.Approve, SoleToJointStates.HOApprovalPassed, SoleToJointStates.TenureInvestigationPassedWithInt)]
+        [InlineData(SoleToJointFormDataValues.Decline, SoleToJointStates.HOApprovalFailed, SoleToJointStates.TenureInvestigationPassed)]
+        [InlineData(SoleToJointFormDataValues.Decline, SoleToJointStates.HOApprovalFailed, SoleToJointStates.TenureInvestigationFailed)]
+        [InlineData(SoleToJointFormDataValues.Decline, SoleToJointStates.HOApprovalFailed, SoleToJointStates.TenureInvestigationPassedWithInt)]
         public void ProcessStateIsUpdatedToShowResultOfHOApproval(string housingOfficerRecommendation, string destinationState, string initialState)
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(initialState))
@@ -611,5 +617,24 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         }
 
         #endregion
+
+        #region Update Tenure
+
+        [Theory]
+        [InlineData(SoleToJointStates.TenureAppointmentScheduled)]
+        [InlineData(SoleToJointStates.TenureAppointmentRescheduled)]
+        public void ProcessStateIsUpdatedToProcessCompleted(string initialState)
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(initialState))
+                    .And(a => _processFixture.GivenAUpdateTenureRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheProcessStateIsUpdatedToUpdateTenure(_processFixture.UpdateProcessRequest, initialState))
+                    .And(a => _steps.ThenTheProcessCompletedEventIsRaised(_snsFixture, _processFixture.ProcessId))
+                .BDDfy();
+        }
+
+        #endregion
+
     }
 }
