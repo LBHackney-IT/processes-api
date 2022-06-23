@@ -22,14 +22,4 @@ namespace ProcessesApi.V1.Domain
         tenant,
         householdMember
     }
-
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum TenureType
-    {
-        Tenant,
-        Leaseholder,
-        Freeholder,
-        HouseholdMember,
-        Occupant
-    }
 }

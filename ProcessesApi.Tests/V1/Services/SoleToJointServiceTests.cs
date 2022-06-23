@@ -962,7 +962,7 @@ namespace ProcessesApi.Tests.V1.Services
         {
             // Arrange
             var process = CreateProcessWithCurrentState(initialState);
-            var relatedEnetity = process.RelatedEntities.First();
+            var relatedEntity = process.RelatedEntities.First();
             var formData = new Dictionary<string, object>()
             {
                 { SoleToJointFormDataKeys.HasNotifiedResident, true }
@@ -979,8 +979,8 @@ namespace ProcessesApi.Tests.V1.Services
                 PersonType.Occupant
             };
             IEnumerable<PersonType> personTypes = personType;
-            var person = CreatePersonWithPersonType(relatedEnetity.Id, personTypes);
-            _mockPersonDb.Setup(x => x.GetPersonById(relatedEnetity.Id)).ReturnsAsync(person);
+            var person = CreatePersonWithPersonType(relatedEntity.Id, personTypes);
+            _mockPersonDb.Setup(x => x.GetPersonById(relatedEntity.Id)).ReturnsAsync(person);
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 
             // Assert

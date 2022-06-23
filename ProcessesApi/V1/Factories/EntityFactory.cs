@@ -37,16 +37,6 @@ namespace ProcessesApi.V1.Factories
             };
         }
 
-        public static TenureInformationDb ToDatabase(this EditTenureDetailsRequestObject requestObject)
-        {
-            return new TenureInformationDb()
-            {
-                StartOfTenureDate = requestObject.StartOfTenureDate,
-                EndOfTenureDate = requestObject.EndOfTenureDate,
-                TenureType = requestObject.TenureType
-            };
-        }
-
 
     }
 }
