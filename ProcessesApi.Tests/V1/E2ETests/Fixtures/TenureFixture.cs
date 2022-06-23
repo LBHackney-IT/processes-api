@@ -71,6 +71,16 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             Tenure = tenure;
         }
 
+
+        public async Task GivenATenureExists(Guid id)
+        {
+            var tenure = _fixture.Build<TenureInformation>()
+                            .With(x => x.Id, id)
+                            .With(x => x.VersionNumber, (int?) null)
+                            .Create();
+            await _dbContext.SaveAsync<TenureInformationDb>(tenure.ToDatabase()).ConfigureAwait(false);
+            Tenure = tenure;
+        }
         public async Task GivenASecureTenureExists(Guid tenureId, Guid tenantId, bool isTenant)
         {
             await GivenATenureExists(tenureId, tenantId, isTenant: isTenant, isSecure: true).ConfigureAwait(false);

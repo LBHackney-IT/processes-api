@@ -112,7 +112,7 @@ namespace ProcessesApi.V1.Helpers
             {
                 Id = process.TargetId,
                 EndOfTenureDate = DateTime.UtcNow,
-                VersionNumber = initialTenure.VersionNumber + 1 ?? 0
+                VersionNumber = initialTenure.VersionNumber
             };
 
             return tenureInfoRequest;
