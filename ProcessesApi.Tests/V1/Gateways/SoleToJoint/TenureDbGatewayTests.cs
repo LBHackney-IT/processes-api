@@ -116,7 +116,6 @@ namespace ProcessesApi.Tests.V1.Gateways
             var response = await _classUnderTest.UpdateTenureById(updateTenure).ConfigureAwait(false);
             // Assert
             response.EndOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 2000);
-
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync for id {entity.Id}", Times.Once());
         }
 

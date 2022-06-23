@@ -1,5 +1,3 @@
-using Hackney.Shared.Tenure.Boundary.Requests;
-using Hackney.Shared.Tenure.Infrastructure;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Infrastructure;
 
