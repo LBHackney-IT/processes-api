@@ -12,6 +12,10 @@ using ProcessesApi.V1.Services.Exceptions;
 using Hackney.Shared.Tenure.Domain;
 using ProcessesApi.V1.Gateways;
 using Hackney.Shared.Tenure.Boundary.Requests;
+using System.Linq;
+using TenureType = ProcessesApi.V1.Domain.TenureType;
+using System.Text.Json.Serialization;
+using Hackney.Shared.Person.Domain;
 
 namespace ProcessesApi.V1.Services
 {
@@ -20,13 +24,15 @@ namespace ProcessesApi.V1.Services
         private readonly ISoleToJointAutomatedEligibilityChecksHelper _automatedcheckshelper;
         private readonly IGetPersonByIdHelper _personByIdHelper;
         private readonly ITenureDbGateway _tenureDbGateway;
+        private readonly IPersonDbGateway _personDbGateway;
 
 
         public SoleToJointService(ISnsFactory snsFactory,
                                   ISnsGateway snsGateway,
                                   ISoleToJointAutomatedEligibilityChecksHelper automatedChecksHelper,
                                   IGetPersonByIdHelper getPersonByIdHelper,
-                                  ITenureDbGateway tenureDbGateway)
+                                  ITenureDbGateway tenureDbGateway,
+                                  IPersonDbGateway personDbGateway)
             : base(snsFactory, snsGateway)
         {
             _snsFactory = snsFactory;
@@ -34,6 +40,7 @@ namespace ProcessesApi.V1.Services
             _automatedcheckshelper = automatedChecksHelper;
             _personByIdHelper = getPersonByIdHelper;
             _tenureDbGateway = tenureDbGateway;
+            _personDbGateway = personDbGateway;
             _permittedTriggersType = typeof(SoleToJointPermittedTriggers);
             _ignoredTriggersForProcessUpdated = new List<string>
             {
@@ -174,6 +181,7 @@ namespace ProcessesApi.V1.Services
             await PublishProcessCompletedEvent(x).ConfigureAwait(false);
 
             var process = x.Parameters[1] as Process;
+            var relatedEntity = process.RelatedEntities.First();
 
             var tenureInfoRequest = new TenureInformation()
             {
@@ -182,9 +190,34 @@ namespace ProcessesApi.V1.Services
             };
             await _tenureDbGateway.UpdateTenureById(tenureInfoRequest).ConfigureAwait(false);
 
+            var person = await _personDbGateway.GetPersonById(relatedEntity.Id).ConfigureAwait(false);
+            var householdMemberList = new List<HouseholdMembers>();
+            var householdMember = new HouseholdMembers()
+            {
+                Id = relatedEntity.Id,
+                DateOfBirth = (DateTime) person.DateOfBirth,
+                FullName = $"{person.FirstName} {person.Surname}",
+                IsResponsible = true,
+                PersonTenureType = (PersonTenureType) person.PersonTypes.FirstOrDefault(),
+                Type = HouseholdMembersType.Person
+                
+            };
+            householdMemberList.Add(householdMember);
+            var tenureDetails = person.Tenures.FirstOrDefault();
+            var tenuredAsset = new TenuredAsset()
+            {
+                Id = tenureDetails.Id,
+                FullAddress = tenureDetails.AssetFullAddress,
+                PropertyReference = tenureDetails.PropertyReference,
+                Uprn = tenureDetails.Uprn
+            };
             var createTenureRequest = new CreateTenureRequestObject()
             {
-                StartOfTenureDate = DateTime.UtcNow
+                StartOfTenureDate = DateTime.UtcNow,
+                HouseholdMembers = householdMemberList,
+                PaymentReference = tenureDetails.PaymentReference,
+                TenuredAsset = tenuredAsset
+                
             };
             await _tenureDbGateway.PostNewTenureAsync(createTenureRequest).ConfigureAwait(false);
         }

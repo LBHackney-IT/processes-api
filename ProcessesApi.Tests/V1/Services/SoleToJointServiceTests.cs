@@ -22,6 +22,7 @@ using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Boundary.Requests;
 using Hackney.Shared.Tenure.Infrastructure;
 using Hackney.Shared.Tenure.Factories;
+using Hackney.Shared.Person.Domain;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -35,6 +36,7 @@ namespace ProcessesApi.Tests.V1.Services
         private Mock<ISoleToJointAutomatedEligibilityChecksHelper> _mockAutomatedEligibilityChecksHelper;
         private Mock<IGetPersonByIdHelper> _mockPersonByIdHelper;
         private Mock<ITenureDbGateway> _mockTenureDb;
+        private Mock<IPersonDbGateway> _mockPersonDb;
         private Mock<ISnsGateway> _mockSnsGateway;
         private readonly Token _token = new Token();
         private EntityEventSns _lastSnsEvent = new EntityEventSns();
@@ -93,23 +95,30 @@ namespace ProcessesApi.Tests.V1.Services
             _mockPersonByIdHelper = new Mock<IGetPersonByIdHelper>();
             _mockAutomatedEligibilityChecksHelper = new Mock<ISoleToJointAutomatedEligibilityChecksHelper>();
             _mockTenureDb = new Mock<ITenureDbGateway>();
+            _mockPersonDb = new Mock<IPersonDbGateway>();
             _classUnderTest = new SoleToJointService(new ProcessesSnsFactory(),
                                                      _mockSnsGateway.Object,
                                                      _mockAutomatedEligibilityChecksHelper.Object,
                                                      _mockPersonByIdHelper.Object,
-                                                     _mockTenureDb.Object);
+                                                     _mockTenureDb.Object,
+                                                     _mockPersonDb.Object);
 
             _mockSnsGateway
                 .Setup(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()))
                 .Callback<EntityEventSns, string, string>((ev, s1, s2) => _lastSnsEvent = ev);
         }
 
-        private Person CreatePerson(Guid incomingTenantId)
-        {
-            return _fixture.Build<Person>()
+        private Person CreatePerson(Guid incomingTenantId) =>
+                            _fixture.Build<Person>()
                            .With(x => x.Id, incomingTenantId)
+                            
                            .Create();
-        }
+
+        private Person CreatePersonWithPersonType(Guid incomingTenantId, IEnumerable<PersonType> personType) =>
+                            _fixture.Build<Person>()
+                           .With(x => x.Id, incomingTenantId)
+                           .With(x=> x.PersonTypes, personType)
+                           .Create();
 
         private Process CreateProcessWithCurrentState(string currentState, Dictionary<string, object> formData = null)
         {
@@ -161,10 +170,26 @@ namespace ProcessesApi.Tests.V1.Services
             return true;
         }
 
-        private bool VerifyNewTenure(CreateTenureRequestObject created)
+        private bool VerifyNewTenure(CreateTenureRequestObject created, Person person)
         {
             created.ToDatabase();
+
             created.StartOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            created.PaymentReference.Should().Be(person.Tenures.FirstOrDefault().PaymentReference);
+
+            //TenuredAsset
+            created.TenuredAsset.Id.Should().Be(person.Tenures.FirstOrDefault().Id);
+            created.TenuredAsset.FullAddress.Should().Be(person.Tenures.FirstOrDefault().AssetFullAddress);
+            created.TenuredAsset.Uprn.Should().Be(person.Tenures.FirstOrDefault().Uprn);
+            created.TenuredAsset.PropertyReference.Should().Be(person.Tenures.FirstOrDefault().PropertyReference);
+
+            //HouseholdMembers
+            created.HouseholdMembers.FirstOrDefault().IsResponsible.Should().Be(true);
+            created.HouseholdMembers.FirstOrDefault().FullName.Should().Be($"{person.FirstName} {person.Surname}");
+            created.HouseholdMembers.FirstOrDefault().DateOfBirth.Should().Be((DateTime)person.DateOfBirth);
+            created.HouseholdMembers.FirstOrDefault().Type.Should().Be(HouseholdMembersType.Person);
+            created.HouseholdMembers.FirstOrDefault().PersonTenureType.Should().Be(person.PersonTypes.FirstOrDefault());
+
             return true;
         }
 
@@ -937,6 +962,7 @@ namespace ProcessesApi.Tests.V1.Services
         {
             // Arrange
             var process = CreateProcessWithCurrentState(initialState);
+            var relatedEnetity = process.RelatedEntities.First();
             var formData = new Dictionary<string, object>()
             {
                 { SoleToJointFormDataKeys.HasNotifiedResident, true }
@@ -948,6 +974,13 @@ namespace ProcessesApi.Tests.V1.Services
                                                      formData);
 
             // Act
+            List<PersonType> personType = new List<PersonType>()
+            {
+                PersonType.Occupant
+            };
+            IEnumerable<PersonType> personTypes = personType;
+            var person = CreatePersonWithPersonType(relatedEnetity.Id, personTypes);
+            _mockPersonDb.Setup(x => x.GetPersonById(relatedEnetity.Id)).ReturnsAsync(person);
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 
             // Assert
@@ -959,7 +992,7 @@ namespace ProcessesApi.Tests.V1.Services
 
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             _mockTenureDb.Verify(g => g.UpdateTenureById(It.Is<TenureInformation>(x => VerifyEndExistingTenure(x, process))), Times.Once);
-            _mockTenureDb.Verify(g => g.PostNewTenureAsync(It.Is<CreateTenureRequestObject>(y => VerifyNewTenure(y))), Times.Once);
+            _mockTenureDb.Verify(g => g.PostNewTenureAsync(It.Is<CreateTenureRequestObject>(y => VerifyNewTenure(y, person))), Times.Once);
             _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_COMPLETED_EVENT);
         }
 

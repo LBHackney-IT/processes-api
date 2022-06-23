@@ -7,6 +7,7 @@ using Xunit;
 using ProcessesApi.V1.Domain;
 using Hackney.Core.Testing.Sns;
 using ProcessesApi.V1.Domain.SoleToJoint;
+using System.Linq;
 
 namespace ProcessesApi.Tests.V1.E2E.Stories
 {
@@ -627,6 +628,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(initialState))
                     .And(a => _processFixture.GivenAUpdateTenureRequest())
+                    .And(a => _personFixture.GivenAPersonExists(_processFixture.Process.RelatedEntities.FirstOrDefault().Id))
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToUpdateTenure(_processFixture.UpdateProcessRequest, initialState))

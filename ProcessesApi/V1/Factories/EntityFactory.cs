@@ -1,3 +1,5 @@
+using Hackney.Shared.Tenure.Boundary.Requests;
+using Hackney.Shared.Tenure.Infrastructure;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Infrastructure;
 
@@ -32,6 +34,16 @@ namespace ProcessesApi.V1.Factories
                 CurrentState = entity.CurrentState,
                 PreviousStates = entity.PreviousStates,
                 VersionNumber = entity.VersionNumber
+            };
+        }
+
+        public static TenureInformationDb ToDatabase(this EditTenureDetailsRequestObject requestObject)
+        {
+            return new TenureInformationDb()
+            {
+                StartOfTenureDate = requestObject.StartOfTenureDate,
+                EndOfTenureDate = requestObject.EndOfTenureDate,
+                TenureType = requestObject.TenureType
             };
         }
 

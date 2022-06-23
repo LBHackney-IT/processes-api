@@ -9,7 +9,7 @@ namespace ProcessesApi.V1.Gateways
     public interface ITenureDbGateway
     {
         Task<TenureInformation> GetTenureById(Guid id);
-        Task UpdateTenureById(TenureInformation tenureInformation);
-        Task<TenureInformationDb> PostNewTenureAsync(CreateTenureRequestObject createTenureRequestObject);
+        Task<TenureInformation> UpdateTenureById(TenureInformation tenureInformation);
+            Task<TenureInformationDb> PostNewTenureAsync(CreateTenureRequestObject createTenureRequestObject);
     }
 }
