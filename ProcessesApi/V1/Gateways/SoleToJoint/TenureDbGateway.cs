@@ -7,6 +7,8 @@ using Hackney.Shared.Tenure.Factories;
 using Hackney.Shared.Tenure.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Hackney.Shared.Person.Factories;
+using Hackney.Shared.Tenure.Boundary.Requests;
+using ProcessesApi.V1.Factories;
 
 namespace ProcessesApi.V1.Gateways
 {
@@ -28,6 +30,25 @@ namespace ProcessesApi.V1.Gateways
 
             var result = await _dynamoDbContext.LoadAsync<TenureInformationDb>(id).ConfigureAwait(false);
             return result?.ToDomain();
+        }
+
+        [LogCall]
+        public async Task<TenureInformation> UpdateTenureById(TenureInformation tenureInformation)
+        {
+            _logger.LogDebug($"Calling IDynamoDBContext.SaveAsync for id {tenureInformation.Id}");
+            await _dynamoDbContext.SaveAsync(tenureInformation.ToDatabase()).ConfigureAwait(false);
+            return tenureInformation;
+        }
+
+        [LogCall]
+        public async Task<TenureInformationDb> PostNewTenureAsync(CreateTenureRequestObject createTenureRequestObject)
+        {
+            _logger.LogDebug($"Calling IDynamoDBContext.SaveAsync");
+            var tenureDbEntity = createTenureRequestObject.ToDatabase();
+
+            await _dynamoDbContext.SaveAsync(tenureDbEntity).ConfigureAwait(false);
+
+            return tenureDbEntity;
         }
     }
 }

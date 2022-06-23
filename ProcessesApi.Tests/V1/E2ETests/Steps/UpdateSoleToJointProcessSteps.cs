@@ -4,6 +4,8 @@ using Hackney.Core.Testing.DynamoDb;
 using Hackney.Core.Testing.Shared.E2E;
 using Hackney.Core.Testing.Sns;
 using Hackney.Shared.Person;
+using Hackney.Shared.Tenure.Domain;
+using Hackney.Shared.Tenure.Infrastructure;
 using Newtonsoft.Json;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
 using ProcessesApi.V1.Boundary.Constants;
@@ -368,6 +370,13 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         public async Task ThenTheProcessCompletedEventIsRaised(ISnsFixture snsFixture, Guid processId)
         {
             await VerifyProcessCompletedEventIsRaisedWithStateData(snsFixture, processId, SoleToJointStates.TenureUpdated, SoleToJointFormDataKeys.Reason).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheExistingTenureHasEnded(Process process)
+        {
+            var tenure = await _dbFixture.DynamoDbContext.LoadAsync<TenureInformationDb>(process.TargetId).ConfigureAwait(false);
+            tenure.Id.Should().Be(process.TargetId);
+            tenure.EndOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 2000);
         }
     }
 }

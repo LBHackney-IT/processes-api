@@ -8,7 +8,9 @@ using System.Threading.Tasks;
 using Hackney.Core.Sns;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Helpers;
-using ProcessesApi.V1.Services.Exceptions;
+using ProcessesApi.V1.Gateways;
+using System.Linq;
+
 
 namespace ProcessesApi.V1.Services
 {
@@ -16,18 +18,24 @@ namespace ProcessesApi.V1.Services
     {
         private readonly ISoleToJointAutomatedEligibilityChecksHelper _automatedcheckshelper;
         private readonly IGetPersonByIdHelper _personByIdHelper;
+        private readonly ITenureDbGateway _tenureDbGateway;
+        private readonly IPersonDbGateway _personDbGateway;
 
 
         public SoleToJointService(ISnsFactory snsFactory,
                                   ISnsGateway snsGateway,
                                   ISoleToJointAutomatedEligibilityChecksHelper automatedChecksHelper,
-                                  IGetPersonByIdHelper getPersonByIdHelper)
+                                  IGetPersonByIdHelper getPersonByIdHelper,
+                                  ITenureDbGateway tenureDbGateway,
+                                  IPersonDbGateway personDbGateway)
             : base(snsFactory, snsGateway)
         {
             _snsFactory = snsFactory;
             _snsGateway = snsGateway;
             _automatedcheckshelper = automatedChecksHelper;
             _personByIdHelper = getPersonByIdHelper;
+            _tenureDbGateway = tenureDbGateway;
+            _personDbGateway = personDbGateway;
             _permittedTriggersType = typeof(SoleToJointPermittedTriggers);
             _ignoredTriggersForProcessUpdated = new List<string>
             {
@@ -166,6 +174,16 @@ namespace ProcessesApi.V1.Services
 
             _eventData = SoleToJointHelpers._eventData;
             await PublishProcessCompletedEvent(x).ConfigureAwait(false);
+
+            var process = x.Parameters[1] as Process;
+            var relatedEntity = process.RelatedEntities.First();
+
+            var tenureInfoRequest = SoleToJointHelpers.UpdateTenureRequest(process);
+            await _tenureDbGateway.UpdateTenureById(tenureInfoRequest).ConfigureAwait(false);
+
+            var person = await _personDbGateway.GetPersonById(relatedEntity.Id).ConfigureAwait(false);
+            var createTenureRequest = SoleToJointHelpers.CreateTenureRequest(relatedEntity.Id, person);
+            await _tenureDbGateway.PostNewTenureAsync(createTenureRequest).ConfigureAwait(false);
         }
 
         private void AddIncomingTenantIdToRelatedEntities(Stateless.StateMachine<string, string>.Transition x)
