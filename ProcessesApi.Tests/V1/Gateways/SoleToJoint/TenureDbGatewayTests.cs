@@ -58,7 +58,6 @@ namespace ProcessesApi.Tests.V1.Gateways
         private async Task InsertDatatoDynamoDB(TenureInformationDb entity)
         {
             await _dbFixture.SaveEntityAsync(entity).ConfigureAwait(false);
-            _cleanup.Add(async () => await _dbFixture.DynamoDbContext.DeleteAsync(entity).ConfigureAwait(false));
 
         }
 
@@ -100,20 +99,17 @@ namespace ProcessesApi.Tests.V1.Gateways
         {
             // Arrange
             var entity = _fixture.Build<TenureInformation>()
-                                 .With(x => x.StartOfTenureDate, DateTime.UtcNow)
-                                 .With(x => x.SuccessionDate, DateTime.UtcNow)
-                                 .With(x => x.PotentialEndDate, DateTime.UtcNow)
-                                 .With(x => x.SubletEndDate, DateTime.UtcNow)
-                                 .With(x => x.EvictionDate, DateTime.UtcNow)
+                                 .Without(x => x.EndOfTenureDate)
                                  .With(x => x.VersionNumber, (int?) null)
                                  .Create();
+
             await InsertDatatoDynamoDB(entity.ToDatabase()).ConfigureAwait(false);
 
 
             var updateTenure = _fixture.Build<TenureInformation>()
                                         .With(x => x.Id, entity.Id)
                                         .With(x => x.EndOfTenureDate, DateTime.UtcNow)
-                                        .With(x => x.VersionNumber, (int?) null)
+                                        .With(x => x.VersionNumber, 0)
                                         .Create();
 
             // Act
@@ -121,7 +117,6 @@ namespace ProcessesApi.Tests.V1.Gateways
             // Assert
             response.EndOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 2000);
 
-            _cleanup.Add(async () => await _dbFixture.DynamoDbContext.DeleteAsync(entity).ConfigureAwait(false));
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync for id {entity.Id}", Times.Once());
         }
 
