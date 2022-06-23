@@ -4,6 +4,7 @@ using Hackney.Core.Testing.DynamoDb;
 using Hackney.Core.Testing.Shared.E2E;
 using Hackney.Core.Testing.Sns;
 using Hackney.Shared.Person;
+using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Infrastructure;
 using Newtonsoft.Json;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
@@ -376,6 +377,28 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             var tenure = await _dbFixture.DynamoDbContext.LoadAsync<TenureInformationDb>(process.TargetId).ConfigureAwait(false);
             tenure.Id.Should().Be(process.TargetId);
             tenure.EndOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 2000);
+        }
+
+        public async Task ThenANewTenureIsCreated(Process process, Person person)
+        {
+            var tenure = await _dbFixture.DynamoDbContext.LoadAsync<TenureInformationDb>(process.RelatedEntities.FirstOrDefault().Id).ConfigureAwait(false);
+            tenure.StartOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            tenure.PaymentReference.Should().Be(person.Tenures.FirstOrDefault().PaymentReference);
+
+            //TenuredAsset
+            tenure.TenuredAsset.Id.Should().Be(person.Tenures.FirstOrDefault().Id);
+            tenure.TenuredAsset.FullAddress.Should().Be(person.Tenures.FirstOrDefault().AssetFullAddress);
+            tenure.TenuredAsset.Uprn.Should().Be(person.Tenures.FirstOrDefault().Uprn);
+            tenure.TenuredAsset.PropertyReference.Should().Be(person.Tenures.FirstOrDefault().PropertyReference);
+
+            //HouseholdMembers
+            tenure.HouseholdMembers.FirstOrDefault().IsResponsible.Should().Be(true);
+            tenure.HouseholdMembers.FirstOrDefault().FullName.Should().Be($"{person.FirstName} {person.Surname}");
+            tenure.HouseholdMembers.FirstOrDefault().DateOfBirth.Should().Be((DateTime) person.DateOfBirth);
+            tenure.HouseholdMembers.FirstOrDefault().Type.Should().Be(HouseholdMembersType.Person);
+            tenure.HouseholdMembers.FirstOrDefault().PersonTenureType.Should().Be(person.PersonTypes.FirstOrDefault());
+
+
         }
     }
 }

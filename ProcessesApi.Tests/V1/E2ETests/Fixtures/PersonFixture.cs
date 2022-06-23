@@ -45,7 +45,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public async Task GivenAPersonExists(Guid relatedEntityId)
         {
             var person = _fixture.Build<Person>()
-                           .With(x => x.Id,relatedEntityId)
+                           .With(x => x.Id, relatedEntityId)
                            .Create();
             await _dbContext.SaveAsync<PersonDbEntity>(person.ToDatabase()).ConfigureAwait(false);
 

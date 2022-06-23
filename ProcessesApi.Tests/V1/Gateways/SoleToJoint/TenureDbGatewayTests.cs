@@ -58,7 +58,8 @@ namespace ProcessesApi.Tests.V1.Gateways
         private async Task InsertDatatoDynamoDB(TenureInformationDb entity)
         {
             await _dbFixture.SaveEntityAsync(entity).ConfigureAwait(false);
-            
+            _cleanup.Add(async () => await _dbFixture.DynamoDbContext.DeleteAsync(entity).ConfigureAwait(false));
+
         }
 
         [Fact]
@@ -110,12 +111,12 @@ namespace ProcessesApi.Tests.V1.Gateways
 
 
             var updateTenure = _fixture.Build<TenureInformation>()
-                                        .With(x=> x.Id, entity.Id)
+                                        .With(x => x.Id, entity.Id)
                                         .With(x => x.EndOfTenureDate, DateTime.UtcNow)
                                         .Create();
-           
+
             // Act
-            var response =  await _classUnderTest.UpdateTenureById(updateTenure).ConfigureAwait(false);
+            var response = await _classUnderTest.UpdateTenureById(updateTenure).ConfigureAwait(false);
             // Assert
             response.EndOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 2000);
 
@@ -151,21 +152,21 @@ namespace ProcessesApi.Tests.V1.Gateways
             };
             var createTenure = _fixture.Build<CreateTenureRequestObject>()
                                  .With(x => x.StartOfTenureDate, DateTime.UtcNow)
-                                 .With(x=> x.HouseholdMembers, householdMemberList)
-                                 .With(x=> x.TenuredAsset, tenuredAsset)
-                                 .With(x=> x.PaymentReference, tenureDetails.PaymentReference)
+                                 .With(x => x.HouseholdMembers, householdMemberList)
+                                 .With(x => x.TenuredAsset, tenuredAsset)
+                                 .With(x => x.PaymentReference, tenureDetails.PaymentReference)
                                  .With(x => x.SuccessionDate, DateTime.UtcNow)
                                  .With(x => x.PotentialEndDate, DateTime.UtcNow)
                                  .With(x => x.SubletEndDate, DateTime.UtcNow)
                                  .With(x => x.EvictionDate, DateTime.UtcNow)
                                  .Without(x => x.EndOfTenureDate)
                                  .Create();
-           
+
             // Act
             var response = await _classUnderTest.PostNewTenureAsync(createTenure).ConfigureAwait(false);
             // Assert
             var DbEntity = createTenure.ToDatabase();
-            response.Should().BeEquivalentTo(DbEntity, config => config.Excluding(x=> x.VersionNumber));
+            response.Should().BeEquivalentTo(DbEntity, config => config.Excluding(x => x.VersionNumber));
 
             _cleanup.Add(async () => await _dbFixture.DynamoDbContext.DeleteAsync(createTenure).ConfigureAwait(false));
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync", Times.Once());

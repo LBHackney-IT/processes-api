@@ -200,7 +200,7 @@ namespace ProcessesApi.V1.Services
                 IsResponsible = true,
                 PersonTenureType = (PersonTenureType) person.PersonTypes.FirstOrDefault(),
                 Type = HouseholdMembersType.Person
-                
+
             };
             householdMemberList.Add(householdMember);
             var tenureDetails = person.Tenures.FirstOrDefault();
@@ -217,7 +217,7 @@ namespace ProcessesApi.V1.Services
                 HouseholdMembers = householdMemberList,
                 PaymentReference = tenureDetails.PaymentReference,
                 TenuredAsset = tenuredAsset
-                
+
             };
             await _tenureDbGateway.PostNewTenureAsync(createTenureRequest).ConfigureAwait(false);
         }

@@ -111,13 +111,13 @@ namespace ProcessesApi.Tests.V1.Services
         private Person CreatePerson(Guid incomingTenantId) =>
                             _fixture.Build<Person>()
                            .With(x => x.Id, incomingTenantId)
-                            
+
                            .Create();
 
         private Person CreatePersonWithPersonType(Guid incomingTenantId, IEnumerable<PersonType> personType) =>
                             _fixture.Build<Person>()
                            .With(x => x.Id, incomingTenantId)
-                           .With(x=> x.PersonTypes, personType)
+                           .With(x => x.PersonTypes, personType)
                            .Create();
 
         private Process CreateProcessWithCurrentState(string currentState, Dictionary<string, object> formData = null)
@@ -186,7 +186,7 @@ namespace ProcessesApi.Tests.V1.Services
             //HouseholdMembers
             created.HouseholdMembers.FirstOrDefault().IsResponsible.Should().Be(true);
             created.HouseholdMembers.FirstOrDefault().FullName.Should().Be($"{person.FirstName} {person.Surname}");
-            created.HouseholdMembers.FirstOrDefault().DateOfBirth.Should().Be((DateTime)person.DateOfBirth);
+            created.HouseholdMembers.FirstOrDefault().DateOfBirth.Should().Be((DateTime) person.DateOfBirth);
             created.HouseholdMembers.FirstOrDefault().Type.Should().Be(HouseholdMembersType.Person);
             created.HouseholdMembers.FirstOrDefault().PersonTenureType.Should().Be(person.PersonTypes.FirstOrDefault());
 

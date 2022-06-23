@@ -10,6 +10,6 @@ namespace ProcessesApi.V1.Gateways
     {
         Task<TenureInformation> GetTenureById(Guid id);
         Task<TenureInformation> UpdateTenureById(TenureInformation tenureInformation);
-            Task<TenureInformationDb> PostNewTenureAsync(CreateTenureRequestObject createTenureRequestObject);
+        Task<TenureInformationDb> PostNewTenureAsync(CreateTenureRequestObject createTenureRequestObject);
     }
 }
