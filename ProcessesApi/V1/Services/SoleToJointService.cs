@@ -183,42 +183,11 @@ namespace ProcessesApi.V1.Services
             var process = x.Parameters[1] as Process;
             var relatedEntity = process.RelatedEntities.First();
 
-            var tenureInfoRequest = new TenureInformation()
-            {
-                Id = process.TargetId,
-                EndOfTenureDate = DateTime.UtcNow
-            };
+            var tenureInfoRequest = SoleToJointHelpers.UpdateTenureRequest(process);
             await _tenureDbGateway.UpdateTenureById(tenureInfoRequest).ConfigureAwait(false);
 
             var person = await _personDbGateway.GetPersonById(relatedEntity.Id).ConfigureAwait(false);
-            var householdMemberList = new List<HouseholdMembers>();
-            var householdMember = new HouseholdMembers()
-            {
-                Id = relatedEntity.Id,
-                DateOfBirth = (DateTime) person.DateOfBirth,
-                FullName = $"{person.FirstName} {person.Surname}",
-                IsResponsible = true,
-                PersonTenureType = (PersonTenureType) person.PersonTypes.FirstOrDefault(),
-                Type = HouseholdMembersType.Person
-
-            };
-            householdMemberList.Add(householdMember);
-            var tenureDetails = person.Tenures.FirstOrDefault();
-            var tenuredAsset = new TenuredAsset()
-            {
-                Id = tenureDetails.Id,
-                FullAddress = tenureDetails.AssetFullAddress,
-                PropertyReference = tenureDetails.PropertyReference,
-                Uprn = tenureDetails.Uprn
-            };
-            var createTenureRequest = new CreateTenureRequestObject()
-            {
-                StartOfTenureDate = DateTime.UtcNow,
-                HouseholdMembers = householdMemberList,
-                PaymentReference = tenureDetails.PaymentReference,
-                TenuredAsset = tenuredAsset
-
-            };
+            var createTenureRequest = SoleToJointHelpers.CreateTenureRequest(relatedEntity.Id, person);
             await _tenureDbGateway.PostNewTenureAsync(createTenureRequest).ConfigureAwait(false);
         }
 

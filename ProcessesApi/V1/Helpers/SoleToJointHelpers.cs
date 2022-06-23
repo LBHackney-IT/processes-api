@@ -1,6 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using Hackney.Shared.Person;
+using Hackney.Shared.Tenure.Boundary.Requests;
+using Hackney.Shared.Tenure.Domain;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Domain.SoleToJoint;
 using ProcessesApi.V1.Services.Exceptions;
@@ -101,5 +105,52 @@ namespace ProcessesApi.V1.Helpers
                 throw new FormDataFormatException("boolean", hasNotifiedResidentString);
             }
         }
+
+        public static TenureInformation UpdateTenureRequest(Process process)
+        {
+            var tenureInfoRequest = new TenureInformation()
+            {
+                Id = process.TargetId,
+                EndOfTenureDate = DateTime.UtcNow
+            };
+
+            return tenureInfoRequest;
+
+        }
+
+        public static CreateTenureRequestObject CreateTenureRequest(Guid id, Person person)
+        {
+            var householdMemberList = new List<HouseholdMembers>();
+            var householdMember = new HouseholdMembers()
+            {
+                Id = id,
+                DateOfBirth = (DateTime) person.DateOfBirth,
+                FullName = $"{person.FirstName} {person.Surname}",
+                IsResponsible = true,
+                PersonTenureType = (PersonTenureType) person.PersonTypes.FirstOrDefault(),
+                Type = HouseholdMembersType.Person
+
+            };
+            householdMemberList.Add(householdMember);
+            var tenureDetails = person.Tenures.FirstOrDefault();
+            var tenuredAsset = new TenuredAsset()
+            {
+                Id = tenureDetails.Id,
+                FullAddress = tenureDetails.AssetFullAddress,
+                PropertyReference = tenureDetails.PropertyReference,
+                Uprn = tenureDetails.Uprn
+            };
+            var createTenureRequest = new CreateTenureRequestObject()
+            {
+                StartOfTenureDate = DateTime.UtcNow,
+                HouseholdMembers = householdMemberList,
+                PaymentReference = tenureDetails.PaymentReference,
+                TenuredAsset = tenuredAsset
+
+            };
+
+            return createTenureRequest;
+        }
+
     }
 }
