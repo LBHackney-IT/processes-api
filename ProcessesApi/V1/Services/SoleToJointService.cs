@@ -8,14 +8,9 @@ using System.Threading.Tasks;
 using Hackney.Core.Sns;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Helpers;
-using ProcessesApi.V1.Services.Exceptions;
-using Hackney.Shared.Tenure.Domain;
 using ProcessesApi.V1.Gateways;
-using Hackney.Shared.Tenure.Boundary.Requests;
 using System.Linq;
-using TenureType = ProcessesApi.V1.Domain.TenureType;
-using System.Text.Json.Serialization;
-using Hackney.Shared.Person.Domain;
+
 
 namespace ProcessesApi.V1.Services
 {
