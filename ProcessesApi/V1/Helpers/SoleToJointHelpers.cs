@@ -106,12 +106,13 @@ namespace ProcessesApi.V1.Helpers
             }
         }
 
-        public static TenureInformation UpdateTenureRequest(Process process)
+        public static TenureInformation UpdateTenureRequest(Process process, TenureInformation initialTenure)
         {
             var tenureInfoRequest = new TenureInformation()
             {
                 Id = process.TargetId,
-                EndOfTenureDate = DateTime.UtcNow
+                EndOfTenureDate = DateTime.UtcNow,
+                VersionNumber = initialTenure.VersionNumber + 1 ?? 0
             };
 
             return tenureInfoRequest;

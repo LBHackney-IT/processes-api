@@ -178,7 +178,8 @@ namespace ProcessesApi.V1.Services
             var process = x.Parameters[1] as Process;
             var relatedEntity = process.RelatedEntities.First();
 
-            var tenureInfoRequest = SoleToJointHelpers.UpdateTenureRequest(process);
+            var initialTenure = await _tenureDbGateway.GetTenureById(process.TargetId).ConfigureAwait(false);
+            var tenureInfoRequest = SoleToJointHelpers.UpdateTenureRequest(process, initialTenure);
             await _tenureDbGateway.UpdateTenureById(tenureInfoRequest).ConfigureAwait(false);
 
             var person = await _personDbGateway.GetPersonById(relatedEntity.Id).ConfigureAwait(false);

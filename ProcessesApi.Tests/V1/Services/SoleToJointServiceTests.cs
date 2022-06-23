@@ -111,7 +111,6 @@ namespace ProcessesApi.Tests.V1.Services
         private Person CreatePerson(Guid incomingTenantId) =>
                             _fixture.Build<Person>()
                            .With(x => x.Id, incomingTenantId)
-
                            .Create();
 
         private Person CreatePersonWithPersonType(Guid incomingTenantId, IEnumerable<PersonType> personType) =>
@@ -119,6 +118,12 @@ namespace ProcessesApi.Tests.V1.Services
                            .With(x => x.Id, incomingTenantId)
                            .With(x => x.PersonTypes, personType)
                            .Create();
+
+        private TenureInformation CreateTenure(Guid id) =>
+                          _fixture.Build<TenureInformation>()
+                         .With(x => x.Id, id)
+                         .With(x=> x.VersionNumber, (int?) null)
+                         .Create();
 
         private Process CreateProcessWithCurrentState(string currentState, Dictionary<string, object> formData = null)
         {
@@ -981,6 +986,10 @@ namespace ProcessesApi.Tests.V1.Services
             IEnumerable<PersonType> personTypes = personType;
             var person = CreatePersonWithPersonType(relatedEntity.Id, personTypes);
             _mockPersonDb.Setup(x => x.GetPersonById(relatedEntity.Id)).ReturnsAsync(person);
+
+            var tenure = CreateTenure(process.TargetId);
+            _mockTenureDb.Setup(x => x.GetTenureById(process.TargetId)).ReturnsAsync(tenure);
+
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 
             // Assert
