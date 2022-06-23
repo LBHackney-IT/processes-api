@@ -634,7 +634,6 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToUpdateTenure(_processFixture.UpdateProcessRequest, initialState))
                     .And(a => _steps.ThenTheProcessCompletedEventIsRaised(_snsFixture, _processFixture.ProcessId))
                     .And(a => _steps.ThenTheExistingTenureHasEnded(_processFixture.Process))
-                    .And(a => _steps.ThenANewTenureIsCreated(_processFixture.Process, _personFixture.Person))
                 .BDDfy();
         }
 

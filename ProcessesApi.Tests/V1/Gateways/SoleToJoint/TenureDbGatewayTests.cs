@@ -113,6 +113,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             var updateTenure = _fixture.Build<TenureInformation>()
                                         .With(x => x.Id, entity.Id)
                                         .With(x => x.EndOfTenureDate, DateTime.UtcNow)
+                                        .With(x => x.VersionNumber, (int?) null)
                                         .Create();
 
             // Act
@@ -128,7 +129,9 @@ namespace ProcessesApi.Tests.V1.Gateways
         public async Task CreateTenureReturnsNewTenure()
         {
             // Arrange
-            var person = _fixture.Create<Person>();
+            var person = _fixture.Build<Person>()
+                                 .With(x => x.VersionNumber, (int?) null)
+                                 .Create();
 
             var householdMemberList = new List<HouseholdMembers>();
             var householdMember = new HouseholdMembers()
