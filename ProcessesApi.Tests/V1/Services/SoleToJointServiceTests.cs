@@ -122,7 +122,7 @@ namespace ProcessesApi.Tests.V1.Services
         private TenureInformation CreateTenure(Guid id) =>
                           _fixture.Build<TenureInformation>()
                          .With(x => x.Id, id)
-                         .With(x=> x.VersionNumber, (int?) null)
+                         .With(x => x.VersionNumber, (int?) null)
                          .Create();
 
         private Process CreateProcessWithCurrentState(string currentState, Dictionary<string, object> formData = null)
