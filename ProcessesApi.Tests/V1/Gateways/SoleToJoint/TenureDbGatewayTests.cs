@@ -134,7 +134,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             entity.EndOfTenureDate = DateTime.UtcNow;
             entity.VersionNumber = 0;
             var request = entity;
-            
+
             var response = await _classUnderTest.UpdateTenureById(request).ConfigureAwait(false);
             // Assert
             var load = await _dbFixture.DynamoDbContext.LoadAsync<TenureInformationDb>(entity.Id).ConfigureAwait(false);
