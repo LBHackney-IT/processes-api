@@ -314,7 +314,7 @@ namespace ProcessesApi.V1.Services
 
 
             _machine.Configure(SoleToJointStates.HOApprovalFailed)
-                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
+                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.TenureAppointmentScheduled)
                      .OnEntry(AddAppointmentDateTimeToEvent)

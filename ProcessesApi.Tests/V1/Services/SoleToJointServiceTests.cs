@@ -244,6 +244,7 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SoleToJointStates.DocumentsRequestedDes, true)]
         [InlineData(SoleToJointStates.DocumentsRequestedAppointment, true)]
         [InlineData(SoleToJointStates.DocumentsAppointmentRescheduled, true)]
+        [InlineData(SoleToJointStates.HOApprovalFailed, false)]
         public async Task ProcessStateIsUpdatedToProcessClosedAndEventIsRaised(string fromState, bool hasReason)
         {
             // Arrange
@@ -275,7 +276,6 @@ namespace ProcessesApi.Tests.V1.Services
         // List all states that CancelProcess can be triggered from
         [Theory]
         [InlineData(SoleToJointStates.HOApprovalPassed)]
-        [InlineData(SoleToJointStates.HOApprovalFailed)]
         [InlineData(SoleToJointStates.InterviewScheduled)]
         [InlineData(SoleToJointStates.InterviewRescheduled)]
         [InlineData(SoleToJointStates.TenureAppointmentScheduled)]
@@ -859,7 +859,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.HOApprovalFailed,
-                new List<string> { SoleToJointPermittedTriggers.CancelProcess }
+                new List<string> { SoleToJointPermittedTriggers.CloseProcess }
             );
             process.PreviousStates.Last().State.Should().Be(initialState);
             VerifyThatProcessUpdatedEventIsTriggered(initialState, SoleToJointStates.HOApprovalFailed);
