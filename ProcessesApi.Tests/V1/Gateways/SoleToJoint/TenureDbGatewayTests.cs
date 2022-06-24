@@ -17,6 +17,10 @@ using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Boundary.Requests;
 using Hackney.Shared.Person;
 using System.Linq;
+using ProcessesApi.V1.Infrastructure;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Force.DeepCloner;
 
 namespace ProcessesApi.Tests.V1.Gateways
 {
@@ -29,6 +33,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         private TenureDbGateway _classUnderTest;
         private readonly Mock<ILogger<TenureDbGateway>> _logger;
         private readonly List<Action> _cleanup = new List<Action>();
+
 
         public TenureDbGatewayTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
@@ -100,22 +105,26 @@ namespace ProcessesApi.Tests.V1.Gateways
             // Arrange
             var entity = _fixture.Build<TenureInformation>()
                                  .Without(x => x.EndOfTenureDate)
+                                 .With(x => x.StartOfTenureDate, DateTime.UtcNow)
+                                 .With(x => x.SuccessionDate, DateTime.UtcNow)
+                                 .With(x => x.PotentialEndDate, DateTime.UtcNow)
+                                 .With(x => x.SubletEndDate, DateTime.UtcNow)
+                                 .With(x => x.EvictionDate, DateTime.UtcNow)
                                  .With(x => x.VersionNumber, (int?) null)
                                  .Create();
 
             await InsertDatatoDynamoDB(entity.ToDatabase()).ConfigureAwait(false);
 
+            entity.EndOfTenureDate = DateTime.UtcNow;
+            entity.VersionNumber = 0;
+            var request = entity;
 
-            var updateTenure = _fixture.Build<TenureInformation>()
-                                        .With(x => x.Id, entity.Id)
-                                        .With(x => x.EndOfTenureDate, DateTime.UtcNow)
-                                        .With(x => x.VersionNumber, 0)
-                                        .Create();
-
-            // Act
-            var response = await _classUnderTest.UpdateTenureById(updateTenure).ConfigureAwait(false);
+            var response = await _classUnderTest.UpdateTenureById(request).ConfigureAwait(false);
             // Assert
+            var load = await _dbFixture.DynamoDbContext.LoadAsync<TenureInformationDb>(entity.Id).ConfigureAwait(false);
+
             response.EndOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            response.Should().BeEquivalentTo(load, config => config.Excluding(x => x.VersionNumber).Excluding(x => x.EndOfTenureDate));
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync for id {entity.Id}", Times.Once());
         }
 

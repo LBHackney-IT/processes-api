@@ -11,7 +11,6 @@ using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Gateways;
 using System.Linq;
 
-
 namespace ProcessesApi.V1.Services
 {
     public class SoleToJointService : ProcessService, ISoleToJointService
@@ -20,6 +19,7 @@ namespace ProcessesApi.V1.Services
         private readonly IGetPersonByIdHelper _personByIdHelper;
         private readonly ITenureDbGateway _tenureDbGateway;
         private readonly IPersonDbGateway _personDbGateway;
+
 
 
         public SoleToJointService(ISnsFactory snsFactory,
@@ -178,7 +178,8 @@ namespace ProcessesApi.V1.Services
             var process = x.Parameters[1] as Process;
             var relatedEntity = process.RelatedEntities.First();
 
-            var tenureInfoRequest = SoleToJointHelpers.UpdateTenureRequest(process);
+            var initialTenure = await _tenureDbGateway.GetTenureById(process.TargetId).ConfigureAwait(false);
+            var tenureInfoRequest = SoleToJointHelpers.UpdateTenureRequest(initialTenure);
             await _tenureDbGateway.UpdateTenureById(tenureInfoRequest).ConfigureAwait(false);
 
             var person = await _personDbGateway.GetPersonById(relatedEntity.Id).ConfigureAwait(false);
