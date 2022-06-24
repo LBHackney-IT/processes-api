@@ -10,8 +10,6 @@ using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Gateways;
 using System.Linq;
-using Microsoft.AspNetCore.Http;
-using Hackney.Core.Http;
 
 namespace ProcessesApi.V1.Services
 {

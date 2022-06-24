@@ -66,22 +66,6 @@ namespace ProcessesApi.Tests.V1.Gateways
 
         }
 
-        private UpdateEntityResult<TenureInformation> CreateUpdateEntityResult(TenureInformation entityCurrentlyInDb)
-        {
-            var updatedEntity = entityCurrentlyInDb.ToDatabase();
-
-            updatedEntity.EndOfTenureDate = DateTime.UtcNow + _fixture.Create<TimeSpan>();
-
-            return new UpdateEntityResult<TenureInformation>
-            {
-                UpdatedEntity = updatedEntity.ToDomain(),
-                NewValues = new Dictionary<string, object>
-                {
-                     { "EndOfTenureDate", updatedEntity.EndOfTenureDate },
-                }
-            };
-        }
-
         [Fact]
         public async Task GetTenureByIdReturnsNullIfEntityDoesntExist()
         {
