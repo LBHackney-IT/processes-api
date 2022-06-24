@@ -9,6 +9,9 @@ using Microsoft.Extensions.Logging;
 using Hackney.Shared.Person.Factories;
 using Hackney.Shared.Tenure.Boundary.Requests;
 using ProcessesApi.V1.Factories;
+using Amazon.DynamoDBv2;
+using System.Linq;
+using ProcessesApi.V1.Infrastructure;
 
 namespace ProcessesApi.V1.Gateways
 {

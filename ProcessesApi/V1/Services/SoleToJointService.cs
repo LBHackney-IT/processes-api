@@ -10,7 +10,8 @@ using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Gateways;
 using System.Linq;
-
+using Microsoft.AspNetCore.Http;
+using Hackney.Core.Http;
 
 namespace ProcessesApi.V1.Services
 {
@@ -20,6 +21,7 @@ namespace ProcessesApi.V1.Services
         private readonly IGetPersonByIdHelper _personByIdHelper;
         private readonly ITenureDbGateway _tenureDbGateway;
         private readonly IPersonDbGateway _personDbGateway;
+
 
 
         public SoleToJointService(ISnsFactory snsFactory,
@@ -179,7 +181,7 @@ namespace ProcessesApi.V1.Services
             var relatedEntity = process.RelatedEntities.First();
 
             var initialTenure = await _tenureDbGateway.GetTenureById(process.TargetId).ConfigureAwait(false);
-            var tenureInfoRequest = SoleToJointHelpers.UpdateTenureRequest(process, initialTenure);
+            var tenureInfoRequest = SoleToJointHelpers.UpdateTenureRequest(initialTenure);
             await _tenureDbGateway.UpdateTenureById(tenureInfoRequest).ConfigureAwait(false);
 
             var person = await _personDbGateway.GetPersonById(relatedEntity.Id).ConfigureAwait(false);

@@ -23,6 +23,7 @@ using Hackney.Shared.Tenure.Boundary.Requests;
 using Hackney.Shared.Tenure.Infrastructure;
 using Hackney.Shared.Tenure.Factories;
 using Hackney.Shared.Person.Domain;
+using Microsoft.AspNetCore.Http;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -40,6 +41,8 @@ namespace ProcessesApi.Tests.V1.Services
         private Mock<ISnsGateway> _mockSnsGateway;
         private readonly Token _token = new Token();
         private EntityEventSns _lastSnsEvent = new EntityEventSns();
+        private const string RequestBodyText = "Some request body text";
+
 
         private Dictionary<string, object> _manualEligibilityPassData => new Dictionary<string, object>
         {
