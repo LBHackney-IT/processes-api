@@ -152,9 +152,7 @@ namespace ProcessesApi.V1.Services
         private async Task OnProcessClosed(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
-            SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
-
-            _eventData = SoleToJointHelpers._eventData;
+            _eventData = SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
             await PublishProcessClosedEvent(x).ConfigureAwait(false);
         }
 
@@ -170,21 +168,12 @@ namespace ProcessesApi.V1.Services
         private async Task OnProcessCompleted(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
-            SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
+            _eventData = SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
 
-            _eventData = SoleToJointHelpers._eventData;
+            var newTenure = SoleToJointHelpers.UpdateTenures(_process, _tenureDbGateway, _personDbGateway);
+            _eventData.Add(SoleToJointFormDataKeys.NewTenureId, newTenure.Id);
+
             await PublishProcessCompletedEvent(x).ConfigureAwait(false);
-
-            var process = x.Parameters[1] as Process;
-            var relatedEntity = process.RelatedEntities.First();
-
-            var initialTenure = await _tenureDbGateway.GetTenureById(process.TargetId).ConfigureAwait(false);
-            var tenureInfoRequest = SoleToJointHelpers.UpdateTenureRequest(initialTenure);
-            await _tenureDbGateway.UpdateTenureById(tenureInfoRequest).ConfigureAwait(false);
-
-            var person = await _personDbGateway.GetPersonById(relatedEntity.Id).ConfigureAwait(false);
-            var createTenureRequest = SoleToJointHelpers.CreateTenureRequest(relatedEntity.Id, person);
-            await _tenureDbGateway.PostNewTenureAsync(createTenureRequest).ConfigureAwait(false);
         }
 
         private void AddIncomingTenantIdToRelatedEntities(Stateless.StateMachine<string, string>.Transition x)

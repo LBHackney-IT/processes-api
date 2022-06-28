@@ -27,5 +27,12 @@ namespace ProcessesApi.V1.Gateways
             var result = await _dynamoDbContext.LoadAsync<PersonDbEntity>(id).ConfigureAwait(false);
             return result?.ToDomain();
         }
+
+        public async Task<Person> UpdatePersonById(Person person)
+        {
+            _logger.LogDebug($"Calling IDynamoDBContext.SaveAsync for Person ID: {person.Id}");
+            await _dynamoDbContext.SaveAsync(person.ToDatabase()).ConfigureAwait(false);
+            return person;
+        }
     }
 }
