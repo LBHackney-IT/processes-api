@@ -20,10 +20,8 @@ using Hackney.Shared.Person;
 using ProcessesApi.V1.Gateways;
 using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Boundary.Requests;
-using Hackney.Shared.Tenure.Infrastructure;
 using Hackney.Shared.Tenure.Factories;
 using Hackney.Shared.Person.Domain;
-using Microsoft.AspNetCore.Http;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -35,9 +33,10 @@ namespace ProcessesApi.Tests.V1.Services
         private readonly List<Action> _cleanup = new List<Action>();
 
         private Mock<ISoleToJointAutomatedEligibilityChecksHelper> _mockAutomatedEligibilityChecksHelper;
-        private Mock<IGetPersonByIdHelper> _mockPersonByIdHelper;
         private Mock<ITenureDbGateway> _mockTenureDb;
         private Mock<IPersonDbGateway> _mockPersonDb;
+        private Mock<IIncomeApiGateway> _mockIncomeApi;
+        private Mock<IPersonApiGateway> _mockPersonApi;
         private Mock<ISnsGateway> _mockSnsGateway;
         private readonly Token _token = new Token();
         private EntityEventSns _lastSnsEvent = new EntityEventSns();
@@ -62,16 +61,6 @@ namespace ProcessesApi.Tests.V1.Services
             { SoleToJointFormDataKeys.BR18, "false" }
         };
 
-        private Dictionary<string, object> _reviewDocumentCheckPass => new Dictionary<string, object>
-        {
-            { SoleToJointFormDataKeys.SeenPhotographicId, "true" },
-            { SoleToJointFormDataKeys.SeenSecondId, "true" },
-            { SoleToJointFormDataKeys.IsNotInImmigrationControl, "true" },
-            {SoleToJointFormDataKeys.SeenProofOfRelationship, "true" },
-            { SoleToJointFormDataKeys.IncomingTenantLivingInProperty, "true" }
-        };
-
-
         public void Dispose()
         {
             Dispose(true);
@@ -94,16 +83,19 @@ namespace ProcessesApi.Tests.V1.Services
         public SoleToJointServiceTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
             _mockSnsGateway = new Mock<ISnsGateway>();
-            _mockPersonByIdHelper = new Mock<IGetPersonByIdHelper>();
             _mockAutomatedEligibilityChecksHelper = new Mock<ISoleToJointAutomatedEligibilityChecksHelper>();
             _mockTenureDb = new Mock<ITenureDbGateway>();
             _mockPersonDb = new Mock<IPersonDbGateway>();
+            _mockIncomeApi = new Mock<IIncomeApiGateway>();
+            _mockPersonApi = new Mock<IPersonApiGateway>();
+
             _classUnderTest = new SoleToJointService(new ProcessesSnsFactory(),
                                                      _mockSnsGateway.Object,
                                                      _mockAutomatedEligibilityChecksHelper.Object,
-                                                     _mockPersonByIdHelper.Object,
                                                      _mockTenureDb.Object,
-                                                     _mockPersonDb.Object);
+                                                     _mockPersonDb.Object,
+                                                     _mockIncomeApi.Object,
+                                                     _mockPersonApi.Object);
 
             _mockSnsGateway
                 .Setup(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()))
@@ -353,7 +345,7 @@ namespace ProcessesApi.Tests.V1.Services
                                                     });
             _mockAutomatedEligibilityChecksHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(true);
             var person = CreatePerson(incomingTenantId);
-            _mockPersonByIdHelper.Setup(x => x.GetPersonById(incomingTenantId)).ReturnsAsync(person);
+            _mockPersonDb.Setup(x => x.GetPersonById(incomingTenantId)).ReturnsAsync(person);
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 
@@ -385,7 +377,7 @@ namespace ProcessesApi.Tests.V1.Services
 
             _mockAutomatedEligibilityChecksHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(false);
             var person = CreatePerson(incomingTenantId);
-            _mockPersonByIdHelper.Setup(x => x.GetPersonById(incomingTenantId)).ReturnsAsync(person);
+            _mockPersonDb.Setup(x => x.GetPersonById(incomingTenantId)).ReturnsAsync(person);
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 
@@ -418,7 +410,7 @@ namespace ProcessesApi.Tests.V1.Services
                                                      formData);
             _mockAutomatedEligibilityChecksHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(true);
             var person = CreatePerson(incomingTenantId);
-            _mockPersonByIdHelper.Setup(x => x.GetPersonById(incomingTenantId)).ReturnsAsync(person);
+            _mockPersonDb.Setup(x => x.GetPersonById(incomingTenantId)).ReturnsAsync(person);
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 

@@ -17,10 +17,6 @@ using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Boundary.Requests;
 using Hackney.Shared.Person;
 using System.Linq;
-using ProcessesApi.V1.Infrastructure;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using Force.DeepCloner;
 
 namespace ProcessesApi.Tests.V1.Gateways
 {

@@ -4,7 +4,6 @@ using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
-using ProcessesApi.V1.Infrastructure.JWT;
 using ProcessesApi.V1.UseCase.Interfaces;
 using System;
 using System.Threading.Tasks;

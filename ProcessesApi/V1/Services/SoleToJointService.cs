@@ -9,33 +9,34 @@ using Hackney.Core.Sns;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Gateways;
-using System.Linq;
 
 namespace ProcessesApi.V1.Services
 {
     public class SoleToJointService : ProcessService, ISoleToJointService
     {
         private readonly ISoleToJointAutomatedEligibilityChecksHelper _automatedcheckshelper;
-        private readonly IGetPersonByIdHelper _personByIdHelper;
         private readonly ITenureDbGateway _tenureDbGateway;
         private readonly IPersonDbGateway _personDbGateway;
-
-
+        private readonly IIncomeApiGateway _incomeApiGateway;
+        private readonly IPersonApiGateway _personApiGateway;
 
         public SoleToJointService(ISnsFactory snsFactory,
                                   ISnsGateway snsGateway,
                                   ISoleToJointAutomatedEligibilityChecksHelper automatedChecksHelper,
-                                  IGetPersonByIdHelper getPersonByIdHelper,
                                   ITenureDbGateway tenureDbGateway,
-                                  IPersonDbGateway personDbGateway)
+                                  IPersonDbGateway personDbGateway,
+                                  IIncomeApiGateway incomeApiGateway,
+                                  IPersonApiGateway personApiGateway)
             : base(snsFactory, snsGateway)
         {
             _snsFactory = snsFactory;
             _snsGateway = snsGateway;
             _automatedcheckshelper = automatedChecksHelper;
-            _personByIdHelper = getPersonByIdHelper;
             _tenureDbGateway = tenureDbGateway;
+            _incomeApiGateway = incomeApiGateway;
             _personDbGateway = personDbGateway;
+            _personApiGateway = personApiGateway;
+
             _permittedTriggersType = typeof(SoleToJointPermittedTriggers);
             _ignoredTriggersForProcessUpdated = new List<string>
             {
@@ -55,9 +56,9 @@ namespace ProcessesApi.V1.Services
             SoleToJointHelpers.ValidateFormData(formData, new List<string>() { SoleToJointFormDataKeys.IncomingTenantId, SoleToJointFormDataKeys.TenantId });
 
             var isEligible = await _automatedcheckshelper.CheckAutomatedEligibility(_process.TargetId,
-                                                                     Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()),
-                                                                     Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.TenantId].ToString()))
-                                                                     .ConfigureAwait(false);
+                                                                                    Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()),
+                                                                                    Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.TenantId].ToString())
+                                                                                   ).ConfigureAwait(false);
 
             processRequest.Trigger = isEligible ? SoleToJointInternalTriggers.EligibiltyPassed : SoleToJointInternalTriggers.EligibiltyFailed;
 
@@ -170,16 +171,17 @@ namespace ProcessesApi.V1.Services
             var processRequest = x.Parameters[0] as ProcessTrigger;
             _eventData = SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
 
-            var newTenure = SoleToJointHelpers.UpdateTenures(_process, _tenureDbGateway, _personDbGateway);
+            var newTenure = SoleToJointHelpers.UpdateTenures(_process, _tenureDbGateway, _personDbGateway, _personApiGateway);
             _eventData.Add(SoleToJointFormDataKeys.NewTenureId, newTenure.Id);
 
             await PublishProcessCompletedEvent(x).ConfigureAwait(false);
         }
 
-        private void AddIncomingTenantIdToRelatedEntities(Stateless.StateMachine<string, string>.Transition x)
+        private async Task AddIncomingTenantIdToRelatedEntitiesAsync(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
-            SoleToJointHelpers.AddIncomingTenantToRelatedEntities(processRequest.FormData, _process, _personByIdHelper);
+            await SoleToJointHelpers.AddIncomingTenantToRelatedEntitiesAsync(processRequest.FormData, _process, _personDbGateway)
+                                    .ConfigureAwait(false);
         }
 
         public void AddAppointmentDateTimeToEvent(Stateless.StateMachine<string, string>.Transition transition)
@@ -208,7 +210,7 @@ namespace ProcessesApi.V1.Services
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckAutomatedEligibility, CheckAutomatedEligibility)
                     .Permit(SoleToJointInternalTriggers.EligibiltyFailed, SoleToJointStates.AutomatedChecksFailed)
                     .Permit(SoleToJointInternalTriggers.EligibiltyPassed, SoleToJointStates.AutomatedChecksPassed)
-                    .OnExit(AddIncomingTenantIdToRelatedEntities);
+                    .OnExitAsync(AddIncomingTenantIdToRelatedEntitiesAsync);
 
             _machine.Configure(SoleToJointStates.AutomatedChecksFailed)
                     .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);

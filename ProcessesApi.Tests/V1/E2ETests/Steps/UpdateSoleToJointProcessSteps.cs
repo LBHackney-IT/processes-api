@@ -4,7 +4,6 @@ using Hackney.Core.Testing.DynamoDb;
 using Hackney.Core.Testing.Shared.E2E;
 using Hackney.Core.Testing.Sns;
 using Hackney.Shared.Person;
-using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Infrastructure;
 using Newtonsoft.Json;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
