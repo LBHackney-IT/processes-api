@@ -1,15 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using Hackney.Shared.Person.Boundary.Request;
-using Hackney.Shared.Tenure.Boundary.Requests;
 using Hackney.Shared.Tenure.Domain;
-using Hackney.Shared.Tenure.Factories;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Domain.SoleToJoint;
-using ProcessesApi.V1.Gateways;
-using ProcessesApi.V1.Gateways.Exceptions;
 using ProcessesApi.V1.Services.Exceptions;
 
 namespace ProcessesApi.V1.Helpers

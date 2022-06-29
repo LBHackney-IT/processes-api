@@ -16,13 +16,6 @@ using ProcessesApi.V1.Services;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Services.Exceptions;
 using System.Globalization;
-using Hackney.Shared.Person;
-using ProcessesApi.V1.Gateways;
-using Hackney.Shared.Tenure.Domain;
-using Hackney.Shared.Tenure.Boundary.Requests;
-using Hackney.Shared.Tenure.Factories;
-using Hackney.Shared.Person.Domain;
-using Hackney.Shared.Person.Boundary.Request;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -291,11 +284,6 @@ namespace ProcessesApi.Tests.V1.Services
 
             // Assert
             _mockDbOperationsHelper.Verify(x => x.AddIncomingTenantToRelatedEntities(triggerObject.FormData, process), Times.Once);
-            // var relatedEntity = process.RelatedEntities.Find(x => x.Id == incomingTenantId);
-            // relatedEntity.Should().NotBeNull();
-            // relatedEntity.TargetType.Should().Be(TargetType.person);
-            // relatedEntity.SubType.Should().Be(SubType.householdMember);
-            // relatedEntity.Description.Should().Be($"{person.FirstName} {person.Surname}");
         }
 
         [Fact]
@@ -927,6 +915,23 @@ namespace ProcessesApi.Tests.V1.Services
             _mockDbOperationsHelper.Verify(x => x.UpdateTenures(process), Times.Once);
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_COMPLETED_EVENT);
+        }
+
+        [Fact]
+        public void ThrowsErrorIfDbOperationsHelperThrowsError()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SoleToJointStates.TenureAppointmentScheduled);
+            var formData = new Dictionary<string, object> { { SoleToJointFormDataKeys.HasNotifiedResident, true } };
+
+            var triggerObject = CreateProcessTrigger(process,
+                                                     SoleToJointPermittedTriggers.UpdateTenure,
+                                                     formData);
+            _mockDbOperationsHelper.Setup(x => x.UpdateTenures(process)).Throws(new Exception("Test Exception"));
+
+            // Act + Assert
+            _classUnderTest.Invoking(x => x.Process(triggerObject, process, _token))
+                           .Should().Throw<Exception>();
         }
 
         #endregion

@@ -1,11 +1,8 @@
 using AutoFixture;
-using FluentAssertions;
 using Hackney.Core.Testing.Shared.E2E;
 using Hackney.Shared.Tenure.Boundary.Response;
 using Hackney.Shared.Tenure.Domain;
-using ProcessesApi.V1.Domain;
 using System;
-using System.Collections.Generic;
 
 namespace ProcessesApi.Tests.V1.E2E.Fixtures
 {

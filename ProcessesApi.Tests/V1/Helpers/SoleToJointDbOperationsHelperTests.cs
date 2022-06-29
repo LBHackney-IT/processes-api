@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using AutoFixture;
 using FluentAssertions;
 using Hackney.Shared.Person;
-using Hackney.Shared.Person.Boundary.Request;
 using Hackney.Shared.Person.Boundary.Response;
 using Hackney.Shared.Person.Domain;
 using Hackney.Shared.Tenure.Boundary.Requests;
@@ -46,6 +45,27 @@ namespace ProcessesApi.Tests.V1.Helpers
                                                                 _mockTenureApi.Object);
         }
 
+        [Fact]
+        public async Task AddsIncomingTenantToRelatedEntities()
+        {
+            // arrange
+            var process = _fixture.Create<Process>();
+            var incomingTenant = _fixture.Create<Person>();
+            _mockPersonDb.Setup(x => x.GetPersonById(incomingTenant.Id)).ReturnsAsync(incomingTenant);
+            var formData = new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenant.Id } };
+
+            // act
+            await _classUnderTest.AddIncomingTenantToRelatedEntities(formData, process).ConfigureAwait(false);
+
+            // assert
+            var relatedEntity = process.RelatedEntities.Find(x => x.Id == incomingTenant.Id);
+            relatedEntity.Should().NotBeNull();
+            relatedEntity.TargetType.Should().Be(TargetType.person);
+            relatedEntity.SubType.Should().Be(SubType.householdMember);
+            relatedEntity.Description.Should().Be($"{incomingTenant.FirstName} {incomingTenant.Surname}");
+        }
+
+        #region Helpers
         private (Process, Person, TenureInformation, Guid, string) CreateProcessAndRelatedEntities()
         {
             var proposedTenantId = Guid.NewGuid();
@@ -109,6 +129,8 @@ namespace ProcessesApi.Tests.V1.Helpers
             // Act
             return await _classUnderTest.CheckAutomatedEligibility(tenure.Id, proposedTenant.Id, tenantId).ConfigureAwait(false);
         }
+
+        #endregion
 
         #region Automated Eligibility checks
 

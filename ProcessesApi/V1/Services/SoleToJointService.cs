@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Hackney.Core.Sns;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Helpers;
-using ProcessesApi.V1.Gateways;
 
 namespace ProcessesApi.V1.Services
 {

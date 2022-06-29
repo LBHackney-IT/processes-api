@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using Hackney.Shared.Person.Boundary.Response;
 using Hackney.Shared.Tenure.Boundary.Requests;
-using Hackney.Shared.Tenure.Domain;
 
 namespace ProcessesApi.V1.Gateways
 {

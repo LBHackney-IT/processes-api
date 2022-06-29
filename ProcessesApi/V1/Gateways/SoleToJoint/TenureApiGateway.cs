@@ -12,7 +12,6 @@ using Hackney.Shared.Person.Boundary.Response;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using JsonSerializer = System.Text.Json.JsonSerializer;
-using Hackney.Shared.Tenure.Domain;
 
 namespace ProcessesApi.V1.Gateways
 {
