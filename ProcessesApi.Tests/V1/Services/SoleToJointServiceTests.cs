@@ -136,7 +136,7 @@ namespace ProcessesApi.Tests.V1.Services
         // List states & triggers that expect certain form data values
         [Theory]
         [InlineData(SoleToJointStates.AutomatedChecksFailed, SoleToJointPermittedTriggers.CloseProcess, new string[] { SoleToJointFormDataKeys.HasNotifiedResident })]
-        [InlineData(SoleToJointStates.DocumentsRequestedDes, SoleToJointPermittedTriggers.CancelProcess, new string[] { SoleToJointFormDataKeys.Comment })]
+        [InlineData(SoleToJointStates.DocumentsRequestedDes, SoleToJointPermittedTriggers.CloseProcess, new string[] { SoleToJointFormDataKeys.HasNotifiedResident })]
         [InlineData(SoleToJointStates.SelectTenants, SoleToJointPermittedTriggers.CheckAutomatedEligibility, new string[] { SoleToJointFormDataKeys.IncomingTenantId, SoleToJointFormDataKeys.TenantId })]
         [InlineData(SoleToJointStates.AutomatedChecksPassed, SoleToJointPermittedTriggers.CheckManualEligibility, new string[] { SoleToJointFormDataKeys.BR11, SoleToJointFormDataKeys.BR12, SoleToJointFormDataKeys.BR13,
                                                                                                                                 SoleToJointFormDataKeys.BR15, SoleToJointFormDataKeys.BR16, SoleToJointFormDataKeys.BR7, SoleToJointFormDataKeys.BR8 })]
@@ -174,6 +174,10 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SoleToJointStates.AutomatedChecksFailed, false)]
         [InlineData(SoleToJointStates.ManualChecksFailed, false)]
         [InlineData(SoleToJointStates.BreachChecksFailed, false)]
+        [InlineData(SoleToJointStates.DocumentsRequestedDes, true)]
+        [InlineData(SoleToJointStates.DocumentsRequestedAppointment, true)]
+        [InlineData(SoleToJointStates.DocumentsAppointmentRescheduled, true)]
+        [InlineData(SoleToJointStates.HOApprovalFailed, false)]
         public async Task ProcessStateIsUpdatedToProcessClosedAndEventIsRaised(string fromState, bool hasReason)
         {
             // Arrange
@@ -204,11 +208,7 @@ namespace ProcessesApi.Tests.V1.Services
 
         // List all states that CancelProcess can be triggered from
         [Theory]
-        [InlineData(SoleToJointStates.DocumentsRequestedDes)]
-        [InlineData(SoleToJointStates.DocumentsRequestedAppointment)]
-        [InlineData(SoleToJointStates.DocumentsAppointmentRescheduled)]
         [InlineData(SoleToJointStates.HOApprovalPassed)]
-        [InlineData(SoleToJointStates.HOApprovalFailed)]
         [InlineData(SoleToJointStates.InterviewScheduled)]
         [InlineData(SoleToJointStates.InterviewRescheduled)]
         [InlineData(SoleToJointStates.TenureAppointmentScheduled)]
@@ -495,7 +495,7 @@ namespace ProcessesApi.Tests.V1.Services
                 {
                     SoleToJointPermittedTriggers.RescheduleDocumentsAppointment,
                     SoleToJointPermittedTriggers.ReviewDocuments,
-                    SoleToJointPermittedTriggers.CancelProcess
+                    SoleToJointPermittedTriggers.CloseProcess
                 });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
@@ -523,7 +523,7 @@ namespace ProcessesApi.Tests.V1.Services
                 {
                     SoleToJointPermittedTriggers.RequestDocumentsAppointment,
                     SoleToJointPermittedTriggers.ReviewDocuments,
-                    SoleToJointPermittedTriggers.CancelProcess
+                    SoleToJointPermittedTriggers.CloseProcess
                 });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
@@ -556,7 +556,7 @@ namespace ProcessesApi.Tests.V1.Services
                 {
                     SoleToJointPermittedTriggers.RescheduleDocumentsAppointment,
                     SoleToJointPermittedTriggers.ReviewDocuments,
-                    SoleToJointPermittedTriggers.CancelProcess
+                    SoleToJointPermittedTriggers.CloseProcess
                 });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.BreachChecksPassed);
@@ -597,7 +597,7 @@ namespace ProcessesApi.Tests.V1.Services
                 {
                     SoleToJointPermittedTriggers.ReviewDocuments,
                     SoleToJointPermittedTriggers.RescheduleDocumentsAppointment,
-                    SoleToJointPermittedTriggers.CancelProcess
+                    SoleToJointPermittedTriggers.CloseProcess
                 }
             );
             process.PreviousStates.Last().State.Should().Be(initialState);
@@ -794,7 +794,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.HOApprovalFailed,
-                new List<string> { SoleToJointPermittedTriggers.CancelProcess }
+                new List<string> { SoleToJointPermittedTriggers.CloseProcess }
             );
             process.PreviousStates.Last().State.Should().Be(initialState);
             VerifyThatProcessUpdatedEventIsTriggered(initialState, SoleToJointStates.HOApprovalFailed);

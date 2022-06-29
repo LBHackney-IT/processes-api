@@ -225,21 +225,21 @@ namespace ProcessesApi.V1.Services
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
                     .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
                     .Permit(SoleToJointPermittedTriggers.RequestDocumentsAppointment, SoleToJointStates.DocumentsRequestedAppointment)
-                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
+                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.DocumentsRequestedAppointment)
                     .OnEntry(AddAppointmentDateTimeToEvent)
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
                     .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
                     .Permit(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment, SoleToJointStates.DocumentsAppointmentRescheduled)
-                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
+                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.DocumentsAppointmentRescheduled)
                     .OnEntry(AddAppointmentDateTimeToEvent)
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
                     .PermitReentry(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment)
                     .Permit(SoleToJointInternalTriggers.DocumentChecksPassed, SoleToJointStates.DocumentChecksPassed)
-                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
+                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.DocumentChecksPassed)
                     .Permit(SoleToJointPermittedTriggers.SubmitApplication, SoleToJointStates.ApplicationSubmitted);
@@ -291,7 +291,7 @@ namespace ProcessesApi.V1.Services
 
 
             _machine.Configure(SoleToJointStates.HOApprovalFailed)
-                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
+                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.TenureAppointmentScheduled)
                      .OnEntry(AddAppointmentDateTimeToEvent)
