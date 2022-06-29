@@ -624,8 +624,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
 
         #region Update Tenure
 
-        [Skip("Trying to fix API fixtures")]
-        [Theory]
+        [Theory(Skip = "Trying to fix API fixtures")]
         [InlineData(SoleToJointStates.TenureAppointmentScheduled)]
         [InlineData(SoleToJointStates.TenureAppointmentRescheduled)]
         public void ProcessStateIsUpdatedToProcessCompleted(string initialState)
