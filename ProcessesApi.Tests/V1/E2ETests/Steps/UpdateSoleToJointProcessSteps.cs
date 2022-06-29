@@ -4,8 +4,12 @@ using Hackney.Core.Testing.DynamoDb;
 using Hackney.Core.Testing.Shared.E2E;
 using Hackney.Core.Testing.Sns;
 using Hackney.Shared.Person;
+using Hackney.Shared.Person.Boundary.Response;
+using Hackney.Shared.Tenure.Boundary.Requests;
+using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Infrastructure;
 using Newtonsoft.Json;
+using ProcessesApi.Tests.V1.E2E.Fixtures;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
 using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
@@ -15,6 +19,7 @@ using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Infrastructure.JWT;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -371,11 +376,23 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             await VerifyProcessCompletedEventIsRaisedWithStateData(snsFixture, processId, SoleToJointStates.TenureUpdated, SoleToJointFormDataKeys.Reason).ConfigureAwait(false);
         }
 
-        public async Task ThenTheExistingTenureHasEnded(Process process)
+        public void ThenANewTenureIsCreated(Process process, TenureApiFixture tenureApiFixture, TenureInformation oldTenure)
         {
-            var tenure = await _dbFixture.DynamoDbContext.LoadAsync<TenureInformationDb>(process.TargetId).ConfigureAwait(false);
-            tenure.Id.Should().Be(process.TargetId);
-            tenure.EndOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            var postRequest = tenureApiFixture.Requests.Find(x => x.HttpMethod == HttpMethod.Post.ToString());
+            postRequest.Should().NotBeNull();
+            var bodystring = new StreamReader(postRequest.InputStream).ReadToEnd();
+            var requestObject = JsonSerializer.Deserialize<CreateTenureRequestObject>(bodystring);
+
+            requestObject.Should().NotBeNull();
+            requestObject.StartOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            requestObject.Should().BeEquivalentTo(oldTenure, c => c.Excluding(x => x.Id)
+                                                                   .Excluding(x => x.HouseholdMembers)
+                                                                   .Excluding(x => x.StartOfTenureDate));
+        }
+
+        public void ThenTheExistingTenureIsClosed(Process process, TenureApiFixture tenureApiFixture)
+        {
+            throw new NotImplementedException();
         }
     }
 }

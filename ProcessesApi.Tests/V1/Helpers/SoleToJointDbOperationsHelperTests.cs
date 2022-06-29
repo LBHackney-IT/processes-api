@@ -30,7 +30,6 @@ namespace ProcessesApi.Tests.V1.Helpers
         private Mock<IIncomeApiGateway> _mockIncomeApi;
         private Mock<IPersonDbGateway> _mockPersonDb;
         private Mock<ITenureDbGateway> _mockTenureDb;
-        private Mock<IPersonApiGateway> _mockPersonApi;
         private Mock<ITenureApiGateway> _mockTenureApi;
         private SoleToJointDbOperationsHelper _classUnderTest;
 
@@ -39,13 +38,11 @@ namespace ProcessesApi.Tests.V1.Helpers
             _mockIncomeApi = new Mock<IIncomeApiGateway>();
             _mockPersonDb = new Mock<IPersonDbGateway>();
             _mockTenureDb = new Mock<ITenureDbGateway>();
-            _mockPersonApi = new Mock<IPersonApiGateway>();
             _mockTenureApi = new Mock<ITenureApiGateway>();
 
             _classUnderTest = new SoleToJointDbOperationsHelper(_mockIncomeApi.Object,
                                                                 _mockPersonDb.Object,
                                                                 _mockTenureDb.Object,
-                                                                _mockPersonApi.Object,
                                                                 _mockTenureApi.Object);
         }
 
@@ -346,12 +343,14 @@ namespace ProcessesApi.Tests.V1.Helpers
             newTenure.Should().BeEquivalentTo(oldTenure, c => c.Excluding(x => x.Id)
                                                                .Excluding(x => x.HouseholdMembers)
                                                                .Excluding(x => x.StartOfTenureDate));
-
             requestObject.StartOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            return true;
+        }
 
-            var householdMemberDetails = newTenure.HouseholdMembers.Find(x => x.Id == incomingTenantId);
-            householdMemberDetails.IsResponsible.Should().BeTrue();
-            householdMemberDetails.PersonTenureType.Should().Be(PersonTenureType.Tenant);
+        private bool VerifyUpdateTenureForPerson(UpdateTenureForPersonRequestObject requestObject)
+        {
+            requestObject.IsResponsible.Should().BeTrue();
+            requestObject.Type.Should().Be(HouseholdMembersType.Person);
 
             return true;
         }
@@ -376,6 +375,7 @@ namespace ProcessesApi.Tests.V1.Helpers
 
             _mockTenureApi.Verify(g => g.EditTenureDetailsById(oldTenure.Id, It.Is<EditTenureDetailsRequestObject>(x => VerifyEndExistingTenure(x)), oldTenure.VersionNumber), Times.Once);
             _mockTenureApi.Verify(g => g.CreateNewTenure(It.Is<CreateTenureRequestObject>(x => VerifyNewTenure(x, oldTenure.ToDatabase(), proposedTenant.Id))), Times.Once);
+            _mockTenureApi.Verify(g => g.UpdateTenureForPerson(newTenure.Id, proposedTenant.Id, It.Is<UpdateTenureForPersonRequestObject>(x => VerifyUpdateTenureForPerson(x)), 0), Times.Once);
         }
 
         #endregion

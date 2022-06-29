@@ -12,6 +12,7 @@ using Hackney.Shared.Person.Boundary.Response;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using JsonSerializer = System.Text.Json.JsonSerializer;
+using Hackney.Shared.Tenure.Domain;
 
 namespace ProcessesApi.V1.Gateways
 {
@@ -47,7 +48,7 @@ namespace ProcessesApi.V1.Gateways
             _logger.LogDebug($"Calling Tenure API to update Tenure ID: {id}");
 
             var route = $"{_apiGateway.ApiRoute}/tenures/{id}";
-            var uri = new Uri(route, UriKind.Relative);
+            var uri = new Uri(route, UriKind.Absolute);
             var message = new HttpRequestMessage(HttpMethod.Patch, uri);
 
             var requestJson = JsonConvert.SerializeObject(editTenureDetailsRequestObject);
@@ -64,16 +65,33 @@ namespace ProcessesApi.V1.Gateways
             _logger.LogDebug($"Calling Tenure API to create new tenure");
 
             var route = $"{_apiGateway.ApiRoute}/tenures";
-            var uri = new Uri(route, UriKind.Relative);
-            var message = new HttpRequestMessage(HttpMethod.Patch, uri);
+            var uri = new Uri(route, UriKind.Absolute);
+            var message = new HttpRequestMessage(HttpMethod.Post, uri);
 
             var requestJson = JsonConvert.SerializeObject(createTenureRequestObject);
             message.Content = new StringContent(requestJson, Encoding.UTF8, "application/json");
-            message.Method = HttpMethod.Patch;
+            message.Method = HttpMethod.Post;
 
             var response = await _apiGateway.SendAsync(message, Guid.NewGuid()).ConfigureAwait(false);
             var responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             return JsonSerializer.Deserialize<TenureResponseObject>(responseContent, CreateJsonOptions());
+        }
+
+        public async Task UpdateTenureForPerson(Guid tenureId, Guid personId, UpdateTenureForPersonRequestObject requestObject, int? ifMatch)
+        {
+            _logger.LogDebug($"Calling Tenure API to update Tenure ID: {tenureId} for person: {personId}");
+
+            var route = $"{_apiGateway.ApiRoute}/tenures/{tenureId}/person/{personId}";
+            var uri = new Uri(route, UriKind.Absolute);
+            var message = new HttpRequestMessage(HttpMethod.Patch, uri);
+
+            var requestJson = JsonConvert.SerializeObject(requestObject);
+            message.Content = new StringContent(requestJson, Encoding.UTF8, "application/json");
+
+            message.Method = HttpMethod.Patch;
+            _apiGateway.RequestHeaders.Add(HeaderConstants.IfMatch, $"\"{ifMatch?.ToString()}\"");
+
+            await _apiGateway.SendAsync(message, Guid.NewGuid()).ConfigureAwait(false);
         }
     }
 }

@@ -183,7 +183,6 @@ namespace ProcessesApi
             services.AddScoped<IPersonDbGateway, PersonDbGateway>();
             services.AddScoped<IIncomeApiGateway, IncomeApiGateway>();
             services.AddScoped<ITenureApiGateway, TenureApiGateway>();
-            services.AddScoped<IPersonApiGateway, PersonApiGateway>();
             services.AddScoped<IEntityUpdater, EntityUpdater>();
         }
 
