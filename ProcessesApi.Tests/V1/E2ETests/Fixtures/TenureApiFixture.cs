@@ -2,8 +2,10 @@ using AutoFixture;
 using FluentAssertions;
 using Hackney.Core.Testing.Shared.E2E;
 using Hackney.Shared.Tenure.Boundary.Response;
+using Hackney.Shared.Tenure.Domain;
 using ProcessesApi.V1.Domain;
 using System;
+using System.Collections.Generic;
 
 namespace ProcessesApi.Tests.V1.E2E.Fixtures
 {
@@ -26,6 +28,25 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             if (disposing && !_disposed)
             {
                 base.Dispose(disposing);
+            }
+        }
+
+        public void GivenTheTenureApiReturns204(Guid id)
+        {
+            Responses.Add(id.ToString(), new TenureResponseObject());
+        }
+
+        public void GivenTheTenureApiReturns201()
+        {
+            var tenure = _fixture.Create<TenureResponseObject>();
+            Responses.Add("tenures", tenure);
+        }
+
+        public void GivenTheTenureApiReturns204ForUpdatingHouseholdMembers(TenureInformation tenure)
+        {
+            foreach (var householdMember in tenure.HouseholdMembers)
+            {
+                Responses.Add(householdMember.Id.ToString(), new TenureResponseObject());
             }
         }
     }

@@ -55,7 +55,7 @@ namespace ProcessesApi.V1.Gateways
             message.Content = new StringContent(requestJson, Encoding.UTF8, "application/json");
 
             message.Method = HttpMethod.Patch;
-            _apiGateway.RequestHeaders.Add(HeaderConstants.IfMatch, $"\"{ifMatch?.ToString()}\"");
+            _apiGateway.RequestHeaders.TryAdd(HeaderConstants.IfMatch, $"\"{ifMatch?.ToString()}\"");
 
             await _apiGateway.SendAsync(message, Guid.NewGuid()).ConfigureAwait(false);
         }
@@ -73,6 +73,8 @@ namespace ProcessesApi.V1.Gateways
             message.Method = HttpMethod.Post;
 
             var response = await _apiGateway.SendAsync(message, Guid.NewGuid()).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode) throw new Exception(response.ReasonPhrase);
+
             var responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             return JsonSerializer.Deserialize<TenureResponseObject>(responseContent, CreateJsonOptions());
         }
@@ -89,9 +91,10 @@ namespace ProcessesApi.V1.Gateways
             message.Content = new StringContent(requestJson, Encoding.UTF8, "application/json");
 
             message.Method = HttpMethod.Patch;
-            _apiGateway.RequestHeaders.Add(HeaderConstants.IfMatch, $"\"{ifMatch?.ToString()}\"");
+            _apiGateway.RequestHeaders.TryAdd(HeaderConstants.IfMatch, $"\"{ifMatch?.ToString()}\"");
 
-            await _apiGateway.SendAsync(message, Guid.NewGuid()).ConfigureAwait(false);
+            var response = await _apiGateway.SendAsync(message, Guid.NewGuid()).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode) throw new Exception(response.ReasonPhrase);
         }
     }
 }

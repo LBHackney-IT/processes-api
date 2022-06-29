@@ -376,23 +376,13 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             await VerifyProcessCompletedEventIsRaisedWithStateData(snsFixture, processId, SoleToJointStates.TenureUpdated, SoleToJointFormDataKeys.Reason).ConfigureAwait(false);
         }
 
-        public void ThenANewTenureIsCreated(Process process, TenureApiFixture tenureApiFixture, TenureInformation oldTenure)
+        public void ThenTenureIsClosedAndNewTenureIsCreated(Process process, TenureApiFixture tenureApiFixture, TenureInformation oldTenure)
         {
-            var postRequest = tenureApiFixture.Requests.Find(x => x.HttpMethod == HttpMethod.Post.ToString());
-            postRequest.Should().NotBeNull();
-            var bodystring = new StreamReader(postRequest.InputStream).ReadToEnd();
-            var requestObject = JsonSerializer.Deserialize<CreateTenureRequestObject>(bodystring);
+            var postRequests = tenureApiFixture.Requests.Where(x => x.HttpMethod == HttpMethod.Post.ToString());
+            var patchRequests = tenureApiFixture.Requests.Where(x => x.HttpMethod == HttpMethod.Patch.ToString());
 
-            requestObject.Should().NotBeNull();
-            requestObject.StartOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 2000);
-            requestObject.Should().BeEquivalentTo(oldTenure, c => c.Excluding(x => x.Id)
-                                                                   .Excluding(x => x.HouseholdMembers)
-                                                                   .Excluding(x => x.StartOfTenureDate));
-        }
-
-        public void ThenTheExistingTenureIsClosed(Process process, TenureApiFixture tenureApiFixture)
-        {
-            throw new NotImplementedException();
+            postRequests.Should().HaveCount(1);
+            patchRequests.Should().HaveCount(oldTenure.HouseholdMembers.Count() + 1);
         }
     }
 }

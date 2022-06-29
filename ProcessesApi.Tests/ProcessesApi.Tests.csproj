@@ -19,7 +19,7 @@
     <PackageReference Include="Hackney.Core.Middleware" Version="1.30.0" />
     <PackageReference Include="Hackney.Core.Sns" Version="1.52.0" />
     <PackageReference Include="Hackney.Core.Testing.DynamoDb" Version="1.57.0" />
-    <PackageReference Include="Hackney.Core.Testing.Shared" Version="1.66.0" />
+    <PackageReference Include="Hackney.Core.Testing.Shared" Version="1.73.0-feat-patch-api-g0004" />
     <PackageReference Include="Hackney.Core.Testing.Sns" Version="1.71.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="6.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="3.1.4" />

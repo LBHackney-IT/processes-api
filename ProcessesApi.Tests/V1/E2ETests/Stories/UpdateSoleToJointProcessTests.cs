@@ -624,21 +624,23 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
 
         #region Update Tenure
 
-        [Theory(Skip = "Trying to fix API fixtures")]
+        [Theory]
         [InlineData(SoleToJointStates.TenureAppointmentScheduled)]
         [InlineData(SoleToJointStates.TenureAppointmentRescheduled)]
         public void ProcessStateIsUpdatedToProcessCompleted(string initialState)
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(initialState))
                     .And(a => _processFixture.GivenAUpdateTenureRequest())
-                    .And(a => _personFixture.GivenAPersonExists(_processFixture.Process.RelatedEntities.FirstOrDefault().Id))
+                    .And(a => _personFixture.GivenAPersonExists(_processFixture.Process.RelatedEntities.First(x => x.SubType == SubType.householdMember).Id))
                     .And(a => _tenureFixture.GivenATenureExists(_processFixture.Process.TargetId))
+                    .And(a => _tenureApiFixture.GivenTheTenureApiReturns204(_processFixture.Process.TargetId))
+                    .And(a => _tenureApiFixture.GivenTheTenureApiReturns201())
+                    .And(a => _tenureApiFixture.GivenTheTenureApiReturns204ForUpdatingHouseholdMembers(_tenureFixture.Tenure))
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToUpdateTenure(_processFixture.UpdateProcessRequest, initialState))
                     .And(a => _steps.ThenTheProcessCompletedEventIsRaised(_snsFixture, _processFixture.ProcessId))
-                    .And(a => _steps.ThenTheExistingTenureIsClosed(_processFixture.Process, _tenureApiFixture))
-                    .And(a => _steps.ThenANewTenureIsCreated(_processFixture.Process, _tenureApiFixture, _tenureFixture.Tenure))
+                    .And(a => _steps.ThenTenureIsClosedAndNewTenureIsCreated(_processFixture.Process, _tenureApiFixture, _tenureFixture.Tenure))
                 .BDDfy();
         }
 

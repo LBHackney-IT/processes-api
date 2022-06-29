@@ -186,8 +186,7 @@ namespace ProcessesApi.V1.Helpers
 
             request.StartOfTenureDate = DateTime.UtcNow;
 
-            var result = await _tenureApiGateway.CreateNewTenure(request).ConfigureAwait(false);
-            return result;
+            return await _tenureApiGateway.CreateNewTenure(request).ConfigureAwait(false);
         }
 
         private async Task AddHouseHoldmembersToTenure(Guid tenureId, IEnumerable<HouseholdMembers> householdMembers, Guid incomingTenantId)
