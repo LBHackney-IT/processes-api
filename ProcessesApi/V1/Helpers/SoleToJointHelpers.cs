@@ -43,31 +43,6 @@ namespace ProcessesApi.V1.Helpers
             });
         }
 
-        public static async Task AddIncomingTenantToRelatedEntitiesAsync(Dictionary<string, object> requestFormData, Process process, IPersonDbGateway personDbGateway)
-        {
-            ValidateFormData(requestFormData, new List<string>() { SoleToJointFormDataKeys.IncomingTenantId });
-
-            //TODO: When doing a POST request from the FE they should created a relatedEntities object with all neccesary values
-            // Once Frontend work is completed the code below should be removed.
-            if (process.RelatedEntities == null)
-                process.RelatedEntities = new List<RelatedEntity>();
-
-            var incomingTenantId = Guid.Parse(requestFormData[SoleToJointFormDataKeys.IncomingTenantId].ToString());
-
-            var incomingTenant = await personDbGateway.GetPersonById(incomingTenantId).ConfigureAwait(false);
-            if (incomingTenant is null) throw new PersonNotFoundException(incomingTenantId);
-
-            var relatedEntity = new RelatedEntity()
-            {
-                Id = incomingTenantId,
-                TargetType = TargetType.person,
-                SubType = SubType.householdMember,
-                Description = $"{incomingTenant.FirstName} {incomingTenant.Surname}"
-            };
-
-            process.RelatedEntities.Add(relatedEntity);
-        }
-
         public static void AddNewTenureToRelatedEntities(TenureInformation newTenure, Process process)
         {
             var relatedEntity = new RelatedEntity()
@@ -124,73 +99,6 @@ namespace ProcessesApi.V1.Helpers
             {
                 throw new FormDataFormatException("boolean", hasNotifiedResidentString);
             }
-        }
-
-        private static async Task EndExistingTenure(TenureInformation tenure, ITenureDbGateway tenureDbGateway)
-        {
-            tenure.EndOfTenureDate = DateTime.UtcNow;
-            await tenureDbGateway.UpdateTenureById(tenure).ConfigureAwait(false);
-        }
-
-        private static async Task<TenureInformation> AddIncomingTenantToNewTenure(TenureInformation oldTenure, Guid incomingTenantId, ITenureDbGateway tenureDbGateway)
-        {
-            var createTenureRequest = new CreateTenureRequestObject()
-            {
-                Notices = oldTenure.Notices.ToList(),
-                SubletEndDate = oldTenure.SubletEndDate,
-                PotentialEndDate = oldTenure.PotentialEndDate,
-                EvictionDate = oldTenure.EvictionDate,
-                SuccessionDate = oldTenure.SuccessionDate,
-                LegacyReferences = oldTenure.LegacyReferences.ToList(),
-                Terminated = oldTenure.Terminated,
-                TenureType = oldTenure.TenureType,
-                EndOfTenureDate = oldTenure.EndOfTenureDate,
-                Charges = oldTenure.Charges,
-                TenuredAsset = oldTenure.TenuredAsset,
-                HouseholdMembers = oldTenure.HouseholdMembers.ToList(),
-                PaymentReference = oldTenure.PaymentReference,
-                AgreementType = oldTenure.AgreementType
-            };
-
-            if (oldTenure.IsSublet.HasValue) createTenureRequest.IsSublet = oldTenure.IsSublet.Value;
-            if (oldTenure.InformHousingBenefitsForChanges.HasValue) createTenureRequest.InformHousingBenefitsForChanges = oldTenure.InformHousingBenefitsForChanges.Value;
-            if (oldTenure.IsMutualExchange.HasValue) createTenureRequest.IsMutualExchange = oldTenure.IsMutualExchange.Value;
-            if (oldTenure.StartOfTenureDate.HasValue) createTenureRequest.StartOfTenureDate = oldTenure.StartOfTenureDate.Value;
-            if (oldTenure.IsTenanted.HasValue) createTenureRequest.IsTenanted = oldTenure.IsTenanted.Value;
-
-            var incomingTenantHouseholdMember = createTenureRequest.HouseholdMembers.Find(x => x.Id == incomingTenantId);
-            incomingTenantHouseholdMember.PersonTenureType = PersonTenureType.Tenant;
-
-            var result = await tenureDbGateway.PostNewTenureAsync(createTenureRequest).ConfigureAwait(false);
-            return result.ToDomain();
-        }
-
-        private static async Task AddNewTenureToPersonRecord(Guid oldTenureId,
-                                                             Guid newTenureId,
-                                                             Guid personId,
-                                                             IPersonDbGateway personDbGateway,
-                                                             IPersonApiGateway personApiGateway)
-        {
-            var person = await personDbGateway.GetPersonById(personId).ConfigureAwait(false);
-            var tenures = person.Tenures.ToList();
-            person.Tenures.First(x => x.Id == oldTenureId).Id = newTenureId;
-
-            var request = new UpdatePersonRequestObject { Tenures = tenures };
-            var ifMatch = person.VersionNumber + 1;
-
-            await personApiGateway.UpdatePersonById(personId, request, ifMatch).ConfigureAwait(false);
-        }
-
-        public static async Task<TenureInformation> UpdateTenures(Process process, ITenureDbGateway tenureDbGateway, IPersonDbGateway personDbGateway, IPersonApiGateway personApiGateway)
-        {
-            var incomingTenant = process.RelatedEntities.Find(x => x.SubType == SubType.householdMember);
-            var existingTenure = await tenureDbGateway.GetTenureById(process.TargetId).ConfigureAwait(false);
-
-            await EndExistingTenure(existingTenure, tenureDbGateway).ConfigureAwait(false);
-            var newTenure = await AddIncomingTenantToNewTenure(existingTenure, incomingTenant.Id, tenureDbGateway).ConfigureAwait(false);
-            await AddNewTenureToPersonRecord(existingTenure.Id, newTenure.Id, incomingTenant.Id, personDbGateway, personApiGateway).ConfigureAwait(false);
-
-            return newTenure;
         }
     }
 }

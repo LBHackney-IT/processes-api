@@ -14,28 +14,14 @@ namespace ProcessesApi.V1.Services
 {
     public class SoleToJointService : ProcessService, ISoleToJointService
     {
-        private readonly ISoleToJointAutomatedEligibilityChecksHelper _automatedcheckshelper;
-        private readonly ITenureDbGateway _tenureDbGateway;
-        private readonly IPersonDbGateway _personDbGateway;
-        private readonly IIncomeApiGateway _incomeApiGateway;
-        private readonly IPersonApiGateway _personApiGateway;
+        private readonly ISoleToJointDbOperationsHelper _dbOperationsHelper;
 
-        public SoleToJointService(ISnsFactory snsFactory,
-                                  ISnsGateway snsGateway,
-                                  ISoleToJointAutomatedEligibilityChecksHelper automatedChecksHelper,
-                                  ITenureDbGateway tenureDbGateway,
-                                  IPersonDbGateway personDbGateway,
-                                  IIncomeApiGateway incomeApiGateway,
-                                  IPersonApiGateway personApiGateway)
+        public SoleToJointService(ISnsFactory snsFactory, ISnsGateway snsGateway, ISoleToJointDbOperationsHelper automatedChecksHelper)
             : base(snsFactory, snsGateway)
         {
             _snsFactory = snsFactory;
             _snsGateway = snsGateway;
-            _automatedcheckshelper = automatedChecksHelper;
-            _tenureDbGateway = tenureDbGateway;
-            _incomeApiGateway = incomeApiGateway;
-            _personDbGateway = personDbGateway;
-            _personApiGateway = personApiGateway;
+            _dbOperationsHelper = automatedChecksHelper;
 
             _permittedTriggersType = typeof(SoleToJointPermittedTriggers);
             _ignoredTriggersForProcessUpdated = new List<string>
@@ -55,7 +41,7 @@ namespace ProcessesApi.V1.Services
             var formData = processRequest.FormData;
             SoleToJointHelpers.ValidateFormData(formData, new List<string>() { SoleToJointFormDataKeys.IncomingTenantId, SoleToJointFormDataKeys.TenantId });
 
-            var isEligible = await _automatedcheckshelper.CheckAutomatedEligibility(_process.TargetId,
+            var isEligible = await _dbOperationsHelper.CheckAutomatedEligibility(_process.TargetId,
                                                                                     Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()),
                                                                                     Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.TenantId].ToString())
                                                                                    ).ConfigureAwait(false);
@@ -171,7 +157,7 @@ namespace ProcessesApi.V1.Services
             var processRequest = x.Parameters[0] as ProcessTrigger;
             _eventData = SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
 
-            var newTenure = SoleToJointHelpers.UpdateTenures(_process, _tenureDbGateway, _personDbGateway, _personApiGateway);
+            var newTenure = _dbOperationsHelper.UpdateTenures(_process);
             _eventData.Add(SoleToJointFormDataKeys.NewTenureId, newTenure.Id);
 
             await PublishProcessCompletedEvent(x).ConfigureAwait(false);
@@ -180,7 +166,7 @@ namespace ProcessesApi.V1.Services
         private async Task AddIncomingTenantIdToRelatedEntitiesAsync(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
-            await SoleToJointHelpers.AddIncomingTenantToRelatedEntitiesAsync(processRequest.FormData, _process, _personDbGateway)
+            await _dbOperationsHelper.AddIncomingTenantToRelatedEntities(processRequest.FormData, _process)
                                     .ConfigureAwait(false);
         }
 

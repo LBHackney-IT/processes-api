@@ -18,7 +18,6 @@ namespace ProcessesApi.V1.Gateways
         private const string PersonApiUrl = "PersonApiUrl";
         private const string PersonApiToken = "PersonApiToken";
         private readonly IApiGateway _apiGateway;
-        private object requestObject;
 
         public PersonApiGateway(ILogger<PersonApiGateway> logger, IApiGateway apiGateway)
         {

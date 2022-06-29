@@ -182,6 +182,8 @@ namespace ProcessesApi
             services.AddScoped<ITenureDbGateway, TenureDbGateway>();
             services.AddScoped<IPersonDbGateway, PersonDbGateway>();
             services.AddScoped<IIncomeApiGateway, IncomeApiGateway>();
+            services.AddScoped<ITenureApiGateway, TenureApiGateway>();
+            services.AddScoped<IPersonApiGateway, PersonApiGateway>();
             services.AddScoped<IEntityUpdater, EntityUpdater>();
         }
 
@@ -194,7 +196,7 @@ namespace ProcessesApi
 
         private static void RegisterHelpers(IServiceCollection services)
         {
-            services.AddScoped<ISoleToJointAutomatedEligibilityChecksHelper, SoleToJointAutomatedEligibilityChecksHelper>();
+            services.AddScoped<ISoleToJointDbOperationsHelper, SoleToJointDbOperationsHelper>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
