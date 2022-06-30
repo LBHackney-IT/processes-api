@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Hackney.Shared.Tenure.Domain;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Domain.SoleToJoint;
 using ProcessesApi.V1.Services.Exceptions;
@@ -37,14 +36,14 @@ namespace ProcessesApi.V1.Helpers
             });
         }
 
-        public static void AddNewTenureToRelatedEntities(TenureInformation newTenure, Process process)
+        public static void AddNewTenureToRelatedEntities(Guid newTenureId, Process process)
         {
             var relatedEntity = new RelatedEntity()
             {
-                Id = newTenure.Id,
+                Id = newTenureId,
                 TargetType = TargetType.tenure,
                 SubType = SubType.newTenure,
-                Description = "New Tenure"
+                Description = "New Tenure created for this process."
             };
             process.RelatedEntities.Add(relatedEntity);
         }

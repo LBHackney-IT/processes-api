@@ -392,9 +392,7 @@ namespace ProcessesApi.Tests.V1.Helpers
             await _classUnderTest.UpdateTenures(process).ConfigureAwait(false);
 
             // Assert
-
             _mockTenureDb.Verify(g => g.GetTenureById(oldTenure.Id), Times.Once);
-
             _mockTenureApi.Verify(g => g.EditTenureDetailsById(oldTenure.Id, It.Is<EditTenureDetailsRequestObject>(x => VerifyEndExistingTenure(x)), oldTenure.VersionNumber), Times.Once);
             _mockTenureApi.Verify(g => g.CreateNewTenure(It.Is<CreateTenureRequestObject>(x => VerifyNewTenure(x, oldTenure.ToDatabase(), proposedTenant.Id))), Times.Once);
             _mockTenureApi.Verify(g => g.UpdateTenureForPerson(newTenure.Id, proposedTenant.Id, It.Is<UpdateTenureForPersonRequestObject>(x => VerifyUpdateTenureForPerson(x)), 0), Times.Once);

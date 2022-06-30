@@ -26,7 +26,7 @@ functions:
       IncomeApiUrl: ${ssm:/housing-tl/${self:provider.stage}/income-api-url}
       IncomeApiToken: ${ssm:/manage-arrears/${self:provider.stage}/income-api-key}
       TenureApiUrl: ${ssm:/housing-tl/${self:provider.stage}/tenure-api-url}
-      TenureApiToken: ${ssm:/manage-arrears/${self:provider.stage}/tenure-api-key}
+      TenureApiToken: ${ssm:/manage-arrears/${self:provider.stage}/tenure-api-token}
       PROCESS_SNS_ARN: ${ssm:/sns-topic/${self:provider.stage}/processes/arn}
     events:
       - http:

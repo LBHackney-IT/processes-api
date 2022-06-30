@@ -156,8 +156,9 @@ namespace ProcessesApi.V1.Services
             var processRequest = x.Parameters[0] as ProcessTrigger;
             _eventData = SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
 
-            var newTenure = _dbOperationsHelper.UpdateTenures(_process);
-            _eventData.Add(SoleToJointFormDataKeys.NewTenureId, newTenure.Id);
+            var newTenureId = await _dbOperationsHelper.UpdateTenures(_process).ConfigureAwait(false);
+            _eventData.Add(SoleToJointFormDataKeys.NewTenureId, newTenureId);
+            SoleToJointHelpers.AddNewTenureToRelatedEntities(newTenureId, _process);
 
             await PublishProcessCompletedEvent(x).ConfigureAwait(false);
         }

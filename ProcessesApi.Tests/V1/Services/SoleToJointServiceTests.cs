@@ -901,6 +901,8 @@ namespace ProcessesApi.Tests.V1.Services
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.UpdateTenure,
                                                      formData);
+            var newTenureId = Guid.NewGuid();
+            _mockDbOperationsHelper.Setup(x => x.UpdateTenures(process)).ReturnsAsync(newTenureId);
 
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
@@ -911,6 +913,10 @@ namespace ProcessesApi.Tests.V1.Services
                                                  SoleToJointStates.TenureUpdated,
                                                  new List<string>());
             process.PreviousStates.LastOrDefault().State.Should().Be(initialState);
+
+            process.RelatedEntities.Should().Contain(x => x.Id == newTenureId
+                                                          && x.TargetType == TargetType.tenure
+                                                          && x.SubType == SubType.newTenure);
 
             _mockDbOperationsHelper.Verify(x => x.UpdateTenures(process), Times.Once);
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);

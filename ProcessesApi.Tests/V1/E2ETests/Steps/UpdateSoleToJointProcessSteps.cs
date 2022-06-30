@@ -217,6 +217,10 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         public async Task ThenTheProcessStateIsUpdatedToUpdateTenure(UpdateProcessQuery request, string initialState)
         {
             await CheckProcessState(request.Id, SoleToJointStates.TenureUpdated, initialState).ConfigureAwait(false);
+
+            var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
+            dbRecord.RelatedEntities.Should().Contain(x => x.TargetType == TargetType.tenure
+                                                           && x.SubType == SubType.newTenure);
         }
         public async Task VerifyProcessUpdatedEventIsRaised(ISnsFixture snsFixture, Guid processId, string oldState, string newState, Action<string> verifyNewStateData = null)
         {
