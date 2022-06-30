@@ -64,12 +64,21 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                                         .With(x => x.State, state)
                                         .Create())
                         .With(x => x.VersionNumber, (int?) null)
+                        .With(x => x.RelatedEntities, new List<RelatedEntity>())
                         .Create();
             Process = process;
             ProcessId = process.Id;
             ProcessName = process.ProcessName;
             IncomingTenantId = Guid.NewGuid();
             TenantId = Guid.NewGuid();
+
+            Process.RelatedEntities.Add(new RelatedEntity
+            {
+                Id = IncomingTenantId,
+                TargetType = TargetType.person,
+                SubType = SubType.householdMember,
+                Description = "Some name"
+            });
         }
 
         public async Task GivenASoleToJointProcessExists(string state)
@@ -78,7 +87,15 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
             await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
             Process.VersionNumber = 0;
+        }
 
+        public async Task GivenASoleToJointProcessExistsWithoutRelatedEntities(string state)
+        {
+            createProcess(state);
+            Process.RelatedEntities = new List<RelatedEntity>();
+
+            await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
+            Process.VersionNumber = 0;
         }
 
         public void GivenASoleToJointProcessDoesNotExist()
