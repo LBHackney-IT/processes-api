@@ -8,11 +8,13 @@ using Hackney.Shared.Person;
 using Hackney.Shared.Tenure.Boundary.Requests;
 using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Factories;
+using Hackney.Shared.Tenure.Infrastructure;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Domain.SoleToJoint;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Gateways.Exceptions;
+using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Services.Exceptions;
 
 namespace ProcessesApi.V1.Helpers
@@ -214,6 +216,27 @@ namespace ProcessesApi.V1.Helpers
             return result.ToDomain();
         }
 
+        private async Task UpdatePersonRecords(TenureInformation tenure)
+        {
+            var oldHouseholdMembers = new List<HouseholdMembers>();
+
+            foreach (var householdMember in tenure.HouseholdMembers)
+            {
+                var updatedResult = new UpdateEntityResult<TenureInformationDb>()
+                {
+                    UpdatedEntity = tenure.ToDatabase(),
+                    OldValues = new Dictionary<string, object>{{ "householdMembers", oldHouseholdMembers }},
+                    NewValues = new Dictionary<string, object>{{ "householdMembers", new List<HouseholdMembers>{ householdMember } }}
+                };
+
+                var personAddedMessage = _tenureSnsFactory.PersonAddedToTenure(updatedResult, _token);
+                var topicArn = Environment.GetEnvironmentVariable("TENURE_SNS_ARN");
+                await _snsGateway.Publish(personAddedMessage, topicArn).ConfigureAwait(false);
+                
+                oldHouseholdMembers.Add(householdMember);
+            }
+        }
+        
         public async Task<Guid> UpdateTenures(Process process, Token token)
         {
             _token = token;
@@ -223,6 +246,7 @@ namespace ProcessesApi.V1.Helpers
 
             await EndExistingTenure(existingTenure).ConfigureAwait(false);
             var newTenure = await CreateNewTenure(existingTenure, incomingTenant.Id).ConfigureAwait(false);
+            await UpdatePersonRecords(newTenure).ConfigureAwait(false);
 
             return newTenure.Id;
         }

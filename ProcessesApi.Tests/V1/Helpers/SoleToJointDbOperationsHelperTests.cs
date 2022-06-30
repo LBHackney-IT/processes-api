@@ -372,6 +372,8 @@ namespace ProcessesApi.Tests.V1.Helpers
                                                                .Excluding(x => x.HouseholdMembers)
                                                                .Excluding(x => x.StartOfTenureDate));
             requestObject.StartOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            newTenure.HouseholdMembers.Should().HaveSameCount(oldTenure.HouseholdMembers);
+            newTenure.HouseholdMembers.Find(x => x.Id == incomingTenantId).PersonTenureType.Should().Be(PersonTenureType.Tenant);
             return true;
         }
 
@@ -386,24 +388,25 @@ namespace ProcessesApi.Tests.V1.Helpers
         [Fact]
         public async Task EndsExistingTenureAndCreatesNewTenureWithAddedTenant()
         {
-            (var process, var proposedTenant, var oldTenure, var tenantId, var tenancyRef) = CreateProcessAndRelatedEntities();
+            (var process, var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateProcessAndRelatedEntities();
 
-            _mockTenureDb.Setup(x => x.GetTenureById(oldTenure.Id)).ReturnsAsync(oldTenure);
+            _mockTenureDb.Setup(x => x.GetTenureById(tenure.Id)).ReturnsAsync(tenure);
 
             var updateResult = _fixture.Create<UpdateEntityResult<TenureInformationDb>>();
-            _mockTenureDb.Setup(x => x.UpdateTenureById(oldTenure.Id, It.IsAny<EditTenureDetailsRequestObject>())).ReturnsAsync(updateResult);
+            _mockTenureDb.Setup(x => x.UpdateTenureById(tenure.Id, It.IsAny<EditTenureDetailsRequestObject>())).ReturnsAsync(updateResult);
 
-            var newTenure = _fixture.Create<TenureInformationDb>();
-            _mockTenureDb.Setup(x => x.PostNewTenureAsync(It.IsAny<CreateTenureRequestObject>())).ReturnsAsync(newTenure);
+            _mockTenureDb.Setup(x => x.PostNewTenureAsync(It.IsAny<CreateTenureRequestObject>())).ReturnsAsync(tenure.ToDatabase());
 
             // Act
             await _classUnderTest.UpdateTenures(process, new Token()).ConfigureAwait(false);
 
             // Assert
-            _mockTenureDb.Verify(g => g.GetTenureById(oldTenure.Id), Times.Once);
-            _mockTenureDb.Verify(g => g.UpdateTenureById(oldTenure.Id, It.Is<EditTenureDetailsRequestObject>(x => VerifyEndExistingTenure(x, oldTenure))), Times.Once);
-            _mockTenureDb.Verify(g => g.PostNewTenureAsync(It.Is<CreateTenureRequestObject>(x => VerifyNewTenure(x, oldTenure.ToDatabase(), proposedTenant.Id))), Times.Once);
-            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
+            _mockTenureDb.Verify(g => g.GetTenureById(tenure.Id), Times.Once);
+            _mockTenureDb.Verify(g => g.UpdateTenureById(tenure.Id, It.Is<EditTenureDetailsRequestObject>(x => VerifyEndExistingTenure(x, tenure))), Times.Once);
+            _mockTenureDb.Verify(g => g.PostNewTenureAsync(It.Is<CreateTenureRequestObject>(x => VerifyNewTenure(x, tenure.ToDatabase(), proposedTenant.Id))), Times.Once);
+
+            var numberOfEvents = tenure.HouseholdMembers.Count() + 2; // 1 event per hm, plus on update old tenure & on create new tenure
+            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(numberOfEvents));
         }
 
         #endregion
