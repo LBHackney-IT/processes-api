@@ -160,7 +160,13 @@ namespace ProcessesApi.V1.Helpers
 
         private async Task EndExistingTenure(TenureInformation tenure)
         {
-            var request = new EditTenureDetailsRequestObject { EndOfTenureDate = DateTime.UtcNow };
+            var request = new EditTenureDetailsRequestObject
+            {
+                StartOfTenureDate = tenure.StartOfTenureDate,
+                EndOfTenureDate = DateTime.UtcNow,
+                TenureType = tenure.TenureType
+            };
+
             var result = await _tenureDbGateway.UpdateTenureById(tenure.Id, request).ConfigureAwait(false);
             if (result is null) throw new TenureNotFoundException(tenure.Id);
 

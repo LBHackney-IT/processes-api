@@ -357,9 +357,11 @@ namespace ProcessesApi.Tests.V1.Helpers
 
         #region Update Tenure
 
-        private bool VerifyEndExistingTenure(EditTenureDetailsRequestObject requestObject)
+        private bool VerifyEndExistingTenure(EditTenureDetailsRequestObject requestObject, TenureInformation oldTenure)
         {
             requestObject.EndOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            requestObject.StartOfTenureDate.Should().Be(oldTenure.StartOfTenureDate);
+            requestObject.TenureType.Should().Be(oldTenure.TenureType);
             return true;
         }
 
@@ -399,7 +401,7 @@ namespace ProcessesApi.Tests.V1.Helpers
 
             // Assert
             _mockTenureDb.Verify(g => g.GetTenureById(oldTenure.Id), Times.Once);
-            _mockTenureDb.Verify(g => g.UpdateTenureById(oldTenure.Id, It.Is<EditTenureDetailsRequestObject>(x => VerifyEndExistingTenure(x))), Times.Once);
+            _mockTenureDb.Verify(g => g.UpdateTenureById(oldTenure.Id, It.Is<EditTenureDetailsRequestObject>(x => VerifyEndExistingTenure(x, oldTenure))), Times.Once);
             _mockTenureDb.Verify(g => g.PostNewTenureAsync(It.Is<CreateTenureRequestObject>(x => VerifyNewTenure(x, oldTenure.ToDatabase(), proposedTenant.Id))), Times.Once);
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
         }
