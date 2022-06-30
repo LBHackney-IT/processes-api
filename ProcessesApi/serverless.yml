@@ -28,6 +28,7 @@ functions:
       TenureApiUrl: ${ssm:/housing-tl/${self:provider.stage}/tenure-api-url}
       TenureApiToken: ${ssm:/housing-tl/${self:provider.stage}/tenure-api-token}
       PROCESS_SNS_ARN: ${ssm:/sns-topic/${self:provider.stage}/processes/arn}
+      TENURE_SNS_ARN: ${ssm:/sns-topic/${self:provider.stage}/tenure/arn}
     events:
       - http:
           path: /{proxy+}

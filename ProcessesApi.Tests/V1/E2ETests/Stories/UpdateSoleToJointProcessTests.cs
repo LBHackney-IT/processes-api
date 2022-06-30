@@ -25,7 +25,6 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         private readonly TenureFixture _tenureFixture;
         private readonly IncomeApiAgreementsFixture _agreementsApiFixture;
         private readonly IncomeApiTenanciesFixture _tenanciesApiFixture;
-        private readonly TenureApiFixture _tenureApiFixture;
         private readonly UpdateSoleToJointProcessSteps _steps;
 
         public UpdateSoleToJointProcessTests(AwsMockWebApplicationFactory<Startup> appFactory)
@@ -37,7 +36,6 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
             _tenureFixture = new TenureFixture(_dbFixture.DynamoDbContext);
             _agreementsApiFixture = new IncomeApiAgreementsFixture();
             _tenanciesApiFixture = new IncomeApiTenanciesFixture();
-            _tenureApiFixture = new TenureApiFixture();
 
             _steps = new UpdateSoleToJointProcessSteps(appFactory.Client, _dbFixture);
         }
@@ -58,7 +56,6 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 _tenureFixture?.Dispose();
                 _agreementsApiFixture?.Dispose();
                 _tenanciesApiFixture?.Dispose();
-                _tenureApiFixture?.Dispose();
                 _snsFixture?.PurgeAllQueueMessages();
 
                 _disposed = true;
@@ -194,9 +191,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [Fact]
         public void ProcessStateIsUpdatedToAutomatedEligibilityChecksPassed()
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.SelectTenants))
+            this.Given(g => _processFixture.GivenASoleToJointProcessExistsWithoutRelatedEntities(SoleToJointStates.SelectTenants))
                     .And(a => _tenureFixture.GivenASecureTenureExists(_processFixture.Process.TargetId, _processFixture.TenantId, true))
-                    .And(a => _tenureFixture.GivenAPersonIsAddedAsAHouseholdMember(_processFixture.IncomingTenantId))
                     .And(a => _personFixture.GivenAnAdultPersonExists(_processFixture.IncomingTenantId))
                     .And(a => _personFixture.GivenAPersonHasAnActiveTenure(_processFixture.Process.TargetId))
                     //.And(a => _agreementsApiFixture.GivenAPaymentAgreementDoesNotExist())
@@ -213,9 +209,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [Fact]
         public void ProcessStateIsUpdatedToAutomatedEligibilityChecksFailed()
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.SelectTenants))
+            this.Given(g => _processFixture.GivenASoleToJointProcessExistsWithoutRelatedEntities(SoleToJointStates.SelectTenants))
                     .And(a => _tenureFixture.GivenASecureTenureExists(_processFixture.Process.TargetId, _processFixture.TenantId, true))
-                    .And(a => _tenureFixture.GivenAPersonIsAddedAsAHouseholdMember(_processFixture.IncomingTenantId))
                     .And(a => _personFixture.GivenAnAdultPersonDoesNotExist(_processFixture.IncomingTenantId))
                     .And(a => _personFixture.GivenAPersonHasAnActiveTenure(_processFixture.Process.TargetId))
                     //.And(a => _agreementsApiFixture.GivenAPaymentAgreementDoesNotExist())
@@ -630,17 +625,14 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         public void ProcessStateIsUpdatedToProcessCompleted(string initialState)
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(initialState))
+                    .And(a => _tenureFixture.GivenATenureExistsAndAPersonIsAddedAsAHouseholdMember(_processFixture.Process.TargetId, _processFixture.IncomingTenantId))
+                    .And(a => _personFixture.GivenAPersonExists(_processFixture.IncomingTenantId))
                     .And(a => _processFixture.GivenAUpdateTenureRequest())
-                    .And(a => _personFixture.GivenAPersonExists(_processFixture.Process.RelatedEntities.First(x => x.SubType == SubType.householdMember).Id))
-                    .And(a => _tenureFixture.GivenATenureExists(_processFixture.Process.TargetId))
-                    .And(a => _tenureApiFixture.GivenTheTenureApiReturns204(_processFixture.Process.TargetId))
-                    .And(a => _tenureApiFixture.GivenTheTenureApiReturns201())
-                    .And(a => _tenureApiFixture.GivenTheTenureApiReturns204ForUpdatingHouseholdMembers(_tenureFixture.Tenure))
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToUpdateTenure(_processFixture.UpdateProcessRequest, initialState))
                     .And(a => _steps.ThenTheProcessCompletedEventIsRaised(_snsFixture, _processFixture.ProcessId))
-                    .And(a => _steps.ThenTenureIsClosedAndNewTenureIsCreated(_processFixture.Process, _tenureApiFixture, _tenureFixture.Tenure))
+                    .And(a => _steps.ThenTenureIsClosedAndNewTenureIsCreated(_processFixture.Process))
                 .BDDfy();
         }
 

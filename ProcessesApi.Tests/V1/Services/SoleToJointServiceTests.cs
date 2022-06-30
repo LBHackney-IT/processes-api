@@ -902,7 +902,7 @@ namespace ProcessesApi.Tests.V1.Services
                                                      SoleToJointPermittedTriggers.UpdateTenure,
                                                      formData);
             var newTenureId = Guid.NewGuid();
-            _mockDbOperationsHelper.Setup(x => x.UpdateTenures(process)).ReturnsAsync(newTenureId);
+            _mockDbOperationsHelper.Setup(x => x.UpdateTenures(process, _token)).ReturnsAsync(newTenureId);
 
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
@@ -918,7 +918,7 @@ namespace ProcessesApi.Tests.V1.Services
                                                           && x.TargetType == TargetType.tenure
                                                           && x.SubType == SubType.newTenure);
 
-            _mockDbOperationsHelper.Verify(x => x.UpdateTenures(process), Times.Once);
+            _mockDbOperationsHelper.Verify(x => x.UpdateTenures(process, _token), Times.Once);
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_COMPLETED_EVENT);
         }
@@ -933,7 +933,7 @@ namespace ProcessesApi.Tests.V1.Services
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.UpdateTenure,
                                                      formData);
-            _mockDbOperationsHelper.Setup(x => x.UpdateTenures(process)).Throws(new Exception("Test Exception"));
+            _mockDbOperationsHelper.Setup(x => x.UpdateTenures(process, _token)).Throws(new Exception("Test Exception"));
 
             // Act + Assert
             _classUnderTest.Invoking(x => x.Process(triggerObject, process, _token))

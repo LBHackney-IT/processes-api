@@ -4,9 +4,8 @@ using Hackney.Core.Testing.DynamoDb;
 using Hackney.Core.Testing.Shared.E2E;
 using Hackney.Core.Testing.Sns;
 using Hackney.Shared.Person;
-using Hackney.Shared.Tenure.Domain;
+using Hackney.Shared.Tenure.Infrastructure;
 using Newtonsoft.Json;
-using ProcessesApi.Tests.V1.E2E.Fixtures;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
 using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
@@ -376,13 +375,10 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             await VerifyProcessCompletedEventIsRaisedWithStateData(snsFixture, processId, SoleToJointStates.TenureUpdated, SoleToJointFormDataKeys.Reason).ConfigureAwait(false);
         }
 
-        public void ThenTenureIsClosedAndNewTenureIsCreated(Process process, TenureApiFixture tenureApiFixture, TenureInformation oldTenure)
+        public async Task ThenTenureIsClosedAndNewTenureIsCreated(Process process)
         {
-            var postRequests = tenureApiFixture.Requests.Where(x => x.HttpMethod == HttpMethod.Post.ToString());
-            var patchRequests = tenureApiFixture.Requests.Where(x => x.HttpMethod == HttpMethod.Patch.ToString());
-
-            postRequests.Should().HaveCount(1);
-            // patchRequests.Should().HaveCount(oldTenure.HouseholdMembers.Count() + 1);
+            var oldTenure = await _dbFixture.DynamoDbContext.LoadAsync<TenureInformationDb>(process.TargetId).ConfigureAwait(false);
+            oldTenure.EndOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 3000);
         }
     }
 }

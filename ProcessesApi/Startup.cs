@@ -162,6 +162,8 @@ namespace ProcessesApi
             services.AddSingleton<IConfiguration>(Configuration);
 
             services.AddScoped<ISnsFactory, ProcessesSnsFactory>();
+            services.AddScoped<IPersonSnsFactory, PersonSnsFactory>();
+            services.AddScoped<ITenureSnsFactory, TenureSnsFactory>();
 
             ConfigureHackneyCoreDI(services);
 
@@ -182,7 +184,6 @@ namespace ProcessesApi
             services.AddScoped<ITenureDbGateway, TenureDbGateway>();
             services.AddScoped<IPersonDbGateway, PersonDbGateway>();
             services.AddScoped<IIncomeApiGateway, IncomeApiGateway>();
-            services.AddScoped<ITenureApiGateway, TenureApiGateway>();
             services.AddScoped<IEntityUpdater, EntityUpdater>();
         }
 

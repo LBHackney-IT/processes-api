@@ -2,12 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Hackney.Core.JWT;
+using Hackney.Core.Sns;
 using Hackney.Shared.Person;
-using Hackney.Shared.Person.Boundary.Response;
 using Hackney.Shared.Tenure.Boundary.Requests;
 using Hackney.Shared.Tenure.Domain;
+using Hackney.Shared.Tenure.Factories;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Domain.SoleToJoint;
+using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Gateways.Exceptions;
 using ProcessesApi.V1.Services.Exceptions;
@@ -19,19 +22,23 @@ namespace ProcessesApi.V1.Helpers
         private readonly IIncomeApiGateway _incomeApiGateway;
         private readonly IPersonDbGateway _personDbGateway;
         private readonly ITenureDbGateway _tenureDbGateway;
-        private readonly ITenureApiGateway _tenureApiGateway;
+        private readonly ITenureSnsFactory _tenureSnsFactory;
+        private readonly ISnsGateway _snsGateway;
+        private Token _token;
 
         public Dictionary<string, bool> EligibilityResults { get; private set; }
 
         public SoleToJointDbOperationsHelper(IIncomeApiGateway incomeApiGateway,
                                              IPersonDbGateway personDbGateway,
                                              ITenureDbGateway tenureDbGateway,
-                                             ITenureApiGateway tenureApiGateway)
+                                             ITenureSnsFactory tenureSnsFactory,
+                                             ISnsGateway snsGateway)
         {
             _incomeApiGateway = incomeApiGateway;
             _personDbGateway = personDbGateway;
             _tenureDbGateway = tenureDbGateway;
-            _tenureApiGateway = tenureApiGateway;
+            _tenureSnsFactory = tenureSnsFactory;
+            _snsGateway = snsGateway;
         }
 
         public async Task AddIncomingTenantToRelatedEntities(Dictionary<string, object> requestFormData, Process process)
@@ -154,10 +161,15 @@ namespace ProcessesApi.V1.Helpers
         private async Task EndExistingTenure(TenureInformation tenure)
         {
             var request = new EditTenureDetailsRequestObject { EndOfTenureDate = DateTime.UtcNow };
-            await _tenureApiGateway.EditTenureDetailsById(tenure.Id, request, tenure.VersionNumber).ConfigureAwait(false);
+            var result = await _tenureDbGateway.UpdateTenureById(tenure.Id, request).ConfigureAwait(false);
+            if (result is null) throw new TenureNotFoundException(tenure.Id);
+
+            var message = _tenureSnsFactory.UpdateTenure(result, _token);
+            var topicArn = Environment.GetEnvironmentVariable("TENURE_SNS_ARN");
+            await _snsGateway.Publish(message, topicArn).ConfigureAwait(false);
         }
 
-        private async Task<TenureResponseObject> CreateNewTenure(TenureInformation oldTenure)
+        private async Task<TenureInformation> CreateNewTenure(TenureInformation oldTenure, Guid incomingTenantId)
         {
             var request = new CreateTenureRequestObject()
             {
@@ -172,7 +184,7 @@ namespace ProcessesApi.V1.Helpers
                 EndOfTenureDate = oldTenure.EndOfTenureDate,
                 Charges = oldTenure.Charges,
                 TenuredAsset = oldTenure.TenuredAsset,
-                HouseholdMembers = new List<HouseholdMembers>(),
+                HouseholdMembers = oldTenure.HouseholdMembers.ToList(),
                 PaymentReference = oldTenure.PaymentReference,
                 AgreementType = oldTenure.AgreementType
             };
@@ -183,35 +195,28 @@ namespace ProcessesApi.V1.Helpers
             if (oldTenure.IsTenanted.HasValue) request.IsTenanted = oldTenure.IsTenanted.Value;
 
             request.StartOfTenureDate = DateTime.UtcNow;
+            var householdMember = request.HouseholdMembers.Find(x => x.Id == incomingTenantId);
+            if (householdMember is null) throw new Exception("Not household member");
+            householdMember.IsResponsible = true;
 
-            return await _tenureApiGateway.CreateNewTenure(request).ConfigureAwait(false);
+            var result = await _tenureDbGateway.PostNewTenureAsync(request).ConfigureAwait(false);
+
+            var tenureCreatedMessage = _tenureSnsFactory.CreateTenure(result, _token);
+            var topicArn = Environment.GetEnvironmentVariable("TENURE_SNS_ARN");
+            await _snsGateway.Publish(tenureCreatedMessage, topicArn).ConfigureAwait(false);
+
+            return result.ToDomain();
         }
 
-        private async Task AddHouseHoldmembersToTenure(Guid tenureId, IEnumerable<HouseholdMembers> householdMembers, Guid incomingTenantId)
+        public async Task<Guid> UpdateTenures(Process process, Token token)
         {
-            foreach (var householdMember in householdMembers)
-            {
-                var request = new UpdateTenureForPersonRequestObject
-                {
-                    FullName = householdMember.FullName,
-                    IsResponsible = householdMember.Id == incomingTenantId ? true : householdMember.IsResponsible,
-                    DateOfBirth = householdMember.DateOfBirth,
-                    Type = HouseholdMembersType.Person
-                };
+            _token = token;
 
-                await _tenureApiGateway.UpdateTenureForPerson(tenureId, householdMember.Id, request, 0)
-                                       .ConfigureAwait(false);
-            }
-        }
-
-        public async Task<Guid> UpdateTenures(Process process)
-        {
             var incomingTenant = process.RelatedEntities.Find(x => x.SubType == SubType.householdMember);
             var existingTenure = await _tenureDbGateway.GetTenureById(process.TargetId).ConfigureAwait(false);
 
             await EndExistingTenure(existingTenure).ConfigureAwait(false);
-            var newTenure = await CreateNewTenure(existingTenure).ConfigureAwait(false);
-            await AddHouseHoldmembersToTenure(newTenure.Id, existingTenure.HouseholdMembers, incomingTenant.Id).ConfigureAwait(false);
+            var newTenure = await CreateNewTenure(existingTenure, incomingTenant.Id).ConfigureAwait(false);
 
             return newTenure.Id;
         }

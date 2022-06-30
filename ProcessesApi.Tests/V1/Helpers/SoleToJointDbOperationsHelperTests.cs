@@ -4,8 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoFixture;
 using FluentAssertions;
+using Hackney.Core.JWT;
+using Hackney.Core.Sns;
 using Hackney.Shared.Person;
-using Hackney.Shared.Person.Boundary.Response;
 using Hackney.Shared.Person.Domain;
 using Hackney.Shared.Tenure.Boundary.Requests;
 using Hackney.Shared.Tenure.Domain;
@@ -14,9 +15,11 @@ using Hackney.Shared.Tenure.Infrastructure;
 using Moq;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Domain.SoleToJoint;
+using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Gateways.Exceptions;
 using ProcessesApi.V1.Helpers;
+using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Services.Exceptions;
 using Xunit;
 
@@ -29,7 +32,7 @@ namespace ProcessesApi.Tests.V1.Helpers
         private Mock<IIncomeApiGateway> _mockIncomeApi;
         private Mock<IPersonDbGateway> _mockPersonDb;
         private Mock<ITenureDbGateway> _mockTenureDb;
-        private Mock<ITenureApiGateway> _mockTenureApi;
+        private Mock<ISnsGateway> _mockSnsGateway;
         private SoleToJointDbOperationsHelper _classUnderTest;
 
         public SoleToJointDbOperationsHelperTests()
@@ -37,12 +40,13 @@ namespace ProcessesApi.Tests.V1.Helpers
             _mockIncomeApi = new Mock<IIncomeApiGateway>();
             _mockPersonDb = new Mock<IPersonDbGateway>();
             _mockTenureDb = new Mock<ITenureDbGateway>();
-            _mockTenureApi = new Mock<ITenureApiGateway>();
+            _mockSnsGateway = new Mock<ISnsGateway>();
 
             _classUnderTest = new SoleToJointDbOperationsHelper(_mockIncomeApi.Object,
                                                                 _mockPersonDb.Object,
                                                                 _mockTenureDb.Object,
-                                                                _mockTenureApi.Object);
+                                                                new TenureSnsFactory(),
+                                                                _mockSnsGateway.Object);
         }
 
         [Fact]
@@ -383,19 +387,21 @@ namespace ProcessesApi.Tests.V1.Helpers
             (var process, var proposedTenant, var oldTenure, var tenantId, var tenancyRef) = CreateProcessAndRelatedEntities();
 
             _mockTenureDb.Setup(x => x.GetTenureById(oldTenure.Id)).ReturnsAsync(oldTenure);
-            _mockPersonDb.Setup(x => x.GetPersonById(proposedTenant.Id)).ReturnsAsync(proposedTenant);
 
-            var newTenure = _fixture.Create<TenureResponseObject>();
-            _mockTenureApi.Setup(x => x.CreateNewTenure(It.IsAny<CreateTenureRequestObject>())).ReturnsAsync(newTenure);
+            var updateResult = _fixture.Create<UpdateEntityResult<TenureInformationDb>>();
+            _mockTenureDb.Setup(x => x.UpdateTenureById(oldTenure.Id, It.IsAny<EditTenureDetailsRequestObject>())).ReturnsAsync(updateResult);
+
+            var newTenure = _fixture.Create<TenureInformationDb>();
+            _mockTenureDb.Setup(x => x.PostNewTenureAsync(It.IsAny<CreateTenureRequestObject>())).ReturnsAsync(newTenure);
 
             // Act
-            await _classUnderTest.UpdateTenures(process).ConfigureAwait(false);
+            await _classUnderTest.UpdateTenures(process, new Token()).ConfigureAwait(false);
 
             // Assert
             _mockTenureDb.Verify(g => g.GetTenureById(oldTenure.Id), Times.Once);
-            _mockTenureApi.Verify(g => g.EditTenureDetailsById(oldTenure.Id, It.Is<EditTenureDetailsRequestObject>(x => VerifyEndExistingTenure(x)), oldTenure.VersionNumber), Times.Once);
-            _mockTenureApi.Verify(g => g.CreateNewTenure(It.Is<CreateTenureRequestObject>(x => VerifyNewTenure(x, oldTenure.ToDatabase(), proposedTenant.Id))), Times.Once);
-            _mockTenureApi.Verify(g => g.UpdateTenureForPerson(newTenure.Id, proposedTenant.Id, It.Is<UpdateTenureForPersonRequestObject>(x => VerifyUpdateTenureForPerson(x)), 0), Times.Once);
+            _mockTenureDb.Verify(g => g.UpdateTenureById(oldTenure.Id, It.Is<EditTenureDetailsRequestObject>(x => VerifyEndExistingTenure(x))), Times.Once);
+            _mockTenureDb.Verify(g => g.PostNewTenureAsync(It.Is<CreateTenureRequestObject>(x => VerifyNewTenure(x, oldTenure.ToDatabase(), proposedTenant.Id))), Times.Once);
+            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
         }
 
         #endregion

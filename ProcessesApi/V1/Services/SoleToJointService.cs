@@ -156,7 +156,7 @@ namespace ProcessesApi.V1.Services
             var processRequest = x.Parameters[0] as ProcessTrigger;
             _eventData = SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
 
-            var newTenureId = await _dbOperationsHelper.UpdateTenures(_process).ConfigureAwait(false);
+            var newTenureId = await _dbOperationsHelper.UpdateTenures(_process, _token).ConfigureAwait(false);
             _eventData.Add(SoleToJointFormDataKeys.NewTenureId, newTenureId);
             SoleToJointHelpers.AddNewTenureToRelatedEntities(newTenureId, _process);
 
@@ -167,7 +167,7 @@ namespace ProcessesApi.V1.Services
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
             await _dbOperationsHelper.AddIncomingTenantToRelatedEntities(processRequest.FormData, _process)
-                                    .ConfigureAwait(false);
+                                     .ConfigureAwait(false);
         }
 
         public void AddAppointmentDateTimeToEvent(Stateless.StateMachine<string, string>.Transition transition)
