@@ -225,18 +225,18 @@ namespace ProcessesApi.V1.Helpers
                 var updatedResult = new UpdateEntityResult<TenureInformationDb>()
                 {
                     UpdatedEntity = tenure.ToDatabase(),
-                    OldValues = new Dictionary<string, object>{{ "householdMembers", oldHouseholdMembers }},
-                    NewValues = new Dictionary<string, object>{{ "householdMembers", new List<HouseholdMembers>{ householdMember } }}
+                    OldValues = new Dictionary<string, object> { { "householdMembers", oldHouseholdMembers } },
+                    NewValues = new Dictionary<string, object> { { "householdMembers", new List<HouseholdMembers> { householdMember } } }
                 };
 
                 var personAddedMessage = _tenureSnsFactory.PersonAddedToTenure(updatedResult, _token);
                 var topicArn = Environment.GetEnvironmentVariable("TENURE_SNS_ARN");
                 await _snsGateway.Publish(personAddedMessage, topicArn).ConfigureAwait(false);
-                
+
                 oldHouseholdMembers.Add(householdMember);
             }
         }
-        
+
         public async Task<Guid> UpdateTenures(Process process, Token token)
         {
             _token = token;
