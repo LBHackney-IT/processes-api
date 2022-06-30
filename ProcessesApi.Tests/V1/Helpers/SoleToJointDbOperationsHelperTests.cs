@@ -373,7 +373,10 @@ namespace ProcessesApi.Tests.V1.Helpers
                                                                .Excluding(x => x.StartOfTenureDate));
             requestObject.StartOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 2000);
             newTenure.HouseholdMembers.Should().HaveSameCount(oldTenure.HouseholdMembers);
-            newTenure.HouseholdMembers.Find(x => x.Id == incomingTenantId).PersonTenureType.Should().Be(PersonTenureType.Tenant);
+
+            var householdMember = newTenure.HouseholdMembers.Find(x => x.Id == incomingTenantId);
+            householdMember.PersonTenureType.Should().Be(PersonTenureType.Tenant);
+            householdMember.IsResponsible.Should().BeTrue();
             return true;
         }
 

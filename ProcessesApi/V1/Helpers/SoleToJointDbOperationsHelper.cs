@@ -205,6 +205,7 @@ namespace ProcessesApi.V1.Helpers
             request.StartOfTenureDate = DateTime.UtcNow;
             var householdMember = request.HouseholdMembers.Find(x => x.Id == incomingTenantId);
             if (householdMember is null) throw new Exception("Not household member");
+            householdMember.PersonTenureType = PersonTenureType.Tenant;
             householdMember.IsResponsible = true;
 
             var result = await _tenureDbGateway.PostNewTenureAsync(request).ConfigureAwait(false);
