@@ -303,7 +303,8 @@ namespace ProcessesApi.V1.Services
                      .OnEntry(AddAppointmentDateTimeToEvent)
                      .PermitReentry(SoleToJointPermittedTriggers.RescheduleTenureAppointment)
                      .Permit(SoleToJointPermittedTriggers.UpdateTenure, SoleToJointStates.TenureUpdated)
-                     .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
+                     .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled)
+                     .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.TenureUpdated)
                     .OnEntryAsync(OnProcessCompleted);
