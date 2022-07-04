@@ -171,6 +171,8 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SoleToJointStates.DocumentsRequestedAppointment, true)]
         [InlineData(SoleToJointStates.DocumentsAppointmentRescheduled, true)]
         [InlineData(SoleToJointStates.HOApprovalFailed, false)]
+        [InlineData(SoleToJointStates.TenureAppointmentRescheduled, false)]
+
         public async Task ProcessStateIsUpdatedToProcessClosedAndEventIsRaised(string fromState, bool hasReason)
         {
             // Arrange
@@ -872,7 +874,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.TenureAppointmentRescheduled,
-                new List<string> { SoleToJointPermittedTriggers.UpdateTenure, SoleToJointPermittedTriggers.CancelProcess, SoleToJointPermittedTriggers.RescheduleTenureAppointment }
+                new List<string> { SoleToJointPermittedTriggers.UpdateTenure, SoleToJointPermittedTriggers.CancelProcess, SoleToJointPermittedTriggers.RescheduleTenureAppointment, SoleToJointPermittedTriggers.CloseProcess }
             );
 
             process.PreviousStates.Last().State.Should().Be(initialState);
