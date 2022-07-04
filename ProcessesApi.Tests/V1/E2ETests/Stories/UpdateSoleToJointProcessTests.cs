@@ -120,6 +120,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [InlineData(SoleToJointStates.AutomatedChecksFailed)]
         [InlineData(SoleToJointStates.ManualChecksFailed)]
         [InlineData(SoleToJointStates.BreachChecksFailed)]
+        [InlineData(SoleToJointStates.HOApprovalFailed)]
         public void ProcessStateIsUpdatedToProcessClosedWithoutReason(string fromState)
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(fromState))
@@ -134,7 +135,6 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         // List all states that CancelProcess can be triggered from
         [Theory]
         [InlineData(SoleToJointStates.HOApprovalPassed)]
-        [InlineData(SoleToJointStates.HOApprovalFailed)]
         [InlineData(SoleToJointStates.InterviewScheduled)]
         [InlineData(SoleToJointStates.InterviewRescheduled)]
         [InlineData(SoleToJointStates.TenureAppointmentScheduled)]
@@ -190,9 +190,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [Fact]
         public void ProcessStateIsUpdatedToAutomatedEligibilityChecksPassed()
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.SelectTenants))
+            this.Given(g => _processFixture.GivenASoleToJointProcessExistsWithoutRelatedEntities(SoleToJointStates.SelectTenants))
                     .And(a => _tenureFixture.GivenASecureTenureExists(_processFixture.Process.TargetId, _processFixture.TenantId, true))
-                    .And(a => _tenureFixture.GivenAPersonIsAddedAsAHouseholdMember(_processFixture.IncomingTenantId))
                     .And(a => _personFixture.GivenAnAdultPersonExists(_processFixture.IncomingTenantId))
                     .And(a => _personFixture.GivenAPersonHasAnActiveTenure(_processFixture.Process.TargetId))
                     //.And(a => _agreementsApiFixture.GivenAPaymentAgreementDoesNotExist())
@@ -209,9 +208,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [Fact]
         public void ProcessStateIsUpdatedToAutomatedEligibilityChecksFailed()
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.SelectTenants))
+            this.Given(g => _processFixture.GivenASoleToJointProcessExistsWithoutRelatedEntities(SoleToJointStates.SelectTenants))
                     .And(a => _tenureFixture.GivenASecureTenureExists(_processFixture.Process.TargetId, _processFixture.TenantId, true))
-                    .And(a => _tenureFixture.GivenAPersonIsAddedAsAHouseholdMember(_processFixture.IncomingTenantId))
                     .And(a => _personFixture.GivenAnAdultPersonDoesNotExist(_processFixture.IncomingTenantId))
                     .And(a => _personFixture.GivenAPersonHasAnActiveTenure(_processFixture.Process.TargetId))
                     //.And(a => _agreementsApiFixture.GivenAPaymentAgreementDoesNotExist())
@@ -626,10 +624,12 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         public void ProcessStateIsUpdatedToProcessCompleted(string initialState)
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(initialState))
+                    .And(a => _tenureFixture.GivenATenureExistsAndAPersonIsAddedAsAHouseholdMember(_processFixture.Process.TargetId, _processFixture.IncomingTenantId))
+                    .And(a => _personFixture.GivenAPersonExists(_processFixture.IncomingTenantId))
                     .And(a => _processFixture.GivenAUpdateTenureRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
-                    .And(a => _steps.ThenTheProcessStateIsUpdatedToUpdateTenure(_processFixture.UpdateProcessRequest, initialState))
+                    .And(a => _steps.ThenTheProcessStateIsUpdatedToUpdateTenure(_processFixture.UpdateProcessRequest, initialState, _processFixture.IncomingTenantId))
                     .And(a => _steps.ThenTheProcessCompletedEventIsRaised(_snsFixture, _processFixture.ProcessId))
                 .BDDfy();
         }

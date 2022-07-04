@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2.DataModel;
 using AutoFixture;
@@ -71,6 +70,16 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             Tenure = tenure;
         }
 
+
+        public async Task GivenATenureExists(Guid id)
+        {
+            var tenure = _fixture.Build<TenureInformation>()
+                            .With(x => x.Id, id)
+                            .With(x => x.VersionNumber, (int?) null)
+                            .Create();
+            await _dbContext.SaveAsync<TenureInformationDb>(tenure.ToDatabase()).ConfigureAwait(false);
+            Tenure = tenure;
+        }
         public async Task GivenASecureTenureExists(Guid tenureId, Guid tenantId, bool isTenant)
         {
             await GivenATenureExists(tenureId, tenantId, isTenant: isTenant, isSecure: true).ConfigureAwait(false);
@@ -85,13 +94,21 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
         }
 
-        public void GivenAPersonIsAddedAsAHouseholdMember(Guid personId)
+        public async Task GivenATenureExistsAndAPersonIsAddedAsAHouseholdMember(Guid id, Guid personId)
         {
             var householdMember = _fixture.Build<HouseholdMembers>()
                                           .With(x => x.Id, personId)
                                           .With(x => x.IsResponsible, false)
                                           .Create();
-            Tenure.HouseholdMembers = Tenure.HouseholdMembers.Append(householdMember);
+
+            var tenure = _fixture.Build<TenureInformation>()
+                            .With(x => x.Id, id)
+                            .With(x => x.HouseholdMembers, new List<HouseholdMembers> { householdMember })
+                            .With(x => x.VersionNumber, (int?) null)
+                            .Create();
+
+            await _dbContext.SaveAsync<TenureInformationDb>(tenure.ToDatabase()).ConfigureAwait(false);
+            Tenure = tenure;
         }
 
     }

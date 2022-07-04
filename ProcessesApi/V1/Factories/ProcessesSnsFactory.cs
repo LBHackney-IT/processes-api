@@ -30,6 +30,7 @@ namespace ProcessesApi.V1.Factories
 
             };
         }
+
         public EntityEventSns ProcessUpdated(Guid id, UpdateEntityResult<ProcessState> updateResult, Token token)
         {
             return new EntityEventSns
@@ -55,7 +56,10 @@ namespace ProcessesApi.V1.Factories
             };
         }
 
-        public EntityEventSns ProcessStateUpdated(Stateless.StateMachine<string, string>.Transition transition, Dictionary<string, object> stateData, Token token, string eventType)
+        public EntityEventSns ProcessStateUpdated(Stateless.StateMachine<string, string>.Transition transition,
+                                                  Dictionary<string, object> stateData,
+                                                  Token token,
+                                                  string eventType)
         {
             var triggerData = transition.Parameters[0] as ProcessTrigger;
 

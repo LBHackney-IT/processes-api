@@ -8,26 +8,20 @@ using System.Threading.Tasks;
 using Hackney.Core.Sns;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Helpers;
-using ProcessesApi.V1.Services.Exceptions;
 
 namespace ProcessesApi.V1.Services
 {
     public class SoleToJointService : ProcessService, ISoleToJointService
     {
-        private readonly ISoleToJointAutomatedEligibilityChecksHelper _automatedcheckshelper;
-        private readonly IGetPersonByIdHelper _personByIdHelper;
+        private readonly ISoleToJointDbOperationsHelper _dbOperationsHelper;
 
-
-        public SoleToJointService(ISnsFactory snsFactory,
-                                  ISnsGateway snsGateway,
-                                  ISoleToJointAutomatedEligibilityChecksHelper automatedChecksHelper,
-                                  IGetPersonByIdHelper getPersonByIdHelper)
+        public SoleToJointService(ISnsFactory snsFactory, ISnsGateway snsGateway, ISoleToJointDbOperationsHelper automatedChecksHelper)
             : base(snsFactory, snsGateway)
         {
             _snsFactory = snsFactory;
             _snsGateway = snsGateway;
-            _automatedcheckshelper = automatedChecksHelper;
-            _personByIdHelper = getPersonByIdHelper;
+            _dbOperationsHelper = automatedChecksHelper;
+
             _permittedTriggersType = typeof(SoleToJointPermittedTriggers);
             _ignoredTriggersForProcessUpdated = new List<string>
             {
@@ -46,10 +40,10 @@ namespace ProcessesApi.V1.Services
             var formData = processRequest.FormData;
             SoleToJointHelpers.ValidateFormData(formData, new List<string>() { SoleToJointFormDataKeys.IncomingTenantId, SoleToJointFormDataKeys.TenantId });
 
-            var isEligible = await _automatedcheckshelper.CheckAutomatedEligibility(_process.TargetId,
-                                                                     Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()),
-                                                                     Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.TenantId].ToString()))
-                                                                     .ConfigureAwait(false);
+            var isEligible = await _dbOperationsHelper.CheckAutomatedEligibility(_process.TargetId,
+                                                                                    Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()),
+                                                                                    Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.TenantId].ToString())
+                                                                                   ).ConfigureAwait(false);
 
             processRequest.Trigger = isEligible ? SoleToJointInternalTriggers.EligibiltyPassed : SoleToJointInternalTriggers.EligibiltyFailed;
 
@@ -144,9 +138,7 @@ namespace ProcessesApi.V1.Services
         private async Task OnProcessClosed(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
-            SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
-
-            _eventData = SoleToJointHelpers._eventData;
+            _eventData = SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
             await PublishProcessClosedEvent(x).ConfigureAwait(false);
         }
 
@@ -162,16 +154,20 @@ namespace ProcessesApi.V1.Services
         private async Task OnProcessCompleted(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
-            SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
+            _eventData = SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
 
-            _eventData = SoleToJointHelpers._eventData;
+            var newTenureId = await _dbOperationsHelper.UpdateTenures(_process, _token).ConfigureAwait(false);
+            _eventData.Add(SoleToJointFormDataKeys.NewTenureId, newTenureId);
+            SoleToJointHelpers.AddNewTenureToRelatedEntities(newTenureId, _process);
+
             await PublishProcessCompletedEvent(x).ConfigureAwait(false);
         }
 
-        private void AddIncomingTenantIdToRelatedEntities(Stateless.StateMachine<string, string>.Transition x)
+        private async Task AddIncomingTenantIdToRelatedEntitiesAsync(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
-            SoleToJointHelpers.AddIncomingTenantToRelatedEntities(processRequest.FormData, _process, _personByIdHelper);
+            await _dbOperationsHelper.AddIncomingTenantToRelatedEntities(processRequest.FormData, _process)
+                                     .ConfigureAwait(false);
         }
 
         public void AddAppointmentDateTimeToEvent(Stateless.StateMachine<string, string>.Transition transition)
@@ -200,7 +196,7 @@ namespace ProcessesApi.V1.Services
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckAutomatedEligibility, CheckAutomatedEligibility)
                     .Permit(SoleToJointInternalTriggers.EligibiltyFailed, SoleToJointStates.AutomatedChecksFailed)
                     .Permit(SoleToJointInternalTriggers.EligibiltyPassed, SoleToJointStates.AutomatedChecksPassed)
-                    .OnExit(AddIncomingTenantIdToRelatedEntities);
+                    .OnExitAsync(AddIncomingTenantIdToRelatedEntitiesAsync);
 
             _machine.Configure(SoleToJointStates.AutomatedChecksFailed)
                     .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
@@ -295,7 +291,7 @@ namespace ProcessesApi.V1.Services
 
 
             _machine.Configure(SoleToJointStates.HOApprovalFailed)
-                    .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
+                    .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.TenureAppointmentScheduled)
                      .OnEntry(AddAppointmentDateTimeToEvent)
@@ -307,7 +303,8 @@ namespace ProcessesApi.V1.Services
                      .OnEntry(AddAppointmentDateTimeToEvent)
                      .PermitReentry(SoleToJointPermittedTriggers.RescheduleTenureAppointment)
                      .Permit(SoleToJointPermittedTriggers.UpdateTenure, SoleToJointStates.TenureUpdated)
-                     .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled);
+                     .Permit(SoleToJointPermittedTriggers.CancelProcess, SharedProcessStates.ProcessCancelled)
+                     .Permit(SoleToJointPermittedTriggers.CloseProcess, SharedProcessStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.TenureUpdated)
                     .OnEntryAsync(OnProcessCompleted);

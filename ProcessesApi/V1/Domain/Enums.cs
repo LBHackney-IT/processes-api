@@ -20,6 +20,7 @@ namespace ProcessesApi.V1.Domain
     public enum SubType
     {
         tenant,
-        householdMember
+        householdMember,
+        newTenure
     }
 }

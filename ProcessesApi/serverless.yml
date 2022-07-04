@@ -25,7 +25,10 @@ functions:
     environment:
       IncomeApiUrl: ${ssm:/housing-tl/${self:provider.stage}/income-api-url}
       IncomeApiToken: ${ssm:/manage-arrears/${self:provider.stage}/income-api-key}
+      TenureApiUrl: ${ssm:/housing-tl/${self:provider.stage}/tenure-api-url}
+      TenureApiToken: ${ssm:/housing-tl/${self:provider.stage}/tenure-api-token}
       PROCESS_SNS_ARN: ${ssm:/sns-topic/${self:provider.stage}/processes/arn}
+      TENURE_SNS_ARN: ${ssm:/sns-topic/${self:provider.stage}/tenure/arn}
     events:
       - http:
           path: /{proxy+}
@@ -95,6 +98,11 @@ resources:
                     - "sns:Publish"
                   Resource:
                     - ${ssm:/sns-topic/${self:provider.stage}/processes/arn}
+                - Effect: Allow
+                  Action:
+                    - "sns:Publish"
+                  Resource:
+                    - ${ssm:/sns-topic/${self:provider.stage}/tenure/arn}
           - PolicyName: dynamoDBAccess
             PolicyDocument:
               Version: '2012-10-17'
@@ -121,11 +129,15 @@ resources:
                 - Effect: Allow
                   Action:
                     - "dynamodb:BatchGet*"
+                    - "dynamodb:BatchWrite"
+                    - "dynamodb:DeleteItem"
                     - "dynamodb:DescribeStream"
                     - "dynamodb:DescribeTable"
                     - "dynamodb:Get*"
+                    - "dynamodb:PutItem"
                     - "dynamodb:Query"
                     - "dynamodb:Scan"
+                    - "dynamodb:UpdateItem"
                   Resource:
                     - 'Fn::Join':
                         - ':'

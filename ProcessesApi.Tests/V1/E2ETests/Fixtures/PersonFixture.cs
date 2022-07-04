@@ -42,6 +42,29 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             }
         }
 
+        public async Task GivenAPersonExists(Guid relatedEntityId)
+        {
+            List<PersonType> personType = new List<PersonType>()
+            {
+                PersonType.Freeholder
+            };
+            IEnumerable<PersonType> personTypes = personType;
+
+            List<TenureDetails> tenureDetails = new List<TenureDetails>();
+
+            var tenureDetail = _fixture.Create<TenureDetails>();
+            tenureDetails.Add(tenureDetail);
+            var person = _fixture.Build<Person>()
+                           .With(x => x.Id, relatedEntityId)
+                           .With(x => x.Tenures, tenureDetails)
+                           .With(x => x.VersionNumber, (int?) null)
+                           .With(x => x.PersonTypes, personTypes)
+                           .Create();
+            await _dbContext.SaveAsync<PersonDbEntity>(person.ToDatabase()).ConfigureAwait(false);
+
+            Person = person;
+        }
+
         public async Task GivenAnAdultPersonExists(Guid personId)
         {
             var person = _fixture.Build<Person>()

@@ -4,6 +4,8 @@ using Hackney.Core.Testing.DynamoDb;
 using Hackney.Core.Testing.Shared.E2E;
 using Hackney.Core.Testing.Sns;
 using Hackney.Shared.Person;
+using Hackney.Shared.Tenure.Domain;
+using Hackney.Shared.Tenure.Infrastructure;
 using Newtonsoft.Json;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
 using ProcessesApi.V1.Boundary.Constants;
@@ -212,10 +214,30 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         {
             await CheckProcessState(request.Id, SoleToJointStates.TenureAppointmentRescheduled, SoleToJointStates.TenureAppointmentRescheduled).ConfigureAwait(false);
         }
-        public async Task ThenTheProcessStateIsUpdatedToUpdateTenure(UpdateProcessQuery request, string initialState)
+        public async Task ThenTheProcessStateIsUpdatedToUpdateTenure(UpdateProcessQuery request, string initialState, Guid incomingTenantId)
         {
             await CheckProcessState(request.Id, SoleToJointStates.TenureUpdated, initialState).ConfigureAwait(false);
+
+            var process = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
+            // RelatedEntities
+            var newTenureDetails = process.RelatedEntities.Find(x => x.TargetType == TargetType.tenure
+                                                              && x.SubType == SubType.newTenure);
+            newTenureDetails.Should().NotBeNull();
+            // oldTenure
+            var oldTenure = await _dbFixture.DynamoDbContext.LoadAsync<TenureInformationDb>(process.TargetId).ConfigureAwait(false);
+            oldTenure.EndOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 3000);
+            // newTenure
+            var newTenure = await _dbFixture.DynamoDbContext.LoadAsync<TenureInformationDb>(newTenureDetails.Id).ConfigureAwait(false);
+            newTenure.StartOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 3000);
+            newTenure.Should().BeEquivalentTo(oldTenure, c => c.Excluding(x => x.Id)
+                                                               .Excluding(x => x.HouseholdMembers)
+                                                               .Excluding(x => x.StartOfTenureDate)
+                                                               .Excluding(x => x.EndOfTenureDate)
+                                                               .Excluding(x => x.VersionNumber));
+            var householdMember = newTenure.HouseholdMembers.Find(x => x.Id == incomingTenantId);
+            householdMember.PersonTenureType.Should().Be(PersonTenureType.Tenant);
         }
+
         public async Task VerifyProcessUpdatedEventIsRaised(ISnsFixture snsFixture, Guid processId, string oldState, string newState, Action<string> verifyNewStateData = null)
         {
             Action<string, string> verifyData = (dataAsString, state) =>
@@ -368,6 +390,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         public async Task ThenTheProcessCompletedEventIsRaised(ISnsFixture snsFixture, Guid processId)
         {
             await VerifyProcessCompletedEventIsRaisedWithStateData(snsFixture, processId, SoleToJointStates.TenureUpdated, SoleToJointFormDataKeys.Reason).ConfigureAwait(false);
+            // todo figure out how to verify other events
         }
     }
 }

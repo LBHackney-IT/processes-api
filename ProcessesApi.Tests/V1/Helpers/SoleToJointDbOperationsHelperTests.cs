@@ -4,38 +4,73 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoFixture;
 using FluentAssertions;
+using Hackney.Core.JWT;
+using Hackney.Core.Sns;
 using Hackney.Shared.Person;
 using Hackney.Shared.Person.Domain;
+using Hackney.Shared.Tenure.Boundary.Requests;
 using Hackney.Shared.Tenure.Domain;
+using Hackney.Shared.Tenure.Factories;
+using Hackney.Shared.Tenure.Infrastructure;
 using Moq;
+using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Domain.SoleToJoint;
+using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Gateways.Exceptions;
 using ProcessesApi.V1.Helpers;
+using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Services.Exceptions;
 using Xunit;
 
 namespace ProcessesApi.Tests.V1.Helpers
 {
     [Collection("LogCall collection")]
-    public class SoleToJointAutomatedEligibilityChecksHelperTests
+    public class SoleToJointDbOperationsHelperTests
     {
         private readonly Fixture _fixture = new Fixture();
-        private Mock<IIncomeApiGateway> _mockIncomeApiGateway;
-        private Mock<IPersonDbGateway> _mockPersonGateway;
-        private Mock<ITenureDbGateway> _mockTenureGateway;
-        private SoleToJointAutomatedEligibilityChecksHelper _classUnderTest;
+        private Mock<IIncomeApiGateway> _mockIncomeApi;
+        private Mock<IPersonDbGateway> _mockPersonDb;
+        private Mock<ITenureDbGateway> _mockTenureDb;
+        private Mock<ISnsGateway> _mockSnsGateway;
+        private SoleToJointDbOperationsHelper _classUnderTest;
 
-        public SoleToJointAutomatedEligibilityChecksHelperTests()
+        public SoleToJointDbOperationsHelperTests()
         {
-            _mockIncomeApiGateway = new Mock<IIncomeApiGateway>();
-            _mockPersonGateway = new Mock<IPersonDbGateway>();
-            _mockTenureGateway = new Mock<ITenureDbGateway>();
+            _mockIncomeApi = new Mock<IIncomeApiGateway>();
+            _mockPersonDb = new Mock<IPersonDbGateway>();
+            _mockTenureDb = new Mock<ITenureDbGateway>();
+            _mockSnsGateway = new Mock<ISnsGateway>();
 
-            _classUnderTest = new SoleToJointAutomatedEligibilityChecksHelper(_mockIncomeApiGateway.Object, _mockPersonGateway.Object, _mockTenureGateway.Object);
+            _classUnderTest = new SoleToJointDbOperationsHelper(_mockIncomeApi.Object,
+                                                                _mockPersonDb.Object,
+                                                                _mockTenureDb.Object,
+                                                                new TenureSnsFactory(),
+                                                                _mockSnsGateway.Object);
         }
 
-        private (Person, TenureInformation, Guid, string) CreateEligibleTenureAndProposedTenant()
+        [Fact]
+        public async Task AddsIncomingTenantToRelatedEntities()
+        {
+            // arrange
+            var process = _fixture.Create<Process>();
+            var incomingTenant = _fixture.Create<Person>();
+            _mockPersonDb.Setup(x => x.GetPersonById(incomingTenant.Id)).ReturnsAsync(incomingTenant);
+            var formData = new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenant.Id } };
+
+            // act
+            await _classUnderTest.AddIncomingTenantToRelatedEntities(formData, process).ConfigureAwait(false);
+
+            // assert
+            var relatedEntity = process.RelatedEntities.Find(x => x.Id == incomingTenant.Id);
+            relatedEntity.Should().NotBeNull();
+            relatedEntity.TargetType.Should().Be(TargetType.person);
+            relatedEntity.SubType.Should().Be(SubType.householdMember);
+            relatedEntity.Description.Should().Be($"{incomingTenant.FirstName} {incomingTenant.Surname}");
+        }
+
+        #region Helpers
+        private (Process, Person, TenureInformation, Guid, string) CreateProcessAndRelatedEntities()
         {
             var proposedTenantId = Guid.NewGuid();
             var tenancyRef = _fixture.Create<string>();
@@ -44,6 +79,12 @@ namespace ProcessesApi.Tests.V1.Helpers
                                  .With(x => x.PersonTenureType, PersonTenureType.Tenant)
                                  .With(x => x.IsResponsible, true)
                                  .Create();
+            var tenantRelatedEntity = new RelatedEntity
+            {
+                Id = tenant.Id,
+                TargetType = TargetType.person,
+                SubType = SubType.tenant
+            };
 
             var proposedTenant = _fixture.Build<Person>()
                                          .With(x => x.VersionNumber, (int?) null)
@@ -55,6 +96,13 @@ namespace ProcessesApi.Tests.V1.Helpers
                                             .With(x => x.Id, proposedTenantId)
                                             .With(x => x.IsResponsible, false)
                                             .Create();
+
+            var proposedTenantRelatedEntity = new RelatedEntity
+            {
+                Id = proposedTenant.Id,
+                TargetType = TargetType.person,
+                SubType = SubType.householdMember
+            };
 
             var tenure = _fixture.Build<TenureInformation>()
                         .With(x => x.HouseholdMembers, new List<HouseholdMembers> { proposedTenantHouseholdMember, tenant })
@@ -72,24 +120,29 @@ namespace ProcessesApi.Tests.V1.Helpers
                                                                       .With(x => x.Type, TenureTypes.Secure.Code)
                                                                       .Create());
             proposedTenant.Tenures = personTenures;
+            var process = _fixture.Build<Process>().With(x => x.TargetId, tenure.Id).Create();
+            process.RelatedEntities = new List<RelatedEntity> { tenantRelatedEntity, proposedTenantRelatedEntity };
 
-            return (proposedTenant, tenure, tenant.Id, tenancyRef);
+            return (process, proposedTenant, tenure, tenant.Id, tenancyRef);
         }
 
         private async Task<bool> SetupAndCheckAutomatedEligibility(TenureInformation tenure, Person proposedTenant, Guid tenantId)
         {
-            _mockTenureGateway.Setup(x => x.GetTenureById(tenure.Id)).ReturnsAsync(tenure);
-            _mockPersonGateway.Setup(x => x.GetPersonById(proposedTenant.Id)).ReturnsAsync(proposedTenant);
+            _mockTenureDb.Setup(x => x.GetTenureById(tenure.Id)).ReturnsAsync(tenure);
+            _mockPersonDb.Setup(x => x.GetPersonById(proposedTenant.Id)).ReturnsAsync(proposedTenant);
             // Act
             return await _classUnderTest.CheckAutomatedEligibility(tenure.Id, proposedTenant.Id, tenantId).ConfigureAwait(false);
         }
 
+        #endregion
+
+        #region Automated Eligibility checks
 
         [Fact]
         public async Task CheckAutomatedEligibilityReturnsTrueIfAllConditionsAreMet()
         {
             // Arrange
-            (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
+            (var process, var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateProcessAndRelatedEntities();
 
             var tenures = proposedTenant.Tenures.Append(_fixture.Build<TenureDetails>()
                                                                 .With(x => x.Type, TenureTypes.NonSecure.Code)
@@ -107,8 +160,8 @@ namespace ProcessesApi.Tests.V1.Helpers
         public void CheckAutomatedEligibilityThrowsErrorIfTheTargetTenureIsNotFound()
         {
             // Arrange
-            (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
-            _mockPersonGateway.Setup(x => x.GetPersonById(proposedTenant.Id)).ReturnsAsync(proposedTenant);
+            (var process, var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateProcessAndRelatedEntities();
+            _mockPersonDb.Setup(x => x.GetPersonById(proposedTenant.Id)).ReturnsAsync(proposedTenant);
             // Act
             Func<Task<bool>> func = async () => await _classUnderTest.CheckAutomatedEligibility(tenure.Id, proposedTenant.Id, tenantId)
                                                                      .ConfigureAwait(false);
@@ -120,8 +173,8 @@ namespace ProcessesApi.Tests.V1.Helpers
         public void CheckAutomatedEligibilityThrowsErrorIfTheProposedTenantIsNotFound()
         {
             // Arrange
-            (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
-            _mockTenureGateway.Setup(x => x.GetTenureById(tenure.Id)).ReturnsAsync(tenure);
+            (var process, var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateProcessAndRelatedEntities();
+            _mockTenureDb.Setup(x => x.GetTenureById(tenure.Id)).ReturnsAsync(tenure);
             // Act
             Func<Task<bool>> func = async () => await _classUnderTest.CheckAutomatedEligibility(tenure.Id, proposedTenant.Id, tenantId)
                                                                      .ConfigureAwait(false);
@@ -133,7 +186,7 @@ namespace ProcessesApi.Tests.V1.Helpers
         public void CheckAutomatedEligibilityThrowsErrorIfTheCurrentTenantIsNotListedAsAHouseholdMember()
         {
             // Arrange
-            (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
+            (var process, var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateProcessAndRelatedEntities();
             tenure.HouseholdMembers = tenure.HouseholdMembers.Where(x => x.Id != tenantId);
             // Act
             Func<Task<bool>> func = async () => await SetupAndCheckAutomatedEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
@@ -146,7 +199,7 @@ namespace ProcessesApi.Tests.V1.Helpers
         public async Task CheckAutomatedEligibilityReturnsFalseIfTenantIsNotANamedTenureHolderOfTheSelectedTenure()
         {
             // Arrange
-            (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
+            (var process, var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateProcessAndRelatedEntities();
 
             var householdMembers = tenure.HouseholdMembers;
             householdMembers.FirstOrDefault(x => x.Id == tenantId).PersonTenureType = PersonTenureType.Occupant;
@@ -165,7 +218,7 @@ namespace ProcessesApi.Tests.V1.Helpers
         public async Task CheckAutomatedEligibilityFailsIfTheTenantIsAlreadyPartOfAJointTenancy()
         {
             // Arrange
-            (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
+            (var process, var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateProcessAndRelatedEntities();
             var householdMembers = tenure.HouseholdMembers.Append(_fixture.Build<HouseholdMembers>()
                                                                           .With(x => x.IsResponsible, true)
                                                                           .Create());
@@ -185,7 +238,7 @@ namespace ProcessesApi.Tests.V1.Helpers
         public async Task CheckAutomatedEligibilityReturnsFalseIfTheSelectedTenureIsNotSecure()
         {
             // Arrange
-            (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
+            (var process, var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateProcessAndRelatedEntities();
             tenure.TenureType = TenureTypes.NonSecure;
             // Act
             var response = await SetupAndCheckAutomatedEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
@@ -201,7 +254,7 @@ namespace ProcessesApi.Tests.V1.Helpers
         public async Task CheckAutomatedEligibilityReturnsFalseIfTheSelectedTenureIsNotCurrentlyActive()
         {
             // Arrange
-            (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
+            (var process, var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateProcessAndRelatedEntities();
             tenure.EndOfTenureDate = DateTime.UtcNow.AddDays(-10);
             // Act
             var response = await SetupAndCheckAutomatedEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
@@ -216,7 +269,7 @@ namespace ProcessesApi.Tests.V1.Helpers
         [Fact(Skip = "Check has been temporarily moved to ManualEligibility Check")]
         public async Task CheckAutomaticEligibilityFailsIfTenantHasLivePaymentAgreements()
         {
-            (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
+            (var process, var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateProcessAndRelatedEntities();
             var paymentAgreements = new PaymentAgreements
             {
                 Agreements = new List<PaymentAgreement>
@@ -227,7 +280,7 @@ namespace ProcessesApi.Tests.V1.Helpers
                         .Create()
                 }
             };
-            _mockIncomeApiGateway.Setup(x => x.GetPaymentAgreementsByTenancyReference(tenancyRef, It.IsAny<Guid>())).ReturnsAsync(paymentAgreements);
+            _mockIncomeApi.Setup(x => x.GetPaymentAgreementsByTenancyReference(tenancyRef, It.IsAny<Guid>())).ReturnsAsync(paymentAgreements);
             // Act
             var response = await SetupAndCheckAutomatedEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
             // Assert
@@ -241,7 +294,7 @@ namespace ProcessesApi.Tests.V1.Helpers
         [Fact(Skip = "Check has been temporarily moved to ManualEligibility Check")]
         public async Task CheckAutomaticEligibilityFailsIfTenantHasAnActiveNoticeOfSeekingPossession()
         {
-            (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
+            (var process, var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateProcessAndRelatedEntities();
 
             var tenancyWithNosp = _fixture.Build<Tenancy>()
                                     .With(x => x.TenancyRef, tenancyRef)
@@ -251,7 +304,7 @@ namespace ProcessesApi.Tests.V1.Helpers
                                     )
                                     .Create();
 
-            _mockIncomeApiGateway.Setup(x => x.GetTenancyByReference(tenancyRef, It.IsAny<Guid>())).ReturnsAsync(tenancyWithNosp);
+            _mockIncomeApi.Setup(x => x.GetTenancyByReference(tenancyRef, It.IsAny<Guid>())).ReturnsAsync(tenancyWithNosp);
 
             // Act
             var response = await SetupAndCheckAutomatedEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
@@ -267,7 +320,7 @@ namespace ProcessesApi.Tests.V1.Helpers
         public async Task CheckAutomatedEligibilityReturnsFalseIfTheProposedTenantIsAMinor()
         {
             // Arrange
-            (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
+            (var process, var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateProcessAndRelatedEntities();
             proposedTenant.DateOfBirth = DateTime.UtcNow;
             // Act
             var response = await SetupAndCheckAutomatedEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
@@ -283,7 +336,7 @@ namespace ProcessesApi.Tests.V1.Helpers
         public async Task CheckAutomatedEligibilityReturnsFalseIfTheProposedTenantIsAHouseholdMemberOfAnActiveTenureThatIsNotNonSecure()
         {
             // Arrange
-            (var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateEligibleTenureAndProposedTenant();
+            (var process, var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateProcessAndRelatedEntities();
 
             var tenures = proposedTenant.Tenures.Append(_fixture.Build<TenureDetails>()
                                                                 .With(x => x.Type, TenureTypes.Freehold.Code)
@@ -299,5 +352,66 @@ namespace ProcessesApi.Tests.V1.Helpers
             _classUnderTest.EligibilityResults.Count(x => x.Value == false).Should().Be(1);
             _classUnderTest.EligibilityResults.Should().HaveCount(8);
         }
+
+        #endregion
+
+        #region Update Tenure
+
+        private bool VerifyEndExistingTenure(EditTenureDetailsRequestObject requestObject, TenureInformation oldTenure)
+        {
+            requestObject.EndOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            requestObject.StartOfTenureDate.Should().Be(oldTenure.StartOfTenureDate);
+            requestObject.TenureType.Should().Be(oldTenure.TenureType);
+            return true;
+        }
+
+        private bool VerifyNewTenure(CreateTenureRequestObject requestObject, TenureInformationDb oldTenure, Guid incomingTenantId)
+        {
+            var newTenure = requestObject.ToDatabase();
+            newTenure.Should().BeEquivalentTo(oldTenure, c => c.Excluding(x => x.Id)
+                                                               .Excluding(x => x.HouseholdMembers)
+                                                               .Excluding(x => x.StartOfTenureDate));
+            requestObject.StartOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            newTenure.HouseholdMembers.Should().HaveSameCount(oldTenure.HouseholdMembers);
+
+            var householdMember = newTenure.HouseholdMembers.Find(x => x.Id == incomingTenantId);
+            householdMember.PersonTenureType.Should().Be(PersonTenureType.Tenant);
+            householdMember.IsResponsible.Should().BeTrue();
+            return true;
+        }
+
+        private bool VerifyUpdateTenureForPerson(UpdateTenureForPersonRequestObject requestObject)
+        {
+            requestObject.IsResponsible.Should().BeTrue();
+            requestObject.Type.Should().Be(HouseholdMembersType.Person);
+
+            return true;
+        }
+
+        [Fact]
+        public async Task EndsExistingTenureAndCreatesNewTenureWithAddedTenant()
+        {
+            (var process, var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateProcessAndRelatedEntities();
+
+            _mockTenureDb.Setup(x => x.GetTenureById(tenure.Id)).ReturnsAsync(tenure);
+
+            var updateResult = _fixture.Create<UpdateEntityResult<TenureInformationDb>>();
+            _mockTenureDb.Setup(x => x.UpdateTenureById(tenure.Id, It.IsAny<EditTenureDetailsRequestObject>())).ReturnsAsync(updateResult);
+
+            _mockTenureDb.Setup(x => x.PostNewTenureAsync(It.IsAny<CreateTenureRequestObject>())).ReturnsAsync(tenure.ToDatabase());
+
+            // Act
+            await _classUnderTest.UpdateTenures(process, new Token()).ConfigureAwait(false);
+
+            // Assert
+            _mockTenureDb.Verify(g => g.GetTenureById(tenure.Id), Times.Once);
+            _mockTenureDb.Verify(g => g.UpdateTenureById(tenure.Id, It.Is<EditTenureDetailsRequestObject>(x => VerifyEndExistingTenure(x, tenure))), Times.Once);
+            _mockTenureDb.Verify(g => g.PostNewTenureAsync(It.Is<CreateTenureRequestObject>(x => VerifyNewTenure(x, tenure.ToDatabase(), proposedTenant.Id))), Times.Once);
+
+            var numberOfEvents = tenure.HouseholdMembers.Count() + 2; // 1 event per hm, plus on update old tenure & on create new tenure
+            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(numberOfEvents));
+        }
+
+        #endregion
     }
 }

@@ -162,6 +162,8 @@ namespace ProcessesApi
             services.AddSingleton<IConfiguration>(Configuration);
 
             services.AddScoped<ISnsFactory, ProcessesSnsFactory>();
+            services.AddScoped<IPersonSnsFactory, PersonSnsFactory>();
+            services.AddScoped<ITenureSnsFactory, TenureSnsFactory>();
 
             ConfigureHackneyCoreDI(services);
 
@@ -194,8 +196,7 @@ namespace ProcessesApi
 
         private static void RegisterHelpers(IServiceCollection services)
         {
-            services.AddScoped<ISoleToJointAutomatedEligibilityChecksHelper, SoleToJointAutomatedEligibilityChecksHelper>();
-            services.AddScoped<IGetPersonByIdHelper, GetPersonByIdHelper>();
+            services.AddScoped<ISoleToJointDbOperationsHelper, SoleToJointDbOperationsHelper>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
