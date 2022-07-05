@@ -106,9 +106,14 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenANewSoleToJointProcessRequest()
         {
-            CreateProcessRequest = _fixture.Build<CreateProcess>()
-                                .Create();
+            CreateProcessRequest = _fixture.Create<CreateProcess>();
             ProcessName = ProcessName.soleToJoint;
+        }
+
+        public void GivenANewChangeOfNameProcessRequest()
+        {
+            CreateProcessRequest = _fixture.Create<CreateProcess>();
+            ProcessName = ProcessName.changeOfName;
         }
 
         public void GivenANewSoleToJointProcessRequestWithValidationErrors()
@@ -133,20 +138,20 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public void GivenACloseProcessRequestWithoutReason()
         {
             GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.CloseProcess);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.HasNotifiedResident, true);
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.HasNotifiedResident, true);
         }
 
         public void GivenACloseProcessRequestWithReason()
         {
             GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.CloseProcess);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.HasNotifiedResident, true);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.Reason, "This is a reason");
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.HasNotifiedResident, true);
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.Reason, "This is a reason");
         }
 
         public void GivenACancelProcessRequest()
         {
             GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.CancelProcess);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.Comment, "This is a comment");
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.Comment, "This is a comment");
         }
 
         public void GivenACheckAutomatedEligibilityRequest()
@@ -394,8 +399,8 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public void GivenAUpdateTenureRequest()
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.UpdateTenure);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.HasNotifiedResident, true);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.Reason, "This is a reason");
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.HasNotifiedResident, true);
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.Reason, "This is a reason");
         }
     }
 }

@@ -12,14 +12,17 @@ namespace ProcessesApi.V1
         public static void ConfigureProcessServices(this IServiceCollection services)
         {
             services.AddTransient<SoleToJointService>();
+            services.AddTransient<ChangeOfNameService>();
             // List Process Services here
 
             services.AddTransient<Func<ProcessName, IProcessService>>(serviceProvider => (processName) =>
             {
                 switch (processName)
                 {
-                    case ProcessName.soletojoint:
+                    case ProcessName.soleToJoint:
                         return serviceProvider.GetRequiredService<SoleToJointService>();
+                    case ProcessName.changeOfName:
+                        return serviceProvider.GetRequiredService<ChangeOfNameService>();
                     default:
                         throw new InvalidEnumArgumentException(nameof(ProcessName), (int) processName, typeof(ProcessName));
                 }

@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Hackney.Core.JWT;
 using Hackney.Core.Sns;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure.JWT;
@@ -21,17 +20,9 @@ using ProcessesApi.V1.Constants;
 namespace ProcessesApi.Tests.V1.Services
 {
     [Collection("AppTest collection")]
-    public class SoleToJointServiceTests : IDisposable
+    public class SoleToJointServiceTests : ProcessServiceBaseTests, IDisposable
     {
-        public SoleToJointService _classUnderTest;
-        public Fixture _fixture = new Fixture();
-        private readonly List<Action> _cleanup = new List<Action>();
-
         private Mock<ISoleToJointDbOperationsHelper> _mockDbOperationsHelper;
-        private Mock<ISnsGateway> _mockSnsGateway;
-        private readonly Token _token = new Token();
-        private EntityEventSns _lastSnsEvent = new EntityEventSns();
-
 
         private Dictionary<string, object> _manualEligibilityPassData => new Dictionary<string, object>
         {
@@ -52,26 +43,7 @@ namespace ProcessesApi.Tests.V1.Services
             { SoleToJointKeys.BR18, "false" }
         };
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        private bool _disposed;
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing && !_disposed)
-            {
-                foreach (var action in _cleanup)
-                    action();
-
-                _disposed = true;
-            }
-        }
-
-        public SoleToJointServiceTests(AwsMockWebApplicationFactory<Startup> appFactory)
+        public SoleToJointServiceTests(AwsMockWebApplicationFactory<Startup> appFactory) : base(appFactory)
         {
             _mockSnsGateway = new Mock<ISnsGateway>();
             _mockDbOperationsHelper = new Mock<ISoleToJointDbOperationsHelper>();
@@ -83,54 +55,10 @@ namespace ProcessesApi.Tests.V1.Services
                 .Callback<EntityEventSns, string, string>((ev, s1, s2) => _lastSnsEvent = ev);
         }
 
-
-        private Process CreateProcessWithCurrentState(string currentState, Dictionary<string, object> formData = null)
-        {
-            return _fixture.Build<Process>()
-                            .With(x => x.CurrentState,
-                                    _fixture.Build<ProcessState>()
-                                        .With(x => x.State, currentState)
-                                        .With(x => x.ProcessData,
-                                            _fixture.Build<ProcessData>()
-                                                .With(x => x.FormData, formData ?? new Dictionary<string, object>())
-                                                .Create())
-                                        .Create())
-                            .Create();
-        }
-
-        private ProcessTrigger CreateProcessTrigger(Process process, string trigger, Dictionary<string, object> formData = null)
-        {
-            return ProcessTrigger.Create
-            (
-                process.Id,
-                trigger,
-                formData,
-                _fixture.Create<List<Guid>>()
-            );
-        }
-
-        private void CurrentStateShouldContainCorrectData(Process process, ProcessTrigger triggerObject, string expectedCurrentState, List<string> expectedTriggers)
-        {
-            process.CurrentState.State.Should().Be(expectedCurrentState);
-            process.CurrentState.PermittedTriggers.Should().BeEquivalentTo(expectedTriggers);
-            process.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(triggerObject.FormData);
-            process.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(triggerObject.Documents);
-            process.CurrentState.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
-            process.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
-        }
-
-        private void VerifyThatProcessUpdatedEventIsTriggered(string oldState, string newState)
-        {
-            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_UPDATED_EVENT);
-            (_lastSnsEvent.EventData.OldData as ProcessStateChangeData).State.Should().Be(oldState);
-            (_lastSnsEvent.EventData.NewData as ProcessStateChangeData).State.Should().Be(newState);
-        }
-
         // List states & triggers that expect certain form data values
         [Theory]
-        [InlineData(SoleToJointStates.AutomatedChecksFailed, SharedPermittedTriggers.CloseProcess, new string[] { SoleToJointKeys.HasNotifiedResident })]
-        [InlineData(SharedStates.DocumentsRequestedDes, SharedPermittedTriggers.CloseProcess, new string[] { SoleToJointKeys.HasNotifiedResident })]
+        [InlineData(SoleToJointStates.AutomatedChecksFailed, SharedPermittedTriggers.CloseProcess, new string[] { SharedKeys.HasNotifiedResident })]
+        [InlineData(SharedStates.DocumentsRequestedDes, SharedPermittedTriggers.CloseProcess, new string[] { SharedKeys.HasNotifiedResident })]
         [InlineData(SoleToJointStates.SelectTenants, SoleToJointPermittedTriggers.CheckAutomatedEligibility, new string[] { SoleToJointKeys.IncomingTenantId, SoleToJointKeys.TenantId })]
         [InlineData(SoleToJointStates.AutomatedChecksPassed, SoleToJointPermittedTriggers.CheckManualEligibility, new string[] { SoleToJointKeys.BR11, SoleToJointKeys.BR12, SoleToJointKeys.BR13,
                                                                                                                                 SoleToJointKeys.BR15, SoleToJointKeys.BR16, SoleToJointKeys.BR7, SoleToJointKeys.BR8 })]
@@ -145,17 +73,7 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SharedStates.HOApprovalPassed, SoleToJointPermittedTriggers.ScheduleTenureAppointment, new string[] { SoleToJointKeys.AppointmentDateTime })]
         public void ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
         {
-            // Arrange 
-            var process = CreateProcessWithCurrentState(initialState);
-
-            var triggerObject = CreateProcessTrigger(process,
-                                                     trigger,
-                                                     new Dictionary<string, object>());
-
-            var expectedErrorMessage = $"The request's FormData is invalid: The form data keys supplied () do not include the expected values ({String.Join(", ", expectedFormDataKeys)}).";
-            // Act + Assert
-            _classUnderTest.Invoking(x => x.Process(triggerObject, process, _token))
-                           .Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
+            ShouldThrowFormDataNotFoundException(initialState, trigger, expectedFormDataKeys);
         }
 
         #region Close or Cancel Process
@@ -163,43 +81,17 @@ namespace ProcessesApi.Tests.V1.Services
         // List all states that CloseProcess can be triggered from
         [Theory]
         [InlineData(SoleToJointStates.AutomatedChecksFailed, true)]
-        [InlineData(SoleToJointStates.ManualChecksFailed, true)]
-        [InlineData(SoleToJointStates.BreachChecksFailed, true)]
-        [InlineData(SoleToJointStates.AutomatedChecksFailed, false)]
         [InlineData(SoleToJointStates.ManualChecksFailed, false)]
-        [InlineData(SoleToJointStates.BreachChecksFailed, false)]
-        [InlineData(SharedStates.DocumentsRequestedDes, true)]
+        [InlineData(SoleToJointStates.BreachChecksFailed, true)]
+        [InlineData(SharedStates.DocumentsRequestedDes, false)]
         [InlineData(SharedStates.DocumentsRequestedAppointment, true)]
-        [InlineData(SharedStates.DocumentsAppointmentRescheduled, true)]
-        [InlineData(SharedStates.HOApprovalFailed, false)]
+        [InlineData(SharedStates.DocumentsAppointmentRescheduled, false)]
+        [InlineData(SharedStates.HOApprovalFailed, true)]
         [InlineData(SoleToJointStates.TenureAppointmentRescheduled, false)]
 
         public async Task ProcessStateIsUpdatedToProcessClosedAndEventIsRaised(string fromState, bool hasReason)
         {
-            // Arrange
-            var process = CreateProcessWithCurrentState(fromState);
-            var formData = new Dictionary<string, object>()
-            {
-                { SoleToJointKeys.HasNotifiedResident, true }
-            };
-            if (hasReason) formData.Add(SoleToJointKeys.Reason, "this is a reason.");
-
-            var triggerObject = CreateProcessTrigger(process,
-                                                     SharedPermittedTriggers.CloseProcess,
-                                                     formData);
-
-            // Act
-            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
-
-            // Assert
-            CurrentStateShouldContainCorrectData(process,
-                                                 triggerObject,
-                                                 SharedStates.ProcessClosed,
-                                                 new List<string>());
-            process.PreviousStates.LastOrDefault().State.Should().Be(fromState);
-
-            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_CLOSED_EVENT);
+            await ProcessStateShouldUpdateToProcessClosedAndEventIsRaised(fromState, hasReason).ConfigureAwait(false);
         }
 
         // List all states that CancelProcess can be triggered from
@@ -212,29 +104,7 @@ namespace ProcessesApi.Tests.V1.Services
 
         public async Task ProcessStateIsUpdatedToProcessCancelledAndProcessClosedEventIsRaised(string fromState)
         {
-            // Arrange
-            var process = CreateProcessWithCurrentState(fromState);
-            var formData = new Dictionary<string, object>()
-            {
-                { SoleToJointKeys.Comment, "Some comment" }
-            };
-
-            var triggerObject = CreateProcessTrigger(process,
-                                                     SharedPermittedTriggers.CancelProcess,
-                                                     formData);
-
-            // Act
-            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
-
-            // Assert
-            CurrentStateShouldContainCorrectData(process,
-                                                 triggerObject,
-                                                 SharedStates.ProcessCancelled,
-                                                 new List<string>());
-            process.PreviousStates.LastOrDefault().State.Should().Be(fromState);
-
-            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_CLOSED_EVENT);
+            await ProcessStateShouldUpdateToProcessCancelledAndProcessClosedEventIsRaised(fromState).ConfigureAwait(false);
         }
 
         # endregion
@@ -897,9 +767,9 @@ namespace ProcessesApi.Tests.V1.Services
             var process = CreateProcessWithCurrentState(initialState);
             var formData = new Dictionary<string, object>()
             {
-                { SoleToJointKeys.HasNotifiedResident, true }
+                { SharedKeys.HasNotifiedResident, true }
             };
-            if (hasReason) formData.Add(SoleToJointKeys.Reason, "this is a reason.");
+            if (hasReason) formData.Add(SharedKeys.Reason, "this is a reason.");
 
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.UpdateTenure,
@@ -931,7 +801,7 @@ namespace ProcessesApi.Tests.V1.Services
         {
             // Arrange
             var process = CreateProcessWithCurrentState(SoleToJointStates.TenureAppointmentScheduled);
-            var formData = new Dictionary<string, object> { { SoleToJointKeys.HasNotifiedResident, true } };
+            var formData = new Dictionary<string, object> { { SharedKeys.HasNotifiedResident, true } };
 
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.UpdateTenure,

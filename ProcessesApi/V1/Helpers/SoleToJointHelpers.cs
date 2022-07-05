@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Constants.SoleToJoint;
 using ProcessesApi.V1.Services.Exceptions;
+using ProcessesApi.V1.Constants;
 
 namespace ProcessesApi.V1.Helpers
 {
@@ -73,14 +73,14 @@ namespace ProcessesApi.V1.Helpers
         public static Dictionary<string, object> ValidateHasNotifiedResident(this ProcessTrigger processRequest)
         {
             var formData = processRequest.FormData;
-            ValidateFormData(formData, new List<string>() { SoleToJointKeys.HasNotifiedResident });
+            ValidateFormData(formData, new List<string>() { SharedKeys.HasNotifiedResident });
 
             var eventData = new Dictionary<string, object>();
 
-            if (formData.ContainsKey(SoleToJointKeys.Reason))
-                eventData = CreateEventData(formData, new List<string> { SoleToJointKeys.Reason });
+            if (formData.ContainsKey(SharedKeys.Reason))
+                eventData = CreateEventData(formData, new List<string> { SharedKeys.Reason });
 
-            var hasNotifiedResidentString = processRequest.FormData[SoleToJointKeys.HasNotifiedResident];
+            var hasNotifiedResidentString = processRequest.FormData[SharedKeys.HasNotifiedResident];
 
             if (Boolean.TryParse(hasNotifiedResidentString.ToString(), out bool hasNotifiedResident))
             {
