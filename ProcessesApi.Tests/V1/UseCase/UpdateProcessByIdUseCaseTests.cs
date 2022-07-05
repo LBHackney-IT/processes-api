@@ -5,7 +5,7 @@ using Hackney.Core.Sns;
 using Moq;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Domain.SoleToJoint;
+using ProcessesApi.V1.Constants.SoleToJoint;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Infrastructure;
@@ -82,7 +82,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             var updateProcess = _fixture.Build<Process>()
                                   .With(x => x.Id, process.Id)
                                   .Create();
-            var formData = new Dictionary<string, object>() { { SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow } };
+            var formData = new Dictionary<string, object>() { { SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow } };
             var gatewayResult = new UpdateEntityResult<ProcessState>()
             {
                 UpdatedEntity = updateProcess.CurrentState,

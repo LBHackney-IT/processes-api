@@ -10,7 +10,7 @@ using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Factories;
 using Hackney.Shared.Tenure.Infrastructure;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Domain.SoleToJoint;
+using ProcessesApi.V1.Constants.SoleToJoint;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Gateways.Exceptions;
@@ -45,14 +45,14 @@ namespace ProcessesApi.V1.Helpers
 
         public async Task AddIncomingTenantToRelatedEntities(Dictionary<string, object> requestFormData, Process process)
         {
-            SoleToJointHelpers.ValidateFormData(requestFormData, new List<string>() { SoleToJointFormDataKeys.IncomingTenantId });
+            SoleToJointHelpers.ValidateFormData(requestFormData, new List<string>() { SoleToJointKeys.IncomingTenantId });
 
             //TODO: When doing a POST request from the FE they should created a relatedEntities object with all neccesary values
             // Once Frontend work is completed the code below should be removed.
             if (process.RelatedEntities == null)
                 process.RelatedEntities = new List<RelatedEntity>();
 
-            var incomingTenantId = Guid.Parse(requestFormData[SoleToJointFormDataKeys.IncomingTenantId].ToString());
+            var incomingTenantId = Guid.Parse(requestFormData[SoleToJointKeys.IncomingTenantId].ToString());
 
             var incomingTenant = await _personDbGateway.GetPersonById(incomingTenantId).ConfigureAwait(false);
             if (incomingTenant is null) throw new PersonNotFoundException(incomingTenantId);

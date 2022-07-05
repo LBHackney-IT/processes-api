@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Boundary.Response;
+using ProcessesApi.V1.Constants;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Services.Exceptions;
@@ -88,7 +89,7 @@ namespace ProcessesApi.V1.Controllers
             try
             {
                 var result = await _processUseCase.Execute(Guid.NewGuid(),
-                                                        SharedInternalTriggers.StartApplication,
+                                                        SharedPermittedTriggers.StartApplication,
                                                         request.TargetId,
                                                         request.TargetType,
                                                         request.RelatedEntities,

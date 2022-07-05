@@ -14,7 +14,7 @@ using Hackney.Shared.Tenure.Factories;
 using Hackney.Shared.Tenure.Infrastructure;
 using Moq;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Domain.SoleToJoint;
+using ProcessesApi.V1.Constants.SoleToJoint;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Gateways.Exceptions;
@@ -22,6 +22,7 @@ using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Services.Exceptions;
 using Xunit;
+using ProcessesApi.V1.Domain.Finance;
 
 namespace ProcessesApi.Tests.V1.Helpers
 {
@@ -56,7 +57,7 @@ namespace ProcessesApi.Tests.V1.Helpers
             var process = _fixture.Create<Process>();
             var incomingTenant = _fixture.Create<Person>();
             _mockPersonDb.Setup(x => x.GetPersonById(incomingTenant.Id)).ReturnsAsync(incomingTenant);
-            var formData = new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenant.Id } };
+            var formData = new Dictionary<string, object> { { SoleToJointKeys.IncomingTenantId, incomingTenant.Id } };
 
             // act
             await _classUnderTest.AddIncomingTenantToRelatedEntities(formData, process).ConfigureAwait(false);

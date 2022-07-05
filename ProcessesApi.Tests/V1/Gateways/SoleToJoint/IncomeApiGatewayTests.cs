@@ -3,7 +3,7 @@ using FluentAssertions;
 using Hackney.Core.Http;
 using Microsoft.Extensions.Logging;
 using Moq;
-using ProcessesApi.V1.Domain.SoleToJoint;
+using ProcessesApi.V1.Domain.Finance;
 using ProcessesApi.V1.Gateways;
 using System;
 using System.Collections.Generic;

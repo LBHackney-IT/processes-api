@@ -1,5 +1,6 @@
 using Hackney.Core.JWT;
 using Hackney.Core.Sns;
+using ProcessesApi.V1.Constants;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure.JWT;
@@ -21,11 +22,21 @@ namespace ProcessesApi.V1.Services
         protected Process _process;
 
         protected Type _permittedTriggersType;
-        protected List<string> _permittedTriggers => _permittedTriggersType
-                                                    .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
-                                                    .Where(fi => fi.IsLiteral && !fi.IsInitOnly && fi.FieldType == typeof(string))
-                                                    .Select(x => (string) x.GetRawConstantValue())
-                                                    .ToList();
+
+        protected List<string> GetPermittedTriggers()
+        {
+            var permittedTriggers = _permittedTriggersType?.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+                                                          .Where(fi => fi.IsLiteral && !fi.IsInitOnly && fi.FieldType == typeof(string))
+                                                          .Select(x => (string) x.GetRawConstantValue())
+                                                          .ToList();
+            var sharedTriggers = typeof(SharedPermittedTriggers).GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+                                                               .Where(fi => fi.IsLiteral && !fi.IsInitOnly && fi.FieldType == typeof(string))
+                                                               .Select(x => (string) x.GetRawConstantValue());
+            permittedTriggers.AddRange(sharedTriggers);
+
+            return permittedTriggers;
+        }
+
         protected List<string> _ignoredTriggersForProcessUpdated;
         protected Dictionary<string, object> _eventData;
 
@@ -51,7 +62,7 @@ namespace ProcessesApi.V1.Services
                 _currentState = ProcessState.Create(
                     _machine.State,
                     _machine.PermittedTriggers
-                        .Where(trigger => _permittedTriggers.Contains(trigger)).ToList(),
+                        .Where(trigger => GetPermittedTriggers().Contains(trigger)).ToList(),
                     assignment,
                     ProcessData.Create(processRequest.FormData, processRequest.Documents),
                     DateTime.UtcNow, DateTime.UtcNow
@@ -107,8 +118,8 @@ namespace ProcessesApi.V1.Services
         protected virtual void SetUpStates()
         {
             // All services must implement the following lines to allow the first state to be initialised correctly:
-            // _machine.Configure(SharedProcessStates.ApplicationInitialised)
-            //         .Permit(SharedInternalTriggers.StartApplication, SOME_STATE);
+            // _machine.Configure(SharedStates.ApplicationInitialised)
+            //         .Permit(SharedPermittedTriggers.StartApplication, SOME_STATE);
         }
 
         public async Task Process(ProcessTrigger processRequest, Process process, Token token)
@@ -116,7 +127,7 @@ namespace ProcessesApi.V1.Services
             _process = process;
             _token = token;
 
-            var state = process.CurrentState is null ? SharedProcessStates.ApplicationInitialised : process.CurrentState.State;
+            var state = process.CurrentState is null ? SharedStates.ApplicationInitialised : process.CurrentState.State;
 
             _machine = new StateMachine<string, string>(() => state, s => state = s);
             var res = _machine.SetTriggerParameters<ProcessTrigger, Process>(processRequest.Trigger);
@@ -124,7 +135,7 @@ namespace ProcessesApi.V1.Services
             ConfigureStateTransitions();
             SetUpStates();
 
-            var triggerIsPermitted = _permittedTriggers.Contains(processRequest.Trigger) || processRequest.Trigger == SharedInternalTriggers.StartApplication;
+            var triggerIsPermitted = GetPermittedTriggers().Contains(processRequest.Trigger);
             var canFire = triggerIsPermitted && _machine.CanFire(processRequest.Trigger);
 
             if (!canFire)

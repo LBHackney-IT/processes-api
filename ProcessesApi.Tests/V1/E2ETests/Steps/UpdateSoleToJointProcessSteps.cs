@@ -11,7 +11,7 @@ using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
 using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Domain.SoleToJoint;
+using ProcessesApi.V1.Constants.SoleToJoint;
 using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Infrastructure.JWT;
 using System;
@@ -22,6 +22,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using JsonSerializer = System.Text.Json.JsonSerializer;
+using ProcessesApi.V1.Constants;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {
@@ -98,7 +99,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         {
             var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
 
-            var incomingTenantId = Guid.Parse(requestBody.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString());
+            var incomingTenantId = Guid.Parse(requestBody.FormData[SoleToJointKeys.IncomingTenantId].ToString());
             var relatedEntity = dbRecord.RelatedEntities.Find(x => x.Id == incomingTenantId);
             relatedEntity.Should().NotBeNull();
             relatedEntity.TargetType.Should().Be(TargetType.person);
@@ -108,12 +109,12 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
         public async Task ThenTheProcessStateIsUpdatedToProcessClosed(UpdateProcessQuery request, string previousState)
         {
-            await CheckProcessState(request.Id, SharedProcessStates.ProcessClosed, previousState).ConfigureAwait(false);
+            await CheckProcessState(request.Id, SharedStates.ProcessClosed, previousState).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessStateIsUpdatedToProcessCancelled(UpdateProcessQuery request, string previousState)
         {
-            await CheckProcessState(request.Id, SharedProcessStates.ProcessCancelled, previousState).ConfigureAwait(false);
+            await CheckProcessState(request.Id, SharedStates.ProcessCancelled, previousState).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessStateIsUpdatedToAutomatedEligibilityChecksPassed(UpdateProcessQuery request)
@@ -149,51 +150,51 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
         public async Task ThenTheProcessStateIsUpdatedToDocumentsRequestedDes(UpdateProcessQuery request)
         {
-            await CheckProcessState(request.Id, SoleToJointStates.DocumentsRequestedDes, SoleToJointStates.BreachChecksPassed).ConfigureAwait(false);
+            await CheckProcessState(request.Id, SharedStates.DocumentsRequestedDes, SoleToJointStates.BreachChecksPassed).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessStateIsUpdatedToDocumentsRequestedAppointment(UpdateProcessQuery request)
         {
-            await CheckProcessState(request.Id, SoleToJointStates.DocumentsRequestedAppointment, SoleToJointStates.BreachChecksPassed).ConfigureAwait(false);
+            await CheckProcessState(request.Id, SharedStates.DocumentsRequestedAppointment, SoleToJointStates.BreachChecksPassed).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessStateIsUpdatedToDocumentsAppointmentRescheduled(UpdateProcessQuery request)
         {
-            await CheckProcessState(request.Id, SoleToJointStates.DocumentsAppointmentRescheduled, SoleToJointStates.DocumentsRequestedAppointment).ConfigureAwait(false);
+            await CheckProcessState(request.Id, SharedStates.DocumentsAppointmentRescheduled, SharedStates.DocumentsRequestedAppointment).ConfigureAwait(false);
         }
         public async Task ThenTheProcessStateRemainsDocumentsAppointmentRescheduled(UpdateProcessQuery request)
         {
-            await CheckProcessState(request.Id, SoleToJointStates.DocumentsAppointmentRescheduled, SoleToJointStates.DocumentsAppointmentRescheduled).ConfigureAwait(false);
+            await CheckProcessState(request.Id, SharedStates.DocumentsAppointmentRescheduled, SharedStates.DocumentsAppointmentRescheduled).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessStateIsUpdatedToDocumentChecksPassed(UpdateProcessQuery request, string initialState)
         {
-            await CheckProcessState(request.Id, SoleToJointStates.DocumentChecksPassed, initialState).ConfigureAwait(false);
+            await CheckProcessState(request.Id, SharedStates.DocumentChecksPassed, initialState).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessStateIsUpdatedToApplicationSubmitted(UpdateProcessQuery request)
         {
-            await CheckProcessState(request.Id, SoleToJointStates.ApplicationSubmitted, SoleToJointStates.DocumentChecksPassed).ConfigureAwait(false);
+            await CheckProcessState(request.Id, SharedStates.ApplicationSubmitted, SharedStates.DocumentChecksPassed).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessStateIsUpdatedToShowResultsOfTenureInvestigation(UpdateProcessQuery request, string destinationState)
         {
-            await CheckProcessState(request.Id, destinationState, SoleToJointStates.ApplicationSubmitted).ConfigureAwait(false);
+            await CheckProcessState(request.Id, destinationState, SharedStates.ApplicationSubmitted).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessStateIsUpdatedToInterviewScheduled(UpdateProcessQuery request)
         {
-            await CheckProcessState(request.Id, SoleToJointStates.InterviewScheduled, SoleToJointStates.TenureInvestigationPassedWithInt).ConfigureAwait(false);
+            await CheckProcessState(request.Id, SharedStates.InterviewScheduled, SharedStates.TenureInvestigationPassedWithInt).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessStateIsUpdatedToInterviewRescheduled(UpdateProcessQuery request)
         {
-            await CheckProcessState(request.Id, SoleToJointStates.InterviewRescheduled, SoleToJointStates.InterviewScheduled).ConfigureAwait(false);
+            await CheckProcessState(request.Id, SharedStates.InterviewRescheduled, SharedStates.InterviewScheduled).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessStateRemainsInterviewRescheduled(UpdateProcessQuery request)
         {
-            await CheckProcessState(request.Id, SoleToJointStates.InterviewRescheduled, SoleToJointStates.InterviewRescheduled).ConfigureAwait(false);
+            await CheckProcessState(request.Id, SharedStates.InterviewRescheduled, SharedStates.InterviewRescheduled).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessStateIsUpdatedToShowResultsOfHOApproval(UpdateProcessQuery request, string destinationState, string initialState)
@@ -203,7 +204,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
         public async Task ThenTheProcessStateIsUpdatedToScheduleTenureAppointment(UpdateProcessQuery request)
         {
-            await CheckProcessState(request.Id, SoleToJointStates.TenureAppointmentScheduled, SoleToJointStates.HOApprovalPassed).ConfigureAwait(false);
+            await CheckProcessState(request.Id, SoleToJointStates.TenureAppointmentScheduled, SharedStates.HOApprovalPassed).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessStateIsUpdatedToRescheduleTenureAppointment(UpdateProcessQuery request)
@@ -283,7 +284,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             {
                 var dataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(dataAsString, _jsonOptions);
                 var stateData = JsonSerializer.Deserialize<Dictionary<string, object>>(dataDic["stateData"].ToString(), _jsonOptions);
-                stateData.Should().ContainKey(SoleToJointFormDataKeys.AppointmentDateTime);
+                stateData.Should().ContainKey(SoleToJointKeys.AppointmentDateTime);
             };
             await VerifyProcessUpdatedEventIsRaised(snsFixture, processId, oldState, newState, verifyData).ConfigureAwait(false);
         }
@@ -345,7 +346,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             Action<EventData> verifyData = (eventData) =>
             {
                 var newDataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(eventData.NewData.ToString(), _jsonOptions);
-                newDataDic["state"].ToString().Should().Be(SharedProcessStates.ProcessClosed);
+                newDataDic["state"].ToString().Should().Be(SharedStates.ProcessClosed);
             };
 
             await VerifyProcessClosedEventIsRaised(snsFixture, processId, verifyData).ConfigureAwait(false);
@@ -379,17 +380,17 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
         public async Task ThenTheProcessClosedEventIsRaisedWithReason(ISnsFixture snsFixture, Guid processId)
         {
-            await VerifyProcessClosedEventIsRaisedWithStateData(snsFixture, processId, SharedProcessStates.ProcessClosed, SoleToJointFormDataKeys.Reason).ConfigureAwait(false);
+            await VerifyProcessClosedEventIsRaisedWithStateData(snsFixture, processId, SharedStates.ProcessClosed, SoleToJointKeys.Reason).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessClosedEventIsRaisedWithComment(ISnsFixture snsFixture, Guid processId)
         {
-            await VerifyProcessClosedEventIsRaisedWithStateData(snsFixture, processId, SharedProcessStates.ProcessCancelled, SoleToJointFormDataKeys.Comment).ConfigureAwait(false);
+            await VerifyProcessClosedEventIsRaisedWithStateData(snsFixture, processId, SharedStates.ProcessCancelled, SoleToJointKeys.Comment).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessCompletedEventIsRaised(ISnsFixture snsFixture, Guid processId)
         {
-            await VerifyProcessCompletedEventIsRaisedWithStateData(snsFixture, processId, SoleToJointStates.TenureUpdated, SoleToJointFormDataKeys.Reason).ConfigureAwait(false);
+            await VerifyProcessCompletedEventIsRaisedWithStateData(snsFixture, processId, SoleToJointStates.TenureUpdated, SoleToJointKeys.Reason).ConfigureAwait(false);
             // todo figure out how to verify other events
         }
     }

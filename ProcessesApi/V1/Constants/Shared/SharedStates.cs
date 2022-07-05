@@ -1,14 +1,11 @@
-namespace ProcessesApi.V1.Domain.SoleToJoint
+namespace ProcessesApi.V1.Constants
 {
-    public static class SoleToJointStates
+    public static class SharedStates
     {
-        public const string SelectTenants = "SelectTenants";
-        public const string AutomatedChecksFailed = "AutomatedChecksFailed";
-        public const string AutomatedChecksPassed = "AutomatedChecksPassed";
-        public const string ManualChecksFailed = "ManualChecksFailed";
-        public const string ManualChecksPassed = "ManualChecksPassed";
-        public const string BreachChecksFailed = "BreachChecksFailed";
-        public const string BreachChecksPassed = "BreachChecksPassed";
+        public const string ApplicationInitialised = "ApplicationInitialised";
+        public const string ProcessClosed = "ProcessClosed";
+        public const string ProcessCancelled = "ProcessCancelled";
+        public const string ProcessCompleted = "ProcessCompleted";
         public const string DocumentsRequestedDes = "DocumentsRequestedDes";
         public const string DocumentsRequestedAppointment = "DocumentsRequestedAppointment";
         public const string DocumentsAppointmentRescheduled = "DocumentsAppointmentRescheduled";
@@ -21,9 +18,5 @@ namespace ProcessesApi.V1.Domain.SoleToJoint
         public const string InterviewRescheduled = "InterviewRescheduled";
         public const string HOApprovalFailed = "HOApprovalFailed";
         public const string HOApprovalPassed = "HOApprovalPassed";
-        public const string TenureAppointmentScheduled = "TenureAppointmentScheduled";
-        public const string TenureAppointmentRescheduled = "TenureAppointmentRescheduled";
-        public const string TenureUpdated = "TenureUpdated";
-
     }
 }
