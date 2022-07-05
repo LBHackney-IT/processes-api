@@ -48,7 +48,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         {
             // Arrange
             var createProcessQuery = _fixture.Create<CreateProcess>();
-            var processName = ProcessName.soleToJoint;
+            var processName = _fixture.Create<ProcessName>();
             var processId = Guid.NewGuid();
             var token = new Token();
             // Act
