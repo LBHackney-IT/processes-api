@@ -380,17 +380,17 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
         public async Task ThenTheProcessClosedEventIsRaisedWithReason(ISnsFixture snsFixture, Guid processId)
         {
-            await VerifyProcessClosedEventIsRaisedWithStateData(snsFixture, processId, SharedStates.ProcessClosed, SoleToJointKeys.Reason).ConfigureAwait(false);
+            await VerifyProcessClosedEventIsRaisedWithStateData(snsFixture, processId, SharedStates.ProcessClosed, SharedKeys.Reason).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessClosedEventIsRaisedWithComment(ISnsFixture snsFixture, Guid processId)
         {
-            await VerifyProcessClosedEventIsRaisedWithStateData(snsFixture, processId, SharedStates.ProcessCancelled, SoleToJointKeys.Comment).ConfigureAwait(false);
+            await VerifyProcessClosedEventIsRaisedWithStateData(snsFixture, processId, SharedStates.ProcessCancelled, SharedKeys.Comment).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessCompletedEventIsRaised(ISnsFixture snsFixture, Guid processId)
         {
-            await VerifyProcessCompletedEventIsRaisedWithStateData(snsFixture, processId, SoleToJointStates.TenureUpdated, SoleToJointKeys.Reason).ConfigureAwait(false);
+            await VerifyProcessCompletedEventIsRaisedWithStateData(snsFixture, processId, SoleToJointStates.TenureUpdated, SharedKeys.Reason).ConfigureAwait(false);
             // todo figure out how to verify other events
         }
     }

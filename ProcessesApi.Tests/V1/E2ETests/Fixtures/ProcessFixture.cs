@@ -59,7 +59,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         private void createProcess(string state)
         {
             var process = _fixture.Build<Process>()
-                        .With(x => x.ProcessName, ProcessName.soletojoint)
+                        .With(x => x.ProcessName, ProcessName.soleToJoint)
                         .With(x => x.CurrentState,
                                 _fixture.Build<ProcessState>()
                                         .With(x => x.State, state)
@@ -106,9 +106,14 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenANewSoleToJointProcessRequest()
         {
-            CreateProcessRequest = _fixture.Build<CreateProcess>()
-                                .Create();
-            ProcessName = ProcessName.soletojoint;
+            CreateProcessRequest = _fixture.Create<CreateProcess>();
+            ProcessName = ProcessName.soleToJoint;
+        }
+
+        public void GivenANewChangeOfNameProcessRequest()
+        {
+            CreateProcessRequest = _fixture.Create<CreateProcess>();
+            ProcessName = ProcessName.changeOfName;
         }
 
         public void GivenANewSoleToJointProcessRequestWithValidationErrors()
@@ -116,7 +121,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             CreateProcessRequest = _fixture.Build<CreateProcess>()
                             .With(x => x.TargetId, Guid.Empty)
                             .Create();
-            ProcessName = ProcessName.soletojoint;
+            ProcessName = ProcessName.soleToJoint;
         }
 
         public void GivenAnUpdateSoleToJointProcessRequest(string trigger)
@@ -133,20 +138,20 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public void GivenACloseProcessRequestWithoutReason()
         {
             GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.CloseProcess);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.HasNotifiedResident, true);
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.HasNotifiedResident, true);
         }
 
         public void GivenACloseProcessRequestWithReason()
         {
             GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.CloseProcess);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.HasNotifiedResident, true);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.Reason, "This is a reason");
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.HasNotifiedResident, true);
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.Reason, "This is a reason");
         }
 
         public void GivenACancelProcessRequest()
         {
             GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.CancelProcess);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.Comment, "This is a comment");
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.Comment, "This is a comment");
         }
 
         public void GivenACheckAutomatedEligibilityRequest()
@@ -313,7 +318,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             UpdateProcessByIdRequest = new ProcessQuery
             {
-                ProcessName = ProcessName.soletojoint,
+                ProcessName = ProcessName.soleToJoint,
                 Id = ProcessId
             };
             UpdateProcessByIdRequestObject = _fixture.Create<UpdateProcessByIdRequestObject>();
@@ -394,8 +399,8 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public void GivenAUpdateTenureRequest()
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.UpdateTenure);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.HasNotifiedResident, true);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.Reason, "This is a reason");
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.HasNotifiedResident, true);
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.Reason, "This is a reason");
         }
     }
 }

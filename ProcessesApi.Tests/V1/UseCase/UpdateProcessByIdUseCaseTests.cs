@@ -44,16 +44,11 @@ namespace ProcessesApi.Tests.V1.UseCase
             return _fixture.Create<UpdateProcessByIdRequestObject>();
         }
 
-        private Process ConstructProcess()
-        {
-            return _fixture.Create<Process>();
-        }
-
 
         [Fact]
         public async Task UpdateProcessWhenProcessDoesNotExistReturnsNull()
         {
-            var process = ConstructProcess();
+            var process = _fixture.Create<Process>();
             var query = ConstructQuery(process.Id);
             var request = ConstructRequest();
             var token = new Token();
@@ -74,7 +69,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         [InlineData(3)]
         public async Task UpdateProcessByIdReturnsResult(int? ifMatch)
         {
-            var process = ConstructProcess();
+            var process = _fixture.Create<Process>();
             var query = ConstructQuery(process.Id);
             var request = ConstructRequest();
             var token = new Token();
@@ -109,8 +104,8 @@ namespace ProcessesApi.Tests.V1.UseCase
         [InlineData(3)]
         public void UpdateProcessByIdExceptionIsThrown(int? ifMatch)
         {
-            var updatedProcess = ConstructProcess();
-            var query = ConstructQuery(updatedProcess.Id);
+            var process = _fixture.Create<Process>();
+            var query = ConstructQuery(process.Id);
             var request = ConstructRequest();
 
             var exception = new ApplicationException("Test exception");

@@ -6,14 +6,6 @@ namespace ProcessesApi.V1.Constants.SoleToJoint
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     public static class SoleToJointKeys
     {
-        #region Close or Cancel Process
-        public const string HasNotifiedResident = "hasNotifiedResident";
-        public const string Reason = "reason";
-        public const string Comment = "comment";
-
-        #endregion
-
-
         #region Automated eligibility checks
 
         /// <summary>

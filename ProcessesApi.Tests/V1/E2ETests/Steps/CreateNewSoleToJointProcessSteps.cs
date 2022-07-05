@@ -44,7 +44,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             _lastResponse = await _httpClient.SendAsync(message).ConfigureAwait(false);
         }
 
-        public async Task ThenTheProcessIsCreated(CreateProcess request)
+        public async Task ThenTheProcessIsCreated(CreateProcess request, ProcessName processName)
         {
             _lastResponse.StatusCode.Should().Be(HttpStatusCode.Created);
             var responseContent = await _lastResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -55,7 +55,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
             dbRecord.TargetId.Should().Be(request.TargetId);
             dbRecord.RelatedEntities.Should().BeEquivalentTo(request.RelatedEntities);
-            dbRecord.ProcessName.Should().Be(ProcessName.soletojoint);
+            dbRecord.ProcessName.Should().Be(processName);
 
             dbRecord.CurrentState.State.Should().Be(SoleToJointStates.SelectTenants);
             dbRecord.CurrentState.PermittedTriggers.Should().BeEquivalentTo(new List<string>() { SoleToJointPermittedTriggers.CheckAutomatedEligibility });

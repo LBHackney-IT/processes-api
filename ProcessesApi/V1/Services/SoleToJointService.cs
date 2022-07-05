@@ -147,9 +147,9 @@ namespace ProcessesApi.V1.Services
         private async Task OnProcessCancelled(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
-            SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointKeys.Comment });
+            SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SharedKeys.Comment });
 
-            _eventData = SoleToJointHelpers.CreateEventData(processRequest.FormData, new List<string> { SoleToJointKeys.Comment });
+            _eventData = SoleToJointHelpers.CreateEventData(processRequest.FormData, new List<string> { SharedKeys.Comment });
             await PublishProcessClosedEvent(x).ConfigureAwait(false);
         }
 
