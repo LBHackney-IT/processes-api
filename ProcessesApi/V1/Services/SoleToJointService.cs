@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Hackney.Core.Sns;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Helpers;
+using ProcessesApi.V1.Infrastructure.JWT;
 
 namespace ProcessesApi.V1.Services
 {
@@ -190,7 +191,7 @@ namespace ProcessesApi.V1.Services
 
             _machine.Configure(SharedProcessStates.ApplicationInitialised)
                     .Permit(SharedInternalTriggers.StartApplication, SoleToJointStates.SelectTenants)
-                    .OnExitAsync(PublishProcessStartedEvent);
+                    .OnExitAsync(() => PublishProcessStartedEvent(ProcessEventConstants.PROCESS_STARTED_AGAINST_TENURE_EVENT));
 
             _machine.Configure(SoleToJointStates.SelectTenants)
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckAutomatedEligibility, CheckAutomatedEligibility)

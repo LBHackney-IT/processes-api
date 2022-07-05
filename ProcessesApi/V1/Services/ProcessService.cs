@@ -59,12 +59,16 @@ namespace ProcessesApi.V1.Services
             });
         }
 
-        protected async Task PublishProcessStartedEvent()
+        protected async Task PublishProcessStartedEvent(string additionalEvent = null)
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = _snsFactory.ProcessStarted(_process, _token);
+            var processStartedSnsMessage = _snsFactory.ProcessStarted(_process, _token);
+            await _snsGateway.Publish(processStartedSnsMessage, processTopicArn).ConfigureAwait(false);
 
-            await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
+            if (additionalEvent is null) return;
+
+            var processEntityMessage = _snsFactory.ProcessStartedAgainstEntity(_process, _token, additionalEvent);
+            await _snsGateway.Publish(processEntityMessage, processTopicArn).ConfigureAwait(false);
         }
 
         protected async Task PublishProcessUpdatedEvent(StateMachine<string, string>.Transition transition)

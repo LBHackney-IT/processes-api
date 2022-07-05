@@ -27,7 +27,30 @@ namespace ProcessesApi.V1.Factories
                     NewData = process
                 },
                 User = new User { Name = token.Name, Email = token.Email }
+            };
+        }
 
+        public EntityEventSns ProcessStartedAgainstEntity(Process process, Token token, string eventType)
+        {
+            return new EntityEventSns
+            {
+                CorrelationId = Guid.NewGuid(),
+                DateTime = DateTime.UtcNow,
+                EntityId = process.TargetId,
+                Id = Guid.NewGuid(),
+                EventType = eventType,
+                Version = ProcessEventConstants.V1_VERSION,
+                SourceDomain = ProcessEventConstants.SOURCE_DOMAIN,
+                SourceSystem = ProcessEventConstants.SOURCE_SYSTEM,
+                EventData = new EventData
+                {
+                    NewData = new ProcessStartedAgainstEntityData
+                    {
+                        Id = process.Id,
+                        ProcessName = process.ProcessName
+                    }
+                },
+                User = new User { Name = token.Name, Email = token.Email }
             };
         }
 
@@ -98,5 +121,11 @@ namespace ProcessesApi.V1.Factories
     {
         public string State { get; set; }
         public Dictionary<string, object> StateData { get; set; }
+    }
+
+    public class ProcessStartedAgainstEntityData
+    {
+        public Guid Id { get; set; }
+        public ProcessName ProcessName { get; set; }
     }
 }
