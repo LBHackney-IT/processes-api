@@ -28,7 +28,7 @@ namespace ProcessesApi.V1.UseCase
 
             Process process;
 
-            if (processTrigger == SharedInternalTriggers.StartApplication)
+            if (processTrigger == SharedPermittedTriggers.StartApplication)
             {
                 process = Process.Create(id, new List<ProcessState>(), null, targetId.Value, targetType.Value, relatedEntities, processName, null);
             }

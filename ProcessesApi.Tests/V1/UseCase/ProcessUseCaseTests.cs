@@ -52,7 +52,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             var token = new Token();
             // Act
             var response = await _classUnderTest.Execute(
-                processId, SharedInternalTriggers.StartApplication,
+                processId, SharedPermittedTriggers.StartApplication,
                 createProcessQuery.TargetId, createProcessQuery.TargetType, createProcessQuery.RelatedEntities, createProcessQuery.FormData,
                 createProcessQuery.Documents, processName, null, token).ConfigureAwait(false);
             // Assert
@@ -77,7 +77,7 @@ namespace ProcessesApi.Tests.V1.UseCase
 
             //Act
             Func<Task<Process>> func = async () => await _classUnderTest.Execute(
-                process.Id, SharedInternalTriggers.StartApplication,
+                process.Id, SharedPermittedTriggers.StartApplication,
                 process.TargetId, process.TargetType, process.RelatedEntities, createProcessQuery.FormData,
                 createProcessQuery.Documents, process.ProcessName, null, token).ConfigureAwait(false);
 

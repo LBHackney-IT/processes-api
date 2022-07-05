@@ -88,7 +88,7 @@ namespace ProcessesApi.V1.Controllers
             try
             {
                 var result = await _processUseCase.Execute(Guid.NewGuid(),
-                                                        SharedInternalTriggers.StartApplication,
+                                                        SharedPermittedTriggers.StartApplication,
                                                         request.TargetId,
                                                         request.TargetType,
                                                         request.RelatedEntities,

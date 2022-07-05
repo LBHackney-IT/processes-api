@@ -100,7 +100,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenASoleToJointProcessDoesNotExist()
         {
-            createProcess(SharedProcessStates.ApplicationInitialised);
+            createProcess(SharedStates.ApplicationInitialised);
         }
 
         public void GivenANewSoleToJointProcessRequest()
@@ -131,20 +131,20 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenACloseProcessRequestWithoutReason()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CloseProcess);
+            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.CloseProcess);
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.HasNotifiedResident, true);
         }
 
         public void GivenACloseProcessRequestWithReason()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CloseProcess);
+            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.CloseProcess);
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.HasNotifiedResident, true);
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.Reason, "This is a reason");
         }
 
         public void GivenACancelProcessRequest()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CancelProcess);
+            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.CancelProcess);
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.Comment, "This is a comment");
         }
 
@@ -210,19 +210,19 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenARequestDocumentsDesRequest()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RequestDocumentsDes);
+            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.RequestDocumentsDes);
         }
 
         public void GivenARequestDocumentsAppointmentRequest()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RequestDocumentsAppointment);
+            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.RequestDocumentsAppointment);
 
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
 
         public async Task GivenARescheduleDocumentsAppointmentRequest()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RescheduleDocumentsAppointment);
+            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.RescheduleDocumentsAppointment);
 
             Process.CurrentState.ProcessData.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
 
@@ -269,7 +269,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenAReviewDocumentsRequest()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.ReviewDocuments);
+            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.ReviewDocuments);
 
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
@@ -289,7 +289,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenATenureInvestigationRequest(string tenureInvestigationRecommendation)
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.TenureInvestigation);
+            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.TenureInvestigation);
 
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
@@ -299,7 +299,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenATenureInvestigationRequestWithMissingData()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.TenureInvestigation);
+            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.TenureInvestigation);
         }
 
         public void GivenATenureInvestigationRequestWithInvalidData()
@@ -320,7 +320,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenAScheduleInterviewRequest()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.ScheduleInterview);
+            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.ScheduleInterview);
 
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
@@ -333,7 +333,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenARescheduleInterviewRequest()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RescheduleInterview);
+            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.RescheduleInterview);
 
             UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
@@ -346,7 +346,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenAHOApprovalRequest(string housingOfficerRecommendation)
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.HOApproval);
+            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.HOApproval);
 
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
@@ -357,7 +357,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenAHOApprovalRequestWithMissingData()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.HOApproval);
+            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.HOApproval);
         }
 
         public void GivenAHOApprovalRequestWithInvalidData()
