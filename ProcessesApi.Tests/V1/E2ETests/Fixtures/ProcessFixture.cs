@@ -133,33 +133,33 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public void GivenACloseProcessRequestWithoutReason()
         {
             GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.CloseProcess);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.HasNotifiedResident, true);
+            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.HasNotifiedResident, true);
         }
 
         public void GivenACloseProcessRequestWithReason()
         {
             GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.CloseProcess);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.HasNotifiedResident, true);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.Reason, "This is a reason");
+            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.HasNotifiedResident, true);
+            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.Reason, "This is a reason");
         }
 
         public void GivenACancelProcessRequest()
         {
             GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.CancelProcess);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.Comment, "This is a comment");
+            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.Comment, "This is a comment");
         }
 
         public void GivenACheckAutomatedEligibilityRequest()
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckAutomatedEligibility);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.IncomingTenantId, IncomingTenantId);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.TenantId, TenantId);
+            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.IncomingTenantId, IncomingTenantId);
+            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.TenantId, TenantId);
         }
 
         public void GivenACheckAutomatedEligibilityRequestWithMissingData()
         {
             GivenACheckAutomatedEligibilityRequest();
-            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.IncomingTenantId);
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointKeys.IncomingTenantId);
         }
 
 
@@ -169,13 +169,13 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
-                { SoleToJointFormDataKeys.BR11, isEligible.ToString() },
-                { SoleToJointFormDataKeys.BR12, "false" },
-                { SoleToJointFormDataKeys.BR13, "false" },
-                { SoleToJointFormDataKeys.BR15, "false" },
-                { SoleToJointFormDataKeys.BR16, "false" },
-                { SoleToJointFormDataKeys.BR7, "false"},
-                { SoleToJointFormDataKeys.BR8, "false"}
+                { SoleToJointKeys.BR11, isEligible.ToString() },
+                { SoleToJointKeys.BR12, "false" },
+                { SoleToJointKeys.BR13, "false" },
+                { SoleToJointKeys.BR15, "false" },
+                { SoleToJointKeys.BR16, "false" },
+                { SoleToJointKeys.BR7, "false"},
+                { SoleToJointKeys.BR8, "false"}
             };
         }
 
@@ -193,7 +193,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public void GivenACheckManualEligibilityRequestWithMissingData()
         {
             GivenACheckManualEligibilityRequest(true);
-            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.BR11);
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointKeys.BR11);
         }
 
         public void GivenATenancyBreachCheckRequest(bool isEligible)
@@ -202,10 +202,10 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
-                { SoleToJointFormDataKeys.BR5, (!isEligible).ToString() },
-                { SoleToJointFormDataKeys.BR10, "false" },
-                { SoleToJointFormDataKeys.BR17, "false" },
-                { SoleToJointFormDataKeys.BR18, "false" }
+                { SoleToJointKeys.BR5, (!isEligible).ToString() },
+                { SoleToJointKeys.BR10, "false" },
+                { SoleToJointKeys.BR17, "false" },
+                { SoleToJointKeys.BR18, "false" }
             };
         }
 
@@ -218,19 +218,19 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.RequestDocumentsAppointment);
 
-            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
 
         public async Task GivenARescheduleDocumentsAppointmentRequest()
         {
             GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.RescheduleDocumentsAppointment);
 
-            Process.CurrentState.ProcessData.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+            Process.CurrentState.ProcessData.FormData.Add(SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
 
             await _dbContext.SaveAsync(Process.ToDatabase()).ConfigureAwait(false);
             Process.VersionNumber++;
 
-            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.AddDays(1).ToIsoString());
+            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow.AddDays(1).ToIsoString());
         }
 
         public void GivenAFailingCheckBreachEligibilityRequest()
@@ -246,13 +246,13 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public void GivenACheckBreachEligibilityRequestWithMissingData()
         {
             GivenATenancyBreachCheckRequest(true);
-            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.BR5);
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointKeys.BR5);
         }
 
         public void GivenARequestDocumentsAppointmentRequestWithMissingData()
         {
             GivenARequestDocumentsAppointmentRequest();
-            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.AppointmentDateTime);
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointKeys.AppointmentDateTime);
         }
         public void GivenAnUpdateSoleToJointProcessRequestWithValidationErrors()
         {
@@ -274,18 +274,18 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
-                { SoleToJointFormDataKeys.SeenPhotographicId, "true" },
-                { SoleToJointFormDataKeys.SeenSecondId, "true" },
-                { SoleToJointFormDataKeys.IsNotInImmigrationControl, "true" },
-                {SoleToJointFormDataKeys.SeenProofOfRelationship, "true" },
-                { SoleToJointFormDataKeys.IncomingTenantLivingInProperty, "true" }
+                { SoleToJointKeys.SeenPhotographicId, "true" },
+                { SoleToJointKeys.SeenSecondId, "true" },
+                { SoleToJointKeys.IsNotInImmigrationControl, "true" },
+                {SoleToJointKeys.SeenProofOfRelationship, "true" },
+                { SoleToJointKeys.IncomingTenantLivingInProperty, "true" }
             };
         }
 
         public void GivenAReviewDocumentsRequestWithMissingData()
         {
             GivenAReviewDocumentsRequest();
-            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.IncomingTenantLivingInProperty);
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointKeys.IncomingTenantLivingInProperty);
         }
 
         public void GivenATenureInvestigationRequest(string tenureInvestigationRecommendation)
@@ -294,7 +294,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
-                { SoleToJointFormDataKeys.TenureInvestigationRecommendation, tenureInvestigationRecommendation }
+                { SoleToJointKeys.TenureInvestigationRecommendation, tenureInvestigationRecommendation }
             };
         }
 
@@ -323,26 +323,26 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.ScheduleInterview);
 
-            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
 
         public void GivenARequestScheduleInterviewRequestWithMissingData()
         {
             GivenAScheduleInterviewRequest();
-            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.AppointmentDateTime);
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointKeys.AppointmentDateTime);
         }
 
         public void GivenARescheduleInterviewRequest()
         {
             GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.RescheduleInterview);
 
-            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
 
         public void GivenARequestRescheduleInterviewRequestWithMissingData()
         {
             GivenARescheduleInterviewRequest();
-            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.AppointmentDateTime);
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointKeys.AppointmentDateTime);
         }
 
         public void GivenAHOApprovalRequest(string housingOfficerRecommendation)
@@ -351,8 +351,8 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
-                { SoleToJointFormDataKeys.HORecommendation, housingOfficerRecommendation },
-                { SoleToJointFormDataKeys.HousingAreaManagerName, "ManagerName" }
+                { SoleToJointKeys.HORecommendation, housingOfficerRecommendation },
+                { SoleToJointKeys.HousingAreaManagerName, "ManagerName" }
             };
         }
 
@@ -370,32 +370,32 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.ScheduleTenureAppointment);
 
-            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
 
         public void GivenARequestTenureAppointmentRequestWithMissingData()
         {
             GivenAScheduleTenureAppointmentRequest();
-            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.AppointmentDateTime);
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointKeys.AppointmentDateTime);
         }
 
         public void GivenARescheduleTenureAppointmentRequest()
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RescheduleTenureAppointment);
 
-            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
 
         public void GivenARescheduleTenureAppointmentRequestWithMissingData()
         {
             GivenARescheduleTenureAppointmentRequest();
-            UpdateProcessRequestObject.FormData.Remove(SoleToJointFormDataKeys.AppointmentDateTime);
+            UpdateProcessRequestObject.FormData.Remove(SoleToJointKeys.AppointmentDateTime);
         }
         public void GivenAUpdateTenureRequest()
         {
             GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.UpdateTenure);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.HasNotifiedResident, true);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointFormDataKeys.Reason, "This is a reason");
+            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.HasNotifiedResident, true);
+            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.Reason, "This is a reason");
         }
     }
 }

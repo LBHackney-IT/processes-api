@@ -57,7 +57,7 @@ namespace ProcessesApi.Tests.V1.Helpers
             var process = _fixture.Create<Process>();
             var incomingTenant = _fixture.Create<Person>();
             _mockPersonDb.Setup(x => x.GetPersonById(incomingTenant.Id)).ReturnsAsync(incomingTenant);
-            var formData = new Dictionary<string, object> { { SoleToJointFormDataKeys.IncomingTenantId, incomingTenant.Id } };
+            var formData = new Dictionary<string, object> { { SoleToJointKeys.IncomingTenantId, incomingTenant.Id } };
 
             // act
             await _classUnderTest.AddIncomingTenantToRelatedEntities(formData, process).ConfigureAwait(false);

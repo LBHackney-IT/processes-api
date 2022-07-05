@@ -99,7 +99,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         {
             var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
 
-            var incomingTenantId = Guid.Parse(requestBody.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString());
+            var incomingTenantId = Guid.Parse(requestBody.FormData[SoleToJointKeys.IncomingTenantId].ToString());
             var relatedEntity = dbRecord.RelatedEntities.Find(x => x.Id == incomingTenantId);
             relatedEntity.Should().NotBeNull();
             relatedEntity.TargetType.Should().Be(TargetType.person);
@@ -284,7 +284,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             {
                 var dataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(dataAsString, _jsonOptions);
                 var stateData = JsonSerializer.Deserialize<Dictionary<string, object>>(dataDic["stateData"].ToString(), _jsonOptions);
-                stateData.Should().ContainKey(SoleToJointFormDataKeys.AppointmentDateTime);
+                stateData.Should().ContainKey(SoleToJointKeys.AppointmentDateTime);
             };
             await VerifyProcessUpdatedEventIsRaised(snsFixture, processId, oldState, newState, verifyData).ConfigureAwait(false);
         }
@@ -380,17 +380,17 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
         public async Task ThenTheProcessClosedEventIsRaisedWithReason(ISnsFixture snsFixture, Guid processId)
         {
-            await VerifyProcessClosedEventIsRaisedWithStateData(snsFixture, processId, SharedStates.ProcessClosed, SoleToJointFormDataKeys.Reason).ConfigureAwait(false);
+            await VerifyProcessClosedEventIsRaisedWithStateData(snsFixture, processId, SharedStates.ProcessClosed, SoleToJointKeys.Reason).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessClosedEventIsRaisedWithComment(ISnsFixture snsFixture, Guid processId)
         {
-            await VerifyProcessClosedEventIsRaisedWithStateData(snsFixture, processId, SharedStates.ProcessCancelled, SoleToJointFormDataKeys.Comment).ConfigureAwait(false);
+            await VerifyProcessClosedEventIsRaisedWithStateData(snsFixture, processId, SharedStates.ProcessCancelled, SoleToJointKeys.Comment).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessCompletedEventIsRaised(ISnsFixture snsFixture, Guid processId)
         {
-            await VerifyProcessCompletedEventIsRaisedWithStateData(snsFixture, processId, SoleToJointStates.TenureUpdated, SoleToJointFormDataKeys.Reason).ConfigureAwait(false);
+            await VerifyProcessCompletedEventIsRaisedWithStateData(snsFixture, processId, SoleToJointStates.TenureUpdated, SoleToJointKeys.Reason).ConfigureAwait(false);
             // todo figure out how to verify other events
         }
     }

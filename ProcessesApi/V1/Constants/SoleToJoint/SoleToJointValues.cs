@@ -1,6 +1,6 @@
 namespace ProcessesApi.V1.Constants.SoleToJoint
 {
-    public static class SoleToJointFormDataValues
+    public static class SoleToJointValues
     {
         #region Tenure Investigation and HOApproval 
 

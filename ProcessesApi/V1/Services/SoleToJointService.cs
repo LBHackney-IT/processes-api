@@ -40,11 +40,11 @@ namespace ProcessesApi.V1.Services
         {
             var processRequest = transition.Parameters[0] as ProcessTrigger;
             var formData = processRequest.FormData;
-            SoleToJointHelpers.ValidateFormData(formData, new List<string>() { SoleToJointFormDataKeys.IncomingTenantId, SoleToJointFormDataKeys.TenantId });
+            SoleToJointHelpers.ValidateFormData(formData, new List<string>() { SoleToJointKeys.IncomingTenantId, SoleToJointKeys.TenantId });
 
             var isEligible = await _dbOperationsHelper.CheckAutomatedEligibility(_process.TargetId,
-                                                                                    Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.IncomingTenantId].ToString()),
-                                                                                    Guid.Parse(processRequest.FormData[SoleToJointFormDataKeys.TenantId].ToString())
+                                                                                    Guid.Parse(processRequest.FormData[SoleToJointKeys.IncomingTenantId].ToString()),
+                                                                                    Guid.Parse(processRequest.FormData[SoleToJointKeys.TenantId].ToString())
                                                                                    ).ConfigureAwait(false);
 
             processRequest.Trigger = isEligible ? SoleToJointInternalTriggers.EligibiltyPassed : SoleToJointInternalTriggers.EligibiltyFailed;
@@ -57,13 +57,13 @@ namespace ProcessesApi.V1.Services
             var processRequest = transition.Parameters[0] as ProcessTrigger;
             processRequest.ValidateManualCheck(SoleToJointInternalTriggers.ManualEligibilityPassed,
                                                SoleToJointInternalTriggers.ManualEligibilityFailed,
-                                               (SoleToJointFormDataKeys.BR11, "true"),
-                                               (SoleToJointFormDataKeys.BR12, "false"),
-                                               (SoleToJointFormDataKeys.BR13, "false"),
-                                               (SoleToJointFormDataKeys.BR15, "false"),
-                                               (SoleToJointFormDataKeys.BR16, "false"),
-                                               (SoleToJointFormDataKeys.BR7, "false"),
-                                               (SoleToJointFormDataKeys.BR8, "false"));
+                                               (SoleToJointKeys.BR11, "true"),
+                                               (SoleToJointKeys.BR12, "false"),
+                                               (SoleToJointKeys.BR13, "false"),
+                                               (SoleToJointKeys.BR15, "false"),
+                                               (SoleToJointKeys.BR16, "false"),
+                                               (SoleToJointKeys.BR7, "false"),
+                                               (SoleToJointKeys.BR8, "false"));
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
@@ -73,10 +73,10 @@ namespace ProcessesApi.V1.Services
             var processRequest = transition.Parameters[0] as ProcessTrigger;
             processRequest.ValidateManualCheck(SoleToJointInternalTriggers.BreachChecksPassed,
                                                SoleToJointInternalTriggers.BreachChecksFailed,
-                                               (SoleToJointFormDataKeys.BR5, "false"),
-                                               (SoleToJointFormDataKeys.BR10, "false"),
-                                               (SoleToJointFormDataKeys.BR17, "false"),
-                                               (SoleToJointFormDataKeys.BR18, "false"));
+                                               (SoleToJointKeys.BR5, "false"),
+                                               (SoleToJointKeys.BR10, "false"),
+                                               (SoleToJointKeys.BR17, "false"),
+                                               (SoleToJointKeys.BR18, "false"));
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
@@ -86,11 +86,11 @@ namespace ProcessesApi.V1.Services
             var formData = processRequest.FormData;
 
             var expectedFormDataKeys = new List<string>{
-                  SoleToJointFormDataKeys.SeenPhotographicId,
-                  SoleToJointFormDataKeys.SeenSecondId,
-                  SoleToJointFormDataKeys.IsNotInImmigrationControl,
-                  SoleToJointFormDataKeys.SeenProofOfRelationship,
-                  SoleToJointFormDataKeys.IncomingTenantLivingInProperty
+                  SoleToJointKeys.SeenPhotographicId,
+                  SoleToJointKeys.SeenSecondId,
+                  SoleToJointKeys.IsNotInImmigrationControl,
+                  SoleToJointKeys.SeenProofOfRelationship,
+                  SoleToJointKeys.IncomingTenantLivingInProperty
             };
             SoleToJointHelpers.ValidateFormData(formData, expectedFormDataKeys);
 
@@ -105,13 +105,13 @@ namespace ProcessesApi.V1.Services
 
             var triggerMappings = new Dictionary<string, string>
             {
-                {SoleToJointFormDataValues.Appointment, SharedInternalTriggers.TenureInvestigationPassedWithInt },
-                { SoleToJointFormDataValues.Approve, SharedInternalTriggers.TenureInvestigationPassed },
-                { SoleToJointFormDataValues.Decline, SharedInternalTriggers.TenureInvestigationFailed }
+                {SoleToJointValues.Appointment, SharedInternalTriggers.TenureInvestigationPassedWithInt },
+                { SoleToJointValues.Approve, SharedInternalTriggers.TenureInvestigationPassed },
+                { SoleToJointValues.Decline, SharedInternalTriggers.TenureInvestigationFailed }
             };
             SoleToJointHelpers.ValidateRecommendation(processRequest,
                                                         triggerMappings,
-                                                        SoleToJointFormDataKeys.TenureInvestigationRecommendation,
+                                                        SoleToJointKeys.TenureInvestigationRecommendation,
                                                         null);
 
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
@@ -123,13 +123,13 @@ namespace ProcessesApi.V1.Services
 
             var triggerMappings = new Dictionary<string, string>
             {
-                { SoleToJointFormDataValues.Approve, SharedInternalTriggers.HOApprovalPassed },
-                { SoleToJointFormDataValues.Decline, SharedInternalTriggers.HOApprovalFailed }
+                { SoleToJointValues.Approve, SharedInternalTriggers.HOApprovalPassed },
+                { SoleToJointValues.Decline, SharedInternalTriggers.HOApprovalFailed }
             };
             SoleToJointHelpers.ValidateRecommendation(processRequest,
                                                         triggerMappings,
-                                                        SoleToJointFormDataKeys.HORecommendation,
-                                                        new List<string> { SoleToJointFormDataKeys.HousingAreaManagerName });
+                                                        SoleToJointKeys.HORecommendation,
+                                                        new List<string> { SoleToJointKeys.HousingAreaManagerName });
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
@@ -147,9 +147,9 @@ namespace ProcessesApi.V1.Services
         private async Task OnProcessCancelled(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
-            SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointFormDataKeys.Comment });
+            SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SoleToJointKeys.Comment });
 
-            _eventData = SoleToJointHelpers.CreateEventData(processRequest.FormData, new List<string> { SoleToJointFormDataKeys.Comment });
+            _eventData = SoleToJointHelpers.CreateEventData(processRequest.FormData, new List<string> { SoleToJointKeys.Comment });
             await PublishProcessClosedEvent(x).ConfigureAwait(false);
         }
 
@@ -159,7 +159,7 @@ namespace ProcessesApi.V1.Services
             _eventData = SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
 
             var newTenureId = await _dbOperationsHelper.UpdateTenures(_process, _token).ConfigureAwait(false);
-            _eventData.Add(SoleToJointFormDataKeys.NewTenureId, newTenureId);
+            _eventData.Add(SoleToJointKeys.NewTenureId, newTenureId);
             SoleToJointHelpers.AddNewTenureToRelatedEntities(newTenureId, _process);
 
             await PublishProcessCompletedEvent(x).ConfigureAwait(false);
@@ -175,9 +175,9 @@ namespace ProcessesApi.V1.Services
         public void AddAppointmentDateTimeToEvent(Stateless.StateMachine<string, string>.Transition transition)
         {
             var trigger = transition.Parameters[0] as ProcessTrigger;
-            SoleToJointHelpers.ValidateFormData(trigger.FormData, new List<string>() { SoleToJointFormDataKeys.AppointmentDateTime });
+            SoleToJointHelpers.ValidateFormData(trigger.FormData, new List<string>() { SoleToJointKeys.AppointmentDateTime });
 
-            _eventData = SoleToJointHelpers.CreateEventData(trigger.FormData, new List<string> { SoleToJointFormDataKeys.AppointmentDateTime });
+            _eventData = SoleToJointHelpers.CreateEventData(trigger.FormData, new List<string> { SoleToJointKeys.AppointmentDateTime });
         }
 
         #endregion

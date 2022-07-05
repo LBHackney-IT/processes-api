@@ -82,7 +82,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             var updateProcess = _fixture.Build<Process>()
                                   .With(x => x.Id, process.Id)
                                   .Create();
-            var formData = new Dictionary<string, object>() { { SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow } };
+            var formData = new Dictionary<string, object>() { { SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow } };
             var gatewayResult = new UpdateEntityResult<ProcessState>()
             {
                 UpdatedEntity = updateProcess.CurrentState,

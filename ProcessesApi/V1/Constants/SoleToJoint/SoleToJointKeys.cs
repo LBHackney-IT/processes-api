@@ -2,9 +2,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ProcessesApi.V1.Constants.SoleToJoint
 {
-    // NOTE: Form data key values must be camelCase to avoid issues with Json Serialiser in E2E tests
+    // NOTE: Key values must be camelCase to avoid issues with Json Serialiser in E2E tests
     [SuppressMessage("ReSharper", "InconsistentNaming")]
-    public static class SoleToJointFormDataKeys
+    public static class SoleToJointKeys
     {
         #region Close or Cancel Process
         public const string HasNotifiedResident = "hasNotifiedResident";
