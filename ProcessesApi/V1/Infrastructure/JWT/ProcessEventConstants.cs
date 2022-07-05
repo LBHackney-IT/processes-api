@@ -11,5 +11,9 @@ namespace ProcessesApi.V1.Infrastructure.JWT
         public const string PROCESS_CLOSED_EVENT = "ProcessClosedEvent";
         public const string PROCESS_COMPLETED_EVENT = "ProcessCompletedEvent";
 
+        public const string PROCESS_STARTED_AGAINST_TENURE_EVENT = "ProcessStartedAgainstTenureEvent";
+        public const string PROCESS_STARTED_AGAINST_ASSET_EVENT = "ProcessStartedAgainstAssetEvent";
+        public const string PROCESS_STARTED_AGAINST_PERSON_EVENT = "ProcessStartedAgainstPersonEvent";
+
     }
 }

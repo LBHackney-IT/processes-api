@@ -258,8 +258,8 @@ namespace ProcessesApi.Tests.V1.Services
                                                  new List<string>() { SoleToJointPermittedTriggers.CheckAutomatedEligibility });
             process.PreviousStates.Should().BeEmpty();
 
-            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_STARTED_EVENT);
+            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
+            _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_STARTED_AGAINST_TENURE_EVENT);
         }
 
         #region Automated eligibility checks
