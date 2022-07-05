@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Hackney.Core.Logging;
 using Microsoft.Extensions.Logging;
 using Hackney.Core.Http;
-using ProcessesApi.V1.Domain.SoleToJoint;
+using ProcessesApi.V1.Domain.Finance;
 
 namespace ProcessesApi.V1.Gateways
 {

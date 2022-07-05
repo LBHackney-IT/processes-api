@@ -1,5 +1,5 @@
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Domain.SoleToJoint;
+using ProcessesApi.V1.Constants.SoleToJoint;
 using ProcessesApi.V1.Services.Interfaces;
 using Stateless;
 using System;
@@ -9,6 +9,7 @@ using Hackney.Core.Sns;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Infrastructure.JWT;
+using ProcessesApi.V1.Constants;
 
 namespace ProcessesApi.V1.Services
 {

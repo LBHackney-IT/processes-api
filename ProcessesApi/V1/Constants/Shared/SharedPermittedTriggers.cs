@@ -1,4 +1,4 @@
-namespace ProcessesApi.V1.Domain
+namespace ProcessesApi.V1.Constants
 {
     public static class SharedPermittedTriggers
     {

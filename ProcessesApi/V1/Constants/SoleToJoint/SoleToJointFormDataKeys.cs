@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace ProcessesApi.V1.Domain.SoleToJoint
+namespace ProcessesApi.V1.Constants.SoleToJoint
 {
     // NOTE: Form data key values must be camelCase to avoid issues with Json Serialiser in E2E tests
     [SuppressMessage("ReSharper", "InconsistentNaming")]

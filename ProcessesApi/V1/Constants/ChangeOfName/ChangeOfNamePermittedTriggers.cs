@@ -1,6 +1,6 @@
-namespace ProcessesApi.V1.Domain.SoleToJoint
+namespace ProcessesApi.V1.Constants.ChangeOfName
 {
-    public static class SoleToJointPermittedTriggers
+    public static class ChangeOfNamePermittedTriggers
     {
         public const string CheckAutomatedEligibility = "CheckAutomatedEligibility";
         public const string CheckManualEligibility = "CheckManualEligibility";

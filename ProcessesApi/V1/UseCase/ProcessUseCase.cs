@@ -1,4 +1,5 @@
 using Hackney.Core.JWT;
+using ProcessesApi.V1.Constants;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Services.Interfaces;

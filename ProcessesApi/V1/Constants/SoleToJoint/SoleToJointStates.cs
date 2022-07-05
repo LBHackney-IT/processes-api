@@ -1,4 +1,4 @@
-namespace ProcessesApi.V1.Domain.SoleToJoint
+namespace ProcessesApi.V1.Constants.SoleToJoint
 {
     public static class SoleToJointStates
     {

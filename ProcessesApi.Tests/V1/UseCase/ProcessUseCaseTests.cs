@@ -4,7 +4,7 @@ using Hackney.Core.JWT;
 using Moq;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Domain.SoleToJoint;
+using ProcessesApi.V1.Constants.SoleToJoint;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Services.Interfaces;
 using ProcessesApi.V1.UseCase;
@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
+using ProcessesApi.V1.Constants;
 
 namespace ProcessesApi.Tests.V1.UseCase
 {

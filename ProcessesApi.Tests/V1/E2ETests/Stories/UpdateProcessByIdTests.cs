@@ -2,7 +2,7 @@ using Hackney.Core.Testing.DynamoDb;
 using Hackney.Core.Testing.Sns;
 using ProcessesApi.Tests.V1.E2E.Fixtures;
 using ProcessesApi.Tests.V1.E2ETests.Steps;
-using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Constants;
 using System;
 using TestStack.BDDfy;
 using Xunit;
