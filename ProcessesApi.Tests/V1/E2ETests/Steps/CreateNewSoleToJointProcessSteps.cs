@@ -55,7 +55,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
             dbRecord.TargetId.Should().Be(request.TargetId);
             dbRecord.RelatedEntities.Should().BeEquivalentTo(request.RelatedEntities);
-            dbRecord.ProcessName.Should().Be(ProcessName.soletojoint);
+            dbRecord.ProcessName.Should().Be(ProcessName.soleToJoint);
 
             dbRecord.CurrentState.State.Should().Be(SoleToJointStates.SelectTenants);
             dbRecord.CurrentState.PermittedTriggers.Should().BeEquivalentTo(new List<string>() { SoleToJointPermittedTriggers.CheckAutomatedEligibility });
