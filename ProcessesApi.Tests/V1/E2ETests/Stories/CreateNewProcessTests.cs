@@ -3,6 +3,8 @@ using Hackney.Core.Testing.DynamoDb;
 using Hackney.Core.Testing.Sns;
 using ProcessesApi.Tests.V1.E2E.Fixtures;
 using ProcessesApi.Tests.V1.E2E.Steps;
+using ProcessesApi.V1.Constants.ChangeOfName;
+using ProcessesApi.V1.Constants.SoleToJoint;
 using TestStack.BDDfy;
 using Xunit;
 
@@ -61,7 +63,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
             this.Given(g => _processFixture.GivenANewSoleToJointProcessRequest())
                 .When(w => _steps.WhenACreateProcessRequestIsMade(_processFixture.CreateProcessRequest, _processFixture.ProcessName))
                 .Then(t => _steps.ThenProcessStartedEventIsRaised(_processFixture, _snsFixture))
-                    .And(t => _steps.ThenTheProcessIsCreated(_processFixture.CreateProcessRequest, _processFixture.ProcessName))
+                    .And(t => _steps.ThenTheSoleToJointProcessIsCreated(_processFixture.CreateProcessRequest))
                 .BDDfy();
         }
 
@@ -71,7 +73,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
             this.Given(g => _processFixture.GivenANewChangeOfNameProcessRequest())
                 .When(w => _steps.WhenACreateProcessRequestIsMade(_processFixture.CreateProcessRequest, _processFixture.ProcessName))
                 .Then(t => _steps.ThenProcessStartedEventIsRaised(_processFixture, _snsFixture))
-                    .And(t => _steps.ThenTheProcessIsCreated(_processFixture.CreateProcessRequest, _processFixture.ProcessName))
+                    .And(t => _steps.ThenTheChangeOfNameProcessIsCreated(_processFixture.CreateProcessRequest))
                 .BDDfy();
         }
     }
