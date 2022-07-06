@@ -74,12 +74,12 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
         public async Task ThenTheSoleToJointProcessIsCreated(CreateProcess request)
         {
-            await ThenTheProcessIsCreated(request, ProcessName.soleToJoint, SoleToJointStates.SelectTenants, new List<string>() { SoleToJointPermittedTriggers.CheckAutomatedEligibility }).ConfigureAwait(false);
+            await ThenTheProcessIsCreated(request, ProcessName.soletojoint, SoleToJointStates.SelectTenants, new List<string>() { SoleToJointPermittedTriggers.CheckAutomatedEligibility }).ConfigureAwait(false);
         }
 
         public async Task ThenTheChangeOfNameProcessIsCreated(CreateProcess request)
         {
-            await ThenTheProcessIsCreated(request, ProcessName.changeOfName, ChangeOfNameStates.EnterNewName, new List<string>()).ConfigureAwait(false);
+            await ThenTheProcessIsCreated(request, ProcessName.changeofname, ChangeOfNameStates.EnterNewName, new List<string>()).ConfigureAwait(false);
         }
 
 

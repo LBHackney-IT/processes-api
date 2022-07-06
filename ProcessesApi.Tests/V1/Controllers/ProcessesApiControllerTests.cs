@@ -100,7 +100,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         private (Process, UpdateProcessQuery, UpdateProcessRequestObject) ConstructPatchRequest()
         {
             var queryObject = _fixture.Create<UpdateProcessRequestObject>();
-            var processName = ProcessName.soleToJoint;
+            var processName = ProcessName.soletojoint;
             var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), TargetType.person, null, processName, null);
             var query = _fixture.Build<UpdateProcessQuery>()
                                 .With(x => x.ProcessName, processResponse.ProcessName)
@@ -112,7 +112,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         private (ProcessState, ProcessQuery, UpdateProcessByIdRequestObject) ConstructPatchByIdRequest()
         {
             var queryObject = _fixture.Create<UpdateProcessByIdRequestObject>();
-            var processName = ProcessName.soleToJoint;
+            var processName = ProcessName.soletojoint;
             var currentProcessState = _fixture.Create<ProcessState>();
             var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), currentProcessState, Guid.NewGuid(), TargetType.tenure, null, processName, null);
             var query = _fixture.Build<ProcessQuery>()
@@ -130,7 +130,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             var controllerContext = new ControllerContext(new ActionContext(stubHttpContext, new RouteData(), new ControllerActionDescriptor()));
             _classUnderTest.ControllerContext = controllerContext;
 
-            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), TargetType.tenure, new List<RelatedEntity>(), ProcessName.soleToJoint, null);
+            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), TargetType.tenure, new List<RelatedEntity>(), ProcessName.soletojoint, null);
             var query = ConstructQuery(process.Id);
             _mockGetByIdUseCase.Setup(x => x.Execute(query)).ReturnsAsync(process);
 
@@ -184,7 +184,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         {
             // Arrange
             var request = ConstructPostRequest();
-            var processName = ProcessName.soleToJoint;
+            var processName = ProcessName.soletojoint;
             var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, request.TargetId, request.TargetType, request.RelatedEntities, processName, null);
 
             _mockProcessUseCase.Setup(x => x.Execute(It.IsAny<Guid>(), SharedPermittedTriggers.StartApplication,
@@ -206,7 +206,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         public async Task CreateNewProcessReturnsBadRequest(Type exceptionType)
         {
             var request = _fixture.Create<CreateProcess>();
-            var processName = ProcessName.soleToJoint;
+            var processName = ProcessName.soletojoint;
             var exception = Activator.CreateInstance(exceptionType) as Exception;
 
             _mockProcessUseCase.Setup(x => x.Execute(It.IsAny<Guid>(), SharedPermittedTriggers.StartApplication,
@@ -221,7 +221,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         public void CreateNewProcessExceptionIsThrown()
         {
             var request = _fixture.Create<CreateProcess>();
-            var processName = ProcessName.soleToJoint;
+            var processName = ProcessName.soletojoint;
             var exception = new ApplicationException("Test exception");
             _mockProcessUseCase.Setup(x => x.Execute(It.IsAny<Guid>(), SharedPermittedTriggers.StartApplication,
               request.TargetId, request.TargetType, request.RelatedEntities, request.FormData, request.Documents, processName, It.IsAny<int?>(), It.IsAny<Token>())).ThrowsAsync(exception);

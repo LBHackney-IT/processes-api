@@ -59,7 +59,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         private void createProcess(string state)
         {
             var process = _fixture.Build<Process>()
-                        .With(x => x.ProcessName, ProcessName.soleToJoint)
+                        .With(x => x.ProcessName, ProcessName.soletojoint)
                         .With(x => x.CurrentState,
                                 _fixture.Build<ProcessState>()
                                         .With(x => x.State, state)
@@ -107,13 +107,13 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public void GivenANewSoleToJointProcessRequest()
         {
             CreateProcessRequest = _fixture.Create<CreateProcess>();
-            ProcessName = ProcessName.soleToJoint;
+            ProcessName = ProcessName.soletojoint;
         }
 
         public void GivenANewChangeOfNameProcessRequest()
         {
             CreateProcessRequest = _fixture.Create<CreateProcess>();
-            ProcessName = ProcessName.changeOfName;
+            ProcessName = ProcessName.changeofname;
         }
 
         public void GivenANewSoleToJointProcessRequestWithValidationErrors()
@@ -121,7 +121,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             CreateProcessRequest = _fixture.Build<CreateProcess>()
                             .With(x => x.TargetId, Guid.Empty)
                             .Create();
-            ProcessName = ProcessName.soleToJoint;
+            ProcessName = ProcessName.soletojoint;
         }
 
         public void GivenAnUpdateSoleToJointProcessRequest(string trigger)
@@ -318,7 +318,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             UpdateProcessByIdRequest = new ProcessQuery
             {
-                ProcessName = ProcessName.soleToJoint,
+                ProcessName = ProcessName.soletojoint,
                 Id = ProcessId
             };
             UpdateProcessByIdRequestObject = _fixture.Create<UpdateProcessByIdRequestObject>();

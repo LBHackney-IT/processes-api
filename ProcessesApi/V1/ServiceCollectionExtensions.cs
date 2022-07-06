@@ -19,9 +19,9 @@ namespace ProcessesApi.V1
             {
                 switch (processName)
                 {
-                    case ProcessName.soleToJoint:
+                    case ProcessName.soletojoint:
                         return serviceProvider.GetRequiredService<SoleToJointService>();
-                    case ProcessName.changeOfName:
+                    case ProcessName.changeofname:
                         return serviceProvider.GetRequiredService<ChangeOfNameService>();
                     default:
                         throw new InvalidEnumArgumentException(nameof(ProcessName), (int) processName, typeof(ProcessName));
