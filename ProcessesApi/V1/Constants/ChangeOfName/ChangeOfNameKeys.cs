@@ -6,5 +6,7 @@ namespace ProcessesApi.V1.Constants.ChangeOfName
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     public static class ChangeOfNameKeys
     {
+        public const string NameSubmitted = "nameSubmitted";
+
     }
 }

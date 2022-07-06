@@ -12,6 +12,7 @@ using ProcessesApi.V1.Infrastructure.JWT;
 using Xunit;
 using ProcessesApi.V1.Services;
 using ProcessesApi.V1.Constants;
+using System.Linq;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -37,20 +38,27 @@ namespace ProcessesApi.Tests.V1.Services
                                     .With(x => x.CurrentState, (ProcessState) null)
                                     .With(x => x.PreviousStates, new List<ProcessState>())
                                     .Create();
+
+            var newName = "newName";
+            var formData = new Dictionary<string, object>
+            {
+                { ChangeOfNameKeys.NameSubmitted, newName }
+            };
             var triggerObject = CreateProcessTrigger(process,
                                                      SharedPermittedTriggers.StartApplication,
-                                                     _fixture.Create<Dictionary<string, object>>());
+                                                     formData);
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
             // Assert
             CurrentStateShouldContainCorrectData(process,
                                                  triggerObject,
-                                                 ChangeOfNameStates.EnterNewName,
-                                                 new List<string>() { });
+                                                 ChangeOfNameStates.NameSubmitted,
+                                                 new List<string>() { SharedPermittedTriggers.RequestDocumentsDes, SharedPermittedTriggers.RequestDocumentsAppointment, SharedPermittedTriggers.CancelProcess });
             process.PreviousStates.Should().BeEmpty();
 
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
             _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_STARTED_AGAINST_PERSON_EVENT);
         }
+
     }
 }
