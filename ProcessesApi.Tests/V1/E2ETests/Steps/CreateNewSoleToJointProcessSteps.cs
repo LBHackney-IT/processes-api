@@ -19,6 +19,7 @@ using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
 using ProcessesApi.V1.Infrastructure.JWT;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Constants.SoleToJoint;
+using ProcessesApi.V1.Constants.ChangeOfName;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {
@@ -44,7 +45,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             _lastResponse = await _httpClient.SendAsync(message).ConfigureAwait(false);
         }
 
-        public async Task ThenTheProcessIsCreated(CreateProcess request, ProcessName processName)
+        public async Task ThenTheProcessIsCreated(CreateProcess request, ProcessName processName, string state, List<string> permittedTriggers)
         {
             _lastResponse.StatusCode.Should().Be(HttpStatusCode.Created);
             var responseContent = await _lastResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -57,8 +58,8 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             dbRecord.RelatedEntities.Should().BeEquivalentTo(request.RelatedEntities);
             dbRecord.ProcessName.Should().Be(processName);
 
-            dbRecord.CurrentState.State.Should().Be(SoleToJointStates.SelectTenants);
-            dbRecord.CurrentState.PermittedTriggers.Should().BeEquivalentTo(new List<string>() { SoleToJointPermittedTriggers.CheckAutomatedEligibility });
+            dbRecord.CurrentState.State.Should().Be(state);
+            dbRecord.CurrentState.PermittedTriggers.Should().BeEquivalentTo(permittedTriggers);
             // TODO: Add test for assignment when implemented
             dbRecord.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(request.FormData);
             dbRecord.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(request.Documents);
@@ -70,6 +71,17 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             // Cleanup
             await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
         }
+
+        public async Task ThenTheSoleToJointProcessIsCreated(CreateProcess request)
+        {
+            await ThenTheProcessIsCreated(request, ProcessName.soleToJoint, SoleToJointStates.SelectTenants, new List<string>() { SoleToJointPermittedTriggers.CheckAutomatedEligibility }).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheChangeOfNameProcessIsCreated(CreateProcess request)
+        {
+            await ThenTheProcessIsCreated(request, ProcessName.changeOfName, ChangeOfNameStates.EnterNewName, new List<string>()).ConfigureAwait(false);
+        }
+
 
         public async Task ThenProcessStartedEventIsRaised(ProcessFixture processFixture, ISnsFixture snsFixture)
         {
