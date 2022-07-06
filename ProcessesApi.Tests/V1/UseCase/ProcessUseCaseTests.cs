@@ -71,7 +71,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         {
             //Arrange
             var createProcessQuery = _fixture.Create<CreateProcess>();
-            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, createProcessQuery.TargetId, createProcessQuery.TargetType, createProcessQuery.RelatedEntities, ProcessName.soleToJoint, null);
+            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, createProcessQuery.TargetId, createProcessQuery.TargetType, createProcessQuery.RelatedEntities, ProcessName.soletojoint, null);
             var token = new Token();
             var exception = new ApplicationException("Test Exception");
             _mockGateway.Setup(x => x.SaveProcess(It.IsAny<Process>())).ThrowsAsync(exception);
