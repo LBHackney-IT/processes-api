@@ -58,7 +58,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             }
         }
 
-        private void createProcess(string state)
+        private void createstjProcess(string state)
         {
             var process = _fixture.Build<Process>()
                         .With(x => x.ProcessName, ProcessName.soleToJoint)
@@ -84,9 +84,43 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             });
         }
 
+        private void createConProcess(string state)
+        {
+            var process = _fixture.Build<Process>()
+                        .With(x => x.ProcessName, ProcessName.changeOfName)
+                        .With(x => x.CurrentState,
+                                _fixture.Build<ProcessState>()
+                                        .With(x => x.State, state)
+                                        .Create())
+                        .With(x => x.VersionNumber, (int?) null)
+                        .With(x => x.RelatedEntities, new List<RelatedEntity>())
+                        .Create();
+            Process = process;
+            ProcessId = process.Id;
+            ProcessName = process.ProcessName;
+            IncomingTenantId = Guid.NewGuid();
+            TenantId = Guid.NewGuid();
+
+            Process.RelatedEntities.Add(new RelatedEntity
+            {
+                Id = IncomingTenantId,
+                TargetType = TargetType.person,
+                SubType = SubType.householdMember,
+                Description = "Some name"
+            });
+        }
+
         public async Task GivenASoleToJointProcessExists(string state)
         {
-            createProcess(state);
+            createstjProcess(state);
+
+            await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
+            Process.VersionNumber = 0;
+        }
+
+        public async Task GivenAChangeOfNameProcessExists(string state)
+        {
+            createConProcess(state);
 
             await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
             Process.VersionNumber = 0;
@@ -94,7 +128,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public async Task GivenASoleToJointProcessExistsWithoutRelatedEntities(string state)
         {
-            createProcess(state);
+            createstjProcess(state);
             Process.RelatedEntities = new List<RelatedEntity>();
 
             await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
@@ -103,7 +137,12 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenASoleToJointProcessDoesNotExist()
         {
-            createProcess(SharedStates.ApplicationInitialised);
+            createstjProcess(SharedStates.ApplicationInitialised);
+        }
+
+        public void GivenAChangeOfNameProcessDoesNotExist()
+        {
+            createConProcess(SharedStates.ApplicationInitialised);
         }
 
         public void GivenANewSoleToJointProcessRequest()
@@ -115,7 +154,6 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public void GivenANewChangeOfNameProcessRequest()
         {
             CreateProcessRequest = _fixture.Create<CreateProcess>();
-            CreateProcessRequest.FormData.Add(ChangeOfNameKeys.NameSubmitted, "newName");
             ProcessName = ProcessName.changeOfName;
         }
 
@@ -268,6 +306,12 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             UpdateProcessRequestObject.Documents.Add(Guid.Empty);
         }
 
+        public void GivenAnUpdateChangeOfNameProcessRequestWithValidationErrors()
+        {
+            GivenAnUpdateProcessRequest(ChangeOfNamePermittedTriggers.EnterNewName);
+            UpdateProcessRequestObject.Documents.Add(Guid.Empty);
+        }
+
         public void GivenAnUpdateProcessByIdRequestWithValidationErrors()
         {
             GivenAnUpdateProcessByIdRequest();
@@ -409,7 +453,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public void GivenANameSubmittedRequest()
         {
             GivenAnUpdateProcessRequest(ChangeOfNamePermittedTriggers.EnterNewName);
-            UpdateProcessRequestObject.FormData.Add(ChangeOfNameKeys.NameSubmitted, "newName");
+            UpdateProcessRequestObject.FormData.Add(ChangeOfNameKeys.FirstName, "newName");
         }
     }
 }

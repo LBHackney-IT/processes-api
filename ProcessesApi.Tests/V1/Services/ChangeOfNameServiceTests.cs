@@ -38,26 +38,48 @@ namespace ProcessesApi.Tests.V1.Services
                                     .With(x => x.CurrentState, (ProcessState) null)
                                     .With(x => x.PreviousStates, new List<ProcessState>())
                                     .Create();
-
-            var newName = "newName";
-            var formData = new Dictionary<string, object>
-            {
-                { ChangeOfNameKeys.NameSubmitted, newName }
-            };
             var triggerObject = CreateProcessTrigger(process,
                                                      SharedPermittedTriggers.StartApplication,
-                                                     formData);
+                                                     _fixture.Create<Dictionary<string, object>>());
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
             // Assert
             CurrentStateShouldContainCorrectData(process,
                                                  triggerObject,
-                                                 ChangeOfNameStates.NameSubmitted,
-                                                 new List<string>() { SharedPermittedTriggers.RequestDocumentsDes, SharedPermittedTriggers.RequestDocumentsAppointment, SharedPermittedTriggers.CancelProcess });
+                                                 ChangeOfNameStates.EnterNewName,
+                                                 new List<string>() { ChangeOfNamePermittedTriggers.EnterNewName });
             process.PreviousStates.Should().BeEmpty();
 
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
             _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_STARTED_AGAINST_PERSON_EVENT);
+        }
+
+        [Fact]
+        public async Task CurrentStateIsUpdatedToNameSubmittedOnEnterNewName()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(ChangeOfNameStates.EnterNewName);
+
+            var newName = "Update";
+            var formData = new Dictionary<string, object>
+            {
+                { ChangeOfNameKeys.FirstName, newName },
+            };
+
+            var triggerObject = CreateProcessTrigger(process,
+                                                     ChangeOfNamePermittedTriggers.EnterNewName,
+                                                     formData);
+
+            // Act
+            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(process,
+                                                 triggerObject,
+                                                 ChangeOfNameStates.NameSubmitted,
+                                                 new List<string>() { /*TODO: Add next state here */ });
+            process.PreviousStates.LastOrDefault().State.Should().Be(ChangeOfNameStates.EnterNewName);
+            VerifyThatProcessUpdatedEventIsTriggered(ChangeOfNameStates.EnterNewName, ChangeOfNameStates.NameSubmitted);
         }
 
     }

@@ -29,22 +29,25 @@ namespace ProcessesApi.V1.Services
         public void AddNewNameToEvent(Stateless.StateMachine<string, string>.Transition transition)
         {
             var trigger = transition.Parameters[0] as ProcessTrigger;
-            SharedHelper.ValidateFormData(trigger.FormData, new List<string>() { ChangeOfNameKeys.NameSubmitted });
+            ProcessHelper.ValidateOptionalFormData(trigger.FormData, new List<string>() { ChangeOfNameKeys.Title, ChangeOfNameKeys.FirstName, ChangeOfNameKeys.MiddleName, ChangeOfNameKeys.Surname });
 
-            _eventData = SharedHelper.CreateEventData(trigger.FormData, new List<string> { ChangeOfNameKeys.NameSubmitted });
+            _eventData = ProcessHelper.CreateEventData(trigger.FormData, new List<string> { ChangeOfNameKeys.Title, ChangeOfNameKeys.FirstName, ChangeOfNameKeys.MiddleName, ChangeOfNameKeys.Surname });
         }
 
         protected override void SetUpStates()
         {
             _machine.Configure(SharedStates.ApplicationInitialised)
-                    .Permit(SharedPermittedTriggers.StartApplication, ChangeOfNameStates.NameSubmitted)
+                    .Permit(SharedPermittedTriggers.StartApplication, ChangeOfNameStates.EnterNewName)
                     .OnExitAsync(() => PublishProcessStartedEvent(ProcessEventConstants.PROCESS_STARTED_AGAINST_PERSON_EVENT));
 
+            _machine.Configure(ChangeOfNameStates.EnterNewName)
+                    .Permit(ChangeOfNamePermittedTriggers.EnterNewName, ChangeOfNameStates.NameSubmitted);
+
             _machine.Configure(ChangeOfNameStates.NameSubmitted)
-                    .OnEntry(AddNewNameToEvent)
-                    .Permit(SharedPermittedTriggers.RequestDocumentsDes, SharedStates.DocumentsRequestedDes)
-                    .Permit(SharedPermittedTriggers.RequestDocumentsAppointment, SharedStates.DocumentsRequestedAppointment)
-                    .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
+                    .OnEntry(AddNewNameToEvent);
+            //.Permit(SharedPermittedTriggers.RequestDocumentsDes, SharedStates.DocumentsRequestedDes)
+            //.Permit(SharedPermittedTriggers.RequestDocumentsAppointment, SharedStates.DocumentsRequestedAppointment)
+            //.Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
         }
     }
 }

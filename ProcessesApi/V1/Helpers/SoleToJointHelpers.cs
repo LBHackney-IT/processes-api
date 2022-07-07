@@ -16,7 +16,7 @@ namespace ProcessesApi.V1.Helpers
         {
             var formData = processRequest.FormData;
             var expectedFormDataKeys = expectations.Select(expectation => expectation.CheckId).ToList();
-            SharedHelper.ValidateFormData(formData, expectedFormDataKeys);
+            ProcessHelper.ValidateFormData(formData, expectedFormDataKeys);
 
             var isCheckPassed = expectations.All(expectation =>
                 String.Equals(expectation.Value,
@@ -46,7 +46,7 @@ namespace ProcessesApi.V1.Helpers
 
             var expectedFormDataKeys = otherExpectedFormDataKeys ?? new List<string>();
             expectedFormDataKeys.Add(keyName);
-            SharedHelper.ValidateFormData(formData, expectedFormDataKeys);
+            ProcessHelper.ValidateFormData(formData, expectedFormDataKeys);
 
             var recommendation = formData[keyName].ToString();
 
@@ -59,12 +59,12 @@ namespace ProcessesApi.V1.Helpers
         public static Dictionary<string, object> ValidateHasNotifiedResident(this ProcessTrigger processRequest)
         {
             var formData = processRequest.FormData;
-            SharedHelper.ValidateFormData(formData, new List<string>() { SharedKeys.HasNotifiedResident });
+            ProcessHelper.ValidateFormData(formData, new List<string>() { SharedKeys.HasNotifiedResident });
 
             var eventData = new Dictionary<string, object>();
 
             if (formData.ContainsKey(SharedKeys.Reason))
-                eventData = SharedHelper.CreateEventData(formData, new List<string> { SharedKeys.Reason });
+                eventData = ProcessHelper.CreateEventData(formData, new List<string> { SharedKeys.Reason });
 
             var hasNotifiedResidentString = processRequest.FormData[SharedKeys.HasNotifiedResident];
 

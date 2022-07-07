@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace ProcessesApi.V1.Helpers
 {
-    public static class SharedHelper
+    public static class ProcessHelper
     {
         public static void ValidateFormData(Dictionary<string, object> requestFormData, List<string> expectedFormDataKeys)
         {
@@ -15,6 +15,18 @@ namespace ProcessesApi.V1.Helpers
             });
         }
 
+        public static void ValidateOptionalFormData(Dictionary<string, object> requestFormData, List<string> expectedFormDataKeys)
+        {
+            var atLeastOneKey = expectedFormDataKeys.Any(x => requestFormData.Any());
+            if (!atLeastOneKey)
+                throw new FormDataNotFoundException(requestFormData.Keys.ToList(), expectedFormDataKeys);
+
+            //expectedFormDataKeys.ForEach(x =>
+            //{
+            //    if (!requestFormData.ContainsKey(x))
+            //        throw new FormDataNotFoundException(requestFormData.Keys.ToList(), expectedFormDataKeys);
+            //});
+        }
         public static Dictionary<string, object> CreateEventData(Dictionary<string, object> requestFormData, List<string> selectedKeys)
         {
             return requestFormData.Where(x => selectedKeys.Contains(x.Key))
