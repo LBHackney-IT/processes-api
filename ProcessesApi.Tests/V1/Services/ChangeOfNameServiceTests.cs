@@ -77,7 +77,7 @@ namespace ProcessesApi.Tests.V1.Services
             CurrentStateShouldContainCorrectData(process,
                                                  triggerObject,
                                                  ChangeOfNameStates.NameSubmitted,
-                                                 new List<string>() { /*TODO: Add next state here */ });
+                                                 new List<string>() { SharedPermittedTriggers.RequestDocumentsDes, SharedPermittedTriggers.RequestDocumentsAppointment, SharedPermittedTriggers.CancelProcess });
             process.PreviousStates.LastOrDefault().State.Should().Be(ChangeOfNameStates.EnterNewName);
             VerifyThatProcessUpdatedEventIsTriggered(ChangeOfNameStates.EnterNewName, ChangeOfNameStates.NameSubmitted);
         }

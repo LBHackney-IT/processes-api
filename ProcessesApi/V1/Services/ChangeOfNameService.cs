@@ -44,10 +44,10 @@ namespace ProcessesApi.V1.Services
                     .Permit(ChangeOfNamePermittedTriggers.EnterNewName, ChangeOfNameStates.NameSubmitted);
 
             _machine.Configure(ChangeOfNameStates.NameSubmitted)
-                    .OnEntry(AddNewNameToEvent);
-            //.Permit(SharedPermittedTriggers.RequestDocumentsDes, SharedStates.DocumentsRequestedDes)
-            //.Permit(SharedPermittedTriggers.RequestDocumentsAppointment, SharedStates.DocumentsRequestedAppointment)
-            //.Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
+                    .OnEntry(AddNewNameToEvent)
+                    .Permit(SharedPermittedTriggers.RequestDocumentsDes, SharedStates.DocumentsRequestedDes)
+                    .Permit(SharedPermittedTriggers.RequestDocumentsAppointment, SharedStates.DocumentsRequestedAppointment)
+                    .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
         }
     }
 }
