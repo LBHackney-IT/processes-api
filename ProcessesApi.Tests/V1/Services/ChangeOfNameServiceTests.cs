@@ -12,6 +12,7 @@ using ProcessesApi.V1.Infrastructure.JWT;
 using Xunit;
 using ProcessesApi.V1.Services;
 using ProcessesApi.V1.Constants;
+using System.Linq;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -46,11 +47,48 @@ namespace ProcessesApi.Tests.V1.Services
             CurrentStateShouldContainCorrectData(process,
                                                  triggerObject,
                                                  ChangeOfNameStates.EnterNewName,
-                                                 new List<string>() { });
+                                                 new List<string>() { ChangeOfNamePermittedTriggers.EnterNewName });
             process.PreviousStates.Should().BeEmpty();
 
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
             _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_STARTED_AGAINST_PERSON_EVENT);
         }
+
+        [Fact]
+        public async Task CurrentStateIsUpdatedToNameSubmittedOnEnterNewName()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(ChangeOfNameStates.EnterNewName);
+
+            var newName = "Update";
+            var formData = new Dictionary<string, object>
+            {
+                { ChangeOfNameKeys.FirstName, newName },
+            };
+
+            var triggerObject = CreateProcessTrigger(process,
+                                                     ChangeOfNamePermittedTriggers.EnterNewName,
+                                                     formData);
+
+            // Act
+            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(process,
+                                                 triggerObject,
+                                                 ChangeOfNameStates.NameSubmitted,
+                                                 new List<string>() { /*TODO: Add next state here */ });
+            process.PreviousStates.LastOrDefault().State.Should().Be(ChangeOfNameStates.EnterNewName);
+            VerifyThatProcessUpdatedEventIsTriggered(ChangeOfNameStates.EnterNewName, ChangeOfNameStates.NameSubmitted);
+        }
+
+        [Theory]
+        [InlineData(ChangeOfNameStates.EnterNewName, ChangeOfNamePermittedTriggers.EnterNewName, new string[] { ChangeOfNameKeys.Title, ChangeOfNameKeys.FirstName, ChangeOfNameKeys.MiddleName, ChangeOfNameKeys.Surname })]
+
+        public void ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
+        {
+            ShouldThrowFormDataNotFoundException(initialState, trigger, expectedFormDataKeys);
+        }
+
     }
 }

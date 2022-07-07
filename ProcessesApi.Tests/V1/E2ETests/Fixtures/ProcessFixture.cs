@@ -11,6 +11,7 @@ using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Infrastructure.Extensions;
 using ProcessesApi.V1.Constants.SoleToJoint;
 using ProcessesApi.V1.Constants;
+using ProcessesApi.V1.Constants.ChangeOfName;
 
 namespace ProcessesApi.Tests.V1.E2E.Fixtures
 {
@@ -28,6 +29,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public ProcessQuery UpdateProcessByIdRequest { get; private set; }
         public UpdateProcessByIdRequestObject UpdateProcessByIdRequestObject { get; private set; }
         public Guid IncomingTenantId { get; private set; }
+
         public Guid TenantId { get; private set; }
         public List<Guid> PersonTenures { get; private set; }
 
@@ -56,10 +58,10 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             }
         }
 
-        private void createProcess(string state)
+        private void createProcess(string state, ProcessName processName)
         {
             var process = _fixture.Build<Process>()
-                        .With(x => x.ProcessName, ProcessName.soletojoint)
+                        .With(x => x.ProcessName, processName)
                         .With(x => x.CurrentState,
                                 _fixture.Build<ProcessState>()
                                         .With(x => x.State, state)
@@ -84,7 +86,15 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public async Task GivenASoleToJointProcessExists(string state)
         {
-            createProcess(state);
+            createProcess(state, ProcessName.soletojoint);
+
+            await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
+            Process.VersionNumber = 0;
+        }
+
+        public async Task GivenAChangeOfNameProcessExists(string state)
+        {
+            createProcess(state, ProcessName.changeofname);
 
             await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
             Process.VersionNumber = 0;
@@ -92,7 +102,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public async Task GivenASoleToJointProcessExistsWithoutRelatedEntities(string state)
         {
-            createProcess(state);
+            createProcess(state, ProcessName.soletojoint);
             Process.RelatedEntities = new List<RelatedEntity>();
 
             await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
@@ -101,7 +111,12 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenASoleToJointProcessDoesNotExist()
         {
-            createProcess(SharedStates.ApplicationInitialised);
+            createProcess(SharedStates.ApplicationInitialised, ProcessName.soletojoint);
+        }
+
+        public void GivenAChangeOfNameProcessDoesNotExist()
+        {
+            createProcess(SharedStates.ApplicationInitialised, ProcessName.changeofname);
         }
 
         public void GivenANewSoleToJointProcessRequest()
@@ -114,6 +129,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             CreateProcessRequest = _fixture.Create<CreateProcess>();
             ProcessName = ProcessName.changeofname;
+
         }
 
         public void GivenANewSoleToJointProcessRequestWithValidationErrors()
@@ -124,7 +140,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             ProcessName = ProcessName.soletojoint;
         }
 
-        public void GivenAnUpdateSoleToJointProcessRequest(string trigger)
+        public void GivenAnUpdateProcessRequest(string trigger)
         {
             UpdateProcessRequest = new UpdateProcessQuery
             {
@@ -137,26 +153,26 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenACloseProcessRequestWithoutReason()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.CloseProcess);
+            GivenAnUpdateProcessRequest(SharedPermittedTriggers.CloseProcess);
             UpdateProcessRequestObject.FormData.Add(SharedKeys.HasNotifiedResident, true);
         }
 
         public void GivenACloseProcessRequestWithReason()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.CloseProcess);
+            GivenAnUpdateProcessRequest(SharedPermittedTriggers.CloseProcess);
             UpdateProcessRequestObject.FormData.Add(SharedKeys.HasNotifiedResident, true);
             UpdateProcessRequestObject.FormData.Add(SharedKeys.Reason, "This is a reason");
         }
 
         public void GivenACancelProcessRequest()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.CancelProcess);
+            GivenAnUpdateProcessRequest(SharedPermittedTriggers.CancelProcess);
             UpdateProcessRequestObject.FormData.Add(SharedKeys.Comment, "This is a comment");
         }
 
         public void GivenACheckAutomatedEligibilityRequest()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckAutomatedEligibility);
+            GivenAnUpdateProcessRequest(SoleToJointPermittedTriggers.CheckAutomatedEligibility);
             UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.IncomingTenantId, IncomingTenantId);
             UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.TenantId, TenantId);
         }
@@ -170,7 +186,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenACheckManualEligibilityRequest(bool isEligible)
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckManualEligibility);
+            GivenAnUpdateProcessRequest(SoleToJointPermittedTriggers.CheckManualEligibility);
 
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
@@ -203,7 +219,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenATenancyBreachCheckRequest(bool isEligible)
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckTenancyBreach);
+            GivenAnUpdateProcessRequest(SoleToJointPermittedTriggers.CheckTenancyBreach);
 
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
@@ -216,19 +232,19 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenARequestDocumentsDesRequest()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.RequestDocumentsDes);
+            GivenAnUpdateProcessRequest(SharedPermittedTriggers.RequestDocumentsDes);
         }
 
         public void GivenARequestDocumentsAppointmentRequest()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.RequestDocumentsAppointment);
+            GivenAnUpdateProcessRequest(SharedPermittedTriggers.RequestDocumentsAppointment);
 
             UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
 
         public async Task GivenARescheduleDocumentsAppointmentRequest()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.RescheduleDocumentsAppointment);
+            GivenAnUpdateProcessRequest(SharedPermittedTriggers.RescheduleDocumentsAppointment);
 
             Process.CurrentState.ProcessData.FormData.Add(SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
 
@@ -261,7 +277,13 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         }
         public void GivenAnUpdateSoleToJointProcessRequestWithValidationErrors()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.CheckAutomatedEligibility);
+            GivenAnUpdateProcessRequest(SoleToJointPermittedTriggers.CheckAutomatedEligibility);
+            UpdateProcessRequestObject.Documents.Add(Guid.Empty);
+        }
+
+        public void GivenAnUpdateChangeOfNameProcessRequestWithValidationErrors()
+        {
+            GivenAnUpdateProcessRequest(ChangeOfNamePermittedTriggers.EnterNewName);
             UpdateProcessRequestObject.Documents.Add(Guid.Empty);
         }
 
@@ -275,7 +297,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenAReviewDocumentsRequest()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.ReviewDocuments);
+            GivenAnUpdateProcessRequest(SharedPermittedTriggers.ReviewDocuments);
 
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
@@ -295,7 +317,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenATenureInvestigationRequest(string tenureInvestigationRecommendation)
         {
-            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.TenureInvestigation);
+            GivenAnUpdateProcessRequest(SharedPermittedTriggers.TenureInvestigation);
 
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
@@ -305,7 +327,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenATenureInvestigationRequestWithMissingData()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.TenureInvestigation);
+            GivenAnUpdateProcessRequest(SharedPermittedTriggers.TenureInvestigation);
         }
 
         public void GivenATenureInvestigationRequestWithInvalidData()
@@ -326,7 +348,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenAScheduleInterviewRequest()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.ScheduleInterview);
+            GivenAnUpdateProcessRequest(SharedPermittedTriggers.ScheduleInterview);
 
             UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
@@ -339,7 +361,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenARescheduleInterviewRequest()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.RescheduleInterview);
+            GivenAnUpdateProcessRequest(SharedPermittedTriggers.RescheduleInterview);
 
             UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
@@ -352,7 +374,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenAHOApprovalRequest(string housingOfficerRecommendation)
         {
-            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.HOApproval);
+            GivenAnUpdateProcessRequest(SharedPermittedTriggers.HOApproval);
 
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
@@ -363,7 +385,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenAHOApprovalRequestWithMissingData()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SharedPermittedTriggers.HOApproval);
+            GivenAnUpdateProcessRequest(SharedPermittedTriggers.HOApproval);
         }
 
         public void GivenAHOApprovalRequestWithInvalidData()
@@ -373,7 +395,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenAScheduleTenureAppointmentRequest()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.ScheduleTenureAppointment);
+            GivenAnUpdateProcessRequest(SoleToJointPermittedTriggers.ScheduleTenureAppointment);
 
             UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
@@ -386,7 +408,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenARescheduleTenureAppointmentRequest()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.RescheduleTenureAppointment);
+            GivenAnUpdateProcessRequest(SoleToJointPermittedTriggers.RescheduleTenureAppointment);
 
             UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
@@ -398,9 +420,21 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         }
         public void GivenAUpdateTenureRequest()
         {
-            GivenAnUpdateSoleToJointProcessRequest(SoleToJointPermittedTriggers.UpdateTenure);
+            GivenAnUpdateProcessRequest(SoleToJointPermittedTriggers.UpdateTenure);
             UpdateProcessRequestObject.FormData.Add(SharedKeys.HasNotifiedResident, true);
             UpdateProcessRequestObject.FormData.Add(SharedKeys.Reason, "This is a reason");
+        }
+
+        public void GivenANameSubmittedRequest()
+        {
+            GivenAnUpdateProcessRequest(ChangeOfNamePermittedTriggers.EnterNewName);
+            UpdateProcessRequestObject.FormData.Add(ChangeOfNameKeys.FirstName, "newName");
+        }
+
+        public void GivenANameSubmittedRequestWithMissingData()
+        {
+            GivenANameSubmittedRequest();
+            UpdateProcessRequestObject.FormData.Clear();
         }
     }
 }

@@ -40,7 +40,7 @@ namespace ProcessesApi.V1.Services
         {
             var processRequest = transition.Parameters[0] as ProcessTrigger;
             var formData = processRequest.FormData;
-            SoleToJointHelpers.ValidateFormData(formData, new List<string>() { SoleToJointKeys.IncomingTenantId, SoleToJointKeys.TenantId });
+            ProcessHelper.ValidateFormData(formData, new List<string>() { SoleToJointKeys.IncomingTenantId, SoleToJointKeys.TenantId });
 
             var isEligible = await _dbOperationsHelper.CheckAutomatedEligibility(_process.TargetId,
                                                                                     Guid.Parse(processRequest.FormData[SoleToJointKeys.IncomingTenantId].ToString()),
@@ -92,7 +92,7 @@ namespace ProcessesApi.V1.Services
                   SoleToJointKeys.SeenProofOfRelationship,
                   SoleToJointKeys.IncomingTenantLivingInProperty
             };
-            SoleToJointHelpers.ValidateFormData(formData, expectedFormDataKeys);
+            ProcessHelper.ValidateFormData(formData, expectedFormDataKeys);
 
             processRequest.Trigger = SharedInternalTriggers.DocumentChecksPassed;
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
@@ -147,9 +147,9 @@ namespace ProcessesApi.V1.Services
         private async Task OnProcessCancelled(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
-            SoleToJointHelpers.ValidateFormData(processRequest.FormData, new List<string>() { SharedKeys.Comment });
+            ProcessHelper.ValidateFormData(processRequest.FormData, new List<string>() { SharedKeys.Comment });
 
-            _eventData = SoleToJointHelpers.CreateEventData(processRequest.FormData, new List<string> { SharedKeys.Comment });
+            _eventData = ProcessHelper.CreateEventData(processRequest.FormData, new List<string> { SharedKeys.Comment });
             await PublishProcessClosedEvent(x).ConfigureAwait(false);
         }
 
@@ -175,9 +175,9 @@ namespace ProcessesApi.V1.Services
         public void AddAppointmentDateTimeToEvent(Stateless.StateMachine<string, string>.Transition transition)
         {
             var trigger = transition.Parameters[0] as ProcessTrigger;
-            SoleToJointHelpers.ValidateFormData(trigger.FormData, new List<string>() { SoleToJointKeys.AppointmentDateTime });
+            ProcessHelper.ValidateFormData(trigger.FormData, new List<string>() { SoleToJointKeys.AppointmentDateTime });
 
-            _eventData = SoleToJointHelpers.CreateEventData(trigger.FormData, new List<string> { SoleToJointKeys.AppointmentDateTime });
+            _eventData = ProcessHelper.CreateEventData(trigger.FormData, new List<string> { SoleToJointKeys.AppointmentDateTime });
         }
 
         #endregion

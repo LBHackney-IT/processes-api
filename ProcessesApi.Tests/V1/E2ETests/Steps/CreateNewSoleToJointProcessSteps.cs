@@ -20,6 +20,7 @@ using ProcessesApi.V1.Infrastructure.JWT;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Constants.SoleToJoint;
 using ProcessesApi.V1.Constants.ChangeOfName;
+using ProcessesApi.V1.Constants;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {
@@ -79,7 +80,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
         public async Task ThenTheChangeOfNameProcessIsCreated(CreateProcess request)
         {
-            await ThenTheProcessIsCreated(request, ProcessName.changeofname, ChangeOfNameStates.EnterNewName, new List<string>()).ConfigureAwait(false);
+            await ThenTheProcessIsCreated(request, ProcessName.changeofname, ChangeOfNameStates.EnterNewName, new List<string>() { ChangeOfNamePermittedTriggers.EnterNewName }).ConfigureAwait(false);
         }
 
 
