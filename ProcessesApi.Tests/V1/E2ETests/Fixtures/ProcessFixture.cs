@@ -87,7 +87,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         private void createConProcess(string state)
         {
             var process = _fixture.Build<Process>()
-                        .With(x => x.ProcessName, ProcessName.changeOfName)
+                        .With(x => x.ProcessName, ProcessName.changeofname)
                         .With(x => x.CurrentState,
                                 _fixture.Build<ProcessState>()
                                         .With(x => x.State, state)
@@ -154,7 +154,6 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public void GivenANewChangeOfNameProcessRequest()
         {
             CreateProcessRequest = _fixture.Create<CreateProcess>();
-            CreateProcessRequest.FormData.Add(ChangeOfNameKeys.NameSubmitted, "newName");
             ProcessName = ProcessName.changeofname;
 
         }
