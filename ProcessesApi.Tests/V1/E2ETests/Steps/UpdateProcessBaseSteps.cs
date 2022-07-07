@@ -21,15 +21,14 @@ using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace ProcessesApi.Tests.V1.E2ETests.Steps
 {
-    public class UpdateChangeOfNameProcessSteps : BaseSteps
+    public class UpdateProcessBaseSteps : BaseSteps
     {
         private readonly IDynamoDbFixture _dbFixture;
 
-        public UpdateChangeOfNameProcessSteps(HttpClient httpClient, IDynamoDbFixture dbFixture) : base(httpClient)
+        public UpdateProcessBaseSteps(HttpClient httpClient, IDynamoDbFixture dbFixture) : base(httpClient)
         {
             _dbFixture = dbFixture;
         }
-
         public async Task WhenAnUpdateProcessRequestIsMade(UpdateProcessQuery request, UpdateProcessRequestObject requestBody, int? ifMatch)
         {
             var token = TestToken.Value;
@@ -82,7 +81,7 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
             dbRecord.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(requestBody.Documents);
         }
 
-        private async Task CheckProcessState(Guid processId, string currentState, string previousState)
+        public async Task CheckProcessState(Guid processId, string currentState, string previousState)
         {
             var dbRecord = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(processId).ConfigureAwait(false);
 

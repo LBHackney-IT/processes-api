@@ -8,7 +8,7 @@ using System;
 using TestStack.BDDfy;
 using Xunit;
 
-namespace ProcessesApi.Tests.V1.E2ETests.Stories
+namespace ProcessesApi.Tests.V1.E2E.Stories
 {
     [Story(
     AsA = "Internal Hackney user (such as a Housing Officer or Area Housing Manager)",
@@ -20,7 +20,7 @@ namespace ProcessesApi.Tests.V1.E2ETests.Stories
         private readonly IDynamoDbFixture _dbFixture;
         private readonly ISnsFixture _snsFixture;
         private readonly ProcessFixture _processFixture;
-        private readonly UpdateChangeOfNameProcessSteps _steps;
+        private readonly UpdateProcessBaseSteps _steps;
 
         public UpdateChangeOfNameProcessTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
@@ -28,7 +28,7 @@ namespace ProcessesApi.Tests.V1.E2ETests.Stories
             _snsFixture = appFactory.SnsFixture;
             _processFixture = new ProcessFixture(_dbFixture.DynamoDbContext, _snsFixture.SimpleNotificationService);
 
-            _steps = new UpdateChangeOfNameProcessSteps(appFactory.Client, _dbFixture);
+            _steps = new UpdateProcessBaseSteps(appFactory.Client, _dbFixture);
         }
 
         public void Dispose()
@@ -92,6 +92,17 @@ namespace ProcessesApi.Tests.V1.E2ETests.Stories
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, ChangeOfNameStates.EnterNewName, ChangeOfNameStates.NameSubmitted))
                 .BDDfy();
+        }
+
+        [Fact]
+        public void BadRequestIsReturnedWhenNoNewNameIsGiven()
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(ChangeOfNameStates.EnterNewName))
+                .And(a => _processFixture.GivenANameSubmittedRequestWithMissingData())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(t => _steps.ThenBadRequestIsReturned())
+                .BDDfy();
+
         }
 
         #endregion#

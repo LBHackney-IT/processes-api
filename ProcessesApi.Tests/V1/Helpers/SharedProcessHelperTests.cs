@@ -7,7 +7,7 @@ using Xunit;
 
 namespace ProcessesApi.Tests.V1.Helpers
 {
-    public class SharedProcessTests
+    public class SharedProcessHelperTests
     {
         [Fact]
         public void ValidateFormDataThrowsErrorIfFormDataDoesNotContainRequiredValues()

@@ -82,5 +82,13 @@ namespace ProcessesApi.Tests.V1.Services
             VerifyThatProcessUpdatedEventIsTriggered(ChangeOfNameStates.EnterNewName, ChangeOfNameStates.NameSubmitted);
         }
 
+        [Theory]
+        [InlineData(ChangeOfNameStates.EnterNewName, ChangeOfNamePermittedTriggers.EnterNewName, new string[] { ChangeOfNameKeys.Title, ChangeOfNameKeys.FirstName, ChangeOfNameKeys.MiddleName, ChangeOfNameKeys.Surname })]
+
+        public void ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
+        {
+            ShouldThrowFormDataNotFoundException(initialState, trigger, expectedFormDataKeys);
+        }
+
     }
 }

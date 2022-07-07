@@ -58,36 +58,10 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             }
         }
 
-        private void createstjProcess(string state)
+        private void createProcess(string state, ProcessName processName)
         {
             var process = _fixture.Build<Process>()
-                        .With(x => x.ProcessName, ProcessName.soletojoint)
-                        .With(x => x.CurrentState,
-                                _fixture.Build<ProcessState>()
-                                        .With(x => x.State, state)
-                                        .Create())
-                        .With(x => x.VersionNumber, (int?) null)
-                        .With(x => x.RelatedEntities, new List<RelatedEntity>())
-                        .Create();
-            Process = process;
-            ProcessId = process.Id;
-            ProcessName = process.ProcessName;
-            IncomingTenantId = Guid.NewGuid();
-            TenantId = Guid.NewGuid();
-
-            Process.RelatedEntities.Add(new RelatedEntity
-            {
-                Id = IncomingTenantId,
-                TargetType = TargetType.person,
-                SubType = SubType.householdMember,
-                Description = "Some name"
-            });
-        }
-
-        private void createConProcess(string state)
-        {
-            var process = _fixture.Build<Process>()
-                        .With(x => x.ProcessName, ProcessName.changeofname)
+                        .With(x => x.ProcessName, processName)
                         .With(x => x.CurrentState,
                                 _fixture.Build<ProcessState>()
                                         .With(x => x.State, state)
@@ -112,7 +86,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public async Task GivenASoleToJointProcessExists(string state)
         {
-            createstjProcess(state);
+            createProcess(state, ProcessName.soletojoint);
 
             await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
             Process.VersionNumber = 0;
@@ -120,7 +94,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public async Task GivenAChangeOfNameProcessExists(string state)
         {
-            createConProcess(state);
+            createProcess(state, ProcessName.changeofname);
 
             await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
             Process.VersionNumber = 0;
@@ -128,7 +102,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public async Task GivenASoleToJointProcessExistsWithoutRelatedEntities(string state)
         {
-            createstjProcess(state);
+            createProcess(state, ProcessName.soletojoint);
             Process.RelatedEntities = new List<RelatedEntity>();
 
             await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
@@ -137,12 +111,12 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenASoleToJointProcessDoesNotExist()
         {
-            createstjProcess(SharedStates.ApplicationInitialised);
+            createProcess(SharedStates.ApplicationInitialised, ProcessName.soletojoint);
         }
 
         public void GivenAChangeOfNameProcessDoesNotExist()
         {
-            createConProcess(SharedStates.ApplicationInitialised);
+            createProcess(SharedStates.ApplicationInitialised, ProcessName.changeofname);
         }
 
         public void GivenANewSoleToJointProcessRequest()
@@ -455,6 +429,12 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             GivenAnUpdateProcessRequest(ChangeOfNamePermittedTriggers.EnterNewName);
             UpdateProcessRequestObject.FormData.Add(ChangeOfNameKeys.FirstName, "newName");
+        }
+
+        public void GivenANameSubmittedRequestWithMissingData()
+        {
+            GivenANameSubmittedRequest();
+            UpdateProcessRequestObject.FormData.Clear();
         }
     }
 }
