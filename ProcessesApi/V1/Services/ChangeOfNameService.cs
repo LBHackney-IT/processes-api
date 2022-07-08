@@ -48,6 +48,11 @@ namespace ProcessesApi.V1.Services
                     .Permit(SharedPermittedTriggers.RequestDocumentsDes, SharedStates.DocumentsRequestedDes)
                     .Permit(SharedPermittedTriggers.RequestDocumentsAppointment, SharedStates.DocumentsRequestedAppointment)
                     .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
+
+            _machine.Configure(SharedStates.DocumentsRequestedDes)
+                    .Permit(SharedPermittedTriggers.RequestDocumentsAppointment, SharedStates.DocumentsRequestedAppointment)
+                    .Permit(SharedPermittedTriggers.ReviewDocuments, SharedStates.DocumentChecksPassed)
+                    .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
         }
     }
 }

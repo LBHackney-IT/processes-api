@@ -90,5 +90,25 @@ namespace ProcessesApi.Tests.V1.Services
             ShouldThrowFormDataNotFoundException(initialState, trigger, expectedFormDataKeys);
         }
 
+        [Fact]
+        public async Task CurrentStateIsUpdatedToRequestDocumentsDes()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(ChangeOfNameStates.NameSubmitted);
+
+            var triggerObject = CreateProcessTrigger(process,
+                                                     SharedPermittedTriggers.RequestDocumentsDes);
+            // Act
+            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(process,
+                                                 triggerObject,
+                                                 SharedStates.DocumentsRequestedDes,
+                                                 new List<string>() { SharedPermittedTriggers.RequestDocumentsAppointment, SharedPermittedTriggers.ReviewDocuments, SharedPermittedTriggers.CancelProcess });
+            process.PreviousStates.LastOrDefault().State.Should().Be(ChangeOfNameStates.NameSubmitted);
+            VerifyThatProcessUpdatedEventIsTriggered(ChangeOfNameStates.NameSubmitted, SharedStates.DocumentsRequestedDes);
+        }
+
     }
 }

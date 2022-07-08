@@ -107,6 +107,21 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
 
         #endregion#
 
+        #region DocumentsRequestedDes
+
+        [Fact]
+        public void UpdateProcessToDocumentsRequestedDes()
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(ChangeOfNameStates.NameSubmitted))
+                .And(a => _processFixture.GivenARequestDocumentsDesRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, ChangeOfNameStates.NameSubmitted, SharedStates.DocumentsRequestedDes))
+                .BDDfy();
+        }
+
+        #endregion
+
 
 
     }
