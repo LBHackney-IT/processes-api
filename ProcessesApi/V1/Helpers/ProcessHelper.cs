@@ -17,9 +17,9 @@ namespace ProcessesApi.V1.Helpers
 
         public static void ValidateOptionalFormData(Dictionary<string, object> requestFormData, List<string> expectedFormDataKeys)
         {
-            var atLeastOneKey = expectedFormDataKeys.Any(x => requestFormData.Any());
-            if (!atLeastOneKey)
+            if (!expectedFormDataKeys.Any(x => requestFormData.ContainsKey(x)))
                 throw new FormDataNotFoundException(requestFormData.Keys.ToList(), expectedFormDataKeys);
+
         }
         public static Dictionary<string, object> CreateEventData(Dictionary<string, object> requestFormData, List<string> selectedKeys)
         {
