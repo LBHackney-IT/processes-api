@@ -181,7 +181,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             {
                 var dataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(dataAsString, _jsonOptions);
                 var stateData = JsonSerializer.Deserialize<Dictionary<string, object>>(dataDic["stateData"].ToString(), _jsonOptions);
-                stateData.Should().ContainKey(SoleToJointKeys.AppointmentDateTime);
+                stateData.Should().ContainKey(SharedKeys.AppointmentDateTime);
             };
             await VerifyProcessUpdatedEventIsRaised(snsFixture, processId, oldState, newState, verifyData).ConfigureAwait(false);
         }
