@@ -20,7 +20,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         private readonly IDynamoDbFixture _dbFixture;
         private readonly ISnsFixture _snsFixture;
         private readonly ProcessFixture _processFixture;
-        private readonly UpdateProcessBaseSteps _steps;
+        private readonly UpdateChangeOfNameProcessStep _steps;
 
         public UpdateChangeOfNameProcessTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
@@ -28,7 +28,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
             _snsFixture = appFactory.SnsFixture;
             _processFixture = new ProcessFixture(_dbFixture.DynamoDbContext, _snsFixture.SimpleNotificationService);
 
-            _steps = new UpdateProcessBaseSteps(appFactory.Client, _dbFixture);
+            _steps = new UpdateChangeOfNameProcessStep(appFactory.Client, _dbFixture);
         }
 
         public void Dispose()
@@ -120,6 +120,36 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .BDDfy();
         }
 
+        #endregion
+
+        #region Documents Requested Appointment
+
+        [Theory]
+        [InlineData(ChangeOfNameStates.NameSubmitted)]
+        [InlineData(SharedStates.DocumentsRequestedDes)]
+
+        public void ProcessStateIsUpdatedToDocumentsRequestedAppointment(string initialState)
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(initialState))
+                    .And(a => _processFixture.GivenARequestDocumentsAppointmentRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheProcessStateIsUpdatedToDocumentsRequestedAppointment(_processFixture.UpdateProcessRequest, initialState))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, initialState, SharedStates.DocumentsRequestedAppointment))
+                .BDDfy();
+        }
+
+        [Theory]
+        [InlineData(ChangeOfNameStates.NameSubmitted)]
+        [InlineData(SharedStates.DocumentsRequestedDes)]
+        public void BadRequestIsReturnedWhenDocumentsAppointmentDataIsMissing(string initialState)
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(initialState))
+                    .And(a => _processFixture.GivenARequestDocumentsAppointmentRequestWithMissingData())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(t => _steps.ThenBadRequestIsReturned())
+                .BDDfy();
+        }
         #endregion
 
 

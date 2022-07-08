@@ -175,9 +175,9 @@ namespace ProcessesApi.V1.Services
         public void AddAppointmentDateTimeToEvent(Stateless.StateMachine<string, string>.Transition transition)
         {
             var trigger = transition.Parameters[0] as ProcessTrigger;
-            ProcessHelper.ValidateFormData(trigger.FormData, new List<string>() { SoleToJointKeys.AppointmentDateTime });
+            ProcessHelper.ValidateFormData(trigger.FormData, new List<string>() { SharedKeys.AppointmentDateTime });
 
-            _eventData = ProcessHelper.CreateEventData(trigger.FormData, new List<string> { SoleToJointKeys.AppointmentDateTime });
+            _eventData = ProcessHelper.CreateEventData(trigger.FormData, new List<string> { SharedKeys.AppointmentDateTime });
         }
 
         #endregion

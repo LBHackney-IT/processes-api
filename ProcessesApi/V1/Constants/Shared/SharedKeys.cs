@@ -8,5 +8,8 @@ namespace ProcessesApi.V1.Constants
         public const string Comment = "comment";
 
         #endregion
+
+        public const string AppointmentDateTime = "appointmentDateTime";
+
     }
 }
