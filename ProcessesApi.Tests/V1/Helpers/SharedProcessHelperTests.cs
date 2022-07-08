@@ -1,4 +1,5 @@
 using FluentAssertions;
+using ProcessesApi.V1.Constants.ChangeOfName;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Services.Exceptions;
 using System;
@@ -51,7 +52,7 @@ namespace ProcessesApi.Tests.V1.Helpers
         public void ValidateFormDataDoesNotThrowErrorIfFormDataContainsAtLeaseOneOfRequiredValues()
         {
             // Arrange
-            var expectedFormDataKey = "firstName";
+            var expectedFormDataKey = ChangeOfNameKeys.FirstName;
             var requestFormData = new Dictionary<string, object>() { { expectedFormDataKey, true } };
             // Act
             Action action = () => ProcessHelper.ValidateOptionalFormData(requestFormData, new List<string>() { expectedFormDataKey });
