@@ -32,7 +32,8 @@ namespace ProcessesApi.Tests.V1.Services
             { SoleToJointKeys.BR15, "false" },
             { SoleToJointKeys.BR16, "false" },
             { SoleToJointKeys.BR7, "false"},
-            { SoleToJointKeys.BR8, "false" }
+            { SoleToJointKeys.BR8, "false" },
+            { SoleToJointKeys.BR9, "false" }
         };
 
         private readonly Dictionary<string, object> _tenancyBreachPassData = new Dictionary<string, object>
@@ -61,16 +62,16 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SharedStates.DocumentsRequestedDes, SharedPermittedTriggers.CloseProcess, new string[] { SharedKeys.HasNotifiedResident })]
         [InlineData(SoleToJointStates.SelectTenants, SoleToJointPermittedTriggers.CheckAutomatedEligibility, new string[] { SoleToJointKeys.IncomingTenantId, SoleToJointKeys.TenantId })]
         [InlineData(SoleToJointStates.AutomatedChecksPassed, SoleToJointPermittedTriggers.CheckManualEligibility, new string[] { SoleToJointKeys.BR11, SoleToJointKeys.BR12, SoleToJointKeys.BR13,
-                                                                                                                                SoleToJointKeys.BR15, SoleToJointKeys.BR16, SoleToJointKeys.BR7, SoleToJointKeys.BR8 })]
+                                                                                                                                SoleToJointKeys.BR15, SoleToJointKeys.BR16, SoleToJointKeys.BR7, SoleToJointKeys.BR8, SoleToJointKeys.BR9 })]
         [InlineData(SoleToJointStates.ManualChecksPassed, SoleToJointPermittedTriggers.CheckTenancyBreach, new string[] { SoleToJointKeys.BR5, SoleToJointKeys.BR10, SoleToJointKeys.BR17, SoleToJointKeys.BR18 })]
-        [InlineData(SoleToJointStates.BreachChecksPassed, SharedPermittedTriggers.RequestDocumentsAppointment, new string[] { SoleToJointKeys.AppointmentDateTime })]
+        [InlineData(SoleToJointStates.BreachChecksPassed, SharedPermittedTriggers.RequestDocumentsAppointment, new string[] { SharedKeys.AppointmentDateTime })]
         [InlineData(SharedStates.ApplicationSubmitted, SharedPermittedTriggers.TenureInvestigation, new string[] { SoleToJointKeys.TenureInvestigationRecommendation })]
         [InlineData(SharedStates.InterviewScheduled, SharedPermittedTriggers.HOApproval, new string[] { SoleToJointKeys.HousingAreaManagerName, SoleToJointKeys.HORecommendation })]
         [InlineData(SharedStates.InterviewRescheduled, SharedPermittedTriggers.HOApproval, new string[] { SoleToJointKeys.HousingAreaManagerName, SoleToJointKeys.HORecommendation })]
         [InlineData(SharedStates.TenureInvestigationFailed, SharedPermittedTriggers.HOApproval, new string[] { SoleToJointKeys.HousingAreaManagerName, SoleToJointKeys.HORecommendation })]
         [InlineData(SharedStates.TenureInvestigationPassed, SharedPermittedTriggers.HOApproval, new string[] { SoleToJointKeys.HousingAreaManagerName, SoleToJointKeys.HORecommendation })]
         [InlineData(SharedStates.TenureInvestigationPassedWithInt, SharedPermittedTriggers.HOApproval, new string[] { SoleToJointKeys.HousingAreaManagerName, SoleToJointKeys.HORecommendation })]
-        [InlineData(SharedStates.HOApprovalPassed, SoleToJointPermittedTriggers.ScheduleTenureAppointment, new string[] { SoleToJointKeys.AppointmentDateTime })]
+        [InlineData(SharedStates.HOApprovalPassed, SoleToJointPermittedTriggers.ScheduleTenureAppointment, new string[] { SharedKeys.AppointmentDateTime })]
         public void ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
         {
             ShouldThrowFormDataNotFoundException(initialState, trigger, expectedFormDataKeys);
@@ -260,6 +261,7 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SoleToJointKeys.BR13, "true")]
         [InlineData(SoleToJointKeys.BR15, "true")]
         [InlineData(SoleToJointKeys.BR16, "true")]
+        [InlineData(SoleToJointKeys.BR9, "true")]
         public async Task ProcessStateIsUpdatedToManualChecksFailed(string eligibilityCheckId, string value)
         {
             // Arrange
@@ -343,7 +345,7 @@ namespace ProcessesApi.Tests.V1.Services
         {
             // Arrange
             var process = CreateProcessWithCurrentState(SoleToJointStates.BreachChecksPassed);
-            var formData = new Dictionary<string, object>() { { SoleToJointKeys.AppointmentDateTime, _fixture.Create<DateTime>() } };
+            var formData = new Dictionary<string, object>() { { SharedKeys.AppointmentDateTime, _fixture.Create<DateTime>() } };
             var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.RequestDocumentsAppointment, formData);
 
             // Act
@@ -404,7 +406,7 @@ namespace ProcessesApi.Tests.V1.Services
             var process = CreateProcessWithCurrentState(SoleToJointStates.BreachChecksPassed);
             var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.RequestDocumentsAppointment, new Dictionary<string, object>
             {
-                { SoleToJointKeys.AppointmentDateTime, appointmentDateTime }
+                { SharedKeys.AppointmentDateTime, appointmentDateTime }
             });
 
             // Act
@@ -424,7 +426,7 @@ namespace ProcessesApi.Tests.V1.Services
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.BreachChecksPassed, SharedStates.DocumentsRequestedAppointment);
 
             var stateData = (_lastSnsEvent.EventData.NewData as ProcessStateChangeData).StateData;
-            stateData.Should().ContainKey(SoleToJointKeys.AppointmentDateTime);
+            stateData.Should().ContainKey(SharedKeys.AppointmentDateTime);
         }
 
         #endregion
@@ -441,11 +443,11 @@ namespace ProcessesApi.Tests.V1.Services
 
             var process = CreateProcessWithCurrentState(initialState, new Dictionary<string, object>
             {
-                { SoleToJointKeys.AppointmentDateTime, appointmentDateTime }
+                { SharedKeys.AppointmentDateTime, appointmentDateTime }
             });
             var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.RescheduleDocumentsAppointment, new Dictionary<string, object>
             {
-                { SoleToJointKeys.AppointmentDateTime, appointmentDateTime }
+                { SharedKeys.AppointmentDateTime, appointmentDateTime }
             });
 
             // Act
@@ -465,7 +467,7 @@ namespace ProcessesApi.Tests.V1.Services
             VerifyThatProcessUpdatedEventIsTriggered(initialState, SharedStates.DocumentsAppointmentRescheduled);
 
             var stateData = (_lastSnsEvent.EventData.NewData as ProcessStateChangeData).StateData;
-            stateData.Should().ContainKey(SoleToJointKeys.AppointmentDateTime);
+            stateData.Should().ContainKey(SharedKeys.AppointmentDateTime);
         }
 
         #endregion
@@ -557,7 +559,7 @@ namespace ProcessesApi.Tests.V1.Services
             var process = CreateProcessWithCurrentState(SharedStates.TenureInvestigationPassedWithInt);
             var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.ScheduleInterview, new Dictionary<string, object>
             {
-                { SoleToJointKeys.AppointmentDateTime, appointmentDateTime }
+                { SharedKeys.AppointmentDateTime, appointmentDateTime }
             });
 
             // Act
@@ -586,7 +588,7 @@ namespace ProcessesApi.Tests.V1.Services
             var process = CreateProcessWithCurrentState(initialState);
             var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.RescheduleInterview, new Dictionary<string, object>
             {
-                { SoleToJointKeys.AppointmentDateTime, appointmentDateTime }
+                { SharedKeys.AppointmentDateTime, appointmentDateTime }
             });
 
             // Act
@@ -703,7 +705,7 @@ namespace ProcessesApi.Tests.V1.Services
             var process = CreateProcessWithCurrentState(SharedStates.HOApprovalPassed);
             var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.ScheduleTenureAppointment, new Dictionary<string, object>
             {
-                { SoleToJointKeys.AppointmentDateTime, appointmentDateTime }
+                { SharedKeys.AppointmentDateTime, appointmentDateTime }
             });
 
             // Act
@@ -732,11 +734,11 @@ namespace ProcessesApi.Tests.V1.Services
             var appointmentDateTime = DateTime.UtcNow.ToString("s", CultureInfo.InvariantCulture);
             var process = CreateProcessWithCurrentState(initialState, new Dictionary<string, object>
             {
-                { SoleToJointKeys.AppointmentDateTime, appointmentDateTime }
+                { SharedKeys.AppointmentDateTime, appointmentDateTime }
             });
             var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.RescheduleTenureAppointment, new Dictionary<string, object>
             {
-                { SoleToJointKeys.AppointmentDateTime, appointmentDateTime }
+                { SharedKeys.AppointmentDateTime, appointmentDateTime }
             });
 
             // Act

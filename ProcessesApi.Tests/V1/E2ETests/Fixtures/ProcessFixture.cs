@@ -196,7 +196,8 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                 { SoleToJointKeys.BR15, "false" },
                 { SoleToJointKeys.BR16, "false" },
                 { SoleToJointKeys.BR7, "false"},
-                { SoleToJointKeys.BR8, "false"}
+                { SoleToJointKeys.BR8, "false"},
+                { SoleToJointKeys.BR9, "false"}
             };
         }
 
@@ -239,19 +240,19 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             GivenAnUpdateProcessRequest(SharedPermittedTriggers.RequestDocumentsAppointment);
 
-            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
 
         public async Task GivenARescheduleDocumentsAppointmentRequest()
         {
             GivenAnUpdateProcessRequest(SharedPermittedTriggers.RescheduleDocumentsAppointment);
 
-            Process.CurrentState.ProcessData.FormData.Add(SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+            Process.CurrentState.ProcessData.FormData.Add(SharedKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
 
             await _dbContext.SaveAsync(Process.ToDatabase()).ConfigureAwait(false);
             Process.VersionNumber++;
 
-            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow.AddDays(1).ToIsoString());
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.AppointmentDateTime, DateTime.UtcNow.AddDays(1).ToIsoString());
         }
 
         public void GivenAFailingCheckBreachEligibilityRequest()
@@ -273,7 +274,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public void GivenARequestDocumentsAppointmentRequestWithMissingData()
         {
             GivenARequestDocumentsAppointmentRequest();
-            UpdateProcessRequestObject.FormData.Remove(SoleToJointKeys.AppointmentDateTime);
+            UpdateProcessRequestObject.FormData.Remove(SharedKeys.AppointmentDateTime);
         }
         public void GivenAnUpdateSoleToJointProcessRequestWithValidationErrors()
         {
@@ -350,26 +351,26 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             GivenAnUpdateProcessRequest(SharedPermittedTriggers.ScheduleInterview);
 
-            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
 
         public void GivenARequestScheduleInterviewRequestWithMissingData()
         {
             GivenAScheduleInterviewRequest();
-            UpdateProcessRequestObject.FormData.Remove(SoleToJointKeys.AppointmentDateTime);
+            UpdateProcessRequestObject.FormData.Remove(SharedKeys.AppointmentDateTime);
         }
 
         public void GivenARescheduleInterviewRequest()
         {
             GivenAnUpdateProcessRequest(SharedPermittedTriggers.RescheduleInterview);
 
-            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
 
         public void GivenARequestRescheduleInterviewRequestWithMissingData()
         {
             GivenARescheduleInterviewRequest();
-            UpdateProcessRequestObject.FormData.Remove(SoleToJointKeys.AppointmentDateTime);
+            UpdateProcessRequestObject.FormData.Remove(SharedKeys.AppointmentDateTime);
         }
 
         public void GivenAHOApprovalRequest(string housingOfficerRecommendation)
@@ -397,26 +398,26 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             GivenAnUpdateProcessRequest(SoleToJointPermittedTriggers.ScheduleTenureAppointment);
 
-            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
 
         public void GivenARequestTenureAppointmentRequestWithMissingData()
         {
             GivenAScheduleTenureAppointmentRequest();
-            UpdateProcessRequestObject.FormData.Remove(SoleToJointKeys.AppointmentDateTime);
+            UpdateProcessRequestObject.FormData.Remove(SharedKeys.AppointmentDateTime);
         }
 
         public void GivenARescheduleTenureAppointmentRequest()
         {
             GivenAnUpdateProcessRequest(SoleToJointPermittedTriggers.RescheduleTenureAppointment);
 
-            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
 
         public void GivenARescheduleTenureAppointmentRequestWithMissingData()
         {
             GivenARescheduleTenureAppointmentRequest();
-            UpdateProcessRequestObject.FormData.Remove(SoleToJointKeys.AppointmentDateTime);
+            UpdateProcessRequestObject.FormData.Remove(SharedKeys.AppointmentDateTime);
         }
         public void GivenAUpdateTenureRequest()
         {
