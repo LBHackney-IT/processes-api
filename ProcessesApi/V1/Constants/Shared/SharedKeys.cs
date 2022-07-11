@@ -6,6 +6,7 @@ namespace ProcessesApi.V1.Constants
         public const string HasNotifiedResident = "hasNotifiedResident";
         public const string Reason = "reason";
         public const string Comment = "comment";
+        public const string AppointmentDateTime = "appointmentDateTime";
 
         #endregion
 

@@ -60,7 +60,7 @@ namespace ProcessesApi.V1.Constants.SoleToJoint
         /// </summary>
         public const string BR7 = "br7";
 
-        #endregion ManualeEligibility checks
+        #endregion Manual Eligibility checks
 
         #region HO Tenancy breach checks
 
@@ -84,9 +84,13 @@ namespace ProcessesApi.V1.Constants.SoleToJoint
         /// </summary>
         public const string BR18 = "br18";
 
-        #endregion
+        /// <summary>
+        /// Does the proposed tenant hold a tenancy/property elsewhere
+        /// </summary>
+        public const string BR9 = "br9";
+        public const string ProposedTenantExistingPropertyOrTenure = "proposedTenantExistingPropertyOrTenure";
 
-        public const string AppointmentDateTime = "appointmentDateTime";
+        #endregion
 
         #region ReviewDocuments
 

@@ -63,7 +63,8 @@ namespace ProcessesApi.V1.Services
                                                (SoleToJointKeys.BR15, "false"),
                                                (SoleToJointKeys.BR16, "false"),
                                                (SoleToJointKeys.BR7, "false"),
-                                               (SoleToJointKeys.BR8, "false"));
+                                               (SoleToJointKeys.BR8, "false"),
+                                               (SoleToJointKeys.BR9, "false"));
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
