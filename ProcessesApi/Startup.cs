@@ -190,8 +190,9 @@ namespace ProcessesApi
         private static void RegisterUseCases(IServiceCollection services)
         {
             services.AddScoped<IGetByIdUseCase, GetProcessByIdUseCase>();
-            services.AddScoped<IProcessUseCase, ProcessUseCase>();
-            services.AddScoped<IUpdateProcessByIdUsecase, UpdateProcessByIdUsecase>();
+            services.AddScoped<ICreateProcessUseCase, CreateProcessUseCase>();
+            services.AddScoped<IUpdateProcessUseCase, UpdateProcessUseCase>();
+            services.AddScoped<IUpdateProcessByIdUseCase, UpdateProcessByIdUseCase>();
         }
 
         private static void RegisterHelpers(IServiceCollection services)

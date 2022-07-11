@@ -5,7 +5,6 @@ using Hackney.Core.Sns;
 using Moq;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Constants.SoleToJoint;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Infrastructure;
@@ -24,7 +23,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         private Mock<IProcessesGateway> _mockGateway;
         private readonly Mock<ISnsGateway> _processesSnsGateway;
         private readonly Mock<ProcessesSnsFactory> _processesSnsFactory;
-        private UpdateProcessByIdUsecase _classUnderTest;
+        private UpdateProcessByIdUseCase _classUnderTest;
         private readonly Fixture _fixture = new Fixture();
 
         public UpdateProcessByIdUseCaseTests()
@@ -32,7 +31,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             _mockGateway = new Mock<IProcessesGateway>();
             _processesSnsGateway = new Mock<ISnsGateway>();
             _processesSnsFactory = new Mock<ProcessesSnsFactory>();
-            _classUnderTest = new UpdateProcessByIdUsecase(_mockGateway.Object, _processesSnsGateway.Object, _processesSnsFactory.Object);
+            _classUnderTest = new UpdateProcessByIdUseCase(_mockGateway.Object, _processesSnsGateway.Object, _processesSnsFactory.Object);
         }
 
         private ProcessQuery ConstructQuery(Guid id)

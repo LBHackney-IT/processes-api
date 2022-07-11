@@ -1,11 +1,8 @@
-using System.Collections.Generic;
 using ProcessesApi.V1.Helpers;
 using Xunit;
 using FluentAssertions;
-using System;
 using AutoFixture;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Services.Exceptions;
 
 namespace ProcessesApi.Tests.V1.Helpers
 {

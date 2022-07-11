@@ -20,7 +20,6 @@ using ProcessesApi.V1.Infrastructure.JWT;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Constants.SoleToJoint;
 using ProcessesApi.V1.Constants.ChangeOfName;
-using ProcessesApi.V1.Constants;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {

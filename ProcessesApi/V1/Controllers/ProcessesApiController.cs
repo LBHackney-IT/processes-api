@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Boundary.Response;
-using ProcessesApi.V1.Constants;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Services.Exceptions;
@@ -26,19 +25,24 @@ namespace ProcessesApi.V1.Controllers
     public class ProcessesApiController : BaseController
     {
         private readonly IGetByIdUseCase _getByIdUseCase;
-        private readonly IProcessUseCase _processUseCase;
-        private readonly IUpdateProcessByIdUsecase _updateProcessByIdUsecase;
+        private readonly ICreateProcessUseCase _createProcessUseCase;
+        private readonly IUpdateProcessUseCase _updateProcessUseCase;
+        private readonly IUpdateProcessByIdUseCase _updateProcessByIdUsecase;
         private readonly IHttpContextWrapper _contextWrapper;
         private readonly ITokenFactory _tokenFactory;
 
 
-        public ProcessesApiController(IGetByIdUseCase getByIdUseCase, IProcessUseCase processUseCase,
-                                      IUpdateProcessByIdUsecase updateProcessByIdUsecase, IHttpContextWrapper contextWrapper,
+        public ProcessesApiController(IGetByIdUseCase getByIdUseCase,
+                                      ICreateProcessUseCase createProcessUseCase,
+                                      IUpdateProcessUseCase updateProcessUseCase,
+                                      IUpdateProcessByIdUseCase updateProcessByIdUsecase,
+                                      IHttpContextWrapper contextWrapper,
                                       ITokenFactory tokenFactory)
 
         {
             _getByIdUseCase = getByIdUseCase;
-            _processUseCase = processUseCase;
+            _createProcessUseCase = createProcessUseCase;
+            _updateProcessUseCase = updateProcessUseCase;
             _updateProcessByIdUsecase = updateProcessByIdUsecase;
             _contextWrapper = contextWrapper;
             _tokenFactory = tokenFactory;
@@ -88,21 +92,10 @@ namespace ProcessesApi.V1.Controllers
             var token = _tokenFactory.Create(_contextWrapper.GetContextRequestHeaders(HttpContext));
             try
             {
-                var result = await _processUseCase.Execute(Guid.NewGuid(),
-                                                        SharedPermittedTriggers.StartApplication,
-                                                        request.TargetId,
-                                                        request.TargetType,
-                                                        request.RelatedEntities,
-                                                        request.FormData,
-                                                        request.Documents,
-                                                        processName,
-                                                        null,
-                                                        token)
-                                                    .ConfigureAwait(false);
+                var result = await _createProcessUseCase.Execute(request, processName, token).ConfigureAwait(false);
                 return Created(new Uri($"api/v1/processes/{processName}/{result.Id}", UriKind.Relative), result);
             }
-            catch (Exception ex) when (ex is FormDataNotFoundException
-                                      || ex is FormDataFormatException
+            catch (Exception ex) when (ex is FormDataInvalidException
                                       || ex is InvalidTriggerException)
             {
                 return BadRequest(ex);
@@ -128,18 +121,10 @@ namespace ProcessesApi.V1.Controllers
             var token = _tokenFactory.Create(_contextWrapper.GetContextRequestHeaders(HttpContext));
             _contextWrapper.GetContextRequestHeaders(HttpContext);
             var ifMatch = GetIfMatchFromHeader();
+
             try
             {
-                var result = await _processUseCase.Execute(query.Id,
-                                                           query.ProcessTrigger,
-                                                           null,
-                                                           null,
-                                                           null,
-                                                           requestObject.FormData,
-                                                           requestObject.Documents,
-                                                           query.ProcessName,
-                                                           ifMatch,
-                                                           token);
+                var result = await _updateProcessUseCase.Execute(query, requestObject, ifMatch, token);
                 if (result == null) return NotFound(query.Id);
                 return NoContent();
             }
