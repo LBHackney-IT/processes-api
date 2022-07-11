@@ -138,5 +138,14 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
             };
             await VerifyProcessUpdatedEventIsRaised(snsFixture, processId, oldState, newState, verifyData).ConfigureAwait(false);
         }
+
+        public async Task ThenTheProcessStateIsUpdatedToDocumentsAppointmentRescheduled(UpdateProcessQuery request)
+        {
+            await CheckProcessState(request.Id, SharedStates.DocumentsAppointmentRescheduled, SharedStates.DocumentsRequestedAppointment).ConfigureAwait(false);
+        }
+        public async Task ThenTheProcessStateRemainsDocumentsAppointmentRescheduled(UpdateProcessQuery request)
+        {
+            await CheckProcessState(request.Id, SharedStates.DocumentsAppointmentRescheduled, SharedStates.DocumentsAppointmentRescheduled).ConfigureAwait(false);
+        }
     }
 }

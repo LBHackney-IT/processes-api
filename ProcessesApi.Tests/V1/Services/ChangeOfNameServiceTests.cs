@@ -57,6 +57,9 @@ namespace ProcessesApi.Tests.V1.Services
 
         [Theory]
         [InlineData(ChangeOfNameStates.EnterNewName, ChangeOfNamePermittedTriggers.EnterNewName, new string[] { ChangeOfNameKeys.Title, ChangeOfNameKeys.FirstName, ChangeOfNameKeys.MiddleName, ChangeOfNameKeys.Surname })]
+        [InlineData(SharedStates.DocumentsAppointmentRescheduled, SharedPermittedTriggers.RescheduleDocumentsAppointment, new string[] { SharedKeys.AppointmentDateTime })]
+        [InlineData(SharedStates.DocumentsRequestedAppointment, SharedPermittedTriggers.RescheduleDocumentsAppointment, new string[] { SharedKeys.AppointmentDateTime })]
+        [InlineData(ChangeOfNameStates.NameSubmitted, SharedPermittedTriggers.RequestDocumentsAppointment, new string[] { SharedKeys.AppointmentDateTime })]
 
         public void ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
         {

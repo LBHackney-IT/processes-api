@@ -93,15 +93,6 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             await CheckProcessState(request.Id, SharedStates.DocumentsRequestedAppointment, SoleToJointStates.BreachChecksPassed).ConfigureAwait(false);
         }
 
-        public async Task ThenTheProcessStateIsUpdatedToDocumentsAppointmentRescheduled(UpdateProcessQuery request)
-        {
-            await CheckProcessState(request.Id, SharedStates.DocumentsAppointmentRescheduled, SharedStates.DocumentsRequestedAppointment).ConfigureAwait(false);
-        }
-        public async Task ThenTheProcessStateRemainsDocumentsAppointmentRescheduled(UpdateProcessQuery request)
-        {
-            await CheckProcessState(request.Id, SharedStates.DocumentsAppointmentRescheduled, SharedStates.DocumentsAppointmentRescheduled).ConfigureAwait(false);
-        }
-
         public async Task ThenTheProcessStateIsUpdatedToDocumentChecksPassed(UpdateProcessQuery request, string initialState)
         {
             await CheckProcessState(request.Id, SharedStates.DocumentChecksPassed, initialState).ConfigureAwait(false);
