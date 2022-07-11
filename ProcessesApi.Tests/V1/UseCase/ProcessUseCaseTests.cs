@@ -4,7 +4,7 @@ using Hackney.Core.JWT;
 using Moq;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Domain.SoleToJoint;
+using ProcessesApi.V1.Constants.SoleToJoint;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Services.Interfaces;
 using ProcessesApi.V1.UseCase;
@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
+using ProcessesApi.V1.Constants;
 
 namespace ProcessesApi.Tests.V1.UseCase
 {
@@ -47,12 +48,12 @@ namespace ProcessesApi.Tests.V1.UseCase
         {
             // Arrange
             var createProcessQuery = _fixture.Create<CreateProcess>();
-            var processName = ProcessName.soletojoint;
+            var processName = _fixture.Create<ProcessName>();
             var processId = Guid.NewGuid();
             var token = new Token();
             // Act
             var response = await _classUnderTest.Execute(
-                processId, SharedInternalTriggers.StartApplication,
+                processId, SharedPermittedTriggers.StartApplication,
                 createProcessQuery.TargetId, createProcessQuery.TargetType, createProcessQuery.RelatedEntities, createProcessQuery.FormData,
                 createProcessQuery.Documents, processName, null, token).ConfigureAwait(false);
             // Assert
@@ -77,7 +78,7 @@ namespace ProcessesApi.Tests.V1.UseCase
 
             //Act
             Func<Task<Process>> func = async () => await _classUnderTest.Execute(
-                process.Id, SharedInternalTriggers.StartApplication,
+                process.Id, SharedPermittedTriggers.StartApplication,
                 process.TargetId, process.TargetType, process.RelatedEntities, createProcessQuery.FormData,
                 createProcessQuery.Documents, process.ProcessName, null, token).ConfigureAwait(false);
 

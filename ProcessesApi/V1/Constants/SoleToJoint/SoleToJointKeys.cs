@@ -1,19 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace ProcessesApi.V1.Domain.SoleToJoint
+namespace ProcessesApi.V1.Constants.SoleToJoint
 {
-    // NOTE: Form data key values must be camelCase to avoid issues with Json Serialiser in E2E tests
+    // NOTE: Key values must be camelCase to avoid issues with Json Serialiser in E2E tests
     [SuppressMessage("ReSharper", "InconsistentNaming")]
-    public static class SoleToJointFormDataKeys
+    public static class SoleToJointKeys
     {
-        #region Close or Cancel Process
-        public const string HasNotifiedResident = "hasNotifiedResident";
-        public const string Reason = "reason";
-        public const string Comment = "comment";
-
-        #endregion
-
-
         #region Automated eligibility checks
 
         /// <summary>
@@ -68,7 +60,7 @@ namespace ProcessesApi.V1.Domain.SoleToJoint
         /// </summary>
         public const string BR7 = "br7";
 
-        #endregion ManualeEligibility checks
+        #endregion Manual Eligibility checks
 
         #region HO Tenancy breach checks
 
@@ -92,9 +84,13 @@ namespace ProcessesApi.V1.Domain.SoleToJoint
         /// </summary>
         public const string BR18 = "br18";
 
-        #endregion
+        /// <summary>
+        /// Does the proposed tenant hold a tenancy/property elsewhere
+        /// </summary>
+        public const string BR9 = "br9";
+        public const string ProposedTenantExistingPropertyOrTenure = "proposedTenantExistingPropertyOrTenure";
 
-        public const string AppointmentDateTime = "appointmentDateTime";
+        #endregion
 
         #region ReviewDocuments
 

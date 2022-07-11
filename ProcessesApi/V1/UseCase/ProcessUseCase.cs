@@ -1,4 +1,5 @@
 using Hackney.Core.JWT;
+using ProcessesApi.V1.Constants;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Services.Interfaces;
@@ -28,7 +29,7 @@ namespace ProcessesApi.V1.UseCase
 
             Process process;
 
-            if (processTrigger == SharedInternalTriggers.StartApplication)
+            if (processTrigger == SharedPermittedTriggers.StartApplication)
             {
                 process = Process.Create(id, new List<ProcessState>(), null, targetId.Value, targetType.Value, relatedEntities, processName, null);
             }

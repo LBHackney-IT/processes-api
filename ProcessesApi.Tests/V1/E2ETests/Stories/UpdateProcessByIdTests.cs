@@ -2,7 +2,7 @@ using Hackney.Core.Testing.DynamoDb;
 using Hackney.Core.Testing.Sns;
 using ProcessesApi.Tests.V1.E2E.Fixtures;
 using ProcessesApi.Tests.V1.E2ETests.Steps;
-using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Constants;
 using System;
 using TestStack.BDDfy;
 using Xunit;
@@ -60,7 +60,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [Fact]
         public void UpdateProcessByIdSucceedsWhenProcessDoesExist()
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SharedProcessStates.ApplicationInitialised))
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SharedStates.ApplicationInitialised))
                     .And(a => _processFixture.GivenAnUpdateProcessByIdRequest())
                 .When(w => _steps.WhenAnUpdateProcessByIdRequestIsMade(_processFixture.UpdateProcessByIdRequest, _processFixture.UpdateProcessByIdRequestObject, 0))
                 .Then(t => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessByIdRequest, _processFixture.UpdateProcessByIdRequestObject))
@@ -73,7 +73,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [InlineData(5)]
         public void ServiceReturnsConflictWhenIncorrectVersionNumber(int? versionNumber)
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SharedProcessStates.ApplicationInitialised))
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SharedStates.ApplicationInitialised))
                 .And(a => _processFixture.GivenAnUpdateProcessByIdRequest())
                 .When(w => _steps.WhenAnUpdateProcessByIdRequestIsMade(_processFixture.UpdateProcessByIdRequest, _processFixture.UpdateProcessByIdRequestObject, versionNumber))
                 .Then(t => _steps.ThenVersionConflictExceptionIsReturned(versionNumber))
@@ -83,7 +83,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [Fact]
         public void ServiceReturnsBadRequest()
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SharedProcessStates.ApplicationInitialised))
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SharedStates.ApplicationInitialised))
                 .And(a => _processFixture.GivenAnUpdateProcessByIdRequestWithValidationErrors())
                 .When(w => _steps.WhenAnUpdateProcessByIdRequestIsMade(_processFixture.UpdateProcessByIdRequest, _processFixture.UpdateProcessByIdRequestObject, 0))
                 .Then(r => _steps.ThenBadRequestIsReturned())

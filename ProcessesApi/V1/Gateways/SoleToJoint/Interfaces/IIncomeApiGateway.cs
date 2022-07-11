@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using ProcessesApi.V1.Domain.SoleToJoint;
+using ProcessesApi.V1.Domain.Finance;
 
 namespace ProcessesApi.V1.Gateways
 {

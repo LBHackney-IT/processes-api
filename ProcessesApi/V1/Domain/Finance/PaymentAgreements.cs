@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace ProcessesApi.V1.Domain.SoleToJoint
+namespace ProcessesApi.V1.Domain.Finance
 {
     public class PaymentAgreements
     {

@@ -5,7 +5,7 @@ using Hackney.Core.Sns;
 using Moq;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Domain.SoleToJoint;
+using ProcessesApi.V1.Constants.SoleToJoint;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Infrastructure;
@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
+using ProcessesApi.V1.Constants;
 
 namespace ProcessesApi.Tests.V1.UseCase
 {
@@ -44,16 +45,11 @@ namespace ProcessesApi.Tests.V1.UseCase
             return _fixture.Create<UpdateProcessByIdRequestObject>();
         }
 
-        private Process ConstructProcess()
-        {
-            return _fixture.Create<Process>();
-        }
-
 
         [Fact]
         public async Task UpdateProcessWhenProcessDoesNotExistReturnsNull()
         {
-            var process = ConstructProcess();
+            var process = _fixture.Create<Process>();
             var query = ConstructQuery(process.Id);
             var request = ConstructRequest();
             var token = new Token();
@@ -74,7 +70,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         [InlineData(3)]
         public async Task UpdateProcessByIdReturnsResult(int? ifMatch)
         {
-            var process = ConstructProcess();
+            var process = _fixture.Create<Process>();
             var query = ConstructQuery(process.Id);
             var request = ConstructRequest();
             var token = new Token();
@@ -82,7 +78,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             var updateProcess = _fixture.Build<Process>()
                                   .With(x => x.Id, process.Id)
                                   .Create();
-            var formData = new Dictionary<string, object>() { { SoleToJointFormDataKeys.AppointmentDateTime, DateTime.UtcNow } };
+            var formData = new Dictionary<string, object>() { { SharedKeys.AppointmentDateTime, DateTime.UtcNow } };
             var gatewayResult = new UpdateEntityResult<ProcessState>()
             {
                 UpdatedEntity = updateProcess.CurrentState,
@@ -109,8 +105,8 @@ namespace ProcessesApi.Tests.V1.UseCase
         [InlineData(3)]
         public void UpdateProcessByIdExceptionIsThrown(int? ifMatch)
         {
-            var updatedProcess = ConstructProcess();
-            var query = ConstructQuery(updatedProcess.Id);
+            var process = _fixture.Create<Process>();
+            var query = ConstructQuery(process.Id);
             var request = ConstructRequest();
 
             var exception = new ApplicationException("Test exception");

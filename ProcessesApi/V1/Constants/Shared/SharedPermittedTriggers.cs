@@ -1,13 +1,11 @@
-namespace ProcessesApi.V1.Domain.SoleToJoint
+namespace ProcessesApi.V1.Constants
 {
-    public static class SoleToJointPermittedTriggers
+    public static class SharedPermittedTriggers
     {
+        public const string StartApplication = "StartApplication";
         public const string CancelProcess = "CancelProcess";
         public const string CloseProcess = "CloseProcess";
-        public const string CheckAutomatedEligibility = "CheckAutomatedEligibility";
-        public const string CheckManualEligibility = "CheckManualEligibility";
         public const string RequestDocuments = "RequestDocuments";
-        public const string CheckTenancyBreach = "CheckTenancyBreach";
         public const string RequestDocumentsDes = "RequestDocumentsDes";
         public const string RequestDocumentsAppointment = "RequestDocumentsAppointment";
         public const string RescheduleDocumentsAppointment = "RescheduleDocumentsAppointment";
@@ -17,9 +15,5 @@ namespace ProcessesApi.V1.Domain.SoleToJoint
         public const string ScheduleInterview = "ScheduleInterview";
         public const string RescheduleInterview = "RescheduleInterview";
         public const string HOApproval = "HOApproval";
-        public const string ScheduleTenureAppointment = "ScheduleTenureAppointment";
-        public const string RescheduleTenureAppointment = "RescheduleTenureAppointment";
-        public const string UpdateTenure = "UpdateTenure";
-
     }
 }

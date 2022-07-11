@@ -5,7 +5,8 @@ namespace ProcessesApi.V1.Domain
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ProcessName
     {
-        soletojoint
+        soletojoint,
+        changeofname
     }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
