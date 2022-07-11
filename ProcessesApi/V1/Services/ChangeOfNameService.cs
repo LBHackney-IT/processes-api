@@ -67,6 +67,11 @@ namespace ProcessesApi.V1.Services
                     .Permit(SharedPermittedTriggers.RescheduleDocumentsAppointment, SharedStates.DocumentsAppointmentRescheduled)
                     .Permit(SharedPermittedTriggers.ReviewDocuments, SharedStates.DocumentChecksPassed)
                     .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
+
+            _machine.Configure(SharedStates.DocumentsAppointmentRescheduled)
+                    .OnEntry(AddAppointmentDateTimeToEvent)
+                    .PermitReentry(SharedPermittedTriggers.RescheduleDocumentsAppointment);
+
         }
     }
 }

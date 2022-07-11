@@ -153,5 +153,41 @@ namespace ProcessesApi.Tests.V1.Services
         }
         #endregion
 
+        #region Reschedule Documents Appointment
+        [Theory]
+        [InlineData(SharedStates.DocumentsRequestedAppointment)]
+        [InlineData(SharedStates.DocumentsAppointmentRescheduled)]
+        public async Task ProcessStateIsUpdatedToDocumentsAppointmentRescheduledOnRescheduleDocumentsAppointmentTrigger(string initialState)
+        {
+            // Arrange
+            var appointmentDateTime = DateTime.UtcNow.ToString("s", CultureInfo.InvariantCulture);
+
+            var process = CreateProcessWithCurrentState(initialState, new Dictionary<string, object>
+            {
+                { SharedKeys.AppointmentDateTime, appointmentDateTime }
+            });
+            var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.RescheduleDocumentsAppointment, new Dictionary<string, object>
+            {
+                { SharedKeys.AppointmentDateTime, appointmentDateTime }
+            });
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SharedStates.DocumentsAppointmentRescheduled,
+                new List<string> { SharedPermittedTriggers.RescheduleDocumentsAppointment /*TODO Add next state here  */}
+
+            );
+            process.PreviousStates.Last().State.Should().Be(initialState);
+            VerifyThatProcessUpdatedEventIsTriggered(initialState, SharedStates.DocumentsAppointmentRescheduled);
+
+            var stateData = (_lastSnsEvent.EventData.NewData as ProcessStateChangeData).StateData;
+            stateData.Should().ContainKey(SharedKeys.AppointmentDateTime);
+        }
+
+        #endregion
+
     }
 }

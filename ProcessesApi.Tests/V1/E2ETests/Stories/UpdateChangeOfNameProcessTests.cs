@@ -152,6 +152,33 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         }
         #endregion
 
+        #region Document Appointment Rescheduled
+
+        [Fact]
+        public void ProcessStateIsUpdatedToDocumentsAppointmentRescheduled()
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(SharedStates.DocumentsRequestedAppointment))
+                    .And(a => _processFixture.GivenARescheduleDocumentsAppointmentRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, _processFixture.Process.VersionNumber))
+                .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheProcessStateIsUpdatedToDocumentsAppointmentRescheduled(_processFixture.UpdateProcessRequest))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SharedStates.DocumentsRequestedAppointment, SharedStates.DocumentsAppointmentRescheduled))
+                .BDDfy();
+        }
+
+        [Fact]
+        public void MultipleDocumentsAppointmentReschedulesArePermitted()
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(SharedStates.DocumentsAppointmentRescheduled))
+                    .And(a => _processFixture.GivenARescheduleDocumentsAppointmentRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, _processFixture.Process.VersionNumber))
+                .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheProcessStateRemainsDocumentsAppointmentRescheduled(_processFixture.UpdateProcessRequest))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SharedStates.DocumentsAppointmentRescheduled, SharedStates.DocumentsAppointmentRescheduled))
+                .BDDfy();
+        }
+        #endregion
+
 
 
     }
