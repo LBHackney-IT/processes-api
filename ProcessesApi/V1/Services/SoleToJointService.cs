@@ -132,7 +132,7 @@ namespace ProcessesApi.V1.Services
             processRequest.HandleRecommendation(triggerMappings,
                                                 SoleToJointKeys.HORecommendation,
                                                 new List<string> { SoleToJointKeys.HousingAreaManagerName });
-            
+
             var eventDataKeys = new List<string> { SoleToJointKeys.HousingAreaManagerName };
             if (formData.ContainsKey(SharedKeys.Reason)) eventDataKeys.Add(SharedKeys.Reason);
             _eventData = formData.CreateEventData(eventDataKeys);
