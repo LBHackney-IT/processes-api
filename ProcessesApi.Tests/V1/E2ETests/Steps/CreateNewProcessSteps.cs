@@ -23,11 +23,11 @@ using ProcessesApi.V1.Constants.ChangeOfName;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {
-    public class CreateNewSoleToJointProcessSteps : BaseSteps
+    public class CreateNewProcessSteps : BaseSteps
     {
         private readonly IDynamoDbFixture _dbFixture;
 
-        public CreateNewSoleToJointProcessSteps(HttpClient httpClient, IDynamoDbFixture dbFixture) : base(httpClient)
+        public CreateNewProcessSteps(HttpClient httpClient, IDynamoDbFixture dbFixture) : base(httpClient)
         {
             _dbFixture = dbFixture;
         }

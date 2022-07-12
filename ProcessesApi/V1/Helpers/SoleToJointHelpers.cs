@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Services.Exceptions;
-using ProcessesApi.V1.Constants;
 
 namespace ProcessesApi.V1.Helpers
 {
@@ -16,7 +15,7 @@ namespace ProcessesApi.V1.Helpers
         {
             var formData = processRequest.FormData;
             var expectedFormDataKeys = expectations.Select(expectation => expectation.CheckId).ToList();
-            ProcessHelper.ValidateFormData(formData, expectedFormDataKeys);
+            formData.ValidateKeys(expectedFormDataKeys);
 
             var isCheckPassed = expectations.All(expectation =>
                 String.Equals(expectation.Value,
@@ -27,7 +26,7 @@ namespace ProcessesApi.V1.Helpers
             processRequest.Trigger = isCheckPassed ? passedTrigger : failedTrigger;
         }
 
-        public static void AddNewTenureToRelatedEntities(Guid newTenureId, Process process)
+        public static void AddNewTenureToRelatedEntities(this Process process, Guid newTenureId)
         {
             var relatedEntity = new RelatedEntity()
             {
@@ -40,22 +39,19 @@ namespace ProcessesApi.V1.Helpers
         }
 
 
-        public static void ValidateRecommendation(this ProcessTrigger processRequest, Dictionary<string, string> triggerMappings, string keyName, List<string> otherExpectedFormDataKeys)
+        public static void HandleRecommendation(this ProcessTrigger processRequest, Dictionary<string, string> triggerMappings, string recommendationKeyName, List<string> otherExpectedFormDataKeys)
         {
             var formData = processRequest.FormData;
 
             var expectedFormDataKeys = otherExpectedFormDataKeys ?? new List<string>();
-            expectedFormDataKeys.Add(keyName);
-            ProcessHelper.ValidateFormData(formData, expectedFormDataKeys);
+            expectedFormDataKeys.Add(recommendationKeyName);
+            formData.ValidateKeys(expectedFormDataKeys);
 
-            var recommendation = formData[keyName].ToString();
+            var recommendation = formData[recommendationKeyName].ToString();
 
             if (!triggerMappings.ContainsKey(recommendation))
-                throw new FormDataValueInvalidException(keyName, recommendation, triggerMappings.Keys.ToList());
+                throw new FormDataValueInvalidException(recommendationKeyName, recommendation, triggerMappings.Keys.ToList());
             processRequest.Trigger = triggerMappings[recommendation];
-
         }
-
-
     }
 }

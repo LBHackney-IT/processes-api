@@ -81,18 +81,18 @@ namespace ProcessesApi.Tests.V1.Services
 
         // List all states that CloseProcess can be triggered from
         [Theory]
-        [InlineData(SoleToJointStates.AutomatedChecksFailed, true)]
-        [InlineData(SoleToJointStates.ManualChecksFailed, false)]
-        [InlineData(SoleToJointStates.BreachChecksFailed, true)]
-        [InlineData(SharedStates.DocumentsRequestedDes, false)]
-        [InlineData(SharedStates.DocumentsRequestedAppointment, true)]
-        [InlineData(SharedStates.DocumentsAppointmentRescheduled, false)]
-        [InlineData(SharedStates.HOApprovalFailed, true)]
-        [InlineData(SoleToJointStates.TenureAppointmentRescheduled, false)]
+        [InlineData(SoleToJointStates.AutomatedChecksFailed)]
+        [InlineData(SoleToJointStates.ManualChecksFailed)]
+        [InlineData(SoleToJointStates.BreachChecksFailed)]
+        [InlineData(SharedStates.DocumentsRequestedDes)]
+        [InlineData(SharedStates.DocumentsRequestedAppointment)]
+        [InlineData(SharedStates.DocumentsAppointmentRescheduled)]
+        [InlineData(SharedStates.HOApprovalFailed)]
+        [InlineData(SoleToJointStates.TenureAppointmentRescheduled)]
 
-        public async Task ProcessStateIsUpdatedToProcessClosedAndEventIsRaised(string fromState, bool hasReason)
+        public async Task ProcessStateIsUpdatedToProcessClosedAndEventIsRaised(string fromState)
         {
-            await ProcessStateShouldUpdateToProcessClosedAndEventIsRaised(fromState, hasReason).ConfigureAwait(false);
+            await ProcessStateShouldUpdateToProcessClosedAndEventIsRaised(fromState).ConfigureAwait(false);
         }
 
         // List all states that CancelProcess can be triggered from
@@ -621,7 +621,8 @@ namespace ProcessesApi.Tests.V1.Services
             var formData = new Dictionary<string, object>
             {
                 {  SoleToJointKeys.HORecommendation, SoleToJointValues.Approve },
-                {  SoleToJointKeys.HousingAreaManagerName, "ManagerName"  }
+                {  SoleToJointKeys.HousingAreaManagerName, "ManagerName"  },
+                {  SharedKeys.Reason, "Some Reason"  }
             };
             var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.HOApproval, formData);
 
@@ -640,6 +641,9 @@ namespace ProcessesApi.Tests.V1.Services
         [Theory]
         [InlineData(SharedStates.InterviewScheduled)]
         [InlineData(SharedStates.InterviewRescheduled)]
+        [InlineData(SharedStates.TenureInvestigationPassedWithInt)]
+        [InlineData(SharedStates.TenureInvestigationPassed)]
+        [InlineData(SharedStates.TenureInvestigationFailed)]
         public async Task ProcessStateIsUpdatedToHOApprovalFailed(string initialState)
         {
             // Arrange
@@ -647,8 +651,10 @@ namespace ProcessesApi.Tests.V1.Services
             var formData = new Dictionary<string, object>
             {
                 {  SoleToJointKeys.HORecommendation, SoleToJointValues.Decline },
-                { SoleToJointKeys.HousingAreaManagerName, "ManagerName"}
+                { SoleToJointKeys.HousingAreaManagerName, "ManagerName"},
+                { SharedKeys.Reason, "Some Reason"}
             };
+
             var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.HOApproval, formData);
 
             // Act
@@ -664,9 +670,12 @@ namespace ProcessesApi.Tests.V1.Services
         }
 
         [Theory]
+        [InlineData(SharedStates.TenureInvestigationPassedWithInt)]
+        [InlineData(SharedStates.TenureInvestigationPassed)]
+        [InlineData(SharedStates.TenureInvestigationFailed)]
         [InlineData(SharedStates.InterviewScheduled)]
         [InlineData(SharedStates.InterviewRescheduled)]
-        public void ThrowsFormDataInvalidExceptionOnHousingApprovalWhenRecommendationIsNotOneOfCorrectValues(string initialState)
+        public void ThrowsFormDataInvalidExceptionOnHOApprovalWhenRecommendationIsNotOneOfCorrectValues(string initialState)
         {
             // Arrange
             var process = CreateProcessWithCurrentState(initialState);
@@ -674,7 +683,8 @@ namespace ProcessesApi.Tests.V1.Services
             var formData = new Dictionary<string, object>
             {
                 {  SoleToJointKeys.HORecommendation, invalidRecommendation },
-                { SoleToJointKeys.HousingAreaManagerName, "ManagerName"}
+                { SoleToJointKeys.HousingAreaManagerName, "ManagerName"},
+                { SharedKeys.Reason, "Some reason"}
             };
             var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.HOApproval, formData);
             var expectedRecommendationValues = new List<string>()
@@ -759,11 +769,9 @@ namespace ProcessesApi.Tests.V1.Services
         #region Update Tenure
 
         [Theory]
-        [InlineData(SoleToJointStates.TenureAppointmentScheduled, true)]
-        [InlineData(SoleToJointStates.TenureAppointmentRescheduled, true)]
-        [InlineData(SoleToJointStates.TenureAppointmentScheduled, false)]
-        [InlineData(SoleToJointStates.TenureAppointmentRescheduled, false)]
-        public async Task ProcessStateIsUpdatedToProcessCompletedAndEventIsRaisedOnUpdateTenure(string initialState, bool hasReason)
+        [InlineData(SoleToJointStates.TenureAppointmentScheduled)]
+        [InlineData(SoleToJointStates.TenureAppointmentRescheduled)]
+        public async Task ProcessStateIsUpdatedToProcessCompletedAndEventIsRaisedOnUpdateTenure(string initialState)
         {
             // Arrange
             var process = CreateProcessWithCurrentState(initialState);
@@ -771,7 +779,9 @@ namespace ProcessesApi.Tests.V1.Services
             {
                 { SharedKeys.HasNotifiedResident, true }
             };
-            if (hasReason) formData.Add(SharedKeys.Reason, "this is a reason.");
+            var random = new Random();
+            if (random.Next() % 2 == 0) // randomly add reason to formdata
+                formData.Add(SharedKeys.Reason, "this is a reason.");
 
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.UpdateTenure,
