@@ -45,7 +45,7 @@ namespace ProcessesApi.V1.Helpers
 
         public async Task AddIncomingTenantToRelatedEntities(Dictionary<string, object> requestFormData, Process process)
         {
-            ProcessHelper.ValidateFormData(requestFormData, new List<string>() { SoleToJointKeys.IncomingTenantId });
+            requestFormData.ValidateKeys(new List<string>() { SoleToJointKeys.IncomingTenantId });
 
             //TODO: When doing a POST request from the FE they should created a relatedEntities object with all neccesary values
             // Once Frontend work is completed the code below should be removed.

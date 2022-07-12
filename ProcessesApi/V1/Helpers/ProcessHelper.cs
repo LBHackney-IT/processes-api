@@ -1,19 +1,15 @@
 using ProcessesApi.V1.Constants;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Factories;
-using ProcessesApi.V1.Services;
 using ProcessesApi.V1.Services.Exceptions;
-using Stateless;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.Helpers
 {
     public static class ProcessHelper
     {
-        public static void ValidateFormData(Dictionary<string, object> requestFormData, List<string> expectedFormDataKeys)
+        public static void ValidateKeys(this Dictionary<string, object> requestFormData, List<string> expectedFormDataKeys)
         {
             expectedFormDataKeys.ForEach(x =>
             {
@@ -22,13 +18,13 @@ namespace ProcessesApi.V1.Helpers
             });
         }
 
-        public static void ValidateOptionalFormData(Dictionary<string, object> requestFormData, List<string> expectedFormDataKeys)
+        public static void ValidateOptionalKeys(this Dictionary<string, object> requestFormData, List<string> expectedFormDataKeys)
         {
             if (!expectedFormDataKeys.Any(x => requestFormData.ContainsKey(x)))
                 throw new FormDataNotFoundException(requestFormData.Keys.ToList(), expectedFormDataKeys);
 
         }
-        public static Dictionary<string, object> CreateEventData(Dictionary<string, object> requestFormData, List<string> selectedKeys)
+        public static Dictionary<string, object> CreateEventData(this Dictionary<string, object> requestFormData, List<string> selectedKeys)
         {
             return requestFormData.Where(x => selectedKeys.Contains(x.Key))
                                   .ToDictionary(val => val.Key, val => val.Value);
@@ -37,7 +33,7 @@ namespace ProcessesApi.V1.Helpers
         public static Dictionary<string, object> ValidateHasNotifiedResident(this ProcessTrigger processRequest)
         {
             var formData = processRequest.FormData;
-            ProcessHelper.ValidateFormData(formData, new List<string>() { SharedKeys.HasNotifiedResident });
+            ProcessHelper.ValidateKeys(formData, new List<string>() { SharedKeys.HasNotifiedResident });
 
             var eventData = new Dictionary<string, object>();
 
