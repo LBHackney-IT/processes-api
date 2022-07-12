@@ -80,7 +80,7 @@ namespace ProcessesApi.Tests.V1.Helpers
             processRequest.FormData.Add(reason, true);
 
             // Act
-            Action action = () => ProcessHelper.ValidateHasNotifiedResident( processRequest);
+            Action action = () => ProcessHelper.ValidateHasNotifiedResident(processRequest);
             // Assert
             action.Should().NotThrow<FormDataNotFoundException>();
         }
