@@ -56,28 +56,6 @@ namespace ProcessesApi.V1.Helpers
 
         }
 
-        public static Dictionary<string, object> ValidateHasNotifiedResident(this ProcessTrigger processRequest)
-        {
-            var formData = processRequest.FormData;
-            ProcessHelper.ValidateFormData(formData, new List<string>() { SharedKeys.HasNotifiedResident });
 
-            var eventData = new Dictionary<string, object>();
-
-            if (formData.ContainsKey(SharedKeys.Reason))
-                eventData = ProcessHelper.CreateEventData(formData, new List<string> { SharedKeys.Reason });
-
-            var hasNotifiedResidentString = processRequest.FormData[SharedKeys.HasNotifiedResident];
-
-            if (Boolean.TryParse(hasNotifiedResidentString.ToString(), out bool hasNotifiedResident))
-            {
-                if (!hasNotifiedResident)
-                    throw new FormDataInvalidException("Housing Officer must notify the resident before closing this process.");
-                return eventData;
-            }
-            else
-            {
-                throw new FormDataFormatException("boolean", hasNotifiedResidentString);
-            }
-        }
     }
 }
