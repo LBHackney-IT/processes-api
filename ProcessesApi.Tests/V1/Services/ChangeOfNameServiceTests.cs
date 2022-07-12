@@ -13,6 +13,7 @@ using Xunit;
 using ProcessesApi.V1.Services;
 using ProcessesApi.V1.Constants;
 using System.Linq;
+using System.Globalization;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -54,6 +55,18 @@ namespace ProcessesApi.Tests.V1.Services
             _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_STARTED_AGAINST_PERSON_EVENT);
         }
 
+        [Theory]
+        [InlineData(ChangeOfNameStates.EnterNewName, ChangeOfNamePermittedTriggers.EnterNewName, new string[] { ChangeOfNameKeys.Title, ChangeOfNameKeys.FirstName, ChangeOfNameKeys.MiddleName, ChangeOfNameKeys.Surname })]
+        [InlineData(SharedStates.DocumentsAppointmentRescheduled, SharedPermittedTriggers.RescheduleDocumentsAppointment, new string[] { SharedKeys.AppointmentDateTime })]
+        [InlineData(SharedStates.DocumentsRequestedAppointment, SharedPermittedTriggers.RescheduleDocumentsAppointment, new string[] { SharedKeys.AppointmentDateTime })]
+        [InlineData(ChangeOfNameStates.NameSubmitted, SharedPermittedTriggers.RequestDocumentsAppointment, new string[] { SharedKeys.AppointmentDateTime })]
+
+        public void ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
+        {
+            ShouldThrowFormDataNotFoundException(initialState, trigger, expectedFormDataKeys);
+        }
+
+        #region NameSubmitted
         [Fact]
         public async Task CurrentStateIsUpdatedToNameSubmittedOnEnterNewName()
         {
@@ -77,18 +90,107 @@ namespace ProcessesApi.Tests.V1.Services
             CurrentStateShouldContainCorrectData(process,
                                                  triggerObject,
                                                  ChangeOfNameStates.NameSubmitted,
-                                                 new List<string>() { /*TODO: Add next state here */ });
+                                                 new List<string>() { SharedPermittedTriggers.RequestDocumentsDes, SharedPermittedTriggers.RequestDocumentsAppointment, SharedPermittedTriggers.CancelProcess });
             process.PreviousStates.LastOrDefault().State.Should().Be(ChangeOfNameStates.EnterNewName);
             VerifyThatProcessUpdatedEventIsTriggered(ChangeOfNameStates.EnterNewName, ChangeOfNameStates.NameSubmitted);
         }
+        #endregion
+
+
+        #region RequestDocumentsDes
+        [Fact]
+        public async Task CurrentStateIsUpdatedToRequestDocumentsDes()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(ChangeOfNameStates.NameSubmitted);
+
+            var triggerObject = CreateProcessTrigger(process,
+                                                     SharedPermittedTriggers.RequestDocumentsDes);
+            // Act
+            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(process,
+                                                 triggerObject,
+                                                 SharedStates.DocumentsRequestedDes,
+                                                 new List<string>() { SharedPermittedTriggers.RequestDocumentsAppointment, SharedPermittedTriggers.ReviewDocuments, SharedPermittedTriggers.CancelProcess });
+            process.PreviousStates.LastOrDefault().State.Should().Be(ChangeOfNameStates.NameSubmitted);
+            VerifyThatProcessUpdatedEventIsTriggered(ChangeOfNameStates.NameSubmitted, SharedStates.DocumentsRequestedDes);
+        }
+        #endregion
+
+        #region RequestDocumentsAppointment
 
         [Theory]
-        [InlineData(ChangeOfNameStates.EnterNewName, ChangeOfNamePermittedTriggers.EnterNewName, new string[] { ChangeOfNameKeys.Title, ChangeOfNameKeys.FirstName, ChangeOfNameKeys.MiddleName, ChangeOfNameKeys.Surname })]
-
-        public void ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
+        [InlineData(ChangeOfNameStates.NameSubmitted)]
+        [InlineData(SharedStates.DocumentsRequestedDes)]
+        public async Task ProcessStateIsUpdatedToDocumentsRequestedAppointment(string initialState)
         {
-            ShouldThrowFormDataNotFoundException(initialState, trigger, expectedFormDataKeys);
+            // Arrange
+            var appointmentDateTime = DateTime.UtcNow.ToString("s", CultureInfo.InvariantCulture);
+
+            var process = CreateProcessWithCurrentState(initialState);
+            var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.RequestDocumentsAppointment, new Dictionary<string, object>
+            {
+                { SharedKeys.AppointmentDateTime, appointmentDateTime }
+            });
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SharedStates.DocumentsRequestedAppointment,
+                new List<string>
+                {
+                    SharedPermittedTriggers.RescheduleDocumentsAppointment,
+                    SharedPermittedTriggers.ReviewDocuments,
+                    SharedPermittedTriggers.CancelProcess
+                });
+
+            process.PreviousStates.Last().State.Should().Be(initialState);
+            VerifyThatProcessUpdatedEventIsTriggered(initialState, SharedStates.DocumentsRequestedAppointment);
+
+            var stateData = (_lastSnsEvent.EventData.NewData as ProcessStateChangeData).StateData;
+            stateData.Should().ContainKey(SharedKeys.AppointmentDateTime);
         }
+        #endregion
+
+        #region Reschedule Documents Appointment
+        [Theory]
+        [InlineData(SharedStates.DocumentsRequestedAppointment)]
+        [InlineData(SharedStates.DocumentsAppointmentRescheduled)]
+        public async Task ProcessStateIsUpdatedToDocumentsAppointmentRescheduledOnRescheduleDocumentsAppointmentTrigger(string initialState)
+        {
+            // Arrange
+            var appointmentDateTime = DateTime.UtcNow.ToString("s", CultureInfo.InvariantCulture);
+
+            var process = CreateProcessWithCurrentState(initialState, new Dictionary<string, object>
+            {
+                { SharedKeys.AppointmentDateTime, appointmentDateTime }
+            });
+            var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.RescheduleDocumentsAppointment, new Dictionary<string, object>
+            {
+                { SharedKeys.AppointmentDateTime, appointmentDateTime }
+            });
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SharedStates.DocumentsAppointmentRescheduled,
+                new List<string> { SharedPermittedTriggers.RescheduleDocumentsAppointment /*TODO Add next state here  */}
+
+            );
+            process.PreviousStates.Last().State.Should().Be(initialState);
+            VerifyThatProcessUpdatedEventIsTriggered(initialState, SharedStates.DocumentsAppointmentRescheduled);
+
+            var stateData = (_lastSnsEvent.EventData.NewData as ProcessStateChangeData).StateData;
+            stateData.Should().ContainKey(SharedKeys.AppointmentDateTime);
+        }
+
+        #endregion
 
     }
 }

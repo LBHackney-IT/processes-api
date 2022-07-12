@@ -3,8 +3,6 @@ using Hackney.Core.Testing.DynamoDb;
 using Hackney.Core.Testing.Sns;
 using ProcessesApi.Tests.V1.E2E.Fixtures;
 using ProcessesApi.Tests.V1.E2E.Steps;
-using ProcessesApi.V1.Constants.ChangeOfName;
-using ProcessesApi.V1.Constants.SoleToJoint;
 using TestStack.BDDfy;
 using Xunit;
 

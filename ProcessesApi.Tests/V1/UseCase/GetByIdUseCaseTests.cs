@@ -6,7 +6,6 @@ using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.UseCase;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
 

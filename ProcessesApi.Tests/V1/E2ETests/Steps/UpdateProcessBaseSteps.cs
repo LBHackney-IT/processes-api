@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
 using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
+using ProcessesApi.V1.Constants;
 using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Infrastructure.JWT;
 using System;
@@ -15,7 +16,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -125,6 +125,26 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
         public async Task ThenTheProcessUpdatedEventIsRaised(ISnsFixture snsFixture, Guid processId, string oldState, string newState)
         {
             await VerifyProcessUpdatedEventIsRaised(snsFixture, processId, oldState, newState).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(ISnsFixture snsFixture, Guid processId, string oldState, string newState)
+        {
+            Action<string> verifyData = (dataAsString) =>
+            {
+                var dataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(dataAsString, _jsonOptions);
+                var stateData = JsonSerializer.Deserialize<Dictionary<string, object>>(dataDic["stateData"].ToString(), _jsonOptions);
+                stateData.Should().ContainKey(SharedKeys.AppointmentDateTime);
+            };
+            await VerifyProcessUpdatedEventIsRaised(snsFixture, processId, oldState, newState, verifyData).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheProcessStateIsUpdatedToDocumentsAppointmentRescheduled(UpdateProcessQuery request)
+        {
+            await CheckProcessState(request.Id, SharedStates.DocumentsAppointmentRescheduled, SharedStates.DocumentsRequestedAppointment).ConfigureAwait(false);
+        }
+        public async Task ThenTheProcessStateRemainsDocumentsAppointmentRescheduled(UpdateProcessQuery request)
+        {
+            await CheckProcessState(request.Id, SharedStates.DocumentsAppointmentRescheduled, SharedStates.DocumentsAppointmentRescheduled).ConfigureAwait(false);
         }
     }
 }

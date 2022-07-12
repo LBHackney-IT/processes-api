@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.UseCase.Interfaces
 {
-    public interface IUpdateProcessByIdUsecase
+    public interface IUpdateProcessByIdUseCase
     {
         Task<ProcessState> Execute(ProcessQuery query, UpdateProcessByIdRequestObject requestObject, string requestBody, int? ifMatch, Token token);
     }

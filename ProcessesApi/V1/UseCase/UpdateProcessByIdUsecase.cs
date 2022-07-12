@@ -10,13 +10,13 @@ using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.UseCase
 {
-    public class UpdateProcessByIdUsecase : IUpdateProcessByIdUsecase
+    public class UpdateProcessByIdUseCase : IUpdateProcessByIdUseCase
     {
         private readonly IProcessesGateway _processGateway;
         private readonly ISnsGateway _snsGateway;
         private readonly ISnsFactory _snsFactory;
 
-        public UpdateProcessByIdUsecase(IProcessesGateway processGateway, ISnsGateway snsGateway, ISnsFactory snsFactory)
+        public UpdateProcessByIdUseCase(IProcessesGateway processGateway, ISnsGateway snsGateway, ISnsFactory snsFactory)
 
         {
             _processGateway = processGateway;

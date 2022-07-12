@@ -10,7 +10,6 @@ using Microsoft.Extensions.Primitives;
 using Moq;
 using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.Constants;
 using ProcessesApi.V1.Controllers;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
@@ -32,8 +31,9 @@ namespace ProcessesApi.Tests.V1.Controllers
     {
         private ProcessesApiController _classUnderTest;
         private Mock<IGetByIdUseCase> _mockGetByIdUseCase;
-        private Mock<IProcessUseCase> _mockProcessUseCase;
-        private Mock<IUpdateProcessByIdUsecase> _mockUpdateProcessByIdUseCase;
+        private Mock<ICreateProcessUseCase> _mockCreateProcessUseCase;
+        private Mock<IUpdateProcessUseCase> _mockUpdateProcessUseCase;
+        private Mock<IUpdateProcessByIdUseCase> _mockUpdateProcessByIdUseCase;
 
         private readonly Mock<ITokenFactory> _mockTokenFactory;
         private readonly Mock<IHttpContextWrapper> _mockContextWrapper;
@@ -47,8 +47,9 @@ namespace ProcessesApi.Tests.V1.Controllers
         public ProcessesApiControllerTests()
         {
             _mockGetByIdUseCase = new Mock<IGetByIdUseCase>();
-            _mockProcessUseCase = new Mock<IProcessUseCase>();
-            _mockUpdateProcessByIdUseCase = new Mock<IUpdateProcessByIdUsecase>();
+            _mockCreateProcessUseCase = new Mock<ICreateProcessUseCase>();
+            _mockUpdateProcessUseCase = new Mock<IUpdateProcessUseCase>();
+            _mockUpdateProcessByIdUseCase = new Mock<IUpdateProcessByIdUseCase>();
 
 
             _mockTokenFactory = new Mock<ITokenFactory>();
@@ -56,12 +57,12 @@ namespace ProcessesApi.Tests.V1.Controllers
             _mockHttpRequest = new Mock<HttpRequest>();
             _mockHttpResponse = new Mock<HttpResponse>();
 
-            _classUnderTest = new ProcessesApiController(_mockGetByIdUseCase.Object, _mockProcessUseCase.Object,
-                                                         _mockUpdateProcessByIdUseCase.Object, _mockContextWrapper.Object,
-                                                         _mockTokenFactory.Object)
-            {
-
-            };
+            _classUnderTest = new ProcessesApiController(_mockGetByIdUseCase.Object,
+                                                         _mockCreateProcessUseCase.Object,
+                                                         _mockUpdateProcessUseCase.Object,
+                                                         _mockUpdateProcessByIdUseCase.Object,
+                                                         _mockContextWrapper.Object,
+                                                         _mockTokenFactory.Object);
 
             // changes to allow reading of raw request body
             _mockHttpRequest.SetupGet(x => x.Body).Returns(new MemoryStream(Encoding.Default.GetBytes(RequestBodyText)));
@@ -92,10 +93,6 @@ namespace ProcessesApi.Tests.V1.Controllers
             };
         }
 
-        private CreateProcess ConstructPostRequest()
-        {
-            return _fixture.Create<CreateProcess>();
-        }
 
         private (Process, UpdateProcessQuery, UpdateProcessRequestObject) ConstructPatchRequest()
         {
@@ -122,6 +119,8 @@ namespace ProcessesApi.Tests.V1.Controllers
             return (currentProcessState, query, queryObject);
         }
 
+        #region Get By ID
+
         [Fact]
         public async Task GetProcessWithValidIDReturnsOKResponse()
         {
@@ -130,7 +129,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             var controllerContext = new ControllerContext(new ActionContext(stubHttpContext, new RouteData(), new ControllerActionDescriptor()));
             _classUnderTest.ControllerContext = controllerContext;
 
-            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), TargetType.tenure, new List<RelatedEntity>(), ProcessName.soletojoint, null);
+            var process = _fixture.Create<Process>();
             var query = ConstructQuery(process.Id);
             _mockGetByIdUseCase.Setup(x => x.Execute(query)).ReturnsAsync(process);
 
@@ -179,17 +178,19 @@ namespace ProcessesApi.Tests.V1.Controllers
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }
 
+        #endregion
+
+        #region Create New Process
+
         [Fact]
         public async void CreateNewProcessReturnsCreatedResponse()
         {
             // Arrange
-            var request = ConstructPostRequest();
+            var request = _fixture.Create<CreateProcess>();
             var processName = ProcessName.soletojoint;
-            var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, request.TargetId, request.TargetType, request.RelatedEntities, processName, null);
+            var processResponse = _fixture.Create<Process>();
 
-            _mockProcessUseCase.Setup(x => x.Execute(It.IsAny<Guid>(), SharedPermittedTriggers.StartApplication,
-             request.TargetId, request.TargetType, request.RelatedEntities, request.FormData, request.Documents, processName, It.IsAny<int?>(), It.IsAny<Token>()))
-             .ReturnsAsync(processResponse);
+            _mockCreateProcessUseCase.Setup(x => x.Execute(request, processName, It.IsAny<Token>())).ReturnsAsync(processResponse);
 
             // Act
             var response = await _classUnderTest.CreateNewProcess(request, processName).ConfigureAwait(false);
@@ -209,8 +210,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             var processName = ProcessName.soletojoint;
             var exception = Activator.CreateInstance(exceptionType) as Exception;
 
-            _mockProcessUseCase.Setup(x => x.Execute(It.IsAny<Guid>(), SharedPermittedTriggers.StartApplication,
-              request.TargetId, request.TargetType, request.RelatedEntities, request.FormData, request.Documents, processName, It.IsAny<int?>(), It.IsAny<Token>())).ThrowsAsync(exception);
+            _mockCreateProcessUseCase.Setup(x => x.Execute(request, processName, It.IsAny<Token>())).ThrowsAsync(exception);
 
             var response = await _classUnderTest.CreateNewProcess(request, processName).ConfigureAwait(false);
 
@@ -223,21 +223,23 @@ namespace ProcessesApi.Tests.V1.Controllers
             var request = _fixture.Create<CreateProcess>();
             var processName = ProcessName.soletojoint;
             var exception = new ApplicationException("Test exception");
-            _mockProcessUseCase.Setup(x => x.Execute(It.IsAny<Guid>(), SharedPermittedTriggers.StartApplication,
-              request.TargetId, request.TargetType, request.RelatedEntities, request.FormData, request.Documents, processName, It.IsAny<int?>(), It.IsAny<Token>())).ThrowsAsync(exception);
+            _mockCreateProcessUseCase.Setup(x => x.Execute(request, processName, It.IsAny<Token>())).ThrowsAsync(exception);
 
             Func<Task<IActionResult>> func = async () => await _classUnderTest.CreateNewProcess(request, processName).ConfigureAwait(false);
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }
+
+        #endregion
+
+        #region Update Process
 
         [Fact]
         public async void UpdateProcessStateSuccessfullyReturnsUpdatedStatus()
         {
             // Arrange
             (var processResponse, var request, var requestObject) = ConstructPatchRequest();
-            _mockProcessUseCase.Setup(x => x.Execute(request.Id, request.ProcessTrigger,
-              null, null, null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
-                .ReturnsAsync(processResponse);
+            _mockUpdateProcessUseCase.Setup(x => x.Execute(request, requestObject, It.IsAny<int?>(), It.IsAny<Token>()))
+                                     .ReturnsAsync(processResponse);
             // Act
             var response = await _classUnderTest.UpdateProcessState(requestObject, request).ConfigureAwait(false);
             // Assert
@@ -249,9 +251,8 @@ namespace ProcessesApi.Tests.V1.Controllers
         {
             // Arrange
             (var processResponse, var request, var requestObject) = ConstructPatchRequest();
-            _mockProcessUseCase.Setup(x => x.Execute(request.Id, SharedPermittedTriggers.StartApplication,
-              null, processResponse.TargetType, null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
-                .ReturnsAsync((Process) null);
+            _mockUpdateProcessUseCase.Setup(x => x.Execute(request, requestObject, It.IsAny<int?>(), It.IsAny<Token>()))
+                                     .ReturnsAsync((Process) null);
             // Act
             var response = await _classUnderTest.UpdateProcessState(requestObject, request).ConfigureAwait(false);
             // Assert
@@ -267,9 +268,8 @@ namespace ProcessesApi.Tests.V1.Controllers
             (var processResponse, var request, var requestObject) = ConstructPatchRequest();
             var exception = Activator.CreateInstance(exceptionType) as Exception;
 
-            _mockProcessUseCase.Setup(x => x.Execute(request.Id, request.ProcessTrigger,
-              null, null, null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
-                .ThrowsAsync(exception);
+            _mockUpdateProcessUseCase.Setup(x => x.Execute(request, requestObject, It.IsAny<int?>(), It.IsAny<Token>()))
+                                     .ThrowsAsync(exception);
 
             var response = await _classUnderTest.UpdateProcessState(requestObject, request).ConfigureAwait(false);
 
@@ -282,9 +282,8 @@ namespace ProcessesApi.Tests.V1.Controllers
             (var processResponse, var request, var requestObject) = ConstructPatchRequest();
             var exception = new VersionNumberConflictException(1, 2);
 
-            _mockProcessUseCase.Setup(x => x.Execute(request.Id, request.ProcessTrigger,
-              null, null, null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
-                .ThrowsAsync(exception);
+            _mockUpdateProcessUseCase.Setup(x => x.Execute(request, requestObject, It.IsAny<int?>(), It.IsAny<Token>()))
+                                     .ThrowsAsync(exception);
 
             var response = await _classUnderTest.UpdateProcessState(requestObject, request).ConfigureAwait(false);
 
@@ -297,14 +296,18 @@ namespace ProcessesApi.Tests.V1.Controllers
             // Arrange
             var exception = new ApplicationException("Test exception");
             (var processResponse, var request, var requestObject) = ConstructPatchRequest();
-            _mockProcessUseCase.Setup(x => x.Execute(request.Id, request.ProcessTrigger,
-              null, null, null, requestObject.FormData, requestObject.Documents, request.ProcessName, It.IsAny<int?>(), It.IsAny<Token>()))
-                .ThrowsAsync(exception);
+
+            _mockUpdateProcessUseCase.Setup(x => x.Execute(request, requestObject, It.IsAny<int?>(), It.IsAny<Token>()))
+                                     .ThrowsAsync(exception);
             // Act
             Func<Task<IActionResult>> func = async () => await _classUnderTest.UpdateProcessState(requestObject, request).ConfigureAwait(false);
             // Assert
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }
+
+        #endregion
+
+        #region Update Process by ID
 
         [Fact]
         public async void UpdateProcessbyIdSuccessfullyReturnsUpdatedStatus()
@@ -359,5 +362,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             // Assert
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }
+
+        #endregion
     }
 }
