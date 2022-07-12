@@ -1,14 +1,18 @@
 using ProcessesApi.V1.Constants;
 using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Factories;
+using ProcessesApi.V1.Services;
 using ProcessesApi.V1.Services.Exceptions;
+using Stateless;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.Helpers
 {
     public static class ProcessHelper
     {
-
         public static void ValidateFormData(Dictionary<string, object> requestFormData, List<string> expectedFormDataKeys)
         {
             expectedFormDataKeys.ForEach(x =>
@@ -28,6 +32,30 @@ namespace ProcessesApi.V1.Helpers
         {
             return requestFormData.Where(x => selectedKeys.Contains(x.Key))
                                   .ToDictionary(val => val.Key, val => val.Value);
+        }
+
+        public static Dictionary<string, object> ValidateHasNotifiedResident(this ProcessTrigger processRequest)
+        {
+            var formData = processRequest.FormData;
+            ProcessHelper.ValidateFormData(formData, new List<string>() { SharedKeys.HasNotifiedResident });
+
+            var eventData = new Dictionary<string, object>();
+
+            if (formData.ContainsKey(SharedKeys.Reason))
+                eventData = ProcessHelper.CreateEventData(formData, new List<string> { SharedKeys.Reason });
+
+            var hasNotifiedResidentString = processRequest.FormData[SharedKeys.HasNotifiedResident];
+
+            if (Boolean.TryParse(hasNotifiedResidentString.ToString(), out bool hasNotifiedResident))
+            {
+                if (!hasNotifiedResident)
+                    throw new FormDataInvalidException("Housing Officer must notify the resident before closing this process.");
+                return eventData;
+            }
+            else
+            {
+                throw new FormDataFormatException("boolean", hasNotifiedResidentString);
+            }
         }
     }
 }

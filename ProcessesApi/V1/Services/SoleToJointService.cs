@@ -141,7 +141,7 @@ namespace ProcessesApi.V1.Services
         private async Task OnProcessClosed(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
-            _eventData = SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
+            _eventData = ProcessHelper.ValidateHasNotifiedResident(processRequest);
             await PublishProcessClosedEvent(x).ConfigureAwait(false);
         }
 
@@ -157,7 +157,7 @@ namespace ProcessesApi.V1.Services
         private async Task OnProcessCompleted(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
-            _eventData = SoleToJointHelpers.ValidateHasNotifiedResident(processRequest);
+            _eventData = ProcessHelper.ValidateHasNotifiedResident(processRequest);
 
             var newTenureId = await _dbOperationsHelper.UpdateTenures(_process, _token).ConfigureAwait(false);
             _eventData.Add(SoleToJointKeys.NewTenureId, newTenureId);

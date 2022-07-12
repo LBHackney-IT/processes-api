@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Hackney.Core.Sns;
 using ProcessesApi.V1.Constants;
 using ProcessesApi.V1.Constants.ChangeOfName;
@@ -42,8 +43,30 @@ namespace ProcessesApi.V1.Services
             _eventData = ProcessHelper.CreateEventData(trigger.FormData, new List<string> { SharedKeys.AppointmentDateTime });
         }
 
+        private async Task OnProcessClosed(Stateless.StateMachine<string, string>.Transition x)
+        {
+            var processRequest = x.Parameters[0] as ProcessTrigger;
+            _eventData = ProcessHelper.ValidateHasNotifiedResident(processRequest);
+            await PublishProcessClosedEvent(x).ConfigureAwait(false);
+        }
+
+        private async Task OnProcessCancelled(Stateless.StateMachine<string, string>.Transition x)
+        {
+            var processRequest = x.Parameters[0] as ProcessTrigger;
+            ProcessHelper.ValidateFormData(processRequest.FormData, new List<string>() { SharedKeys.Comment });
+
+            _eventData = ProcessHelper.CreateEventData(processRequest.FormData, new List<string> { SharedKeys.Comment });
+            await PublishProcessClosedEvent(x).ConfigureAwait(false);
+        }
+
         protected override void SetUpStates()
         {
+            _machine.Configure(SharedStates.ProcessClosed)
+                    .OnEntryAsync(OnProcessClosed);
+
+            _machine.Configure(SharedStates.ProcessCancelled)
+                    .OnEntryAsync(OnProcessCancelled);
+
             _machine.Configure(SharedStates.ApplicationInitialised)
                     .Permit(SharedPermittedTriggers.StartApplication, ChangeOfNameStates.EnterNewName)
                     .OnExitAsync(() => PublishProcessStartedEvent(ProcessEventConstants.PROCESS_STARTED_AGAINST_PERSON_EVENT));
@@ -70,7 +93,8 @@ namespace ProcessesApi.V1.Services
 
             _machine.Configure(SharedStates.DocumentsAppointmentRescheduled)
                     .OnEntry(AddAppointmentDateTimeToEvent)
-                    .PermitReentry(SharedPermittedTriggers.RescheduleDocumentsAppointment);
+                    .PermitReentry(SharedPermittedTriggers.RescheduleDocumentsAppointment)
+                    .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
 
         }
     }
