@@ -296,24 +296,42 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
 
 
-        public void GivenAReviewDocumentsRequest()
+        public void GivenASTJReviewDocumentsRequest()
         {
             GivenAnUpdateProcessRequest(SharedPermittedTriggers.ReviewDocuments);
 
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
-                { SoleToJointKeys.SeenPhotographicId, "true" },
-                { SoleToJointKeys.SeenSecondId, "true" },
+                { SharedKeys.SeenPhotographicId, "true" },
+                { SharedKeys.SeenSecondId, "true" },
                 { SoleToJointKeys.IsNotInImmigrationControl, "true" },
                 {SoleToJointKeys.SeenProofOfRelationship, "true" },
                 { SoleToJointKeys.IncomingTenantLivingInProperty, "true" }
             };
         }
 
-        public void GivenAReviewDocumentsRequestWithMissingData()
+        public void GivenACONReviewDocumentsRequest()
         {
-            GivenAReviewDocumentsRequest();
+            GivenAnUpdateProcessRequest(SharedPermittedTriggers.ReviewDocuments);
+
+            UpdateProcessRequestObject.FormData = new Dictionary<string, object>
+            {
+                { SharedKeys.SeenPhotographicId, "true" },
+                { SharedKeys.SeenSecondId, "true" },
+                { ChangeOfNameKeys.AtLeastOneDocument, "true" }
+            };
+        }
+
+        public void GivenASTJReviewDocumentsRequestWithMissingData()
+        {
+            GivenASTJReviewDocumentsRequest();
             UpdateProcessRequestObject.FormData.Remove(SoleToJointKeys.IncomingTenantLivingInProperty);
+        }
+
+        public void GivenACONReviewDocumentsRequestWithMissingData()
+        {
+            GivenACONReviewDocumentsRequest();
+            UpdateProcessRequestObject.FormData.Remove(ChangeOfNameKeys.AtLeastOneDocument);
         }
 
         public void GivenATenureInvestigationRequest(string tenureInvestigationRecommendation)

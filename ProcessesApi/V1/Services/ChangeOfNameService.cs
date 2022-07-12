@@ -8,6 +8,7 @@ using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Infrastructure.JWT;
 using ProcessesApi.V1.Services.Interfaces;
+using Stateless;
 
 namespace ProcessesApi.V1.Services
 {
@@ -59,6 +60,22 @@ namespace ProcessesApi.V1.Services
             await PublishProcessClosedEvent(x).ConfigureAwait(false);
         }
 
+        private async Task ReviewDocumentsCheck(StateMachine<string, string>.Transition transition)
+        {
+            var processRequest = transition.Parameters[0] as ProcessTrigger;
+            var formData = processRequest.FormData;
+
+            var expectedFormDataKeys = new List<string>{
+                  SharedKeys.SeenPhotographicId,
+                  SharedKeys.SeenSecondId,
+                  ChangeOfNameKeys.AtLeastOneDocument,
+            };
+            ProcessHelper.ValidateFormData(formData, expectedFormDataKeys);
+
+            processRequest.Trigger = SharedInternalTriggers.DocumentChecksPassed;
+            await TriggerStateMachine(processRequest).ConfigureAwait(false);
+        }
+
         protected override void SetUpStates()
         {
             _machine.Configure(SharedStates.ProcessClosed)
@@ -81,20 +98,27 @@ namespace ProcessesApi.V1.Services
                     .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
 
             _machine.Configure(SharedStates.DocumentsRequestedDes)
+                    .InternalTransitionAsync(SharedPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
                     .Permit(SharedPermittedTriggers.RequestDocumentsAppointment, SharedStates.DocumentsRequestedAppointment)
-                    .Permit(SharedPermittedTriggers.ReviewDocuments, SharedStates.DocumentChecksPassed)
+                    .Permit(SharedInternalTriggers.DocumentChecksPassed, SharedStates.DocumentChecksPassed)
                     .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
 
             _machine.Configure(SharedStates.DocumentsRequestedAppointment)
                     .OnEntry(AddAppointmentDateTimeToEvent)
+                    .InternalTransitionAsync(SharedPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
+                    .Permit(SharedInternalTriggers.DocumentChecksPassed, SharedStates.DocumentChecksPassed)
                     .Permit(SharedPermittedTriggers.RescheduleDocumentsAppointment, SharedStates.DocumentsAppointmentRescheduled)
-                    .Permit(SharedPermittedTriggers.ReviewDocuments, SharedStates.DocumentChecksPassed)
                     .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
 
             _machine.Configure(SharedStates.DocumentsAppointmentRescheduled)
                     .OnEntry(AddAppointmentDateTimeToEvent)
+                    .InternalTransitionAsync(SharedPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
                     .PermitReentry(SharedPermittedTriggers.RescheduleDocumentsAppointment)
+                    .Permit(SharedInternalTriggers.DocumentChecksPassed, SharedStates.DocumentChecksPassed)
                     .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
+
+            _machine.Configure(SharedStates.DocumentChecksPassed)
+                   .Permit(SharedPermittedTriggers.SubmitApplication, SharedStates.ApplicationSubmitted);
 
         }
     }

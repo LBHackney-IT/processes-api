@@ -376,7 +376,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         public void ProcessStateIsUpdatedToDocumentsChecksPassed(string initialState)
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(initialState))
-                    .And(a => _processFixture.GivenAReviewDocumentsRequest())
+                    .And(a => _processFixture.GivenASTJReviewDocumentsRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToDocumentChecksPassed(_processFixture.UpdateProcessRequest, initialState))
@@ -388,7 +388,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         public void BadRequestIsReturnedWhenRequestDocumentsCheckDataIsMissing()
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(SharedStates.DocumentsRequestedDes))
-                    .And(a => _processFixture.GivenAReviewDocumentsRequestWithMissingData())
+                    .And(a => _processFixture.GivenASTJReviewDocumentsRequestWithMissingData())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(t => _steps.ThenBadRequestIsReturned())
                 .BDDfy();

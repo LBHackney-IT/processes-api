@@ -87,8 +87,8 @@ namespace ProcessesApi.V1.Services
             var formData = processRequest.FormData;
 
             var expectedFormDataKeys = new List<string>{
-                  SoleToJointKeys.SeenPhotographicId,
-                  SoleToJointKeys.SeenSecondId,
+                  SharedKeys.SeenPhotographicId,
+                  SharedKeys.SeenSecondId,
                   SoleToJointKeys.IsNotInImmigrationControl,
                   SoleToJointKeys.SeenProofOfRelationship,
                   SoleToJointKeys.IncomingTenantLivingInProperty

@@ -211,5 +211,10 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
         {
             await VerifyProcessClosedEventIsRaisedWithStateData(snsFixture, processId, SharedStates.ProcessClosed, SharedKeys.Reason).ConfigureAwait(false);
         }
+
+        public async Task ThenTheProcessStateIsUpdatedToDocumentChecksPassed(UpdateProcessQuery request, string initialState)
+        {
+            await CheckProcessState(request.Id, SharedStates.DocumentChecksPassed, initialState).ConfigureAwait(false);
+        }
     }
 }

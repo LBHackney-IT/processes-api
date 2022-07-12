@@ -95,16 +95,6 @@ namespace ProcessesApi.V1.Constants.SoleToJoint
         #region ReviewDocuments
 
         /// <summary>
-        ///     I confirm I have seen a government issue photographic ID
-        /// </summary>
-        public const string SeenPhotographicId = "seenPhotographicId";
-
-        /// <summary>
-        ///     I confirm I have seen a second form of ID (does not have to be photographic)
-        /// </summary>
-        public const string SeenSecondId = "seenSecondId";
-
-        /// <summary>
         ///     I confirm that the prespective tenant is not subject to immigration control under the
         ///     Asylum and Immigration Act 1996
         /// </summary>
