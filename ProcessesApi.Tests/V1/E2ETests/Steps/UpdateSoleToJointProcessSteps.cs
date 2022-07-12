@@ -186,30 +186,6 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
         }
 
-        public new async Task ThenTheProcessClosedEventIsRaisedWithoutReason(ISnsFixture snsFixture, Guid processId)
-        {
-            Action<EventData> verifyData = (eventData) =>
-            {
-                var newDataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(eventData.NewData.ToString(), _jsonOptions);
-                newDataDic["state"].ToString().Should().Be(SharedStates.ProcessClosed);
-            };
-
-            await VerifyProcessClosedEventIsRaised(snsFixture, processId, verifyData).ConfigureAwait(false);
-        }
-
-        private async Task VerifyProcessClosedEventIsRaisedWithStateData(ISnsFixture snsFixture, Guid processId, string newState, string key)
-        {
-            Action<EventData> verifyData = (eventData) =>
-            {
-                var newDataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(eventData.NewData.ToString(), _jsonOptions);
-                newDataDic["state"].ToString().Should().Be(newState);
-
-                var stateData = JsonSerializer.Deserialize<Dictionary<string, object>>(newDataDic["stateData"].ToString(), _jsonOptions);
-                stateData.Should().ContainKey(key);
-            };
-            await VerifyProcessClosedEventIsRaised(snsFixture, processId, verifyData).ConfigureAwait(false);
-        }
-
         private async Task VerifyProcessCompletedEventIsRaisedWithStateData(ISnsFixture snsFixture, Guid processId, string newState, string key)
         {
             Action<EventData> verifyData = (eventData) =>
