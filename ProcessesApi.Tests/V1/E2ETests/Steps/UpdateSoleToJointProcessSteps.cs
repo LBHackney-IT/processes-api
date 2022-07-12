@@ -93,15 +93,6 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             await CheckProcessState(request.Id, SharedStates.DocumentsRequestedAppointment, SoleToJointStates.BreachChecksPassed).ConfigureAwait(false);
         }
 
-        public async Task ThenTheProcessStateIsUpdatedToDocumentsAppointmentRescheduled(UpdateProcessQuery request)
-        {
-            await CheckProcessState(request.Id, SharedStates.DocumentsAppointmentRescheduled, SharedStates.DocumentsRequestedAppointment).ConfigureAwait(false);
-        }
-        public async Task ThenTheProcessStateRemainsDocumentsAppointmentRescheduled(UpdateProcessQuery request)
-        {
-            await CheckProcessState(request.Id, SharedStates.DocumentsAppointmentRescheduled, SharedStates.DocumentsAppointmentRescheduled).ConfigureAwait(false);
-        }
-
         public async Task ThenTheProcessStateIsUpdatedToDocumentChecksPassed(UpdateProcessQuery request, string initialState)
         {
             await CheckProcessState(request.Id, SharedStates.DocumentChecksPassed, initialState).ConfigureAwait(false);
@@ -172,18 +163,6 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                                                                .Excluding(x => x.VersionNumber));
             var householdMember = newTenure.HouseholdMembers.Find(x => x.Id == incomingTenantId);
             householdMember.PersonTenureType.Should().Be(PersonTenureType.Tenant);
-        }
-
-
-        public async Task ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(ISnsFixture snsFixture, Guid processId, string oldState, string newState)
-        {
-            Action<string> verifyData = (dataAsString) =>
-            {
-                var dataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(dataAsString, _jsonOptions);
-                var stateData = JsonSerializer.Deserialize<Dictionary<string, object>>(dataDic["stateData"].ToString(), _jsonOptions);
-                stateData.Should().ContainKey(SharedKeys.AppointmentDateTime);
-            };
-            await VerifyProcessUpdatedEventIsRaised(snsFixture, processId, oldState, newState, verifyData).ConfigureAwait(false);
         }
 
         public async Task VerifyProcessClosedEventIsRaised(ISnsFixture snsFixture, Guid processId, Action<EventData> verifyStateData)
