@@ -103,6 +103,7 @@ namespace ProcessesApi.Tests.V1.Helpers
         {
             var processRequest = _fixture.Create<ProcessTrigger>();
             var reason = SharedKeys.Reason;
+            processRequest.FormData.Clear();
             processRequest.FormData.Add(reason, true);
 
             // Act
