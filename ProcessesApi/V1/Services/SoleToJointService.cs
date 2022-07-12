@@ -40,7 +40,7 @@ namespace ProcessesApi.V1.Services
         {
             var processRequest = transition.Parameters[0] as ProcessTrigger;
             var formData = processRequest.FormData;
-            ProcessHelper.ValidateFormData(formData, new List<string>() { SoleToJointKeys.IncomingTenantId, SoleToJointKeys.TenantId });
+            formData.ValidateKeys(new List<string>() { SoleToJointKeys.IncomingTenantId, SoleToJointKeys.TenantId });
 
             var isEligible = await _dbOperationsHelper.CheckAutomatedEligibility(_process.TargetId,
                                                                                     Guid.Parse(processRequest.FormData[SoleToJointKeys.IncomingTenantId].ToString()),
@@ -93,7 +93,7 @@ namespace ProcessesApi.V1.Services
                   SoleToJointKeys.SeenProofOfRelationship,
                   SoleToJointKeys.IncomingTenantLivingInProperty
             };
-            ProcessHelper.ValidateFormData(formData, expectedFormDataKeys);
+            formData.ValidateKeys(expectedFormDataKeys);
 
             processRequest.Trigger = SharedInternalTriggers.DocumentChecksPassed;
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
@@ -110,10 +110,10 @@ namespace ProcessesApi.V1.Services
                 { SoleToJointValues.Approve, SharedInternalTriggers.TenureInvestigationPassed },
                 { SoleToJointValues.Decline, SharedInternalTriggers.TenureInvestigationFailed }
             };
-            SoleToJointHelpers.ValidateRecommendation(processRequest,
-                                                        triggerMappings,
-                                                        SoleToJointKeys.TenureInvestigationRecommendation,
-                                                        null);
+
+            processRequest.HandleRecommendation(triggerMappings,
+                                                SoleToJointKeys.TenureInvestigationRecommendation,
+                                                null);
 
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
@@ -121,16 +121,23 @@ namespace ProcessesApi.V1.Services
         private async Task CheckHOApproval(StateMachine<string, string>.Transition transition)
         {
             var processRequest = transition.Parameters[0] as ProcessTrigger;
+            var formData = processRequest.FormData;
 
             var triggerMappings = new Dictionary<string, string>
             {
                 { SoleToJointValues.Approve, SharedInternalTriggers.HOApprovalPassed },
                 { SoleToJointValues.Decline, SharedInternalTriggers.HOApprovalFailed }
             };
-            SoleToJointHelpers.ValidateRecommendation(processRequest,
-                                                        triggerMappings,
-                                                        SoleToJointKeys.HORecommendation,
-                                                        new List<string> { SoleToJointKeys.HousingAreaManagerName });
+
+            var expectedFormDataKeys = new List<string> { SoleToJointKeys.HousingAreaManagerName };
+
+            processRequest.HandleRecommendation(triggerMappings,
+                                                SoleToJointKeys.HORecommendation,
+                                                expectedFormDataKeys);
+
+            if (formData.ContainsKey(SharedKeys.Reason)) expectedFormDataKeys.Add(SharedKeys.Reason);
+            _eventData = formData.CreateEventData(expectedFormDataKeys);
+
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
@@ -141,27 +148,27 @@ namespace ProcessesApi.V1.Services
         private async Task OnProcessClosed(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
-            _eventData = ProcessHelper.ValidateHasNotifiedResident(processRequest);
+            _eventData = processRequest.ValidateHasNotifiedResident();
             await PublishProcessClosedEvent(x).ConfigureAwait(false);
         }
 
         private async Task OnProcessCancelled(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
-            ProcessHelper.ValidateFormData(processRequest.FormData, new List<string>() { SharedKeys.Comment });
+            processRequest.FormData.ValidateKeys(new List<string>() { SharedKeys.Comment });
 
-            _eventData = ProcessHelper.CreateEventData(processRequest.FormData, new List<string> { SharedKeys.Comment });
+            _eventData = processRequest.FormData.CreateEventData(new List<string> { SharedKeys.Comment });
             await PublishProcessClosedEvent(x).ConfigureAwait(false);
         }
 
         private async Task OnProcessCompleted(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
-            _eventData = ProcessHelper.ValidateHasNotifiedResident(processRequest);
+            _eventData = processRequest.ValidateHasNotifiedResident();
 
             var newTenureId = await _dbOperationsHelper.UpdateTenures(_process, _token).ConfigureAwait(false);
             _eventData.Add(SoleToJointKeys.NewTenureId, newTenureId);
-            SoleToJointHelpers.AddNewTenureToRelatedEntities(newTenureId, _process);
+            _process.AddNewTenureToRelatedEntities(newTenureId);
 
             await PublishProcessCompletedEvent(x).ConfigureAwait(false);
         }
@@ -176,9 +183,9 @@ namespace ProcessesApi.V1.Services
         public void AddAppointmentDateTimeToEvent(Stateless.StateMachine<string, string>.Transition transition)
         {
             var trigger = transition.Parameters[0] as ProcessTrigger;
-            ProcessHelper.ValidateFormData(trigger.FormData, new List<string>() { SharedKeys.AppointmentDateTime });
+            trigger.FormData.ValidateKeys(new List<string>() { SharedKeys.AppointmentDateTime });
 
-            _eventData = ProcessHelper.CreateEventData(trigger.FormData, new List<string> { SharedKeys.AppointmentDateTime });
+            _eventData = trigger.FormData.CreateEventData(new List<string> { SharedKeys.AppointmentDateTime });
         }
 
         #endregion
@@ -274,9 +281,9 @@ namespace ProcessesApi.V1.Services
             _machine.Configure(SharedStates.InterviewScheduled)
                     .OnEntry(AddAppointmentDateTimeToEvent)
                     .InternalTransitionAsync(SharedPermittedTriggers.HOApproval, CheckHOApproval)
-                    .Permit(SharedPermittedTriggers.RescheduleInterview, SharedStates.InterviewRescheduled)
                     .Permit(SharedInternalTriggers.HOApprovalFailed, SharedStates.HOApprovalFailed)
                     .Permit(SharedInternalTriggers.HOApprovalPassed, SharedStates.HOApprovalPassed)
+                    .Permit(SharedPermittedTriggers.RescheduleInterview, SharedStates.InterviewRescheduled)
                     .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
 
 

@@ -18,14 +18,14 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         private readonly ProcessFixture _processFixture;
         private readonly ISnsFixture _snsFixture;
         private readonly IDynamoDbFixture _dbFixture;
-        private readonly CreateNewSoleToJointProcessSteps _steps;
+        private readonly CreateNewProcessSteps _steps;
 
         public CreateNewProcessTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
             _dbFixture = appFactory.DynamoDbFixture;
             _snsFixture = appFactory.SnsFixture;
             _processFixture = new ProcessFixture(_dbFixture.DynamoDbContext, _snsFixture.SimpleNotificationService);
-            _steps = new CreateNewSoleToJointProcessSteps(appFactory.Client, _dbFixture);
+            _steps = new CreateNewProcessSteps(appFactory.Client, _dbFixture);
         }
 
         public void Dispose()

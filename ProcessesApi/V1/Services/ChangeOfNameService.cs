@@ -30,7 +30,7 @@ namespace ProcessesApi.V1.Services
         public void AddNewNameToEvent(Stateless.StateMachine<string, string>.Transition transition)
         {
             var trigger = transition.Parameters[0] as ProcessTrigger;
-            ProcessHelper.ValidateOptionalFormData(trigger.FormData, new List<string>() { ChangeOfNameKeys.Title, ChangeOfNameKeys.FirstName, ChangeOfNameKeys.MiddleName, ChangeOfNameKeys.Surname });
+            ProcessHelper.ValidateOptionalKeys(trigger.FormData, new List<string>() { ChangeOfNameKeys.Title, ChangeOfNameKeys.FirstName, ChangeOfNameKeys.MiddleName, ChangeOfNameKeys.Surname });
 
             _eventData = ProcessHelper.CreateEventData(trigger.FormData, new List<string> { ChangeOfNameKeys.Title, ChangeOfNameKeys.FirstName, ChangeOfNameKeys.MiddleName, ChangeOfNameKeys.Surname });
         }
@@ -38,7 +38,7 @@ namespace ProcessesApi.V1.Services
         public void AddAppointmentDateTimeToEvent(Stateless.StateMachine<string, string>.Transition transition)
         {
             var trigger = transition.Parameters[0] as ProcessTrigger;
-            ProcessHelper.ValidateFormData(trigger.FormData, new List<string>() { SharedKeys.AppointmentDateTime });
+            trigger.FormData.ValidateKeys(new List<string>() { SharedKeys.AppointmentDateTime });
 
             _eventData = ProcessHelper.CreateEventData(trigger.FormData, new List<string> { SharedKeys.AppointmentDateTime });
         }
@@ -53,7 +53,7 @@ namespace ProcessesApi.V1.Services
         private async Task OnProcessCancelled(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
-            ProcessHelper.ValidateFormData(processRequest.FormData, new List<string>() { SharedKeys.Comment });
+            ProcessHelper.ValidateKeys(processRequest.FormData, new List<string>() { SharedKeys.Comment });
 
             _eventData = ProcessHelper.CreateEventData(processRequest.FormData, new List<string> { SharedKeys.Comment });
             await PublishProcessClosedEvent(x).ConfigureAwait(false);
