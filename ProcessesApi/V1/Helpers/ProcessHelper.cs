@@ -1,9 +1,13 @@
 using ProcessesApi.V1.Constants;
+using ProcessesApi.V1.Constants.Shared;
 using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Services;
 using ProcessesApi.V1.Services.Exceptions;
+using Stateless;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.Helpers
 {
@@ -53,6 +57,5 @@ namespace ProcessesApi.V1.Helpers
                 throw new FormDataFormatException("boolean", hasNotifiedResidentString);
             }
         }
-
     }
 }

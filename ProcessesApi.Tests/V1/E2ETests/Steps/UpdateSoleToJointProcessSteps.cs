@@ -88,11 +88,6 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             await CheckProcessState(request.Id, SharedStates.DocumentsRequestedAppointment, SoleToJointStates.BreachChecksPassed).ConfigureAwait(false);
         }
 
-        public async Task ThenTheProcessStateIsUpdatedToShowResultsOfTenureInvestigation(UpdateProcessQuery request, string destinationState)
-        {
-            await CheckProcessState(request.Id, destinationState, SharedStates.ApplicationSubmitted).ConfigureAwait(false);
-        }
-
         public async Task ThenTheProcessStateIsUpdatedToInterviewScheduled(UpdateProcessQuery request)
         {
             await CheckProcessState(request.Id, SharedStates.InterviewScheduled, SharedStates.TenureInvestigationPassedWithInt).ConfigureAwait(false);

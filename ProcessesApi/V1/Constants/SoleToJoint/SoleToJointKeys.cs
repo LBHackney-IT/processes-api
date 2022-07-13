@@ -113,12 +113,6 @@ namespace ProcessesApi.V1.Constants.SoleToJoint
 
         #endregion
 
-        #region Tenure Investigation
-
-        public const string TenureInvestigationRecommendation = "tenureInvestigationRecommendation";
-
-        #endregion
-
         #region HOApproval
 
         public const string HORecommendation = "hoRecommendation";

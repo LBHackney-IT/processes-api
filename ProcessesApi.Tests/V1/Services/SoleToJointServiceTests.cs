@@ -16,6 +16,7 @@ using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Services.Exceptions;
 using System.Globalization;
 using ProcessesApi.V1.Constants;
+using ProcessesApi.V1.Constants.Shared;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -65,7 +66,7 @@ namespace ProcessesApi.Tests.V1.Services
                                                                                                                                 SoleToJointKeys.BR15, SoleToJointKeys.BR16, SoleToJointKeys.BR7, SoleToJointKeys.BR8, SoleToJointKeys.BR9 })]
         [InlineData(SoleToJointStates.ManualChecksPassed, SoleToJointPermittedTriggers.CheckTenancyBreach, new string[] { SoleToJointKeys.BR5, SoleToJointKeys.BR10, SoleToJointKeys.BR17, SoleToJointKeys.BR18 })]
         [InlineData(SoleToJointStates.BreachChecksPassed, SharedPermittedTriggers.RequestDocumentsAppointment, new string[] { SharedKeys.AppointmentDateTime })]
-        [InlineData(SharedStates.ApplicationSubmitted, SharedPermittedTriggers.TenureInvestigation, new string[] { SoleToJointKeys.TenureInvestigationRecommendation })]
+        [InlineData(SharedStates.ApplicationSubmitted, SharedPermittedTriggers.TenureInvestigation, new string[] { SharedKeys.TenureInvestigationRecommendation })]
         [InlineData(SharedStates.InterviewScheduled, SharedPermittedTriggers.HOApproval, new string[] { SoleToJointKeys.HousingAreaManagerName, SoleToJointKeys.HORecommendation })]
         [InlineData(SharedStates.InterviewRescheduled, SharedPermittedTriggers.HOApproval, new string[] { SoleToJointKeys.HousingAreaManagerName, SoleToJointKeys.HORecommendation })]
         [InlineData(SharedStates.TenureInvestigationFailed, SharedPermittedTriggers.HOApproval, new string[] { SoleToJointKeys.HousingAreaManagerName, SoleToJointKeys.HORecommendation })]
@@ -494,16 +495,16 @@ namespace ProcessesApi.Tests.V1.Services
         }
 
         [Theory]
-        [InlineData(SoleToJointValues.Approve, SharedStates.TenureInvestigationPassed)]
-        [InlineData(SoleToJointValues.Decline, SharedStates.TenureInvestigationFailed)]
-        [InlineData(SoleToJointValues.Appointment, SharedStates.TenureInvestigationPassedWithInt)]
+        [InlineData(SharedValues.Approve, SharedStates.TenureInvestigationPassed)]
+        [InlineData(SharedValues.Decline, SharedStates.TenureInvestigationFailed)]
+        [InlineData(SharedValues.Appointment, SharedStates.TenureInvestigationPassedWithInt)]
         public async Task ProcessStateIsUpdatedOnTenureInvestigationTrigger(string tenureInvestigationRecommendation, string expectedState)
         {
             // Arrange
             var process = CreateProcessWithCurrentState(SharedStates.ApplicationSubmitted);
             var formData = new Dictionary<string, object>
             {
-                {  SoleToJointKeys.TenureInvestigationRecommendation, tenureInvestigationRecommendation }
+                {  SharedKeys.TenureInvestigationRecommendation, tenureInvestigationRecommendation }
             };
             var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.TenureInvestigation, formData);
 
@@ -527,17 +528,17 @@ namespace ProcessesApi.Tests.V1.Services
             var invalidRecommendation = "some invalid value";
             var formData = new Dictionary<string, object>
             {
-                {  SoleToJointKeys.TenureInvestigationRecommendation, invalidRecommendation }
+                {  SharedKeys.TenureInvestigationRecommendation, invalidRecommendation }
             };
             var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.TenureInvestigation, formData);
             var expectedRecommendationValues = new List<string>()
             {
-                SoleToJointValues.Appointment,
-                SoleToJointValues.Approve,
-                SoleToJointValues.Decline
+                SharedValues.Appointment,
+                SharedValues.Approve,
+                SharedValues.Decline
             };
             var expectedErrorMessage = String.Format("The request's FormData is invalid: The form data value supplied for key {0} does not match any of the expected values ({1}). The value supplied was: {2}",
-                                                    SoleToJointKeys.TenureInvestigationRecommendation,
+                                                    SharedKeys.TenureInvestigationRecommendation,
                                                     String.Join(", ", expectedRecommendationValues),
                                                     invalidRecommendation);
 
@@ -620,7 +621,7 @@ namespace ProcessesApi.Tests.V1.Services
             var process = CreateProcessWithCurrentState(initialState);
             var formData = new Dictionary<string, object>
             {
-                {  SoleToJointKeys.HORecommendation, SoleToJointValues.Approve },
+                {  SoleToJointKeys.HORecommendation, SharedValues.Approve },
                 {  SoleToJointKeys.HousingAreaManagerName, "ManagerName"  },
                 {  SharedKeys.Reason, "Some Reason"  }
             };
@@ -650,7 +651,7 @@ namespace ProcessesApi.Tests.V1.Services
             var process = CreateProcessWithCurrentState(initialState);
             var formData = new Dictionary<string, object>
             {
-                {  SoleToJointKeys.HORecommendation, SoleToJointValues.Decline },
+                {  SoleToJointKeys.HORecommendation, SharedValues.Decline },
                 { SoleToJointKeys.HousingAreaManagerName, "ManagerName"},
                 { SharedKeys.Reason, "Some Reason"}
             };
@@ -689,8 +690,8 @@ namespace ProcessesApi.Tests.V1.Services
             var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.HOApproval, formData);
             var expectedRecommendationValues = new List<string>()
             {
-                SoleToJointValues.Approve,
-                SoleToJointValues.Decline
+                SharedValues.Approve,
+                SharedValues.Decline
             };
 
             var expectedErrorMessage = String.Format("The request's FormData is invalid: The form data value supplied for key {0} does not match any of the expected values ({1}). The value supplied was: {2}",
