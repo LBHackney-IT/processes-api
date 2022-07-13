@@ -129,14 +129,13 @@ namespace ProcessesApi.V1.Services
                 { SoleToJointValues.Decline, SharedInternalTriggers.HOApprovalFailed }
             };
 
-            var expectedFormDataKeys = new List<string> { SoleToJointKeys.HousingAreaManagerName };
-
             processRequest.HandleRecommendation(triggerMappings,
                                                 SoleToJointKeys.HORecommendation,
-                                                expectedFormDataKeys);
+                                                new List<string> { SoleToJointKeys.HousingAreaManagerName });
 
-            if (formData.ContainsKey(SharedKeys.Reason)) expectedFormDataKeys.Add(SharedKeys.Reason);
-            _eventData = formData.CreateEventData(expectedFormDataKeys);
+            var eventDataKeys = new List<string> { SoleToJointKeys.HousingAreaManagerName };
+            if (formData.ContainsKey(SharedKeys.Reason)) eventDataKeys.Add(SharedKeys.Reason);
+            _eventData = formData.CreateEventData(eventDataKeys);
 
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
