@@ -108,27 +108,11 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         public void ProcessStateIsUpdatedToProcessClosedWithReason(string fromState)
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(fromState))
-                    .And(a => _processFixture.GivenACloseProcessRequestWithReason())
+                    .And(a => _processFixture.GivenACloseProcessRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToProcessClosed(_processFixture.UpdateProcessRequest, fromState))
-                    .And(a => _steps.ThenTheProcessClosedEventIsRaisedWithReason(_snsFixture, _processFixture.ProcessId))
-                .BDDfy();
-        }
-
-        [Theory]
-        [InlineData(SoleToJointStates.AutomatedChecksFailed)]
-        [InlineData(SoleToJointStates.ManualChecksFailed)]
-        [InlineData(SoleToJointStates.BreachChecksFailed)]
-        [InlineData(SharedStates.HOApprovalFailed)]
-        public void ProcessStateIsUpdatedToProcessClosedWithoutReason(string fromState)
-        {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists(fromState))
-                    .And(a => _processFixture.GivenACloseProcessRequestWithoutReason())
-                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
-                .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
-                    .And(a => _steps.ThenTheProcessStateIsUpdatedToProcessClosed(_processFixture.UpdateProcessRequest, fromState))
-                    .And(a => _steps.ThenTheProcessClosedEventIsRaisedWithoutReason(_snsFixture, _processFixture.ProcessId))
+                    .And(a => _steps.ThenTheProcessClosedEventIsRaised(_snsFixture, _processFixture.ProcessId, _processFixture.UpdateProcessRequestObject, fromState))
                 .BDDfy();
         }
 
@@ -146,7 +130,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToProcessCancelled(_processFixture.UpdateProcessRequest, fromState))
-                    .And(a => _steps.ThenTheProcessClosedEventIsRaisedWithComment(_snsFixture, _processFixture.ProcessId))
+                    .And(a => _steps.ThenTheProcessClosedEventIsRaisedWithComment(_snsFixture, _processFixture.ProcessId, fromState))
                 .BDDfy();
         }
 
@@ -376,7 +360,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         public void ProcessStateIsUpdatedToDocumentsChecksPassed(string initialState)
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(initialState))
-                    .And(a => _processFixture.GivenAReviewDocumentsRequest())
+                    .And(a => _processFixture.GivenASTJReviewDocumentsRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToDocumentChecksPassed(_processFixture.UpdateProcessRequest, initialState))
@@ -388,7 +372,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         public void BadRequestIsReturnedWhenRequestDocumentsCheckDataIsMissing()
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(SharedStates.DocumentsRequestedDes))
-                    .And(a => _processFixture.GivenAReviewDocumentsRequestWithMissingData())
+                    .And(a => _processFixture.GivenASTJReviewDocumentsRequestWithMissingData())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(t => _steps.ThenBadRequestIsReturned())
                 .BDDfy();
@@ -524,7 +508,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                     .And(a => _processFixture.GivenAHOApprovalRequest(housingOfficerRecommendation))
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessStateIsUpdatedToShowResultsOfHOApproval(_processFixture.UpdateProcessRequest, destinationState, initialState))
-                .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, initialState, destinationState))
+                .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithHOApprovalDetails(_snsFixture, _processFixture.ProcessId, _processFixture.UpdateProcessRequestObject, initialState, destinationState))
                 .BDDfy();
         }
 
@@ -630,7 +614,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessStateIsUpdatedToUpdateTenure(_processFixture.UpdateProcessRequest, initialState, _processFixture.IncomingTenantId))
-                    .And(a => _steps.ThenTheProcessCompletedEventIsRaised(_snsFixture, _processFixture.ProcessId))
+                    .And(a => _steps.ThenTheProcessCompletedEventIsRaised(_snsFixture, _processFixture.ProcessId, initialState))
                 .BDDfy();
         }
 

@@ -47,11 +47,6 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             await CheckProcessState(request.Id, SharedStates.ProcessClosed, previousState).ConfigureAwait(false);
         }
 
-        public async Task ThenTheProcessStateIsUpdatedToProcessCancelled(UpdateProcessQuery request, string previousState)
-        {
-            await CheckProcessState(request.Id, SharedStates.ProcessCancelled, previousState).ConfigureAwait(false);
-        }
-
         public async Task ThenTheProcessStateIsUpdatedToAutomatedEligibilityChecksPassed(UpdateProcessQuery request)
         {
             await CheckProcessState(request.Id, SoleToJointStates.AutomatedChecksPassed, SoleToJointStates.SelectTenants).ConfigureAwait(false);
@@ -91,11 +86,6 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         public async Task ThenTheProcessStateIsUpdatedToDocumentsRequestedAppointment(UpdateProcessQuery request)
         {
             await CheckProcessState(request.Id, SharedStates.DocumentsRequestedAppointment, SoleToJointStates.BreachChecksPassed).ConfigureAwait(false);
-        }
-
-        public async Task ThenTheProcessStateIsUpdatedToDocumentChecksPassed(UpdateProcessQuery request, string initialState)
-        {
-            await CheckProcessState(request.Id, SharedStates.DocumentChecksPassed, initialState).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessStateIsUpdatedToApplicationSubmitted(UpdateProcessQuery request)
@@ -163,111 +153,6 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                                                                .Excluding(x => x.VersionNumber));
             var householdMember = newTenure.HouseholdMembers.Find(x => x.Id == incomingTenantId);
             householdMember.PersonTenureType.Should().Be(PersonTenureType.Tenant);
-        }
-
-        public async Task VerifyProcessClosedEventIsRaised(ISnsFixture snsFixture, Guid processId, Action<EventData> verifyStateData)
-        {
-            Action<EntityEventSns> verifyFunc = actual =>
-            {
-                actual.Id.Should().NotBeEmpty();
-                actual.CorrelationId.Should().NotBeEmpty();
-                actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
-                actual.EntityId.Should().Be(processId);
-
-                verifyStateData(actual.EventData);
-
-                actual.EventType.Should().Be(ProcessEventConstants.PROCESS_CLOSED_EVENT);
-                actual.SourceDomain.Should().Be(ProcessEventConstants.SOURCE_DOMAIN);
-                actual.SourceSystem.Should().Be(ProcessEventConstants.SOURCE_SYSTEM);
-                actual.Version.Should().Be(ProcessEventConstants.V1_VERSION);
-
-                actual.User.Email.Should().Be(TestToken.UserEmail);
-                actual.User.Name.Should().Be(TestToken.UserName);
-            };
-
-            var snsVerifier = snsFixture.GetSnsEventVerifier<EntityEventSns>();
-            var snsResult = await snsVerifier.VerifySnsEventRaised(verifyFunc);
-
-            if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
-        }
-
-        public async Task VerifyProcessCompletedEventIsRaised(ISnsFixture snsFixture, Guid processId, Action<EventData> verifyStateData)
-        {
-            Action<EntityEventSns> verifyFunc = actual =>
-            {
-                actual.Id.Should().NotBeEmpty();
-                actual.CorrelationId.Should().NotBeEmpty();
-                actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
-                actual.EntityId.Should().Be(processId);
-
-                verifyStateData(actual.EventData);
-
-                actual.EventType.Should().Be(ProcessEventConstants.PROCESS_COMPLETED_EVENT);
-                actual.SourceDomain.Should().Be(ProcessEventConstants.SOURCE_DOMAIN);
-                actual.SourceSystem.Should().Be(ProcessEventConstants.SOURCE_SYSTEM);
-                actual.Version.Should().Be(ProcessEventConstants.V1_VERSION);
-
-                actual.User.Email.Should().Be(TestToken.UserEmail);
-                actual.User.Name.Should().Be(TestToken.UserName);
-            };
-
-            var snsVerifier = snsFixture.GetSnsEventVerifier<EntityEventSns>();
-            var snsResult = await snsVerifier.VerifySnsEventRaised(verifyFunc);
-
-            if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
-        }
-
-        public async Task ThenTheProcessClosedEventIsRaisedWithoutReason(ISnsFixture snsFixture, Guid processId)
-        {
-            Action<EventData> verifyData = (eventData) =>
-            {
-                var newDataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(eventData.NewData.ToString(), _jsonOptions);
-                newDataDic["state"].ToString().Should().Be(SharedStates.ProcessClosed);
-            };
-
-            await VerifyProcessClosedEventIsRaised(snsFixture, processId, verifyData).ConfigureAwait(false);
-        }
-
-        private async Task VerifyProcessClosedEventIsRaisedWithStateData(ISnsFixture snsFixture, Guid processId, string newState, string key)
-        {
-            Action<EventData> verifyData = (eventData) =>
-            {
-                var newDataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(eventData.NewData.ToString(), _jsonOptions);
-                newDataDic["state"].ToString().Should().Be(newState);
-
-                var stateData = JsonSerializer.Deserialize<Dictionary<string, object>>(newDataDic["stateData"].ToString(), _jsonOptions);
-                stateData.Should().ContainKey(key);
-            };
-            await VerifyProcessClosedEventIsRaised(snsFixture, processId, verifyData).ConfigureAwait(false);
-        }
-
-        private async Task VerifyProcessCompletedEventIsRaisedWithStateData(ISnsFixture snsFixture, Guid processId, string newState, string key)
-        {
-            Action<EventData> verifyData = (eventData) =>
-            {
-                var newDataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(eventData.NewData.ToString(), _jsonOptions);
-                newDataDic["state"].ToString().Should().Be(newState);
-
-                var stateData = JsonSerializer.Deserialize<Dictionary<string, object>>(newDataDic["stateData"].ToString(), _jsonOptions);
-                stateData.Should().ContainKey(key);
-            };
-            await VerifyProcessCompletedEventIsRaised(snsFixture, processId, verifyData).ConfigureAwait(false);
-        }
-
-        public async Task ThenTheProcessClosedEventIsRaisedWithReason(ISnsFixture snsFixture, Guid processId)
-        {
-            await VerifyProcessClosedEventIsRaisedWithStateData(snsFixture, processId, SharedStates.ProcessClosed, SharedKeys.Reason).ConfigureAwait(false);
-        }
-
-        public async Task ThenTheProcessClosedEventIsRaisedWithComment(ISnsFixture snsFixture, Guid processId)
-        {
-            await VerifyProcessClosedEventIsRaisedWithStateData(snsFixture, processId, SharedStates.ProcessCancelled, SharedKeys.Comment).ConfigureAwait(false);
-        }
-
-        public async Task ThenTheProcessCompletedEventIsRaised(ISnsFixture snsFixture, Guid processId)
-        {
-            await VerifyProcessCompletedEventIsRaisedWithStateData(snsFixture, processId, SoleToJointStates.TenureUpdated, SharedKeys.Reason).ConfigureAwait(false);
-            // todo figure out how to verify other events
         }
     }
 }

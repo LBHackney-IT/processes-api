@@ -11,5 +11,19 @@ namespace ProcessesApi.V1.Constants
 
         public const string AppointmentDateTime = "appointmentDateTime";
 
+        #region Shared Review Documents
+
+        /// <summary>
+        ///     I confirm I have seen a government issue photographic ID
+        /// </summary>
+        public const string SeenPhotographicId = "seenPhotographicId";
+
+        /// <summary>
+        ///     I confirm I have seen a second form of ID (does not have to be photographic)
+        /// </summary>
+        public const string SeenSecondId = "seenSecondId";
+
+        #endregion
+
     }
 }

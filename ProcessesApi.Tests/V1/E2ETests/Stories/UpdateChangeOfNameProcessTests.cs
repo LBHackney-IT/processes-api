@@ -20,7 +20,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         private readonly IDynamoDbFixture _dbFixture;
         private readonly ISnsFixture _snsFixture;
         private readonly ProcessFixture _processFixture;
-        private readonly UpdateChangeOfNameProcessStep _steps;
+        private readonly UpdateChangeOfNameProcessSteps _steps;
 
         public UpdateChangeOfNameProcessTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
@@ -28,7 +28,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
             _snsFixture = appFactory.SnsFixture;
             _processFixture = new ProcessFixture(_dbFixture.DynamoDbContext, _snsFixture.SimpleNotificationService);
 
-            _steps = new UpdateChangeOfNameProcessStep(appFactory.Client, _dbFixture);
+            _steps = new UpdateChangeOfNameProcessSteps(appFactory.Client, _dbFixture);
         }
 
         public void Dispose()
@@ -80,6 +80,26 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .Then(t => _steps.ThenVersionConflictExceptionIsReturned(ifMatch))
                 .BDDfy();
         }
+
+        #region Cancel Process
+
+        // List all states that CancelProcess can be triggered from
+        [Theory]
+        [InlineData(ChangeOfNameStates.NameSubmitted)]
+        [InlineData(SharedStates.DocumentsRequestedDes)]
+        [InlineData(SharedStates.DocumentsRequestedAppointment)]
+        [InlineData(SharedStates.DocumentsAppointmentRescheduled)]
+        public void ProcessStateIsUpdatedToProcessCancelled(string fromState)
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(fromState))
+                    .And(a => _processFixture.GivenACancelProcessRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheProcessStateIsUpdatedToProcessCancelled(_processFixture.UpdateProcessRequest, fromState))
+                    .And(a => _steps.ThenTheProcessClosedEventIsRaisedWithComment(_snsFixture, _processFixture.ProcessId, fromState))
+                .BDDfy();
+        }
+        #endregion
 
         #region NameSubmitted
 
@@ -177,6 +197,35 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                     .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SharedStates.DocumentsAppointmentRescheduled, SharedStates.DocumentsAppointmentRescheduled))
                 .BDDfy();
         }
+        #endregion
+
+        #region Review documents
+
+        [Theory]
+        [InlineData(SharedStates.DocumentsRequestedDes)]
+        [InlineData(SharedStates.DocumentsRequestedAppointment)]
+        [InlineData(SharedStates.DocumentsAppointmentRescheduled)]
+        public void ProcessStateIsUpdatedToDocumentsChecksPassed(string initialState)
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(initialState))
+                    .And(a => _processFixture.GivenACONReviewDocumentsRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheProcessStateIsUpdatedToDocumentChecksPassed(_processFixture.UpdateProcessRequest, initialState))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, initialState, SharedStates.DocumentChecksPassed))
+                .BDDfy();
+        }
+
+        [Fact]
+        public void BadRequestIsReturnedWhenRequestDocumentsCheckDataIsMissing()
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(SharedStates.DocumentsRequestedDes))
+                    .And(a => _processFixture.GivenACONReviewDocumentsRequestWithMissingData())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(t => _steps.ThenBadRequestIsReturned())
+                .BDDfy();
+        }
+
         #endregion
 
 

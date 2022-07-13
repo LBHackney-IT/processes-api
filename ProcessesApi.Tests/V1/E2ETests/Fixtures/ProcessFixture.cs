@@ -151,17 +151,14 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             UpdateProcessRequestObject = _fixture.Create<UpdateProcessRequestObject>();
         }
 
-        public void GivenACloseProcessRequestWithoutReason()
+        public void GivenACloseProcessRequest()
         {
             GivenAnUpdateProcessRequest(SharedPermittedTriggers.CloseProcess);
             UpdateProcessRequestObject.FormData.Add(SharedKeys.HasNotifiedResident, true);
-        }
 
-        public void GivenACloseProcessRequestWithReason()
-        {
-            GivenAnUpdateProcessRequest(SharedPermittedTriggers.CloseProcess);
-            UpdateProcessRequestObject.FormData.Add(SharedKeys.HasNotifiedResident, true);
-            UpdateProcessRequestObject.FormData.Add(SharedKeys.Reason, "This is a reason");
+            var random = new Random();
+            if (random.Next() % 2 == 0) // randomly add reason to formdata
+                UpdateProcessRequestObject.FormData.Add(SharedKeys.Reason, "This is a reason");
         }
 
         public void GivenACancelProcessRequest()
@@ -296,24 +293,42 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
 
 
-        public void GivenAReviewDocumentsRequest()
+        public void GivenASTJReviewDocumentsRequest()
         {
             GivenAnUpdateProcessRequest(SharedPermittedTriggers.ReviewDocuments);
 
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
-                { SoleToJointKeys.SeenPhotographicId, "true" },
-                { SoleToJointKeys.SeenSecondId, "true" },
+                { SharedKeys.SeenPhotographicId, "true" },
+                { SharedKeys.SeenSecondId, "true" },
                 { SoleToJointKeys.IsNotInImmigrationControl, "true" },
                 {SoleToJointKeys.SeenProofOfRelationship, "true" },
                 { SoleToJointKeys.IncomingTenantLivingInProperty, "true" }
             };
         }
 
-        public void GivenAReviewDocumentsRequestWithMissingData()
+        public void GivenACONReviewDocumentsRequest()
         {
-            GivenAReviewDocumentsRequest();
+            GivenAnUpdateProcessRequest(SharedPermittedTriggers.ReviewDocuments);
+
+            UpdateProcessRequestObject.FormData = new Dictionary<string, object>
+            {
+                { SharedKeys.SeenPhotographicId, "true" },
+                { SharedKeys.SeenSecondId, "true" },
+                { ChangeOfNameKeys.AtLeastOneDocument, "true" }
+            };
+        }
+
+        public void GivenASTJReviewDocumentsRequestWithMissingData()
+        {
+            GivenASTJReviewDocumentsRequest();
             UpdateProcessRequestObject.FormData.Remove(SoleToJointKeys.IncomingTenantLivingInProperty);
+        }
+
+        public void GivenACONReviewDocumentsRequestWithMissingData()
+        {
+            GivenACONReviewDocumentsRequest();
+            UpdateProcessRequestObject.FormData.Remove(ChangeOfNameKeys.AtLeastOneDocument);
         }
 
         public void GivenATenureInvestigationRequest(string tenureInvestigationRecommendation)
@@ -382,6 +397,10 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                 { SoleToJointKeys.HORecommendation, housingOfficerRecommendation },
                 { SoleToJointKeys.HousingAreaManagerName, "ManagerName" }
             };
+
+            var random = new Random();
+            if (random.Next() % 2 == 0) // randomly add reason to formdata
+                UpdateProcessRequestObject.FormData.Add(SharedKeys.Reason, "Some Reason");
         }
 
         public void GivenAHOApprovalRequestWithMissingData()

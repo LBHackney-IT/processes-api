@@ -115,7 +115,7 @@ namespace ProcessesApi.Tests.V1.Services
                            .Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
         }
 
-        protected async Task ProcessStateShouldUpdateToProcessClosedAndEventIsRaised(string fromState, bool hasReason)
+        protected async Task ProcessStateShouldUpdateToProcessClosedAndEventIsRaised(string fromState)
         {
             // Arrange
             var process = CreateProcessWithCurrentState(fromState);
@@ -123,7 +123,10 @@ namespace ProcessesApi.Tests.V1.Services
             {
                 { SharedKeys.HasNotifiedResident, true }
             };
-            if (hasReason) formData.Add(SharedKeys.Reason, "this is a reason.");
+
+            var random = new Random();
+            if (random.Next() % 2 == 0) // randomly add reason to formdata
+                formData.Add(SharedKeys.Reason, "this is a reason.");
 
             var triggerObject = CreateProcessTrigger(process,
                                                      SharedPermittedTriggers.CloseProcess,

@@ -15,5 +15,20 @@ namespace ProcessesApi.V1.Constants.ChangeOfName
 
         #endregion
 
+        #region Review Documents
+
+        /// <summary>
+        ///     I confirm I have seen a valid example of one of the following documents
+        ///     Marriage certificate
+        ///     Civil partnership certificate
+        ///     Decree absolute
+        ///     Final order
+        ///     Deed poll document
+        ///     Statutory document
+        /// </summary>
+        public const string AtLeastOneDocument = "atLeastOneDocument";
+
+        #endregion
+
     }
 }
