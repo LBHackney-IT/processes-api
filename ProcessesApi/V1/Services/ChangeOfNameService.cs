@@ -70,7 +70,7 @@ namespace ProcessesApi.V1.Services
                   SharedKeys.SeenSecondId,
                   ChangeOfNameKeys.AtLeastOneDocument,
             };
-            ProcessHelper.ValidateFormData(formData, expectedFormDataKeys);
+            ProcessHelper.ValidateKeys(formData, expectedFormDataKeys);
 
             processRequest.Trigger = SharedInternalTriggers.DocumentChecksPassed;
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
