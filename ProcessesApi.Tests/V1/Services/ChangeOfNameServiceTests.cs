@@ -196,8 +196,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SharedStates.DocumentsAppointmentRescheduled,
-                new List<string> { SharedPermittedTriggers.RescheduleDocumentsAppointment, SharedPermittedTriggers.CancelProcess /*TODO Add next state here  */}
-
+                new List<string> { SharedPermittedTriggers.RescheduleDocumentsAppointment, SharedPermittedTriggers.CancelProcess, SharedPermittedTriggers.ReviewDocuments }
             );
             process.PreviousStates.Last().State.Should().Be(initialState);
             VerifyThatProcessUpdatedEventIsTriggered(initialState, SharedStates.DocumentsAppointmentRescheduled);
@@ -207,6 +206,8 @@ namespace ProcessesApi.Tests.V1.Services
         }
 
         #endregion
+
+
 
     }
 }

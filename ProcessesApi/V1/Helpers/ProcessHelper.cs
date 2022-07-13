@@ -53,5 +53,6 @@ namespace ProcessesApi.V1.Helpers
                 throw new FormDataFormatException("boolean", hasNotifiedResidentString);
             }
         }
+
     }
 }

@@ -112,6 +112,11 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
             await CheckProcessState(request.Id, SharedStates.ProcessCancelled, previousState).ConfigureAwait(false);
         }
 
+        public async Task ThenTheProcessStateIsUpdatedToDocumentChecksPassed(UpdateProcessQuery request, string initialState)
+        {
+            await CheckProcessState(request.Id, SharedStates.DocumentChecksPassed, initialState).ConfigureAwait(false);
+        }
+
         # endregion
 
         # region Events
@@ -277,7 +282,6 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
             await VerifyProcessCompletedEventIsRaised(snsFixture, processId, oldState, SoleToJointStates.TenureUpdated).ConfigureAwait(false);
             // todo figure out how to verify other events e.g. tenure updated
         }
-
         # endregion
     }
 }
