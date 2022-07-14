@@ -66,15 +66,23 @@ namespace ProcessesApi.Tests.V1.Services
             ShouldThrowFormDataNotFoundException(initialState, trigger, expectedFormDataKeys);
         }
 
+        #region Close Process
+        [Theory]
+        [InlineData(SharedStates.DocumentsRequestedDes)]
+        [InlineData(SharedStates.DocumentsRequestedAppointment)]
+        [InlineData(SharedStates.DocumentsAppointmentRescheduled)]
+        public async Task ProcessStateIsUpdatedToProcessClosedAndEventIsRaised(string fromState)
+        {
+            await ProcessStateShouldUpdateToProcessClosedAndEventIsRaised(fromState).ConfigureAwait(false);
+        }
+
+        #endregion
 
         #region Cancel Process
 
         // List all states that CancelProcess can be triggered from
         [Theory]
         [InlineData(ChangeOfNameStates.NameSubmitted)]
-        [InlineData(SharedStates.DocumentsRequestedDes)]
-        [InlineData(SharedStates.DocumentsRequestedAppointment)]
-        [InlineData(SharedStates.DocumentsAppointmentRescheduled)]
         public async Task ProcessStateIsUpdatedToProcessCancelledAndProcessClosedEventIsRaised(string fromState)
         {
             await ProcessStateShouldUpdateToProcessCancelledAndProcessClosedEventIsRaised(fromState).ConfigureAwait(false);
@@ -129,7 +137,7 @@ namespace ProcessesApi.Tests.V1.Services
             CurrentStateShouldContainCorrectData(process,
                                                  triggerObject,
                                                  SharedStates.DocumentsRequestedDes,
-                                                 new List<string>() { SharedPermittedTriggers.RequestDocumentsAppointment, SharedPermittedTriggers.ReviewDocuments, SharedPermittedTriggers.CancelProcess });
+                                                 new List<string>() { SharedPermittedTriggers.RequestDocumentsAppointment, SharedPermittedTriggers.ReviewDocuments, SharedPermittedTriggers.CloseProcess });
             process.PreviousStates.LastOrDefault().State.Should().Be(ChangeOfNameStates.NameSubmitted);
             VerifyThatProcessUpdatedEventIsTriggered(ChangeOfNameStates.NameSubmitted, SharedStates.DocumentsRequestedDes);
         }
@@ -161,7 +169,7 @@ namespace ProcessesApi.Tests.V1.Services
                 {
                     SharedPermittedTriggers.RescheduleDocumentsAppointment,
                     SharedPermittedTriggers.ReviewDocuments,
-                    SharedPermittedTriggers.CancelProcess
+                    SharedPermittedTriggers.CloseProcess
                 });
 
             process.PreviousStates.Last().State.Should().Be(initialState);
@@ -196,7 +204,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SharedStates.DocumentsAppointmentRescheduled,
-                new List<string> { SharedPermittedTriggers.RescheduleDocumentsAppointment, SharedPermittedTriggers.CancelProcess, SharedPermittedTriggers.ReviewDocuments }
+                new List<string> { SharedPermittedTriggers.RescheduleDocumentsAppointment, SharedPermittedTriggers.CloseProcess, SharedPermittedTriggers.ReviewDocuments }
             );
             process.PreviousStates.Last().State.Should().Be(initialState);
             VerifyThatProcessUpdatedEventIsTriggered(initialState, SharedStates.DocumentsAppointmentRescheduled);

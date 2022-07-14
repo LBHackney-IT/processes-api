@@ -101,21 +101,21 @@ namespace ProcessesApi.V1.Services
                     .InternalTransitionAsync(SharedPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
                     .Permit(SharedPermittedTriggers.RequestDocumentsAppointment, SharedStates.DocumentsRequestedAppointment)
                     .Permit(SharedInternalTriggers.DocumentChecksPassed, SharedStates.DocumentChecksPassed)
-                    .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
+                    .Permit(SharedPermittedTriggers.CloseProcess, SharedStates.ProcessClosed);
 
             _machine.Configure(SharedStates.DocumentsRequestedAppointment)
                     .OnEntry(AddAppointmentDateTimeToEvent)
                     .InternalTransitionAsync(SharedPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
                     .Permit(SharedInternalTriggers.DocumentChecksPassed, SharedStates.DocumentChecksPassed)
                     .Permit(SharedPermittedTriggers.RescheduleDocumentsAppointment, SharedStates.DocumentsAppointmentRescheduled)
-                    .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
+                    .Permit(SharedPermittedTriggers.CloseProcess, SharedStates.ProcessClosed);
 
             _machine.Configure(SharedStates.DocumentsAppointmentRescheduled)
                     .OnEntry(AddAppointmentDateTimeToEvent)
                     .InternalTransitionAsync(SharedPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
                     .PermitReentry(SharedPermittedTriggers.RescheduleDocumentsAppointment)
                     .Permit(SharedInternalTriggers.DocumentChecksPassed, SharedStates.DocumentChecksPassed)
-                    .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
+                    .Permit(SharedPermittedTriggers.CloseProcess, SharedStates.ProcessClosed);
 
             _machine.Configure(SharedStates.DocumentChecksPassed)
                    .Permit(SharedPermittedTriggers.SubmitApplication, SharedStates.ApplicationSubmitted)
