@@ -38,7 +38,7 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
             result.ShouldHaveValidationErrorFor(x => x.TargetId);
         }
 
-        [Fact(Skip = "TO DO once FE logic is completed")]
+        [Fact]
         public void RequestShouldErrorWithNullRelatedEntity()
         {
             //Arrange
