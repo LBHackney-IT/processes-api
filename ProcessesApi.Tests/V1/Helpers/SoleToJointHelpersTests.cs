@@ -8,6 +8,7 @@ using ProcessesApi.V1.Constants.Shared;
 using ProcessesApi.V1.Constants;
 using System;
 using ProcessesApi.V1.Services.Exceptions;
+using ProcessesApi.V1.Constants.SoleToJoint;
 
 namespace ProcessesApi.Tests.V1.Helpers
 {
@@ -85,14 +86,31 @@ namespace ProcessesApi.Tests.V1.Helpers
 
             var triggerMappings = new Dictionary<string, string>
             {
-                {"Approval", SharedInternalTriggers.TenureInvestigationPassed },
+                {SharedValues.Approve, "TenurePassed"},
                 { SharedValues.Appointment, SharedInternalTriggers.TenureInvestigationPassedWithInt },
                 { SharedValues.Decline, SharedInternalTriggers.TenureInvestigationFailed }
             };
-
             Action action = () => processRequest.SelectTriggerFromUserInput(triggerMappings, SharedKeys.TenureInvestigationRecommendation, null);
 
             action.Should().Throw<FormDataNotFoundException>();
+        }
+
+        [Fact]
+        public void ShouldThrowFormDataNotFoundErrorIfInvalidUserInput()
+        {
+            var processRequest = _fixture.Create<ProcessTrigger>();
+
+            var triggerMappings = new Dictionary<string, string>
+            {
+                {SharedValues.Appointment, SharedInternalTriggers.TenureInvestigationPassedWithInt },
+                { SharedValues.Approve, SharedInternalTriggers.TenureInvestigationPassed },
+                { SharedValues.Decline, SharedInternalTriggers.TenureInvestigationFailed }
+            };
+
+            processRequest.FormData.Add(SharedKeys.TenureInvestigationRecommendation, "recommendation");
+            Action action = () => processRequest.SelectTriggerFromUserInput(triggerMappings, SharedKeys.TenureInvestigationRecommendation, null);
+
+            action.Should().Throw<FormDataValueInvalidException>();
         }
 
     }
