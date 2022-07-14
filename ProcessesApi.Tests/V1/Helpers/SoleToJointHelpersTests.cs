@@ -96,7 +96,7 @@ namespace ProcessesApi.Tests.V1.Helpers
         }
 
         [Fact]
-        public void ShouldThrowFormDataNotFoundErrorIfInvalidUserInput()
+        public void ShouldThrowFormDataInvalidErrorIfInvalidUserInput()
         {
             var processRequest = _fixture.Create<ProcessTrigger>();
 
