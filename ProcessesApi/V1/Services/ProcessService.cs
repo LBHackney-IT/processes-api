@@ -109,7 +109,7 @@ namespace ProcessesApi.V1.Services
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
 
-        protected async Task TriggerStateMachine(ProcessTrigger trigger)
+        public async Task TriggerStateMachine(ProcessTrigger trigger)
         {
             var res = _machine.SetTriggerParameters<ProcessTrigger, Process>(trigger.Trigger);
             await _machine.FireAsync(res, trigger, _process).ConfigureAwait(false);

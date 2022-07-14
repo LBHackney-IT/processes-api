@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Hackney.Core.Sns;
 using ProcessesApi.V1.Constants;
 using ProcessesApi.V1.Constants.ChangeOfName;
+using ProcessesApi.V1.Constants.Shared;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Helpers;
@@ -76,6 +77,25 @@ namespace ProcessesApi.V1.Services
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
+        public async Task CheckTenureInvestigation(StateMachine<string, string>.Transition transition)
+        {
+            var processRequest = transition.Parameters[0] as ProcessTrigger;
+
+
+            var triggerMappings = new Dictionary<string, string>
+            {
+                { SharedValues.Appointment, SharedInternalTriggers.TenureInvestigationPassedWithInt },
+                { SharedValues.Approve, SharedInternalTriggers.TenureInvestigationPassed },
+                { SharedValues.Decline, SharedInternalTriggers.TenureInvestigationFailed }
+            };
+
+            processRequest.SelectTriggerFromUserInput(triggerMappings,
+                                                SharedKeys.TenureInvestigationRecommendation,
+                                                null);
+
+            await TriggerStateMachine(processRequest).ConfigureAwait(false);
+        }
+
         protected override void SetUpStates()
         {
             _machine.Configure(SharedStates.ProcessClosed)
@@ -122,11 +142,11 @@ namespace ProcessesApi.V1.Services
                     .Permit(SharedInternalTriggers.HOApprovalFailed, SharedStates.HOApprovalFailed)
                     .Permit(SharedInternalTriggers.HOApprovalPassed, SharedStates.HOApprovalPassed);
 
-            _machine.Configure(SharedStates.ApplicationSubmitted);
-            //.InternalTransitionAsync(SharedPermittedTriggers.TenureInvestigation, CheckTenureInvestigation)
-            //.Permit(SharedInternalTriggers.TenureInvestigationFailed, SharedStates.TenureInvestigationFailed)
-            //.Permit(SharedInternalTriggers.TenureInvestigationPassed, SharedStates.TenureInvestigationPassed)
-            //.Permit(SharedInternalTriggers.TenureInvestigationPassedWithInt, SharedStates.TenureInvestigationPassedWithInt);
+            _machine.Configure(SharedStates.ApplicationSubmitted)
+                    .InternalTransitionAsync(SharedPermittedTriggers.TenureInvestigation, CheckTenureInvestigation)
+                    .Permit(SharedInternalTriggers.TenureInvestigationFailed, SharedStates.TenureInvestigationFailed)
+                    .Permit(SharedInternalTriggers.TenureInvestigationPassed, SharedStates.TenureInvestigationPassed)
+                    .Permit(SharedInternalTriggers.TenureInvestigationPassedWithInt, SharedStates.TenureInvestigationPassedWithInt);
 
         }
     }

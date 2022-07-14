@@ -14,6 +14,7 @@ using ProcessesApi.V1.Services;
 using ProcessesApi.V1.Constants;
 using System.Linq;
 using System.Globalization;
+using ProcessesApi.V1.Constants.Shared;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -60,6 +61,7 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SharedStates.DocumentsAppointmentRescheduled, SharedPermittedTriggers.RescheduleDocumentsAppointment, new string[] { SharedKeys.AppointmentDateTime })]
         [InlineData(SharedStates.DocumentsRequestedAppointment, SharedPermittedTriggers.RescheduleDocumentsAppointment, new string[] { SharedKeys.AppointmentDateTime })]
         [InlineData(ChangeOfNameStates.NameSubmitted, SharedPermittedTriggers.RequestDocumentsAppointment, new string[] { SharedKeys.AppointmentDateTime })]
+        [InlineData(SharedStates.ApplicationSubmitted, SharedPermittedTriggers.TenureInvestigation, new string[] { SharedKeys.TenureInvestigationRecommendation })]
 
         public void ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
         {
@@ -230,10 +232,40 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SharedStates.ApplicationSubmitted,
-                new List<string> { });
+                new List<string> { SharedPermittedTriggers.TenureInvestigation });
 
             process.PreviousStates.Last().State.Should().Be(SharedStates.DocumentChecksPassed);
             VerifyThatProcessUpdatedEventIsTriggered(SharedStates.DocumentChecksPassed, SharedStates.ApplicationSubmitted);
+        }
+
+        #endregion
+
+        #region Tenure Investigation
+
+        [Theory]
+        [InlineData(SharedValues.Approve, SharedStates.TenureInvestigationPassed)]
+        [InlineData(SharedValues.Decline, SharedStates.TenureInvestigationFailed)]
+        [InlineData(SharedValues.Appointment, SharedStates.TenureInvestigationPassedWithInt)]
+        public async Task ProcessStateIsUpdatedOnTenureInvestigationTrigger(string tenureInvestigationRecommendation, string expectedState)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SharedStates.ApplicationSubmitted);
+            var formData = new Dictionary<string, object>
+            {
+                {  SharedKeys.TenureInvestigationRecommendation, tenureInvestigationRecommendation }
+            };
+            var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.TenureInvestigation, formData);
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, expectedState,
+                new List<string> { /*TODO Add next state here  */}
+            );
+            process.PreviousStates.Last().State.Should().Be(SharedStates.ApplicationSubmitted);
+            VerifyThatProcessUpdatedEventIsTriggered(SharedStates.ApplicationSubmitted, expectedState);
         }
 
         #endregion

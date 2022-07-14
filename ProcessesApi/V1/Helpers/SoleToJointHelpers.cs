@@ -39,7 +39,7 @@ namespace ProcessesApi.V1.Helpers
         }
 
 
-        public static void HandleRecommendation(this ProcessTrigger processRequest, Dictionary<string, string> triggerMappings, string recommendationKeyName, List<string> otherExpectedFormDataKeys)
+        public static void SelectTriggerFromUserInput(this ProcessTrigger processRequest, Dictionary<string, string> triggerMappings, string recommendationKeyName, List<string> otherExpectedFormDataKeys)
         {
             var formData = processRequest.FormData;
 

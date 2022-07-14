@@ -4,6 +4,7 @@ using ProcessesApi.Tests.V1.E2E.Fixtures;
 using ProcessesApi.Tests.V1.E2ETests.Steps;
 using ProcessesApi.V1.Constants;
 using ProcessesApi.V1.Constants.ChangeOfName;
+using ProcessesApi.V1.Constants.Shared;
 using System;
 using TestStack.BDDfy;
 using Xunit;
@@ -258,7 +259,43 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         }
         #endregion
 
+        #region Tenure Investigation
 
+        [Theory]
+        [InlineData(SharedValues.Appointment, SharedStates.TenureInvestigationPassedWithInt)]
+        [InlineData(SharedValues.Approve, SharedStates.TenureInvestigationPassed)]
+        [InlineData(SharedValues.Decline, SharedStates.TenureInvestigationFailed)]
+        public void ProcessStateIsUpdatedToShowResultOfTenureInvestigation(string tenureInvestigationRecommendation, string destinationState)
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(SharedStates.ApplicationSubmitted))
+                    .And(a => _processFixture.GivenATenureInvestigationRequest(tenureInvestigationRecommendation))
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenTheProcessStateIsUpdatedToShowResultsOfTenureInvestigation(_processFixture.UpdateProcessRequest, destinationState))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaised(_snsFixture, _processFixture.ProcessId, SharedStates.ApplicationSubmitted, destinationState))
+                .BDDfy();
+        }
+
+        [Fact]
+        public void BadRequestIsReturnedWhenTenureInvestigationRecommendationIsMissing()
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SharedStates.ApplicationSubmitted))
+                    .And(a => _processFixture.GivenATenureInvestigationRequestWithMissingData())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenBadRequestIsReturned())
+                .BDDfy();
+        }
+
+        [Fact]
+        public void BadRequestIsReturnedWhenTenureInvestigationRecommendationIsInvalid()
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SharedStates.ApplicationSubmitted))
+                    .And(a => _processFixture.GivenATenureInvestigationRequestWithInvalidData())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenBadRequestIsReturned())
+                .BDDfy();
+        }
+
+        #endregion
 
     }
 }
