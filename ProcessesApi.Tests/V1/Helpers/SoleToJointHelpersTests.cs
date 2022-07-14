@@ -3,6 +3,11 @@ using Xunit;
 using FluentAssertions;
 using AutoFixture;
 using ProcessesApi.V1.Domain;
+using System.Collections.Generic;
+using ProcessesApi.V1.Constants.Shared;
+using ProcessesApi.V1.Constants;
+using System;
+using ProcessesApi.V1.Services.Exceptions;
 
 namespace ProcessesApi.Tests.V1.Helpers
 {
@@ -55,6 +60,40 @@ namespace ProcessesApi.Tests.V1.Helpers
             processRequest.Trigger.Should().Be(passedTrigger);
         }
 
+        [Fact]
+        public void ShouldNotThrowErrorIfValidUserInput()
+        {
+            var processRequest = _fixture.Create<ProcessTrigger>();
+
+            var triggerMappings = new Dictionary<string, string>
+            {
+                {SharedValues.Appointment, SharedInternalTriggers.TenureInvestigationPassedWithInt },
+                { SharedValues.Approve, SharedInternalTriggers.TenureInvestigationPassed },
+                { SharedValues.Decline, SharedInternalTriggers.TenureInvestigationFailed }
+            };
+
+            Action action = () => processRequest.SelectTriggerFromUserInput(triggerMappings, SharedKeys.TenureInvestigationRecommendation, null);
+
+            action.Should().NotThrow<FormDataValueInvalidException>();
+        }
+
+
+        [Fact]
+        public void ShouldThrowFormDataNotFoundError()
+        {
+            var processRequest = _fixture.Create<ProcessTrigger>();
+
+            var triggerMappings = new Dictionary<string, string>
+            {
+                {"Approval", SharedInternalTriggers.TenureInvestigationPassed },
+                { SharedValues.Appointment, SharedInternalTriggers.TenureInvestigationPassedWithInt },
+                { SharedValues.Decline, SharedInternalTriggers.TenureInvestigationFailed }
+            };
+
+            Action action = () => processRequest.SelectTriggerFromUserInput(triggerMappings, SharedKeys.TenureInvestigationRecommendation, null);
+
+            action.Should().Throw<FormDataNotFoundException>();
+        }
 
     }
 }

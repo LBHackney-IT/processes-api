@@ -89,7 +89,7 @@ namespace ProcessesApi.V1.Services
                 { SharedValues.Decline, SharedInternalTriggers.TenureInvestigationFailed }
             };
 
-            processRequest.HandleRecommendation(triggerMappings,
+            processRequest.SelectTriggerFromUserInput(triggerMappings,
                                                 SharedKeys.TenureInvestigationRecommendation,
                                                 null);
 

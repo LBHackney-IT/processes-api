@@ -111,7 +111,7 @@ namespace ProcessesApi.V1.Services
                 { SharedValues.Decline, SharedInternalTriggers.HOApprovalFailed }
             };
 
-            processRequest.HandleRecommendation(triggerMappings,
+            processRequest.SelectTriggerFromUserInput(triggerMappings,
                                                 SoleToJointKeys.HORecommendation,
                                                 new List<string> { SoleToJointKeys.HousingAreaManagerName });
 
@@ -134,7 +134,7 @@ namespace ProcessesApi.V1.Services
                 { SharedValues.Decline, SharedInternalTriggers.TenureInvestigationFailed }
             };
 
-            processRequest.HandleRecommendation(triggerMappings,
+            processRequest.SelectTriggerFromUserInput(triggerMappings,
                                                 SharedKeys.TenureInvestigationRecommendation,
                                                 null);
 
