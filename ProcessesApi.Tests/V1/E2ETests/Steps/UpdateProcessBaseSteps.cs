@@ -117,6 +117,11 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
             await CheckProcessState(request.Id, SharedStates.DocumentChecksPassed, initialState).ConfigureAwait(false);
         }
 
+        public async Task ThenTheProcessStateIsUpdatedToApplicationSubmitted(UpdateProcessQuery request)
+        {
+            await CheckProcessState(request.Id, SharedStates.ApplicationSubmitted, SharedStates.DocumentChecksPassed).ConfigureAwait(false);
+        }
+
         # endregion
 
         # region Events

@@ -118,7 +118,15 @@ namespace ProcessesApi.V1.Services
                     .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
 
             _machine.Configure(SharedStates.DocumentChecksPassed)
-                   .Permit(SharedPermittedTriggers.SubmitApplication, SharedStates.ApplicationSubmitted);
+                   .Permit(SharedPermittedTriggers.SubmitApplication, SharedStates.ApplicationSubmitted)
+                    .Permit(SharedInternalTriggers.HOApprovalFailed, SharedStates.HOApprovalFailed)
+                    .Permit(SharedInternalTriggers.HOApprovalPassed, SharedStates.HOApprovalPassed);
+
+            _machine.Configure(SharedStates.ApplicationSubmitted);
+            //.InternalTransitionAsync(SharedPermittedTriggers.TenureInvestigation, CheckTenureInvestigation)
+            //.Permit(SharedInternalTriggers.TenureInvestigationFailed, SharedStates.TenureInvestigationFailed)
+            //.Permit(SharedInternalTriggers.TenureInvestigationPassed, SharedStates.TenureInvestigationPassed)
+            //.Permit(SharedInternalTriggers.TenureInvestigationPassedWithInt, SharedStates.TenureInvestigationPassedWithInt);
 
         }
     }

@@ -207,6 +207,29 @@ namespace ProcessesApi.Tests.V1.Services
 
         #endregion
 
+        #region Submit Application
+
+        [Fact]
+        public async Task ProcessStateIsUpdatedToApplicationSubmittedOnSubmitApplicationTrigger()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SharedStates.DocumentChecksPassed);
+            var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.SubmitApplication);
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SharedStates.ApplicationSubmitted,
+                new List<string> { });
+
+            process.PreviousStates.Last().State.Should().Be(SharedStates.DocumentChecksPassed);
+            VerifyThatProcessUpdatedEventIsTriggered(SharedStates.DocumentChecksPassed, SharedStates.ApplicationSubmitted);
+        }
+
+        #endregion
+
 
 
     }
