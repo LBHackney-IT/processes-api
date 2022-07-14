@@ -81,14 +81,30 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .BDDfy();
         }
 
+        #region Close Process
+
+        // List all states that CloseProcess can be triggered from
+        [Theory]
+        [InlineData(SharedStates.DocumentsRequestedDes)]
+        [InlineData(SharedStates.DocumentsRequestedAppointment)]
+        [InlineData(SharedStates.DocumentsAppointmentRescheduled)]
+        public void ProcessStateIsUpdatedToProcessClosedWithReason(string fromState)
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(fromState))
+                    .And(a => _processFixture.GivenACloseProcessRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheProcessStateIsUpdatedToProcessClosed(_processFixture.UpdateProcessRequest, fromState))
+                    .And(a => _steps.ThenTheProcessClosedEventIsRaised(_snsFixture, _processFixture.ProcessId, _processFixture.UpdateProcessRequestObject, fromState))
+                .BDDfy();
+        }
+        #endregion
+
         #region Cancel Process
 
         // List all states that CancelProcess can be triggered from
         [Theory]
         [InlineData(ChangeOfNameStates.NameSubmitted)]
-        [InlineData(SharedStates.DocumentsRequestedDes)]
-        [InlineData(SharedStates.DocumentsRequestedAppointment)]
-        [InlineData(SharedStates.DocumentsAppointmentRescheduled)]
         public void ProcessStateIsUpdatedToProcessCancelled(string fromState)
         {
             this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(fromState))
