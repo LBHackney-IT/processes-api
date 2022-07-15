@@ -42,11 +42,6 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             relatedEntity.Description.Should().Be($"{person.FirstName} {person.Surname}");
         }
 
-        public async Task ThenTheProcessStateIsUpdatedToProcessClosed(UpdateProcessQuery request, string previousState)
-        {
-            await CheckProcessState(request.Id, SharedStates.ProcessClosed, previousState).ConfigureAwait(false);
-        }
-
         public async Task ThenTheProcessStateIsUpdatedToAutomatedEligibilityChecksPassed(UpdateProcessQuery request)
         {
             await CheckProcessState(request.Id, SoleToJointStates.AutomatedChecksPassed, SoleToJointStates.SelectTenants).ConfigureAwait(false);
@@ -86,11 +81,6 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         public async Task ThenTheProcessStateIsUpdatedToDocumentsRequestedAppointment(UpdateProcessQuery request)
         {
             await CheckProcessState(request.Id, SharedStates.DocumentsRequestedAppointment, SoleToJointStates.BreachChecksPassed).ConfigureAwait(false);
-        }
-
-        public async Task ThenTheProcessStateIsUpdatedToShowResultsOfTenureInvestigation(UpdateProcessQuery request, string destinationState)
-        {
-            await CheckProcessState(request.Id, destinationState, SharedStates.ApplicationSubmitted).ConfigureAwait(false);
         }
 
         public async Task ThenTheProcessStateIsUpdatedToInterviewScheduled(UpdateProcessQuery request)

@@ -337,7 +337,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
-                { SoleToJointKeys.TenureInvestigationRecommendation, tenureInvestigationRecommendation }
+                { SharedKeys.TenureInvestigationRecommendation, tenureInvestigationRecommendation }
             };
         }
 

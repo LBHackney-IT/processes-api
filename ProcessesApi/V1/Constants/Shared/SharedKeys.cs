@@ -25,5 +25,11 @@ namespace ProcessesApi.V1.Constants
 
         #endregion
 
+        #region Tenure Investigation
+
+        public const string TenureInvestigationRecommendation = "tenureInvestigationRecommendation";
+
+        #endregion
+
     }
 }

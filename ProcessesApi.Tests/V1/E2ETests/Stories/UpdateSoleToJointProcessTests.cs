@@ -7,6 +7,7 @@ using Xunit;
 using Hackney.Core.Testing.Sns;
 using ProcessesApi.V1.Constants.SoleToJoint;
 using ProcessesApi.V1.Constants;
+using ProcessesApi.V1.Constants.Shared;
 
 namespace ProcessesApi.Tests.V1.E2E.Stories
 {
@@ -394,9 +395,9 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         }
 
         [Theory]
-        [InlineData(SoleToJointValues.Appointment, SharedStates.TenureInvestigationPassedWithInt)]
-        [InlineData(SoleToJointValues.Approve, SharedStates.TenureInvestigationPassed)]
-        [InlineData(SoleToJointValues.Decline, SharedStates.TenureInvestigationFailed)]
+        [InlineData(SharedValues.Appointment, SharedStates.TenureInvestigationPassedWithInt)]
+        [InlineData(SharedValues.Approve, SharedStates.TenureInvestigationPassed)]
+        [InlineData(SharedValues.Decline, SharedStates.TenureInvestigationFailed)]
         public void ProcessStateIsUpdatedToShowResultOfTenureInvestigation(string tenureInvestigationRecommendation, string destinationState)
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(SharedStates.ApplicationSubmitted))
@@ -492,16 +493,16 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         #region HOApproval
 
         [Theory]
-        [InlineData(SoleToJointValues.Approve, SharedStates.HOApprovalPassed, SharedStates.InterviewScheduled)]
-        [InlineData(SoleToJointValues.Approve, SharedStates.HOApprovalPassed, SharedStates.InterviewRescheduled)]
-        [InlineData(SoleToJointValues.Decline, SharedStates.HOApprovalFailed, SharedStates.InterviewScheduled)]
-        [InlineData(SoleToJointValues.Decline, SharedStates.HOApprovalFailed, SharedStates.InterviewRescheduled)]
-        [InlineData(SoleToJointValues.Approve, SharedStates.HOApprovalPassed, SharedStates.TenureInvestigationPassed)]
-        [InlineData(SoleToJointValues.Approve, SharedStates.HOApprovalPassed, SharedStates.TenureInvestigationFailed)]
-        [InlineData(SoleToJointValues.Approve, SharedStates.HOApprovalPassed, SharedStates.TenureInvestigationPassedWithInt)]
-        [InlineData(SoleToJointValues.Decline, SharedStates.HOApprovalFailed, SharedStates.TenureInvestigationPassed)]
-        [InlineData(SoleToJointValues.Decline, SharedStates.HOApprovalFailed, SharedStates.TenureInvestigationFailed)]
-        [InlineData(SoleToJointValues.Decline, SharedStates.HOApprovalFailed, SharedStates.TenureInvestigationPassedWithInt)]
+        [InlineData(SharedValues.Approve, SharedStates.HOApprovalPassed, SharedStates.InterviewScheduled)]
+        [InlineData(SharedValues.Approve, SharedStates.HOApprovalPassed, SharedStates.InterviewRescheduled)]
+        [InlineData(SharedValues.Decline, SharedStates.HOApprovalFailed, SharedStates.InterviewScheduled)]
+        [InlineData(SharedValues.Decline, SharedStates.HOApprovalFailed, SharedStates.InterviewRescheduled)]
+        [InlineData(SharedValues.Approve, SharedStates.HOApprovalPassed, SharedStates.TenureInvestigationPassed)]
+        [InlineData(SharedValues.Approve, SharedStates.HOApprovalPassed, SharedStates.TenureInvestigationFailed)]
+        [InlineData(SharedValues.Approve, SharedStates.HOApprovalPassed, SharedStates.TenureInvestigationPassedWithInt)]
+        [InlineData(SharedValues.Decline, SharedStates.HOApprovalFailed, SharedStates.TenureInvestigationPassed)]
+        [InlineData(SharedValues.Decline, SharedStates.HOApprovalFailed, SharedStates.TenureInvestigationFailed)]
+        [InlineData(SharedValues.Decline, SharedStates.HOApprovalFailed, SharedStates.TenureInvestigationPassedWithInt)]
         public void ProcessStateIsUpdatedToShowResultOfHOApproval(string housingOfficerRecommendation, string destinationState, string initialState)
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(initialState))
