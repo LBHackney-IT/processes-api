@@ -273,7 +273,7 @@ namespace ProcessesApi.Tests.V1.Services
 
         #endregion
 
-        #region HOApproval and Schedule/Reschedule Interview
+        #region HOApproval
 
         [Theory]
         [InlineData(SharedStates.InterviewScheduled)]

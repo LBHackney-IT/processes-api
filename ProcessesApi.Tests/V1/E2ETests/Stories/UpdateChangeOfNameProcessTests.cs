@@ -297,7 +297,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
 
         #endregion
 
-        #region HO Approval and Schedule/Reschedule Interview
+        #region HO Approval
 
         [Theory]
         [InlineData(SharedValues.Approve, SharedStates.HOApprovalPassed, SharedStates.InterviewScheduled)]
