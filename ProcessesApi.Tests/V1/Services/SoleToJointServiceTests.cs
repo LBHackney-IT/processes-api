@@ -67,11 +67,11 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SoleToJointStates.ManualChecksPassed, SoleToJointPermittedTriggers.CheckTenancyBreach, new string[] { SoleToJointKeys.BR5, SoleToJointKeys.BR10, SoleToJointKeys.BR17, SoleToJointKeys.BR18 })]
         [InlineData(SoleToJointStates.BreachChecksPassed, SharedPermittedTriggers.RequestDocumentsAppointment, new string[] { SharedKeys.AppointmentDateTime })]
         [InlineData(SharedStates.ApplicationSubmitted, SharedPermittedTriggers.TenureInvestigation, new string[] { SharedKeys.TenureInvestigationRecommendation })]
-        [InlineData(SharedStates.InterviewScheduled, SharedPermittedTriggers.HOApproval, new string[] { SoleToJointKeys.HousingAreaManagerName, SoleToJointKeys.HORecommendation })]
-        [InlineData(SharedStates.InterviewRescheduled, SharedPermittedTriggers.HOApproval, new string[] { SoleToJointKeys.HousingAreaManagerName, SoleToJointKeys.HORecommendation })]
-        [InlineData(SharedStates.TenureInvestigationFailed, SharedPermittedTriggers.HOApproval, new string[] { SoleToJointKeys.HousingAreaManagerName, SoleToJointKeys.HORecommendation })]
-        [InlineData(SharedStates.TenureInvestigationPassed, SharedPermittedTriggers.HOApproval, new string[] { SoleToJointKeys.HousingAreaManagerName, SoleToJointKeys.HORecommendation })]
-        [InlineData(SharedStates.TenureInvestigationPassedWithInt, SharedPermittedTriggers.HOApproval, new string[] { SoleToJointKeys.HousingAreaManagerName, SoleToJointKeys.HORecommendation })]
+        [InlineData(SharedStates.InterviewScheduled, SharedPermittedTriggers.HOApproval, new string[] { SharedKeys.HousingAreaManagerName, SharedKeys.HORecommendation })]
+        [InlineData(SharedStates.InterviewRescheduled, SharedPermittedTriggers.HOApproval, new string[] { SharedKeys.HousingAreaManagerName, SharedKeys.HORecommendation })]
+        [InlineData(SharedStates.TenureInvestigationFailed, SharedPermittedTriggers.HOApproval, new string[] { SharedKeys.HousingAreaManagerName, SharedKeys.HORecommendation })]
+        [InlineData(SharedStates.TenureInvestigationPassed, SharedPermittedTriggers.HOApproval, new string[] { SharedKeys.HousingAreaManagerName, SharedKeys.HORecommendation })]
+        [InlineData(SharedStates.TenureInvestigationPassedWithInt, SharedPermittedTriggers.HOApproval, new string[] { SharedKeys.HousingAreaManagerName, SharedKeys.HORecommendation })]
         [InlineData(SharedStates.HOApprovalPassed, SoleToJointPermittedTriggers.ScheduleTenureAppointment, new string[] { SharedKeys.AppointmentDateTime })]
         public void ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
         {
@@ -621,8 +621,8 @@ namespace ProcessesApi.Tests.V1.Services
             var process = CreateProcessWithCurrentState(initialState);
             var formData = new Dictionary<string, object>
             {
-                {  SoleToJointKeys.HORecommendation, SharedValues.Approve },
-                {  SoleToJointKeys.HousingAreaManagerName, "ManagerName"  },
+                {  SharedKeys.HORecommendation, SharedValues.Approve },
+                {  SharedKeys.HousingAreaManagerName, "ManagerName"  },
                 {  SharedKeys.Reason, "Some Reason"  }
             };
             var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.HOApproval, formData);
@@ -651,8 +651,8 @@ namespace ProcessesApi.Tests.V1.Services
             var process = CreateProcessWithCurrentState(initialState);
             var formData = new Dictionary<string, object>
             {
-                {  SoleToJointKeys.HORecommendation, SharedValues.Decline },
-                { SoleToJointKeys.HousingAreaManagerName, "ManagerName"},
+                {  SharedKeys.HORecommendation, SharedValues.Decline },
+                { SharedKeys.HousingAreaManagerName, "ManagerName"},
                 { SharedKeys.Reason, "Some Reason"}
             };
 
@@ -683,8 +683,8 @@ namespace ProcessesApi.Tests.V1.Services
             var invalidRecommendation = "some invalid value";
             var formData = new Dictionary<string, object>
             {
-                {  SoleToJointKeys.HORecommendation, invalidRecommendation },
-                { SoleToJointKeys.HousingAreaManagerName, "ManagerName"},
+                {  SharedKeys.HORecommendation, invalidRecommendation },
+                { SharedKeys.HousingAreaManagerName, "ManagerName"},
                 { SharedKeys.Reason, "Some reason"}
             };
             var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.HOApproval, formData);
@@ -695,7 +695,7 @@ namespace ProcessesApi.Tests.V1.Services
             };
 
             var expectedErrorMessage = String.Format("The request's FormData is invalid: The form data value supplied for key {0} does not match any of the expected values ({1}). The value supplied was: {2}",
-                                                    SoleToJointKeys.HORecommendation,
+                                                    SharedKeys.HORecommendation,
                                                     String.Join(", ", expectedRecommendationValues),
                                                     invalidRecommendation);
 

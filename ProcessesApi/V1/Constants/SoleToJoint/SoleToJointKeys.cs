@@ -113,13 +113,6 @@ namespace ProcessesApi.V1.Constants.SoleToJoint
 
         #endregion
 
-        #region HOApproval
-
-        public const string HORecommendation = "hoRecommendation";
-        public const string HousingAreaManagerName = "housingAreaManagerName";
-
-        #endregion
-
         public const string NewTenureId = "newTenureId";
     }
 }

@@ -15,6 +15,7 @@ using ProcessesApi.V1.Constants;
 using System.Linq;
 using System.Globalization;
 using ProcessesApi.V1.Constants.Shared;
+using ProcessesApi.V1.Services.Exceptions;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -62,7 +63,9 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SharedStates.DocumentsRequestedAppointment, SharedPermittedTriggers.RescheduleDocumentsAppointment, new string[] { SharedKeys.AppointmentDateTime })]
         [InlineData(ChangeOfNameStates.NameSubmitted, SharedPermittedTriggers.RequestDocumentsAppointment, new string[] { SharedKeys.AppointmentDateTime })]
         [InlineData(SharedStates.ApplicationSubmitted, SharedPermittedTriggers.TenureInvestigation, new string[] { SharedKeys.TenureInvestigationRecommendation })]
-
+        [InlineData(SharedStates.TenureInvestigationFailed, SharedPermittedTriggers.HOApproval, new string[] { SharedKeys.HousingAreaManagerName, SharedKeys.HORecommendation })]
+        [InlineData(SharedStates.TenureInvestigationPassed, SharedPermittedTriggers.HOApproval, new string[] { SharedKeys.HousingAreaManagerName, SharedKeys.HORecommendation })]
+        [InlineData(SharedStates.TenureInvestigationPassedWithInt, SharedPermittedTriggers.HOApproval, new string[] { SharedKeys.HousingAreaManagerName, SharedKeys.HORecommendation })]
         public void ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
         {
             ShouldThrowFormDataNotFoundException(initialState, trigger, expectedFormDataKeys);
@@ -266,6 +269,101 @@ namespace ProcessesApi.Tests.V1.Services
             );
             process.PreviousStates.Last().State.Should().Be(SharedStates.ApplicationSubmitted);
             VerifyThatProcessUpdatedEventIsTriggered(SharedStates.ApplicationSubmitted, expectedState);
+        }
+
+        #endregion
+
+        #region HOApproval
+
+        [Theory]
+        [InlineData(SharedStates.TenureInvestigationPassedWithInt)]
+        [InlineData(SharedStates.TenureInvestigationPassed)]
+        [InlineData(SharedStates.TenureInvestigationFailed)]
+
+        public async Task ProcessStateIsUpdatedToHOApprovalPassed(string initialState)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(initialState);
+            var formData = new Dictionary<string, object>
+            {
+                {  SharedKeys.HORecommendation, SharedValues.Approve },
+                {  SharedKeys.HousingAreaManagerName, "ManagerName"  },
+                {  SharedKeys.Reason, "Some Reason"  }
+            };
+            var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.HOApproval, formData);
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SharedStates.HOApprovalPassed,
+                new List<string> { }
+            );
+            process.PreviousStates.Last().State.Should().Be(initialState);
+            VerifyThatProcessUpdatedEventIsTriggered(initialState, SharedStates.HOApprovalPassed);
+        }
+
+        [Theory]
+        [InlineData(SharedStates.TenureInvestigationPassedWithInt)]
+        [InlineData(SharedStates.TenureInvestigationPassed)]
+        [InlineData(SharedStates.TenureInvestigationFailed)]
+        public async Task ProcessStateIsUpdatedToHOApprovalFailed(string initialState)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(initialState);
+            var formData = new Dictionary<string, object>
+            {
+                {  SharedKeys.HORecommendation, SharedValues.Decline },
+                { SharedKeys.HousingAreaManagerName, "ManagerName"},
+                { SharedKeys.Reason, "Some Reason"}
+            };
+
+            var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.HOApproval, formData);
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SharedStates.HOApprovalFailed,
+                new List<string> { }
+            );
+            process.PreviousStates.Last().State.Should().Be(initialState);
+            VerifyThatProcessUpdatedEventIsTriggered(initialState, SharedStates.HOApprovalFailed);
+        }
+
+        [Theory]
+        [InlineData(SharedStates.TenureInvestigationPassedWithInt)]
+        [InlineData(SharedStates.TenureInvestigationPassed)]
+        [InlineData(SharedStates.TenureInvestigationFailed)]
+        public void ThrowsFormDataInvalidExceptionOnHOApprovalWhenRecommendationIsNotOneOfCorrectValues(string initialState)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(initialState);
+            var invalidRecommendation = "some invalid value";
+            var formData = new Dictionary<string, object>
+            {
+                {  SharedKeys.HORecommendation, invalidRecommendation },
+                { SharedKeys.HousingAreaManagerName, "ManagerName"},
+                { SharedKeys.Reason, "Some reason"}
+            };
+            var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.HOApproval, formData);
+            var expectedRecommendationValues = new List<string>()
+            {
+                SharedValues.Approve,
+                SharedValues.Decline
+            };
+
+            var expectedErrorMessage = String.Format("The request's FormData is invalid: The form data value supplied for key {0} does not match any of the expected values ({1}). The value supplied was: {2}",
+                                                    SharedKeys.HORecommendation,
+                                                    String.Join(", ", expectedRecommendationValues),
+                                                    invalidRecommendation);
+
+            // Act & assert
+            _classUnderTest
+                .Invoking(cut => cut.Process(trigger, process, _token))
+                .Should().Throw<FormDataInvalidException>().WithMessage(expectedErrorMessage);
         }
 
         #endregion

@@ -394,8 +394,8 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
-                { SoleToJointKeys.HORecommendation, housingOfficerRecommendation },
-                { SoleToJointKeys.HousingAreaManagerName, "ManagerName" }
+                { SharedKeys.HORecommendation, housingOfficerRecommendation },
+                { SharedKeys.HousingAreaManagerName, "ManagerName" }
             };
 
             var random = new Random();
