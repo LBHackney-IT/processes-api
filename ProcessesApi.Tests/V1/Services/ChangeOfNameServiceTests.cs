@@ -374,6 +374,61 @@ namespace ProcessesApi.Tests.V1.Services
 
         #endregion
 
+        #region Schedule Interview
+
+        [Fact]
+        public async Task ProcessStateIsUpdatedToInterviewScheduledOnScheduleInterviewTrigger()
+        {
+            // Arrange
+            var appointmentDateTime = DateTime.UtcNow.ToString("s", CultureInfo.InvariantCulture);
+            var process = CreateProcessWithCurrentState(SharedStates.TenureInvestigationPassedWithInt);
+            var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.ScheduleInterview, new Dictionary<string, object>
+            {
+                { SharedKeys.AppointmentDateTime, appointmentDateTime }
+            });
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SharedStates.InterviewScheduled,
+                new List<string> { SharedPermittedTriggers.RescheduleInterview, SharedPermittedTriggers.HOApproval, SharedPermittedTriggers.CancelProcess });
+
+            process.PreviousStates.Last().State.Should().Be(SharedStates.TenureInvestigationPassedWithInt);
+            VerifyThatProcessUpdatedEventIsTriggered(SharedStates.TenureInvestigationPassedWithInt, SharedStates.InterviewScheduled);
+        }
+
+        #endregion
+
+        #region Reschedule Interview
+
+        [Theory]
+        [InlineData(SharedStates.InterviewScheduled)]
+        [InlineData(SharedStates.InterviewRescheduled)]
+        public async Task ProcessStateIsUpdatedToInterviewRescheduledOnScheduleInterview(string initialState)
+        {
+            // Arrange
+            var appointmentDateTime = DateTime.UtcNow.ToString("s", CultureInfo.InvariantCulture);
+            var process = CreateProcessWithCurrentState(initialState);
+            var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.RescheduleInterview, new Dictionary<string, object>
+            {
+                { SharedKeys.AppointmentDateTime, appointmentDateTime }
+            });
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SharedStates.InterviewRescheduled,
+                new List<string> { SharedPermittedTriggers.HOApproval, SharedPermittedTriggers.RescheduleInterview, SharedPermittedTriggers.CancelProcess });
+
+            process.PreviousStates.Last().State.Should().Be(initialState);
+            VerifyThatProcessUpdatedEventIsTriggered(initialState, SharedStates.InterviewRescheduled);
+        }
+
+        #endregion
 
 
     }
