@@ -112,10 +112,10 @@ namespace ProcessesApi.V1.Services
             };
 
             processRequest.SelectTriggerFromUserInput(triggerMappings,
-                                                SoleToJointKeys.HORecommendation,
-                                                new List<string> { SoleToJointKeys.HousingAreaManagerName });
+                                                SharedKeys.HORecommendation,
+                                                new List<string> { SharedKeys.HousingAreaManagerName });
 
-            var eventDataKeys = new List<string> { SoleToJointKeys.HousingAreaManagerName };
+            var eventDataKeys = new List<string> { SharedKeys.HousingAreaManagerName };
             if (formData.ContainsKey(SharedKeys.Reason)) eventDataKeys.Add(SharedKeys.Reason);
             _eventData = formData.CreateEventData(eventDataKeys);
 

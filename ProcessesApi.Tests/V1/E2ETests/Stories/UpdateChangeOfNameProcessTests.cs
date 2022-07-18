@@ -297,5 +297,50 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
 
         #endregion
 
+        #region HO Approval
+
+        [Theory]
+        [InlineData(SharedValues.Approve, SharedStates.HOApprovalPassed, SharedStates.TenureInvestigationPassed)]
+        [InlineData(SharedValues.Approve, SharedStates.HOApprovalPassed, SharedStates.TenureInvestigationFailed)]
+        [InlineData(SharedValues.Approve, SharedStates.HOApprovalPassed, SharedStates.TenureInvestigationPassedWithInt)]
+        [InlineData(SharedValues.Decline, SharedStates.HOApprovalFailed, SharedStates.TenureInvestigationPassed)]
+        [InlineData(SharedValues.Decline, SharedStates.HOApprovalFailed, SharedStates.TenureInvestigationFailed)]
+        [InlineData(SharedValues.Decline, SharedStates.HOApprovalFailed, SharedStates.TenureInvestigationPassedWithInt)]
+        public void ProcessStateIsUpdatedToShowResultOfHOApproval(string housingOfficerRecommendation, string destinationState, string initialState)
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(initialState))
+                    .And(a => _processFixture.GivenAHOApprovalRequest(housingOfficerRecommendation))
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenTheProcessStateIsUpdatedToShowResultsOfHOApproval(_processFixture.UpdateProcessRequest, destinationState, initialState))
+                .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithHOApprovalDetails(_snsFixture, _processFixture.ProcessId, _processFixture.UpdateProcessRequestObject, initialState, destinationState))
+                .BDDfy();
+        }
+
+        [Theory]
+        [InlineData(SharedStates.HOApprovalPassed)]
+        [InlineData(SharedStates.HOApprovalFailed)]
+        public void BadRequestIsReturnedWhenHORecommendationIsMissing(string initialState)
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(initialState))
+                    .And(a => _processFixture.GivenAHOApprovalRequestWithMissingData())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenBadRequestIsReturned())
+                .BDDfy();
+        }
+
+        [Theory]
+        [InlineData(SharedStates.HOApprovalPassed)]
+        [InlineData(SharedStates.HOApprovalFailed)]
+        public void BadRequestIsReturnedWhenHORecommendationIsInvalid(string initialState)
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(initialState))
+                    .And(a => _processFixture.GivenAHOApprovalRequestWithInvalidData())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenBadRequestIsReturned())
+                .BDDfy();
+        }
+
+        #endregion
+
     }
 }
