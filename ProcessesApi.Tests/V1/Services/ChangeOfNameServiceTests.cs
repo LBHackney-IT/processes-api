@@ -265,7 +265,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, expectedState,
-                new List<string> { /*TODO Add next state here  */}
+                new List<string> { SharedPermittedTriggers.HOApproval }
             );
             process.PreviousStates.Last().State.Should().Be(SharedStates.ApplicationSubmitted);
             VerifyThatProcessUpdatedEventIsTriggered(SharedStates.ApplicationSubmitted, expectedState);
@@ -298,7 +298,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SharedStates.HOApprovalPassed,
-                new List<string> { }
+                new List<string> { /*TODO Add next state here  */ }
             );
             process.PreviousStates.Last().State.Should().Be(initialState);
             VerifyThatProcessUpdatedEventIsTriggered(initialState, SharedStates.HOApprovalPassed);
@@ -327,7 +327,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SharedStates.HOApprovalFailed,
-                new List<string> { }
+                new List<string> { /*TODO Add next state here  */ }
             );
             process.PreviousStates.Last().State.Should().Be(initialState);
             VerifyThatProcessUpdatedEventIsTriggered(initialState, SharedStates.HOApprovalFailed);
