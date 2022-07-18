@@ -171,19 +171,39 @@ namespace ProcessesApi.V1.Services
                     .Permit(SharedInternalTriggers.TenureInvestigationPassedWithInt, SharedStates.TenureInvestigationPassedWithInt);
 
             _machine.Configure(SharedStates.TenureInvestigationPassedWithInt)
+                    .Permit(SharedPermittedTriggers.ScheduleInterview, SharedStates.InterviewScheduled)
                     .InternalTransitionAsync(SharedPermittedTriggers.HOApproval, CheckHOApproval)
                     .Permit(SharedInternalTriggers.HOApprovalFailed, SharedStates.HOApprovalFailed)
                     .Permit(SharedInternalTriggers.HOApprovalPassed, SharedStates.HOApprovalPassed);
 
             _machine.Configure(SharedStates.TenureInvestigationPassed)
+                    .Permit(SharedPermittedTriggers.ScheduleInterview, SharedStates.InterviewScheduled)
                    .InternalTransitionAsync(SharedPermittedTriggers.HOApproval, CheckHOApproval)
                    .Permit(SharedInternalTriggers.HOApprovalFailed, SharedStates.HOApprovalFailed)
-                   .Permit(SharedInternalTriggers.HOApprovalPassed, SharedStates.HOApprovalPassed); ;
+                   .Permit(SharedInternalTriggers.HOApprovalPassed, SharedStates.HOApprovalPassed);
 
             _machine.Configure(SharedStates.TenureInvestigationFailed)
+                    .Permit(SharedPermittedTriggers.ScheduleInterview, SharedStates.InterviewScheduled)
                     .InternalTransitionAsync(SharedPermittedTriggers.HOApproval, CheckHOApproval)
                     .Permit(SharedInternalTriggers.HOApprovalFailed, SharedStates.HOApprovalFailed)
                     .Permit(SharedInternalTriggers.HOApprovalPassed, SharedStates.HOApprovalPassed);
+
+            _machine.Configure(SharedStates.InterviewScheduled)
+                   .OnEntry(AddAppointmentDateTimeToEvent)
+                   .InternalTransitionAsync(SharedPermittedTriggers.HOApproval, CheckHOApproval)
+                   .Permit(SharedInternalTriggers.HOApprovalFailed, SharedStates.HOApprovalFailed)
+                   .Permit(SharedInternalTriggers.HOApprovalPassed, SharedStates.HOApprovalPassed)
+                   .Permit(SharedPermittedTriggers.RescheduleInterview, SharedStates.InterviewRescheduled)
+                   .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
+
+
+            _machine.Configure(SharedStates.InterviewRescheduled)
+                    .OnEntry(AddAppointmentDateTimeToEvent)
+                    .InternalTransitionAsync(SharedPermittedTriggers.HOApproval, CheckHOApproval)
+                    .PermitReentry(SharedPermittedTriggers.RescheduleInterview)
+                    .Permit(SharedInternalTriggers.HOApprovalFailed, SharedStates.HOApprovalFailed)
+                    .Permit(SharedInternalTriggers.HOApprovalPassed, SharedStates.HOApprovalPassed)
+                    .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
 
         }
     }

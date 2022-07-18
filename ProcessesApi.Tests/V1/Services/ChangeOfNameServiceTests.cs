@@ -265,7 +265,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, expectedState,
-                new List<string> { SharedPermittedTriggers.HOApproval }
+                new List<string> { SharedPermittedTriggers.HOApproval, SharedPermittedTriggers.ScheduleInterview }
             );
             process.PreviousStates.Last().State.Should().Be(SharedStates.ApplicationSubmitted);
             VerifyThatProcessUpdatedEventIsTriggered(SharedStates.ApplicationSubmitted, expectedState);
@@ -273,9 +273,11 @@ namespace ProcessesApi.Tests.V1.Services
 
         #endregion
 
-        #region HOApproval
+        #region HOApproval and Schedule/Reschedule Interview
 
         [Theory]
+        [InlineData(SharedStates.InterviewScheduled)]
+        [InlineData(SharedStates.InterviewRescheduled)]
         [InlineData(SharedStates.TenureInvestigationPassedWithInt)]
         [InlineData(SharedStates.TenureInvestigationPassed)]
         [InlineData(SharedStates.TenureInvestigationFailed)]
@@ -305,6 +307,8 @@ namespace ProcessesApi.Tests.V1.Services
         }
 
         [Theory]
+        [InlineData(SharedStates.InterviewScheduled)]
+        [InlineData(SharedStates.InterviewRescheduled)]
         [InlineData(SharedStates.TenureInvestigationPassedWithInt)]
         [InlineData(SharedStates.TenureInvestigationPassed)]
         [InlineData(SharedStates.TenureInvestigationFailed)]
@@ -327,13 +331,15 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SharedStates.HOApprovalFailed,
-                new List<string> { /*TODO Add next state here  */ }
+                new List<string> {/*TODO Add next state here  */ }
             );
             process.PreviousStates.Last().State.Should().Be(initialState);
             VerifyThatProcessUpdatedEventIsTriggered(initialState, SharedStates.HOApprovalFailed);
         }
 
         [Theory]
+        [InlineData(SharedStates.InterviewScheduled)]
+        [InlineData(SharedStates.InterviewRescheduled)]
         [InlineData(SharedStates.TenureInvestigationPassedWithInt)]
         [InlineData(SharedStates.TenureInvestigationPassed)]
         [InlineData(SharedStates.TenureInvestigationFailed)]

@@ -297,9 +297,13 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
 
         #endregion
 
-        #region HO Approval
+        #region HO Approval and Schedule/Reschedule Interview
 
         [Theory]
+        [InlineData(SharedValues.Approve, SharedStates.HOApprovalPassed, SharedStates.InterviewScheduled)]
+        [InlineData(SharedValues.Approve, SharedStates.HOApprovalPassed, SharedStates.InterviewRescheduled)]
+        [InlineData(SharedValues.Decline, SharedStates.HOApprovalFailed, SharedStates.InterviewScheduled)]
+        [InlineData(SharedValues.Decline, SharedStates.HOApprovalFailed, SharedStates.InterviewRescheduled)]
         [InlineData(SharedValues.Approve, SharedStates.HOApprovalPassed, SharedStates.TenureInvestigationPassed)]
         [InlineData(SharedValues.Approve, SharedStates.HOApprovalPassed, SharedStates.TenureInvestigationFailed)]
         [InlineData(SharedValues.Approve, SharedStates.HOApprovalPassed, SharedStates.TenureInvestigationPassedWithInt)]
@@ -319,6 +323,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [Theory]
         [InlineData(SharedStates.HOApprovalPassed)]
         [InlineData(SharedStates.HOApprovalFailed)]
+        [InlineData(SharedStates.InterviewScheduled)]
+        [InlineData(SharedStates.InterviewRescheduled)]
         public void BadRequestIsReturnedWhenHORecommendationIsMissing(string initialState)
         {
             this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(initialState))
@@ -329,6 +335,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         }
 
         [Theory]
+        [InlineData(SharedStates.InterviewScheduled)]
+        [InlineData(SharedStates.InterviewRescheduled)]
         [InlineData(SharedStates.HOApprovalPassed)]
         [InlineData(SharedStates.HOApprovalFailed)]
         public void BadRequestIsReturnedWhenHORecommendationIsInvalid(string initialState)
@@ -340,7 +348,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .BDDfy();
         }
 
-        #endregion
+        #endregion 
 
     }
 }
