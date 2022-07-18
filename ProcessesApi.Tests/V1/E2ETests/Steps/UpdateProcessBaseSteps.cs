@@ -136,6 +136,21 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
             await CheckProcessState(request.Id, destinationState, initialState).ConfigureAwait(false);
         }
 
+        public async Task ThenTheProcessStateIsUpdatedToInterviewScheduled(UpdateProcessQuery request)
+        {
+            await CheckProcessState(request.Id, SharedStates.InterviewScheduled, SharedStates.TenureInvestigationPassedWithInt).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheProcessStateIsUpdatedToInterviewRescheduled(UpdateProcessQuery request)
+        {
+            await CheckProcessState(request.Id, SharedStates.InterviewRescheduled, SharedStates.InterviewScheduled).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheProcessStateRemainsInterviewRescheduled(UpdateProcessQuery request)
+        {
+            await CheckProcessState(request.Id, SharedStates.InterviewRescheduled, SharedStates.InterviewRescheduled).ConfigureAwait(false);
+        }
+
 
         # endregion
 
