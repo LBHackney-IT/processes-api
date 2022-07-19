@@ -1,4 +1,5 @@
 using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.Model;
 using Hackney.Core.DynamoDb;
 using Hackney.Core.Sns;
 using Hackney.Core.Testing.DynamoDb;
@@ -23,6 +24,20 @@ namespace ProcessesApi.Tests
                     Name = "Processes",
                     KeyName = "id",
                     KeyType = ScalarAttributeType.S,
+                    GlobalSecondaryIndexes = new List<GlobalSecondaryIndex>
+                    {
+                        new GlobalSecondaryIndex
+                        {
+                            IndexName = "ProcessByTargetId",
+                            KeySchema = new List<KeySchemaElement>
+                            {
+                                new KeySchemaElement("targetId", KeyType.HASH),
+                                new KeySchemaElement("id", KeyType.RANGE)
+                            },
+                            Projection = new Projection { ProjectionType = ProjectionType.ALL },
+                            ProvisionedThroughput = new ProvisionedThroughput(3, 3)
+                        }
+                    }
                 },
                 new TableDef
                 {

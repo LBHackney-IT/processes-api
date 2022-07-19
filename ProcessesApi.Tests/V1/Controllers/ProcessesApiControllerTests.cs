@@ -17,7 +17,6 @@ using ProcessesApi.V1.Services.Exceptions;
 using ProcessesApi.V1.UseCase.Exceptions;
 using ProcessesApi.V1.UseCase.Interfaces;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -96,26 +95,27 @@ namespace ProcessesApi.Tests.V1.Controllers
 
         private (Process, UpdateProcessQuery, UpdateProcessRequestObject) ConstructPatchRequest()
         {
-            var queryObject = _fixture.Create<UpdateProcessRequestObject>();
-            var processName = ProcessName.soletojoint;
-            var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, Guid.NewGuid(), TargetType.person, null, processName, null);
+            var processResponse = _fixture.Create<Process>();
             var query = _fixture.Build<UpdateProcessQuery>()
                                 .With(x => x.ProcessName, processResponse.ProcessName)
                                 .With(x => x.Id, processResponse.Id)
                                 .Create();
+            var queryObject = _fixture.Create<UpdateProcessRequestObject>();
             return (processResponse, query, queryObject);
         }
 
         private (ProcessState, ProcessQuery, UpdateProcessByIdRequestObject) ConstructPatchByIdRequest()
         {
-            var queryObject = _fixture.Create<UpdateProcessByIdRequestObject>();
-            var processName = ProcessName.soletojoint;
+            var processResponse = _fixture.Create<Process>();
             var currentProcessState = _fixture.Create<ProcessState>();
-            var processResponse = Process.Create(Guid.NewGuid(), new List<ProcessState>(), currentProcessState, Guid.NewGuid(), TargetType.tenure, null, processName, null);
+            processResponse.CurrentState = currentProcessState;
+
             var query = _fixture.Build<ProcessQuery>()
                                 .With(x => x.ProcessName, processResponse.ProcessName)
                                 .With(x => x.Id, processResponse.Id)
                                 .Create();
+            var queryObject = _fixture.Create<UpdateProcessByIdRequestObject>();
+
             return (currentProcessState, query, queryObject);
         }
 

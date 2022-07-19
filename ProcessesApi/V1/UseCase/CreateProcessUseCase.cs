@@ -6,7 +6,6 @@ using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Services.Interfaces;
 using ProcessesApi.V1.UseCase.Interfaces;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.UseCase
@@ -25,7 +24,8 @@ namespace ProcessesApi.V1.UseCase
 
         public async Task<Process> Execute(CreateProcess request, ProcessName processName, Token token)
         {
-            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, request.TargetId, request.TargetType, request.RelatedEntities, processName, null);
+            var process = Process.Create(request.TargetId, request.TargetType, request.RelatedEntities, processName);
+
             var triggerObject = ProcessTrigger.Create(process.Id, SharedPermittedTriggers.StartApplication, request.FormData, request.Documents);
 
             IProcessService service = _processServiceProvider(processName);

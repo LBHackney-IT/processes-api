@@ -1,4 +1,6 @@
 using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.DocumentModel;
+using Hackney.Core.DynamoDb;
 using Hackney.Core.Logging;
 using Microsoft.Extensions.Logging;
 using ProcessesApi.V1.Boundary.Request;
@@ -7,6 +9,7 @@ using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.UseCase.Exceptions;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -14,11 +17,13 @@ namespace ProcessesApi.V1.Gateways
 {
     public class ProcessesGateway : IProcessesGateway
     {
+        private const int MAX_RESULTS = 10;
+        private const string GETPROCESSESBYTARGETIDINDEX = "ProcessByTargetId";
+        private const string TARGETID = "targetId";
+
         private readonly IDynamoDBContext _dynamoDbContext;
         private readonly IEntityUpdater _updater;
         private readonly ILogger<ProcessesGateway> _logger;
-
-
 
         public ProcessesGateway(IDynamoDBContext dynamoDbContext, IEntityUpdater updater, ILogger<ProcessesGateway> logger)
         {
@@ -67,6 +72,46 @@ namespace ProcessesApi.V1.Gateways
                 await _dynamoDbContext.SaveAsync(currentProcess).ConfigureAwait(false);
             }
             return updatedResult;
+        }
+
+        [LogCall]
+        public async Task<PagedResult<Process>> GetProcessByTargetId(GetProcessByTargetIdRequest request)
+        {
+            int pageSize = request.PageSize.HasValue ? request.PageSize.Value : MAX_RESULTS;
+            var dbProcesses = new List<ProcessesDb>();
+            var table = _dynamoDbContext.GetTargetTable<ProcessesDb>();
+
+            var queryConfig = new QueryOperationConfig
+            {
+                IndexName = GETPROCESSESBYTARGETIDINDEX,
+                Limit = pageSize,
+                PaginationToken = PaginationDetails.DecodeToken(request.PaginationToken),
+                Filter = new QueryFilter(TARGETID, QueryOperator.Equal, request.TargetId)
+            };
+
+            var search = table.Query(queryConfig);
+            _logger.LogDebug($"Querying {queryConfig.IndexName} index for targetId {request.TargetId}");
+            var resultsSet = await search.GetNextSetAsync().ConfigureAwait(false);
+
+            var paginationToken = search.PaginationToken;
+            if (resultsSet.Any())
+            {
+                dbProcesses.AddRange(_dynamoDbContext.FromDocuments<ProcessesDb>(resultsSet));
+
+                // Look ahead for any more, but only if we have a token
+                if (!string.IsNullOrEmpty(PaginationDetails.EncodeToken(paginationToken)))
+                {
+                    queryConfig.PaginationToken = paginationToken;
+                    queryConfig.Limit = 1;
+                    search = table.Query(queryConfig);
+                    resultsSet = await search.GetNextSetAsync().ConfigureAwait(false);
+                    if (!resultsSet.Any())
+                        paginationToken = null;
+                }
+            }
+
+            return new PagedResult<Process>(dbProcesses.Select(x => x.ToDomain()),
+                                            new PaginationDetails(paginationToken));
         }
 
 

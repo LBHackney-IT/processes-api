@@ -14,6 +14,7 @@ using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.UseCase.Exceptions;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -30,9 +31,6 @@ namespace ProcessesApi.Tests.V1.Gateways
         private readonly Mock<ILogger<ProcessesGateway>> _logger;
         private readonly Mock<IEntityUpdater> _mockUpdater;
         private const string RequestBody = "{ \"FormData\":\"key7d2d6e42-0cbf-411a-b66c-bc35da8b6061\":{ },\"Documents\":[\"89017f11-95f7-434d-96f8-178e33685fb4\"],\"Assignment\":{\"Type\":\"Type8a4da85c-5da4-43ba-a77d-08582db9f97f\",\"Value\":\"Value6543846f-1aa8-4095-b984-4ceac8c2770f\",\"Patch\":\"Patch557d8db0-2ccf-422d-9c6f-bf7d1737f5a5\"}}";
-
-
-
 
         public ProcessesGatewayTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
@@ -60,10 +58,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             }
         }
 
-        private async Task InsertDatatoDynamoDB(ProcessesDb entity)
-        {
-            await _dbFixture.SaveEntityAsync(entity).ConfigureAwait(false);
-        }
+        #region Get Process by Id
 
         [Fact]
         public async Task GetProcessByIdReturnsNullIfEntityDoesntExist()
@@ -78,10 +73,12 @@ namespace ProcessesApi.Tests.V1.Gateways
         public async Task GetProcessByIdReturnsTheProcessIfItExists()
         {
             var entity = _fixture.Build<Process>()
-                        .With(x => x.VersionNumber, (int?) null)
-                        .Create();
-            await InsertDatatoDynamoDB(entity.ToDatabase()).ConfigureAwait(false);
+                                 .With(x => x.VersionNumber, (int?) null)
+                                 .Create();
+            await _dbFixture.SaveEntityAsync(entity.ToDatabase()).ConfigureAwait(false);
+
             var response = await _classUnderTest.GetProcessById(entity.Id).ConfigureAwait(false);
+
             response.Should().BeEquivalentTo(entity, config => config.Excluding(y => y.VersionNumber));
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for ID: {entity.Id}", Times.Once());
         }
@@ -105,19 +102,25 @@ namespace ProcessesApi.Tests.V1.Gateways
             mockDynamoDb.Verify(x => x.LoadAsync<ProcessesDb>(id, default), Times.Once);
         }
 
+        #endregion
+
+        #region Save Process
+
         [Fact]
         public async Task SaveProcessSucessfullySavesNewProcessToDatabase()
         {
             // Arrange
             var process = _fixture.Build<Process>()
-                        .With(x => x.VersionNumber, (int?) null)
-                        .Create();
+                                  .With(x => x.VersionNumber, (int?) null)
+                                  .Create();
             // Act
             await _classUnderTest.SaveProcess(process).ConfigureAwait(false);
             // Assert
             var processDb = await _dynamoDb.LoadAsync<ProcessesDb>(process.Id).ConfigureAwait(false);
-            processDb.Should().BeEquivalentTo(process, config => config.Excluding(x => x.VersionNumber));
+
+            processDb.Should().BeEquivalentTo(process, config => config.Excluding(y => y.VersionNumber));
             processDb.VersionNumber.Should().Be(0);
+
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync for id {process.Id}", Times.Once());
 
             _cleanup.Add(async () => await _dynamoDb.DeleteAsync<ProcessesDb>(process.Id).ConfigureAwait(false));
@@ -128,19 +131,19 @@ namespace ProcessesApi.Tests.V1.Gateways
         {
             // Arrange
             var originalProcess = _fixture.Build<Process>()
-                                    .With(x => x.VersionNumber, (int?) null)
-                                    .Create();
-            await InsertDatatoDynamoDB(originalProcess.ToDatabase()).ConfigureAwait(false);
+                                          .With(x => x.VersionNumber, (int?) null)
+                                          .Create();
+            await _dbFixture.SaveEntityAsync(originalProcess.ToDatabase()).ConfigureAwait(false);
 
             var updateObject = _fixture.Build<Process>()
-                                    .With(x => x.Id, originalProcess.Id)
-                                    .With(x => x.VersionNumber, 0)
-                                    .Create();
+                                       .With(x => x.Id, originalProcess.Id)
+                                       .With(x => x.VersionNumber, 0)
+                                       .Create();
 
             // Act
             var updatedProcess = await _classUnderTest.SaveProcess(updateObject).ConfigureAwait(false);
             // Assert
-            updatedProcess.Should().BeEquivalentTo(updateObject, c => c.Excluding(x => x.VersionNumber));
+            updatedProcess.Should().BeEquivalentTo(updateObject, config => config.Excluding(y => y.VersionNumber));
             updatedProcess.VersionNumber.Should().Be(1);
 
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync for id {updateObject.Id}", Times.Once());
@@ -148,13 +151,18 @@ namespace ProcessesApi.Tests.V1.Gateways
             _cleanup.Add(async () => await _dynamoDb.DeleteAsync<ProcessesDb>(originalProcess.Id).ConfigureAwait(false));
         }
 
+        #endregion
+
+        #region Update Process by Id
+
         [Fact]
         public async Task UpdateProcessByIdSuccessfullySaves()
         {
             var originalProcess = _fixture.Build<Process>()
-                                   .With(x => x.VersionNumber, (int?) null)
-                                   .Create();
-            await InsertDatatoDynamoDB(originalProcess.ToDatabase()).ConfigureAwait(false);
+                                          .With(x => x.VersionNumber, (int?) null)
+                                          .Create();
+
+            await _dbFixture.SaveEntityAsync(originalProcess.ToDatabase()).ConfigureAwait(false);
 
             var updateProcessRequest = _fixture.Create<UpdateProcessByIdRequestObject>();
 
@@ -214,15 +222,15 @@ namespace ProcessesApi.Tests.V1.Gateways
         public async Task UpdateProcessByIdSuccessfullySavesEvenWhenAssignmentIsNull()
         {
             var originalProcess = _fixture.Build<Process>()
-                                   .With(x => x.VersionNumber, (int?) null)
-                                   .Create();
-            await InsertDatatoDynamoDB(originalProcess.ToDatabase()).ConfigureAwait(false);
+                                          .With(x => x.VersionNumber, (int?) null)
+                                          .Create();
+            await _dbFixture.SaveEntityAsync(originalProcess.ToDatabase()).ConfigureAwait(false);
 
             var updateProcessRequest = _fixture.Build<UpdateProcessByIdRequestObject>().Without(x => x.Assignment).Create();
 
             var updatedProcessQuery = _fixture.Build<ProcessQuery>()
-                        .With(x => x.Id, originalProcess.Id)
-                        .Create();
+                                              .With(x => x.Id, originalProcess.Id)
+                                              .Create();
 
             var updatedProcess = originalProcess.DeepClone();
             updatedProcess.CurrentState.ProcessData.Documents = updateProcessRequest.ProcessData.Documents;
@@ -274,7 +282,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             var originalProcess = _fixture.Build<Process>()
                                           .With(x => x.VersionNumber, (int?) null)
                                           .Create();
-            await InsertDatatoDynamoDB(originalProcess.ToDatabase()).ConfigureAwait(false);
+            await _dbFixture.SaveEntityAsync(originalProcess.ToDatabase()).ConfigureAwait(false);
 
             var updateProcessRequest = _fixture.Create<UpdateProcessByIdRequestObject>();
 
@@ -305,5 +313,108 @@ namespace ProcessesApi.Tests.V1.Gateways
 
         }
 
+        #endregion
+
+        #region Get Process by Target Id
+
+        private List<ProcessesDb> CreateAndInsertProcesses(Guid targetId, int count)
+        {
+            var processes = new List<ProcessesDb>();
+
+            for (int i = 0; i < count; i++)
+            {
+                var process = _fixture.Build<ProcessesDb>()
+                                      .With(x => x.TargetId, targetId)
+                                      .With(x => x.CurrentState, (ProcessState) null)
+                                      .With(x => x.PreviousStates, new List<ProcessState>())
+                                      .With(x => x.VersionNumber, (int?) null)
+                                      .Create();
+                _dbFixture.SaveEntityAsync(process).GetAwaiter().GetResult();
+                processes.Add(process);
+            }
+
+            return processes;
+        }
+
+        [Fact]
+        public async Task GetByTargetIdReturnsEmptyIfNoRecords()
+        {
+            var request = new GetProcessByTargetIdRequest { TargetId = Guid.NewGuid() };
+
+            var response = await _classUnderTest.GetProcessByTargetId(request).ConfigureAwait(false);
+
+            response.Should().NotBeNull();
+            response.Results.Should().BeEmpty();
+            response.PaginationDetails.HasNext.Should().BeFalse();
+            response.PaginationDetails.NextToken.Should().BeNull();
+
+            _logger.VerifyExact(LogLevel.Debug, $"Querying ProcessByTargetId index for targetId {request.TargetId}", Times.Once());
+        }
+
+        [Fact]
+        public async Task GetByTargetIdReturnsRecords()
+        {
+            var targetId = Guid.NewGuid();
+            var expected = CreateAndInsertProcesses(targetId, 5);
+            var request = new GetProcessByTargetIdRequest() { TargetId = targetId };
+
+            var response = await _classUnderTest.GetProcessByTargetId(request).ConfigureAwait(false);
+
+            response.Should().NotBeNull();
+            response.Results.Should().BeEquivalentTo(expected);
+            response.PaginationDetails.HasNext.Should().BeFalse();
+            response.PaginationDetails.NextToken.Should().BeNull();
+
+            _logger.VerifyExact(LogLevel.Debug, $"Querying ProcessByTargetId index for targetId {request.TargetId}", Times.Once());
+        }
+
+        [Fact]
+        public async Task GetByTargetIdReturnsRecordsWithPaginationPages()
+        {
+            var targetId = Guid.NewGuid();
+            var expected = CreateAndInsertProcesses(targetId, 9);
+            CreateAndInsertProcesses(Guid.NewGuid(), 6); // insert other data to make sure it's not returned in same request
+
+            var expectedFirstPage = expected.OrderBy(x => x.Id).Take(5);
+            var expectedSecondPage = expected.Except(expectedFirstPage).OrderBy(x => x.Id);
+
+            var request = new GetProcessByTargetIdRequest() { TargetId = targetId, PageSize = 5 };
+            var response = await _classUnderTest.GetProcessByTargetId(request).ConfigureAwait(false);
+
+            response.Should().NotBeNull();
+            response.Results.Should().BeEquivalentTo(expectedFirstPage, c => c.Excluding(x => x.CurrentState.ProcessData.FormData));
+            response.PaginationDetails.HasNext.Should().BeTrue();
+            response.PaginationDetails.NextToken.Should().NotBeNull();
+
+            request.PaginationToken = response.PaginationDetails.NextToken;
+            response = await _classUnderTest.GetProcessByTargetId(request).ConfigureAwait(false);
+
+            response.Should().NotBeNull();
+            response.Results.Should().HaveSameCount(expectedSecondPage);
+            response.PaginationDetails.HasNext.Should().BeFalse();
+            response.PaginationDetails.NextToken.Should().BeNull();
+
+            _logger.VerifyExact(LogLevel.Debug, $"Querying ProcessByTargetId index for targetId {request.TargetId}", Times.Exactly(2));
+        }
+
+        [Fact]
+        public async Task GetByTargetIdReturnsNoPaginationTokenIfPageSizeEqualsRecordCount()
+        {
+            var targetId = Guid.NewGuid();
+            var expected = CreateAndInsertProcesses(targetId, 10);
+
+            var request = new GetProcessByTargetIdRequest() { TargetId = targetId, PageSize = 10 };
+
+            var response = await _classUnderTest.GetProcessByTargetId(request).ConfigureAwait(false);
+
+            response.Should().NotBeNull();
+            response.Results.Should().BeEquivalentTo(expected);
+            response.PaginationDetails.HasNext.Should().BeFalse();
+            response.PaginationDetails.NextToken.Should().BeNull();
+
+            _logger.VerifyExact(LogLevel.Debug, $"Querying ProcessByTargetId index for targetId {request.TargetId}", Times.Once());
+        }
+
+        #endregion
     }
 }

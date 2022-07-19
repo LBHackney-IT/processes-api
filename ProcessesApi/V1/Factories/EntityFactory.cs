@@ -7,17 +7,17 @@ namespace ProcessesApi.V1.Factories
     {
         public static Process ToDomain(this ProcessesDb entity)
         {
-            Process soleToJointProcess;
-            soleToJointProcess = Process.Create(
-                    entity.Id,
-                    entity.PreviousStates,
-                    entity.CurrentState,
-                    entity.TargetId,
-                    entity.TargetType,
-                    entity.RelatedEntities,
-                    entity.ProcessName,
-                    entity.VersionNumber);
-            return soleToJointProcess;
+            return new Process
+            {
+                Id = entity.Id,
+                TargetId = entity.TargetId,
+                TargetType = entity.TargetType,
+                RelatedEntities = entity.RelatedEntities,
+                ProcessName = entity.ProcessName,
+                CurrentState = entity.CurrentState,
+                PreviousStates = entity.PreviousStates,
+                VersionNumber = entity.VersionNumber
+            };
         }
 
         public static ProcessesDb ToDatabase(this Process entity)
