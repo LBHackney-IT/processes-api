@@ -297,5 +297,119 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
 
         #endregion
 
+        #region HO Approval
+
+        [Theory]
+        [InlineData(SharedValues.Approve, SharedStates.HOApprovalPassed, SharedStates.InterviewScheduled)]
+        [InlineData(SharedValues.Approve, SharedStates.HOApprovalPassed, SharedStates.InterviewRescheduled)]
+        [InlineData(SharedValues.Decline, SharedStates.HOApprovalFailed, SharedStates.InterviewScheduled)]
+        [InlineData(SharedValues.Decline, SharedStates.HOApprovalFailed, SharedStates.InterviewRescheduled)]
+        [InlineData(SharedValues.Approve, SharedStates.HOApprovalPassed, SharedStates.TenureInvestigationPassed)]
+        [InlineData(SharedValues.Approve, SharedStates.HOApprovalPassed, SharedStates.TenureInvestigationFailed)]
+        [InlineData(SharedValues.Approve, SharedStates.HOApprovalPassed, SharedStates.TenureInvestigationPassedWithInt)]
+        [InlineData(SharedValues.Decline, SharedStates.HOApprovalFailed, SharedStates.TenureInvestigationPassed)]
+        [InlineData(SharedValues.Decline, SharedStates.HOApprovalFailed, SharedStates.TenureInvestigationFailed)]
+        [InlineData(SharedValues.Decline, SharedStates.HOApprovalFailed, SharedStates.TenureInvestigationPassedWithInt)]
+        public void ProcessStateIsUpdatedToShowResultOfHOApproval(string housingOfficerRecommendation, string destinationState, string initialState)
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(initialState))
+                    .And(a => _processFixture.GivenAHOApprovalRequest(housingOfficerRecommendation))
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenTheProcessStateIsUpdatedToShowResultsOfHOApproval(_processFixture.UpdateProcessRequest, destinationState, initialState))
+                .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithHOApprovalDetails(_snsFixture, _processFixture.ProcessId, _processFixture.UpdateProcessRequestObject, initialState, destinationState))
+                .BDDfy();
+        }
+
+        [Theory]
+        [InlineData(SharedStates.HOApprovalPassed)]
+        [InlineData(SharedStates.HOApprovalFailed)]
+        [InlineData(SharedStates.InterviewScheduled)]
+        [InlineData(SharedStates.InterviewRescheduled)]
+        public void BadRequestIsReturnedWhenHORecommendationIsMissing(string initialState)
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(initialState))
+                    .And(a => _processFixture.GivenAHOApprovalRequestWithMissingData())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenBadRequestIsReturned())
+                .BDDfy();
+        }
+
+        [Theory]
+        [InlineData(SharedStates.InterviewScheduled)]
+        [InlineData(SharedStates.InterviewRescheduled)]
+        [InlineData(SharedStates.HOApprovalPassed)]
+        [InlineData(SharedStates.HOApprovalFailed)]
+        public void BadRequestIsReturnedWhenHORecommendationIsInvalid(string initialState)
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(initialState))
+                    .And(a => _processFixture.GivenAHOApprovalRequestWithInvalidData())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenBadRequestIsReturned())
+                .BDDfy();
+        }
+
+        #endregion
+
+
+        #region Schedule Interview
+
+        [Fact]
+        public void ProcessStateIsUpdatedToInterviewScheduled()
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(SharedStates.TenureInvestigationPassedWithInt))
+                    .And(a => _processFixture.GivenAScheduleInterviewRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenTheProcessStateIsUpdatedToInterviewScheduled(_processFixture.UpdateProcessRequest))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SharedStates.TenureInvestigationPassedWithInt, SharedStates.InterviewScheduled))
+                .BDDfy();
+        }
+
+        [Fact]
+        public void BadRequestIsReturnedWhenScheduleInterviewAppointmentDataIsMissing()
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(SharedStates.TenureInvestigationPassed))
+                    .And(a => _processFixture.GivenARequestScheduleInterviewRequestWithMissingData())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(t => _steps.ThenBadRequestIsReturned())
+                .BDDfy();
+        }
+        #endregion
+
+        #region Reschedule Interview
+
+        [Fact]
+        public void ProcessStateIsUpdatedToInterviewRescheduled()
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(SharedStates.InterviewScheduled))
+                    .And(a => _processFixture.GivenARescheduleInterviewRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenTheProcessStateIsUpdatedToInterviewRescheduled(_processFixture.UpdateProcessRequest))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SharedStates.InterviewScheduled, SharedStates.InterviewRescheduled))
+                .BDDfy();
+        }
+
+        [Fact]
+        public void MultipleInterviewReschedulesArePermitted()
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(SharedStates.InterviewRescheduled))
+                    .And(a => _processFixture.GivenARescheduleInterviewRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, _processFixture.Process.VersionNumber))
+                .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheProcessStateRemainsInterviewRescheduled(_processFixture.UpdateProcessRequest))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SharedStates.InterviewRescheduled, SharedStates.InterviewRescheduled))
+                .BDDfy();
+        }
+
+        [Fact]
+        public void BadRequestIsReturnedWhenRescheduleInterviewAppointmentDataIsMissing()
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExists(SharedStates.InterviewScheduled))
+                    .And(a => _processFixture.GivenARequestRescheduleInterviewRequestWithMissingData())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(t => _steps.ThenBadRequestIsReturned())
+                .BDDfy();
+        }
+        #endregion
+
     }
 }

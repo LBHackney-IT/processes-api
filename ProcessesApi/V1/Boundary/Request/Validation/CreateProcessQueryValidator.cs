@@ -8,13 +8,12 @@ namespace ProcessesApi.V1.Boundary.Request.Validation
         public CreateProcessQueryValidator()
         {
             RuleFor(x => x.TargetId).NotNull()
-                            .NotEqual(Guid.Empty);
-            // Uncomment when frontend has added relatedEntities as part of the CreateProcess Request
-            //RuleFor(x => x.RelatedEntities).NotNull();
-            RuleForEach(x => x.Documents).NotNull()
-                            .NotEqual(Guid.Empty);
+                                    .NotEqual(Guid.Empty);
+            RuleFor(x => x.TargetType).NotNull();
+            RuleFor(x => x.RelatedEntities).NotNull();
             RuleForEach(x => x.RelatedEntities).SetValidator(new RelatedEntityValidator());
-
+            RuleForEach(x => x.Documents).NotNull()
+                                         .NotEqual(Guid.Empty);
         }
     }
 }

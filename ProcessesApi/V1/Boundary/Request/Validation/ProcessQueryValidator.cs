@@ -8,7 +8,7 @@ namespace ProcessesApi.V1.Boundary.Request.Validation
         public ProcessQueryValidator()
         {
             RuleFor(x => x.Id).NotNull()
-                            .NotEqual(Guid.Empty);
+                              .NotEqual(Guid.Empty);
         }
     }
 }

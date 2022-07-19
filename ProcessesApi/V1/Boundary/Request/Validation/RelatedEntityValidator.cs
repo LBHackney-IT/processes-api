@@ -9,6 +9,7 @@ namespace ProcessesApi.V1.Boundary.Request.Validation
         public RelatedEntityValidator()
         {
             RuleFor(x => x.Id).NotNull().NotEqual(Guid.Empty);
+            RuleFor(x => x.TargetType).NotNull();
         }
     }
 }

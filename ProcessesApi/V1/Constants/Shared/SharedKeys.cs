@@ -31,5 +31,12 @@ namespace ProcessesApi.V1.Constants
 
         #endregion
 
+        #region HOApproval
+
+        public const string HORecommendation = "hoRecommendation";
+        public const string HousingAreaManagerName = "housingAreaManagerName";
+
+        #endregion
+
     }
 }
