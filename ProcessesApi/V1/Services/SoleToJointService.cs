@@ -296,22 +296,22 @@ namespace ProcessesApi.V1.Services
                     .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
 
             _machine.Configure(SharedStates.HOApprovalPassed)
-                    .Permit(SoleToJointPermittedTriggers.ScheduleTenureAppointment, SoleToJointStates.TenureAppointmentScheduled)
+                    .Permit(SharedPermittedTriggers.ScheduleTenureAppointment, SharedStates.TenureAppointmentScheduled)
                     .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
 
 
             _machine.Configure(SharedStates.HOApprovalFailed)
                     .Permit(SharedPermittedTriggers.CloseProcess, SharedStates.ProcessClosed);
 
-            _machine.Configure(SoleToJointStates.TenureAppointmentScheduled)
+            _machine.Configure(SharedStates.TenureAppointmentScheduled)
                      .OnEntry(AddAppointmentDateTimeToEvent)
-                     .Permit(SoleToJointPermittedTriggers.RescheduleTenureAppointment, SoleToJointStates.TenureAppointmentRescheduled)
+                     .Permit(SharedPermittedTriggers.RescheduleTenureAppointment, SharedStates.TenureAppointmentRescheduled)
                      .Permit(SoleToJointPermittedTriggers.UpdateTenure, SoleToJointStates.TenureUpdated)
                      .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
 
-            _machine.Configure(SoleToJointStates.TenureAppointmentRescheduled)
+            _machine.Configure(SharedStates.TenureAppointmentRescheduled)
                      .OnEntry(AddAppointmentDateTimeToEvent)
-                     .PermitReentry(SoleToJointPermittedTriggers.RescheduleTenureAppointment)
+                     .PermitReentry(SharedPermittedTriggers.RescheduleTenureAppointment)
                      .Permit(SoleToJointPermittedTriggers.UpdateTenure, SoleToJointStates.TenureUpdated)
                      .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled)
                      .Permit(SharedPermittedTriggers.CloseProcess, SharedStates.ProcessClosed);
