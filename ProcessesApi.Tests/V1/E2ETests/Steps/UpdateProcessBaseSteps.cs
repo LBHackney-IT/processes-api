@@ -126,6 +126,30 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
         {
             await CheckProcessState(request.Id, SharedStates.ApplicationSubmitted, SharedStates.DocumentChecksPassed).ConfigureAwait(false);
         }
+        public async Task ThenTheProcessStateIsUpdatedToShowResultsOfTenureInvestigation(UpdateProcessQuery request, string destinationState)
+        {
+            await CheckProcessState(request.Id, destinationState, SharedStates.ApplicationSubmitted).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheProcessStateIsUpdatedToShowResultsOfHOApproval(UpdateProcessQuery request, string destinationState, string initialState)
+        {
+            await CheckProcessState(request.Id, destinationState, initialState).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheProcessStateIsUpdatedToInterviewScheduled(UpdateProcessQuery request)
+        {
+            await CheckProcessState(request.Id, SharedStates.InterviewScheduled, SharedStates.TenureInvestigationPassedWithInt).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheProcessStateIsUpdatedToInterviewRescheduled(UpdateProcessQuery request)
+        {
+            await CheckProcessState(request.Id, SharedStates.InterviewRescheduled, SharedStates.InterviewScheduled).ConfigureAwait(false);
+        }
+
+        public async Task ThenTheProcessStateRemainsInterviewRescheduled(UpdateProcessQuery request)
+        {
+            await CheckProcessState(request.Id, SharedStates.InterviewRescheduled, SharedStates.InterviewRescheduled).ConfigureAwait(false);
+        }
 
 
         # endregion
@@ -189,7 +213,7 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
             {
                 var dataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(dataAsString, _jsonOptions);
                 var stateData = JsonSerializer.Deserialize<Dictionary<string, object>>(dataDic["stateData"].ToString(), _jsonOptions);
-                stateData.Should().ContainKey(SoleToJointKeys.HousingAreaManagerName);
+                stateData.Should().ContainKey(SharedKeys.HousingAreaManagerName);
                 if (requestObject.FormData.ContainsKey(SharedKeys.Reason)) stateData.Should().ContainKey(SharedKeys.Reason);
             };
 

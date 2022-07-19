@@ -10,6 +10,7 @@ using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Infrastructure.JWT;
 using ProcessesApi.V1.Constants;
+using ProcessesApi.V1.Constants.Shared;
 
 namespace ProcessesApi.V1.Services
 {
@@ -99,25 +100,6 @@ namespace ProcessesApi.V1.Services
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
-        private async Task CheckTenureInvestigation(StateMachine<string, string>.Transition transition)
-        {
-            var processRequest = transition.Parameters[0] as ProcessTrigger;
-
-
-            var triggerMappings = new Dictionary<string, string>
-            {
-                {SoleToJointValues.Appointment, SharedInternalTriggers.TenureInvestigationPassedWithInt },
-                { SoleToJointValues.Approve, SharedInternalTriggers.TenureInvestigationPassed },
-                { SoleToJointValues.Decline, SharedInternalTriggers.TenureInvestigationFailed }
-            };
-
-            processRequest.HandleRecommendation(triggerMappings,
-                                                SoleToJointKeys.TenureInvestigationRecommendation,
-                                                null);
-
-            await TriggerStateMachine(processRequest).ConfigureAwait(false);
-        }
-
         private async Task CheckHOApproval(StateMachine<string, string>.Transition transition)
         {
             var processRequest = transition.Parameters[0] as ProcessTrigger;
@@ -125,17 +107,36 @@ namespace ProcessesApi.V1.Services
 
             var triggerMappings = new Dictionary<string, string>
             {
-                { SoleToJointValues.Approve, SharedInternalTriggers.HOApprovalPassed },
-                { SoleToJointValues.Decline, SharedInternalTriggers.HOApprovalFailed }
+                { SharedValues.Approve, SharedInternalTriggers.HOApprovalPassed },
+                { SharedValues.Decline, SharedInternalTriggers.HOApprovalFailed }
             };
 
-            processRequest.HandleRecommendation(triggerMappings,
-                                                SoleToJointKeys.HORecommendation,
-                                                new List<string> { SoleToJointKeys.HousingAreaManagerName });
+            processRequest.SelectTriggerFromUserInput(triggerMappings,
+                                                SharedKeys.HORecommendation,
+                                                new List<string> { SharedKeys.HousingAreaManagerName });
 
-            var eventDataKeys = new List<string> { SoleToJointKeys.HousingAreaManagerName };
+            var eventDataKeys = new List<string> { SharedKeys.HousingAreaManagerName };
             if (formData.ContainsKey(SharedKeys.Reason)) eventDataKeys.Add(SharedKeys.Reason);
             _eventData = formData.CreateEventData(eventDataKeys);
+
+            await TriggerStateMachine(processRequest).ConfigureAwait(false);
+        }
+
+        public async Task CheckTenureInvestigation(StateMachine<string, string>.Transition transition)
+        {
+            var processRequest = transition.Parameters[0] as ProcessTrigger;
+
+
+            var triggerMappings = new Dictionary<string, string>
+            {
+                {SharedValues.Appointment, SharedInternalTriggers.TenureInvestigationPassedWithInt },
+                { SharedValues.Approve, SharedInternalTriggers.TenureInvestigationPassed },
+                { SharedValues.Decline, SharedInternalTriggers.TenureInvestigationFailed }
+            };
+
+            processRequest.SelectTriggerFromUserInput(triggerMappings,
+                                                SharedKeys.TenureInvestigationRecommendation,
+                                                null);
 
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }

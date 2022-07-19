@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Hackney.Core.Sns;
 using ProcessesApi.V1.Constants;
 using ProcessesApi.V1.Constants.ChangeOfName;
+using ProcessesApi.V1.Constants.Shared;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Helpers;
@@ -76,6 +77,47 @@ namespace ProcessesApi.V1.Services
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
+        public async Task CheckTenureInvestigation(StateMachine<string, string>.Transition transition)
+        {
+            var processRequest = transition.Parameters[0] as ProcessTrigger;
+
+
+            var triggerMappings = new Dictionary<string, string>
+            {
+                { SharedValues.Appointment, SharedInternalTriggers.TenureInvestigationPassedWithInt },
+                { SharedValues.Approve, SharedInternalTriggers.TenureInvestigationPassed },
+                { SharedValues.Decline, SharedInternalTriggers.TenureInvestigationFailed }
+            };
+
+            processRequest.SelectTriggerFromUserInput(triggerMappings,
+                                                SharedKeys.TenureInvestigationRecommendation,
+                                                null);
+
+            await TriggerStateMachine(processRequest).ConfigureAwait(false);
+        }
+
+        private async Task CheckHOApproval(StateMachine<string, string>.Transition transition)
+        {
+            var processRequest = transition.Parameters[0] as ProcessTrigger;
+            var formData = processRequest.FormData;
+
+            var triggerMappings = new Dictionary<string, string>
+            {
+                { SharedValues.Approve, SharedInternalTriggers.HOApprovalPassed },
+                { SharedValues.Decline, SharedInternalTriggers.HOApprovalFailed }
+            };
+
+            processRequest.SelectTriggerFromUserInput(triggerMappings,
+                                                SharedKeys.HORecommendation,
+                                                new List<string> { SharedKeys.HousingAreaManagerName });
+
+            var eventDataKeys = new List<string> { SharedKeys.HousingAreaManagerName };
+            if (formData.ContainsKey(SharedKeys.Reason)) eventDataKeys.Add(SharedKeys.Reason);
+            _eventData = formData.CreateEventData(eventDataKeys);
+
+            await TriggerStateMachine(processRequest).ConfigureAwait(false);
+        }
+
         protected override void SetUpStates()
         {
             _machine.Configure(SharedStates.ProcessClosed)
@@ -122,11 +164,46 @@ namespace ProcessesApi.V1.Services
                     .Permit(SharedInternalTriggers.HOApprovalFailed, SharedStates.HOApprovalFailed)
                     .Permit(SharedInternalTriggers.HOApprovalPassed, SharedStates.HOApprovalPassed);
 
-            _machine.Configure(SharedStates.ApplicationSubmitted);
-            //.InternalTransitionAsync(SharedPermittedTriggers.TenureInvestigation, CheckTenureInvestigation)
-            //.Permit(SharedInternalTriggers.TenureInvestigationFailed, SharedStates.TenureInvestigationFailed)
-            //.Permit(SharedInternalTriggers.TenureInvestigationPassed, SharedStates.TenureInvestigationPassed)
-            //.Permit(SharedInternalTriggers.TenureInvestigationPassedWithInt, SharedStates.TenureInvestigationPassedWithInt);
+            _machine.Configure(SharedStates.ApplicationSubmitted)
+                    .InternalTransitionAsync(SharedPermittedTriggers.TenureInvestigation, CheckTenureInvestigation)
+                    .Permit(SharedInternalTriggers.TenureInvestigationFailed, SharedStates.TenureInvestigationFailed)
+                    .Permit(SharedInternalTriggers.TenureInvestigationPassed, SharedStates.TenureInvestigationPassed)
+                    .Permit(SharedInternalTriggers.TenureInvestigationPassedWithInt, SharedStates.TenureInvestigationPassedWithInt);
+
+            _machine.Configure(SharedStates.TenureInvestigationPassedWithInt)
+                    .Permit(SharedPermittedTriggers.ScheduleInterview, SharedStates.InterviewScheduled)
+                    .InternalTransitionAsync(SharedPermittedTriggers.HOApproval, CheckHOApproval)
+                    .Permit(SharedInternalTriggers.HOApprovalFailed, SharedStates.HOApprovalFailed)
+                    .Permit(SharedInternalTriggers.HOApprovalPassed, SharedStates.HOApprovalPassed);
+
+            _machine.Configure(SharedStates.TenureInvestigationPassed)
+                    .Permit(SharedPermittedTriggers.ScheduleInterview, SharedStates.InterviewScheduled)
+                   .InternalTransitionAsync(SharedPermittedTriggers.HOApproval, CheckHOApproval)
+                   .Permit(SharedInternalTriggers.HOApprovalFailed, SharedStates.HOApprovalFailed)
+                   .Permit(SharedInternalTriggers.HOApprovalPassed, SharedStates.HOApprovalPassed);
+
+            _machine.Configure(SharedStates.TenureInvestigationFailed)
+                    .Permit(SharedPermittedTriggers.ScheduleInterview, SharedStates.InterviewScheduled)
+                    .InternalTransitionAsync(SharedPermittedTriggers.HOApproval, CheckHOApproval)
+                    .Permit(SharedInternalTriggers.HOApprovalFailed, SharedStates.HOApprovalFailed)
+                    .Permit(SharedInternalTriggers.HOApprovalPassed, SharedStates.HOApprovalPassed);
+
+            _machine.Configure(SharedStates.InterviewScheduled)
+                   .OnEntry(AddAppointmentDateTimeToEvent)
+                   .InternalTransitionAsync(SharedPermittedTriggers.HOApproval, CheckHOApproval)
+                   .Permit(SharedInternalTriggers.HOApprovalFailed, SharedStates.HOApprovalFailed)
+                   .Permit(SharedInternalTriggers.HOApprovalPassed, SharedStates.HOApprovalPassed)
+                   .Permit(SharedPermittedTriggers.RescheduleInterview, SharedStates.InterviewRescheduled)
+                   .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
+
+
+            _machine.Configure(SharedStates.InterviewRescheduled)
+                    .OnEntry(AddAppointmentDateTimeToEvent)
+                    .InternalTransitionAsync(SharedPermittedTriggers.HOApproval, CheckHOApproval)
+                    .PermitReentry(SharedPermittedTriggers.RescheduleInterview)
+                    .Permit(SharedInternalTriggers.HOApprovalFailed, SharedStates.HOApprovalFailed)
+                    .Permit(SharedInternalTriggers.HOApprovalPassed, SharedStates.HOApprovalPassed)
+                    .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
 
         }
     }
