@@ -1,5 +1,6 @@
 using AutoFixture;
 using FluentAssertions;
+using Hackney.Core.DynamoDb;
 using Hackney.Core.Http;
 using Hackney.Core.JWT;
 using Microsoft.AspNetCore.Http;
@@ -10,6 +11,7 @@ using Microsoft.Extensions.Primitives;
 using Moq;
 using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
+using ProcessesApi.V1.Boundary.Response;
 using ProcessesApi.V1.Controllers;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
@@ -17,6 +19,7 @@ using ProcessesApi.V1.Services.Exceptions;
 using ProcessesApi.V1.UseCase.Exceptions;
 using ProcessesApi.V1.UseCase.Interfaces;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -33,6 +36,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         private Mock<ICreateProcessUseCase> _mockCreateProcessUseCase;
         private Mock<IUpdateProcessUseCase> _mockUpdateProcessUseCase;
         private Mock<IUpdateProcessByIdUseCase> _mockUpdateProcessByIdUseCase;
+        private Mock<IGetProcessesByTargetIdUseCase> _mockGetProcessByTargetIdUseCase;
 
         private readonly Mock<ITokenFactory> _mockTokenFactory;
         private readonly Mock<IHttpContextWrapper> _mockContextWrapper;
@@ -49,6 +53,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             _mockCreateProcessUseCase = new Mock<ICreateProcessUseCase>();
             _mockUpdateProcessUseCase = new Mock<IUpdateProcessUseCase>();
             _mockUpdateProcessByIdUseCase = new Mock<IUpdateProcessByIdUseCase>();
+            _mockGetProcessByTargetIdUseCase = new Mock<IGetProcessesByTargetIdUseCase>();
 
 
             _mockTokenFactory = new Mock<ITokenFactory>();
@@ -60,6 +65,7 @@ namespace ProcessesApi.Tests.V1.Controllers
                                                          _mockCreateProcessUseCase.Object,
                                                          _mockUpdateProcessUseCase.Object,
                                                          _mockUpdateProcessByIdUseCase.Object,
+                                                         _mockGetProcessByTargetIdUseCase.Object,
                                                          _mockContextWrapper.Object,
                                                          _mockTokenFactory.Object);
 
@@ -359,6 +365,74 @@ namespace ProcessesApi.Tests.V1.Controllers
                                          .ThrowsAsync(exception);
             // Act
             Func<Task<IActionResult>> func = async () => await _classUnderTest.UpdateProcessById(requestObject, request).ConfigureAwait(false);
+            // Assert
+            func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
+        }
+
+        #endregion
+
+        #region Get by Target Id
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("some-value")]
+        public async Task GetProcessesByTargetIdReturnsOkWithNoResults(string paginationToken)
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+            var query = new GetProcessesByTargetIdRequest { TargetId = id, PaginationToken = paginationToken };
+            
+            var result = _fixture.Build<PagedResult<ProcessResponse>>()
+                                 .With(x => x.Results, new List<ProcessResponse>())
+                                 .Create();
+            _mockGetProcessByTargetIdUseCase.Setup(x => x.Execute(query)).ReturnsAsync((PagedResult<ProcessResponse>) result);
+
+            // Act
+            var response = await _classUnderTest.GetByTargetId(query).ConfigureAwait(false);
+
+            // Assert
+            response.Should().BeOfType(typeof(OkObjectResult));
+            (response as OkObjectResult).Value.Should().BeEquivalentTo(result);
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("some-value")]
+        public async Task GetProcessesByTargetIdReturnsProcesses(string paginationToken)
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+            var query = new GetProcessesByTargetIdRequest { TargetId = id, PaginationToken = paginationToken };
+
+            var processes = _fixture.CreateMany<ProcessResponse>(5).ToList();
+            var pagedResult = new PagedResult<ProcessResponse>(processes, new PaginationDetails(paginationToken));
+            _mockGetProcessByTargetIdUseCase.Setup(x => x.Execute(query)).ReturnsAsync(pagedResult);
+
+            // Act
+            var response = await _classUnderTest.GetByTargetId(query).ConfigureAwait(false);
+
+            // Assert
+            response.Should().BeOfType(typeof(OkObjectResult));
+            (response as OkObjectResult).Value.Should().BeEquivalentTo(pagedResult);
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("some-value")]
+        public void GetProcessesByTargetIdExceptionIsThrown(string paginationToken)
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+            var query = new GetProcessesByTargetIdRequest { TargetId = id, PaginationToken = paginationToken };
+            var exception = new ApplicationException("Test exception");
+            _mockGetProcessByTargetIdUseCase.Setup(x => x.Execute(query)).ThrowsAsync(exception);
+
+            // Act
+            Func<Task<IActionResult>> func = async () => await _classUnderTest.GetByTargetId(query).ConfigureAwait(false);
+
             // Assert
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
         }

@@ -18,7 +18,7 @@ namespace ProcessesApi.V1.Gateways
     public class ProcessesGateway : IProcessesGateway
     {
         private const int MAX_RESULTS = 10;
-        private const string GETPROCESSESBYTARGETIDINDEX = "ProcessByTargetId";
+        private const string GETPROCESSESBYTARGETIDINDEX = "ProcessesByTargetId";
         private const string TARGETID = "targetId";
 
         private readonly IDynamoDBContext _dynamoDbContext;
@@ -75,7 +75,7 @@ namespace ProcessesApi.V1.Gateways
         }
 
         [LogCall]
-        public async Task<PagedResult<Process>> GetProcessByTargetId(GetProcessByTargetIdRequest request)
+        public async Task<PagedResult<Process>> GetProcessesByTargetId(GetProcessesByTargetIdRequest request)
         {
             int pageSize = request.PageSize.HasValue ? request.PageSize.Value : MAX_RESULTS;
             var dbProcesses = new List<ProcessesDb>();

@@ -28,7 +28,7 @@ namespace ProcessesApi.Tests
                     {
                         new GlobalSecondaryIndex
                         {
-                            IndexName = "ProcessByTargetId",
+                            IndexName = "ProcessesByTargetId",
                             KeySchema = new List<KeySchemaElement>
                             {
                                 new KeySchemaElement("targetId", KeyType.HASH),

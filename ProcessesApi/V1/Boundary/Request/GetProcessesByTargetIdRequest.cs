@@ -3,7 +3,7 @@ using System;
 
 namespace ProcessesApi.V1.Boundary.Request
 {
-    public class GetProcessByTargetIdRequest
+    public class GetProcessesByTargetIdRequest
     {
         [FromQuery]
         public Guid TargetId { get; set; }

@@ -16,7 +16,7 @@ resource "aws_dynamodb_table" "processesapi_dynamodb_table" {
   }
 
   global_secondary_index {
-    name               = "ProcessByTargetId"
+    name               = "ProcessesByTargetId"
     hash_key           = "targetId"
     range_key          = "id"
     write_capacity     = 10

@@ -11,11 +11,11 @@ namespace ProcessesApi.V1.Infrastructure
     {
 
         [DynamoDBHashKey]
-        [DynamoDBGlobalSecondaryIndexRangeKey("ProcessByTargetId")]
+        [DynamoDBGlobalSecondaryIndexRangeKey("ProcessesByTargetId")]
         public Guid Id { get; set; }
 
         [DynamoDBProperty]
-        [DynamoDBGlobalSecondaryIndexHashKey("ProcessByTargetId")]
+        [DynamoDBGlobalSecondaryIndexHashKey("ProcessesByTargetId")]
         public Guid TargetId { get; set; }
 
         [DynamoDBProperty(Converter = typeof(DynamoDbEnumConverter<TargetType>))]

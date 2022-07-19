@@ -339,16 +339,16 @@ namespace ProcessesApi.Tests.V1.Gateways
         [Fact]
         public async Task GetByTargetIdReturnsEmptyIfNoRecords()
         {
-            var request = new GetProcessByTargetIdRequest { TargetId = Guid.NewGuid() };
+            var request = new GetProcessesByTargetIdRequest { TargetId = Guid.NewGuid() };
 
-            var response = await _classUnderTest.GetProcessByTargetId(request).ConfigureAwait(false);
+            var response = await _classUnderTest.GetProcessesByTargetId(request).ConfigureAwait(false);
 
             response.Should().NotBeNull();
             response.Results.Should().BeEmpty();
             response.PaginationDetails.HasNext.Should().BeFalse();
             response.PaginationDetails.NextToken.Should().BeNull();
 
-            _logger.VerifyExact(LogLevel.Debug, $"Querying ProcessByTargetId index for targetId {request.TargetId}", Times.Once());
+            _logger.VerifyExact(LogLevel.Debug, $"Querying ProcessesByTargetId index for targetId {request.TargetId}", Times.Once());
         }
 
         [Fact]
@@ -356,16 +356,16 @@ namespace ProcessesApi.Tests.V1.Gateways
         {
             var targetId = Guid.NewGuid();
             var expected = CreateAndInsertProcesses(targetId, 5);
-            var request = new GetProcessByTargetIdRequest() { TargetId = targetId };
+            var request = new GetProcessesByTargetIdRequest() { TargetId = targetId };
 
-            var response = await _classUnderTest.GetProcessByTargetId(request).ConfigureAwait(false);
+            var response = await _classUnderTest.GetProcessesByTargetId(request).ConfigureAwait(false);
 
             response.Should().NotBeNull();
             response.Results.Should().BeEquivalentTo(expected);
             response.PaginationDetails.HasNext.Should().BeFalse();
             response.PaginationDetails.NextToken.Should().BeNull();
 
-            _logger.VerifyExact(LogLevel.Debug, $"Querying ProcessByTargetId index for targetId {request.TargetId}", Times.Once());
+            _logger.VerifyExact(LogLevel.Debug, $"Querying ProcessesByTargetId index for targetId {request.TargetId}", Times.Once());
         }
 
         [Fact]
@@ -378,8 +378,8 @@ namespace ProcessesApi.Tests.V1.Gateways
             var expectedFirstPage = expected.OrderBy(x => x.Id).Take(5);
             var expectedSecondPage = expected.Except(expectedFirstPage).OrderBy(x => x.Id);
 
-            var request = new GetProcessByTargetIdRequest() { TargetId = targetId, PageSize = 5 };
-            var response = await _classUnderTest.GetProcessByTargetId(request).ConfigureAwait(false);
+            var request = new GetProcessesByTargetIdRequest() { TargetId = targetId, PageSize = 5 };
+            var response = await _classUnderTest.GetProcessesByTargetId(request).ConfigureAwait(false);
 
             response.Should().NotBeNull();
             response.Results.Should().BeEquivalentTo(expectedFirstPage, c => c.Excluding(x => x.CurrentState.ProcessData.FormData));
@@ -387,14 +387,14 @@ namespace ProcessesApi.Tests.V1.Gateways
             response.PaginationDetails.NextToken.Should().NotBeNull();
 
             request.PaginationToken = response.PaginationDetails.NextToken;
-            response = await _classUnderTest.GetProcessByTargetId(request).ConfigureAwait(false);
+            response = await _classUnderTest.GetProcessesByTargetId(request).ConfigureAwait(false);
 
             response.Should().NotBeNull();
             response.Results.Should().HaveSameCount(expectedSecondPage);
             response.PaginationDetails.HasNext.Should().BeFalse();
             response.PaginationDetails.NextToken.Should().BeNull();
 
-            _logger.VerifyExact(LogLevel.Debug, $"Querying ProcessByTargetId index for targetId {request.TargetId}", Times.Exactly(2));
+            _logger.VerifyExact(LogLevel.Debug, $"Querying ProcessesByTargetId index for targetId {request.TargetId}", Times.Exactly(2));
         }
 
         [Fact]
@@ -403,16 +403,16 @@ namespace ProcessesApi.Tests.V1.Gateways
             var targetId = Guid.NewGuid();
             var expected = CreateAndInsertProcesses(targetId, 10);
 
-            var request = new GetProcessByTargetIdRequest() { TargetId = targetId, PageSize = 10 };
+            var request = new GetProcessesByTargetIdRequest() { TargetId = targetId, PageSize = 10 };
 
-            var response = await _classUnderTest.GetProcessByTargetId(request).ConfigureAwait(false);
+            var response = await _classUnderTest.GetProcessesByTargetId(request).ConfigureAwait(false);
 
             response.Should().NotBeNull();
             response.Results.Should().BeEquivalentTo(expected);
             response.PaginationDetails.HasNext.Should().BeFalse();
             response.PaginationDetails.NextToken.Should().BeNull();
 
-            _logger.VerifyExact(LogLevel.Debug, $"Querying ProcessByTargetId index for targetId {request.TargetId}", Times.Once());
+            _logger.VerifyExact(LogLevel.Debug, $"Querying ProcessesByTargetId index for targetId {request.TargetId}", Times.Once());
         }
 
         #endregion
