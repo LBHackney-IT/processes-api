@@ -382,7 +382,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             // Arrange
             var id = Guid.NewGuid();
             var query = new GetProcessesByTargetIdRequest { TargetId = id, PaginationToken = paginationToken };
-            
+
             var result = _fixture.Build<PagedResult<ProcessResponse>>()
                                  .With(x => x.Results, new List<ProcessResponse>())
                                  .Create();
