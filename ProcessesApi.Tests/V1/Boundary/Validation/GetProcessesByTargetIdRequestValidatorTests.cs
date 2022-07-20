@@ -36,5 +36,16 @@ namespace ProcessesApi.Tests.V1.Boundary.Validation
             //Assert
             result.ShouldHaveValidationErrorFor(x => x.TargetId);
         }
+
+        [Fact]
+        public void RequestShouldNotErrorWithValidTargetId()
+        {
+            //Arrange
+            var query = new GetProcessesByTargetIdRequest() { TargetId = Guid.NewGuid() };
+            //Act
+            var result = _classUnderTest.TestValidate(query);
+            //Assert
+            result.ShouldNotHaveValidationErrorFor(x => x.TargetId);
+        }
     }
 }
