@@ -8,7 +8,6 @@ using ProcessesApi.V1.Constants.Shared;
 using ProcessesApi.V1.Constants;
 using System;
 using ProcessesApi.V1.Services.Exceptions;
-using ProcessesApi.V1.Constants.SoleToJoint;
 
 namespace ProcessesApi.Tests.V1.Helpers
 {

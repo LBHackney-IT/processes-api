@@ -7,27 +7,25 @@ namespace ProcessesApi.V1.Domain
     public class Process
     {
         public Guid Id { get; set; }
-
-        public ProcessState CurrentState { get; set; }
-        public List<ProcessState> PreviousStates { get; set; }
         public Guid TargetId { get; set; }
         public TargetType TargetType { get; set; }
         public List<RelatedEntity> RelatedEntities { get; set; }
         public ProcessName ProcessName { get; set; }
+        public ProcessState CurrentState { get; set; }
+        public List<ProcessState> PreviousStates { get; set; }
         public int? VersionNumber { get; set; }
 
+        public Process() { }
 
-        public Process(Guid id, List<ProcessState> previousStates,
-            ProcessState currentState, Guid targetId, TargetType targetType,
-            List<RelatedEntity> relatedEntities, ProcessName processName, int? versionNumber)
+        public Process(Guid id, Guid targetId, TargetType targetType, List<RelatedEntity> relatedEntities, ProcessName processName, ProcessState currentState, List<ProcessState> previousStates, int? versionNumber)
         {
             Id = id;
-            CurrentState = currentState;
-            PreviousStates = previousStates;
             TargetId = targetId;
             TargetType = targetType;
             RelatedEntities = relatedEntities;
             ProcessName = processName;
+            CurrentState = currentState;
+            PreviousStates = previousStates;
             VersionNumber = versionNumber;
         }
 
@@ -39,15 +37,10 @@ namespace ProcessesApi.V1.Domain
             return Task.CompletedTask;
         }
 
-
-
-        public static Process Create(Guid id,
-           List<ProcessState> previousStates,
-           ProcessState currentState, Guid targetId, TargetType targetType,
-           List<RelatedEntity> relatedEntities, ProcessName processName, int? versionNumber)
+        public static Process Create(Guid targetId, TargetType targetType, List<RelatedEntity> relatedEntities, ProcessName processName)
         {
 
-            return new Process(id, previousStates, currentState, targetId, targetType, relatedEntities, processName, versionNumber);
+            return new Process(Guid.NewGuid(), targetId, targetType, relatedEntities, processName, null, new List<ProcessState>(), null);
         }
     }
 }

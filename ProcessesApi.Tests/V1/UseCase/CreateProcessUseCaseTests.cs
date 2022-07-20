@@ -7,7 +7,6 @@ using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Services.Interfaces;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
 using ProcessesApi.V1.UseCase;
@@ -29,15 +28,6 @@ namespace ProcessesApi.Tests.V1.UseCase
             Func<ProcessName, IProcessService> _mockProcessServiceProvider = (processName) => { return _mockProcessService.Object; };
 
             _classUnderTest = new CreateProcessUseCase(_mockGateway.Object, _mockProcessServiceProvider);
-        }
-
-        private Process CreateProcessInInitialState()
-        {
-            return _fixture.Build<Process>()
-                    .With(x => x.CurrentState, (ProcessState) null)
-                    .With(x => x.PreviousStates, new List<ProcessState>())
-                    .With(x => x.VersionNumber, 0)
-                    .Create();
         }
 
         [Fact]
