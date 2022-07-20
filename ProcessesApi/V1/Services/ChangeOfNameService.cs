@@ -205,6 +205,27 @@ namespace ProcessesApi.V1.Services
                     .Permit(SharedInternalTriggers.HOApprovalPassed, SharedStates.HOApprovalPassed)
                     .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
 
+            _machine.Configure(SharedStates.HOApprovalPassed)
+                    .Permit(SharedPermittedTriggers.ScheduleTenureAppointment, SharedStates.TenureAppointmentScheduled)
+                    .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
+
+
+            _machine.Configure(SharedStates.HOApprovalFailed)
+                    .Permit(SharedPermittedTriggers.CloseProcess, SharedStates.ProcessClosed);
+
+            _machine.Configure(SharedStates.TenureAppointmentScheduled)
+                     .OnEntry(AddAppointmentDateTimeToEvent)
+                     .Permit(SharedPermittedTriggers.RescheduleTenureAppointment, SharedStates.TenureAppointmentRescheduled)
+                     .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
+
+            _machine.Configure(SharedStates.TenureAppointmentRescheduled)
+                    .OnEntry(AddAppointmentDateTimeToEvent)
+                    .PermitReentry(SharedPermittedTriggers.RescheduleTenureAppointment)
+                    .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled)
+                    .Permit(SharedPermittedTriggers.CloseProcess, SharedStates.ProcessClosed);
+
+
+
         }
     }
 }

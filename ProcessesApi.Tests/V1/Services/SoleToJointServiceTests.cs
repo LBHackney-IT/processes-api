@@ -72,7 +72,7 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SharedStates.TenureInvestigationFailed, SharedPermittedTriggers.HOApproval, new string[] { SharedKeys.HousingAreaManagerName, SharedKeys.HORecommendation })]
         [InlineData(SharedStates.TenureInvestigationPassed, SharedPermittedTriggers.HOApproval, new string[] { SharedKeys.HousingAreaManagerName, SharedKeys.HORecommendation })]
         [InlineData(SharedStates.TenureInvestigationPassedWithInt, SharedPermittedTriggers.HOApproval, new string[] { SharedKeys.HousingAreaManagerName, SharedKeys.HORecommendation })]
-        [InlineData(SharedStates.HOApprovalPassed, SoleToJointPermittedTriggers.ScheduleTenureAppointment, new string[] { SharedKeys.AppointmentDateTime })]
+        [InlineData(SharedStates.HOApprovalPassed, SharedPermittedTriggers.ScheduleTenureAppointment, new string[] { SharedKeys.AppointmentDateTime })]
         public void ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
         {
             ShouldThrowFormDataNotFoundException(initialState, trigger, expectedFormDataKeys);
@@ -89,7 +89,7 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SharedStates.DocumentsRequestedAppointment)]
         [InlineData(SharedStates.DocumentsAppointmentRescheduled)]
         [InlineData(SharedStates.HOApprovalFailed)]
-        [InlineData(SoleToJointStates.TenureAppointmentRescheduled)]
+        [InlineData(SharedStates.TenureAppointmentRescheduled)]
 
         public async Task ProcessStateIsUpdatedToProcessClosedAndEventIsRaised(string fromState)
         {
@@ -101,8 +101,8 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SharedStates.HOApprovalPassed)]
         [InlineData(SharedStates.InterviewScheduled)]
         [InlineData(SharedStates.InterviewRescheduled)]
-        [InlineData(SoleToJointStates.TenureAppointmentScheduled)]
-        [InlineData(SoleToJointStates.TenureAppointmentRescheduled)]
+        [InlineData(SharedStates.TenureAppointmentScheduled)]
+        [InlineData(SharedStates.TenureAppointmentRescheduled)]
 
         public async Task ProcessStateIsUpdatedToProcessCancelledAndProcessClosedEventIsRaised(string fromState)
         {
@@ -633,7 +633,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SharedStates.HOApprovalPassed,
-                new List<string> { SoleToJointPermittedTriggers.ScheduleTenureAppointment, SharedPermittedTriggers.CancelProcess }
+                new List<string> { SharedPermittedTriggers.ScheduleTenureAppointment, SharedPermittedTriggers.CancelProcess }
             );
             process.PreviousStates.Last().State.Should().Be(initialState);
             VerifyThatProcessUpdatedEventIsTriggered(initialState, SharedStates.HOApprovalPassed);
@@ -714,7 +714,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Arrange
             var appointmentDateTime = DateTime.UtcNow.ToString("s", CultureInfo.InvariantCulture);
             var process = CreateProcessWithCurrentState(SharedStates.HOApprovalPassed);
-            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.ScheduleTenureAppointment, new Dictionary<string, object>
+            var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.ScheduleTenureAppointment, new Dictionary<string, object>
             {
                 { SharedKeys.AppointmentDateTime, appointmentDateTime }
             });
@@ -724,12 +724,12 @@ namespace ProcessesApi.Tests.V1.Services
 
             // Assert
             CurrentStateShouldContainCorrectData(
-                process, trigger, SoleToJointStates.TenureAppointmentScheduled,
-                new List<string> { SoleToJointPermittedTriggers.RescheduleTenureAppointment, SoleToJointPermittedTriggers.UpdateTenure, SharedPermittedTriggers.CancelProcess }
+                process, trigger, SharedStates.TenureAppointmentScheduled,
+                new List<string> { SharedPermittedTriggers.RescheduleTenureAppointment, SoleToJointPermittedTriggers.UpdateTenure, SharedPermittedTriggers.CancelProcess }
              );
 
             process.PreviousStates.Last().State.Should().Be(SharedStates.HOApprovalPassed);
-            VerifyThatProcessUpdatedEventIsTriggered(SharedStates.HOApprovalPassed, SoleToJointStates.TenureAppointmentScheduled);
+            VerifyThatProcessUpdatedEventIsTriggered(SharedStates.HOApprovalPassed, SharedStates.TenureAppointmentScheduled);
         }
 
 
@@ -737,8 +737,8 @@ namespace ProcessesApi.Tests.V1.Services
 
         #region Reschedule Tenure Appointment
         [Theory]
-        [InlineData(SoleToJointStates.TenureAppointmentScheduled)]
-        [InlineData(SoleToJointStates.TenureAppointmentRescheduled)]
+        [InlineData(SharedStates.TenureAppointmentScheduled)]
+        [InlineData(SharedStates.TenureAppointmentRescheduled)]
         public async Task ProcessStateIsUpdatedToRescheduleTenureAppointmentOnScheduleAppointment(string initialState)
         {
             // Arrange
@@ -747,7 +747,7 @@ namespace ProcessesApi.Tests.V1.Services
             {
                 { SharedKeys.AppointmentDateTime, appointmentDateTime }
             });
-            var trigger = CreateProcessTrigger(process, SoleToJointPermittedTriggers.RescheduleTenureAppointment, new Dictionary<string, object>
+            var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.RescheduleTenureAppointment, new Dictionary<string, object>
             {
                 { SharedKeys.AppointmentDateTime, appointmentDateTime }
             });
@@ -757,12 +757,12 @@ namespace ProcessesApi.Tests.V1.Services
 
             // Assert
             CurrentStateShouldContainCorrectData(
-                process, trigger, SoleToJointStates.TenureAppointmentRescheduled,
-                new List<string> { SoleToJointPermittedTriggers.UpdateTenure, SharedPermittedTriggers.CancelProcess, SoleToJointPermittedTriggers.RescheduleTenureAppointment, SharedPermittedTriggers.CloseProcess }
+                process, trigger, SharedStates.TenureAppointmentRescheduled,
+                new List<string> { SoleToJointPermittedTriggers.UpdateTenure, SharedPermittedTriggers.CancelProcess, SharedPermittedTriggers.RescheduleTenureAppointment, SharedPermittedTriggers.CloseProcess }
             );
 
             process.PreviousStates.Last().State.Should().Be(initialState);
-            VerifyThatProcessUpdatedEventIsTriggered(initialState, SoleToJointStates.TenureAppointmentRescheduled);
+            VerifyThatProcessUpdatedEventIsTriggered(initialState, SharedStates.TenureAppointmentRescheduled);
         }
 
         #endregion
@@ -770,8 +770,8 @@ namespace ProcessesApi.Tests.V1.Services
         #region Update Tenure
 
         [Theory]
-        [InlineData(SoleToJointStates.TenureAppointmentScheduled)]
-        [InlineData(SoleToJointStates.TenureAppointmentRescheduled)]
+        [InlineData(SharedStates.TenureAppointmentScheduled)]
+        [InlineData(SharedStates.TenureAppointmentRescheduled)]
         public async Task ProcessStateIsUpdatedToProcessCompletedAndEventIsRaisedOnUpdateTenure(string initialState)
         {
             // Arrange
@@ -813,7 +813,7 @@ namespace ProcessesApi.Tests.V1.Services
         public void ThrowsErrorIfDbOperationsHelperThrowsError()
         {
             // Arrange
-            var process = CreateProcessWithCurrentState(SoleToJointStates.TenureAppointmentScheduled);
+            var process = CreateProcessWithCurrentState(SharedStates.TenureAppointmentScheduled);
             var formData = new Dictionary<string, object> { { SharedKeys.HasNotifiedResident, true } };
 
             var triggerObject = CreateProcessTrigger(process,

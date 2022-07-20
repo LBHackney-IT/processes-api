@@ -66,6 +66,10 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SharedStates.TenureInvestigationFailed, SharedPermittedTriggers.HOApproval, new string[] { SharedKeys.HousingAreaManagerName, SharedKeys.HORecommendation })]
         [InlineData(SharedStates.TenureInvestigationPassed, SharedPermittedTriggers.HOApproval, new string[] { SharedKeys.HousingAreaManagerName, SharedKeys.HORecommendation })]
         [InlineData(SharedStates.TenureInvestigationPassedWithInt, SharedPermittedTriggers.HOApproval, new string[] { SharedKeys.HousingAreaManagerName, SharedKeys.HORecommendation })]
+        [InlineData(SharedStates.HOApprovalPassed, SharedPermittedTriggers.ScheduleTenureAppointment, new string[] { SharedKeys.AppointmentDateTime })]
+        [InlineData(SharedStates.TenureAppointmentScheduled, SharedPermittedTriggers.RescheduleTenureAppointment, new string[] { SharedKeys.AppointmentDateTime })]
+        [InlineData(SharedStates.TenureAppointmentRescheduled, SharedPermittedTriggers.RescheduleTenureAppointment, new string[] { SharedKeys.AppointmentDateTime })]
+
         public void ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
         {
             ShouldThrowFormDataNotFoundException(initialState, trigger, expectedFormDataKeys);
@@ -76,6 +80,8 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SharedStates.DocumentsRequestedDes)]
         [InlineData(SharedStates.DocumentsRequestedAppointment)]
         [InlineData(SharedStates.DocumentsAppointmentRescheduled)]
+        [InlineData(SharedStates.TenureAppointmentRescheduled)]
+
         public async Task ProcessStateIsUpdatedToProcessClosedAndEventIsRaised(string fromState)
         {
             await ProcessStateShouldUpdateToProcessClosedAndEventIsRaised(fromState).ConfigureAwait(false);
@@ -88,6 +94,8 @@ namespace ProcessesApi.Tests.V1.Services
         // List all states that CancelProcess can be triggered from
         [Theory]
         [InlineData(ChangeOfNameStates.NameSubmitted)]
+        [InlineData(SharedStates.TenureAppointmentScheduled)]
+        [InlineData(SharedStates.TenureAppointmentRescheduled)]
         public async Task ProcessStateIsUpdatedToProcessCancelledAndProcessClosedEventIsRaised(string fromState)
         {
             await ProcessStateShouldUpdateToProcessCancelledAndProcessClosedEventIsRaised(fromState).ConfigureAwait(false);
@@ -273,107 +281,6 @@ namespace ProcessesApi.Tests.V1.Services
 
         #endregion
 
-        #region HOApproval
-
-        [Theory]
-        [InlineData(SharedStates.InterviewScheduled)]
-        [InlineData(SharedStates.InterviewRescheduled)]
-        [InlineData(SharedStates.TenureInvestigationPassedWithInt)]
-        [InlineData(SharedStates.TenureInvestigationPassed)]
-        [InlineData(SharedStates.TenureInvestigationFailed)]
-
-        public async Task ProcessStateIsUpdatedToHOApprovalPassed(string initialState)
-        {
-            // Arrange
-            var process = CreateProcessWithCurrentState(initialState);
-            var formData = new Dictionary<string, object>
-            {
-                {  SharedKeys.HORecommendation, SharedValues.Approve },
-                {  SharedKeys.HousingAreaManagerName, "ManagerName"  },
-                {  SharedKeys.Reason, "Some Reason"  }
-            };
-            var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.HOApproval, formData);
-
-            // Act
-            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
-
-            // Assert
-            CurrentStateShouldContainCorrectData(
-                process, trigger, SharedStates.HOApprovalPassed,
-                new List<string> { /*TODO Add next state here  */ }
-            );
-            process.PreviousStates.Last().State.Should().Be(initialState);
-            VerifyThatProcessUpdatedEventIsTriggered(initialState, SharedStates.HOApprovalPassed);
-        }
-
-        [Theory]
-        [InlineData(SharedStates.InterviewScheduled)]
-        [InlineData(SharedStates.InterviewRescheduled)]
-        [InlineData(SharedStates.TenureInvestigationPassedWithInt)]
-        [InlineData(SharedStates.TenureInvestigationPassed)]
-        [InlineData(SharedStates.TenureInvestigationFailed)]
-        public async Task ProcessStateIsUpdatedToHOApprovalFailed(string initialState)
-        {
-            // Arrange
-            var process = CreateProcessWithCurrentState(initialState);
-            var formData = new Dictionary<string, object>
-            {
-                {  SharedKeys.HORecommendation, SharedValues.Decline },
-                { SharedKeys.HousingAreaManagerName, "ManagerName"},
-                { SharedKeys.Reason, "Some Reason"}
-            };
-
-            var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.HOApproval, formData);
-
-            // Act
-            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
-
-            // Assert
-            CurrentStateShouldContainCorrectData(
-                process, trigger, SharedStates.HOApprovalFailed,
-                new List<string> {/*TODO Add next state here  */ }
-            );
-            process.PreviousStates.Last().State.Should().Be(initialState);
-            VerifyThatProcessUpdatedEventIsTriggered(initialState, SharedStates.HOApprovalFailed);
-        }
-
-        [Theory]
-        [InlineData(SharedStates.InterviewScheduled)]
-        [InlineData(SharedStates.InterviewRescheduled)]
-        [InlineData(SharedStates.TenureInvestigationPassedWithInt)]
-        [InlineData(SharedStates.TenureInvestigationPassed)]
-        [InlineData(SharedStates.TenureInvestigationFailed)]
-        public void ThrowsFormDataInvalidExceptionOnHOApprovalWhenRecommendationIsNotOneOfCorrectValues(string initialState)
-        {
-            // Arrange
-            var process = CreateProcessWithCurrentState(initialState);
-            var invalidRecommendation = "some invalid value";
-            var formData = new Dictionary<string, object>
-            {
-                {  SharedKeys.HORecommendation, invalidRecommendation },
-                { SharedKeys.HousingAreaManagerName, "ManagerName"},
-                { SharedKeys.Reason, "Some reason"}
-            };
-            var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.HOApproval, formData);
-            var expectedRecommendationValues = new List<string>()
-            {
-                SharedValues.Approve,
-                SharedValues.Decline
-            };
-
-            var expectedErrorMessage = String.Format("The request's FormData is invalid: The form data value supplied for key {0} does not match any of the expected values ({1}). The value supplied was: {2}",
-                                                    SharedKeys.HORecommendation,
-                                                    String.Join(", ", expectedRecommendationValues),
-                                                    invalidRecommendation);
-
-            // Act & assert
-            _classUnderTest
-                .Invoking(cut => cut.Process(trigger, process, _token))
-                .Should().Throw<FormDataInvalidException>().WithMessage(expectedErrorMessage);
-        }
-
-        #endregion
-
         #region Schedule Interview
 
         [Fact]
@@ -426,6 +333,167 @@ namespace ProcessesApi.Tests.V1.Services
 
             process.PreviousStates.Last().State.Should().Be(initialState);
             VerifyThatProcessUpdatedEventIsTriggered(initialState, SharedStates.InterviewRescheduled);
+        }
+
+        #endregion
+
+        #region HOApproval
+
+        [Theory]
+        [InlineData(SharedStates.InterviewScheduled)]
+        [InlineData(SharedStates.InterviewRescheduled)]
+        [InlineData(SharedStates.TenureInvestigationPassedWithInt)]
+        [InlineData(SharedStates.TenureInvestigationPassed)]
+        [InlineData(SharedStates.TenureInvestigationFailed)]
+
+        public async Task ProcessStateIsUpdatedToHOApprovalPassed(string initialState)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(initialState);
+            var formData = new Dictionary<string, object>
+            {
+                {  SharedKeys.HORecommendation, SharedValues.Approve },
+                {  SharedKeys.HousingAreaManagerName, "ManagerName"  },
+                {  SharedKeys.Reason, "Some Reason"  }
+            };
+            var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.HOApproval, formData);
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SharedStates.HOApprovalPassed,
+                new List<string> { SharedPermittedTriggers.ScheduleTenureAppointment, SharedPermittedTriggers.CancelProcess }
+            );
+            process.PreviousStates.Last().State.Should().Be(initialState);
+            VerifyThatProcessUpdatedEventIsTriggered(initialState, SharedStates.HOApprovalPassed);
+        }
+
+        [Theory]
+        [InlineData(SharedStates.InterviewScheduled)]
+        [InlineData(SharedStates.InterviewRescheduled)]
+        [InlineData(SharedStates.TenureInvestigationPassedWithInt)]
+        [InlineData(SharedStates.TenureInvestigationPassed)]
+        [InlineData(SharedStates.TenureInvestigationFailed)]
+        public async Task ProcessStateIsUpdatedToHOApprovalFailed(string initialState)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(initialState);
+            var formData = new Dictionary<string, object>
+            {
+                {  SharedKeys.HORecommendation, SharedValues.Decline },
+                { SharedKeys.HousingAreaManagerName, "ManagerName"},
+                { SharedKeys.Reason, "Some Reason"}
+            };
+
+            var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.HOApproval, formData);
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SharedStates.HOApprovalFailed,
+                new List<string> { SharedPermittedTriggers.CloseProcess }
+            );
+            process.PreviousStates.Last().State.Should().Be(initialState);
+            VerifyThatProcessUpdatedEventIsTriggered(initialState, SharedStates.HOApprovalFailed);
+        }
+
+        [Theory]
+        [InlineData(SharedStates.InterviewScheduled)]
+        [InlineData(SharedStates.InterviewRescheduled)]
+        [InlineData(SharedStates.TenureInvestigationPassedWithInt)]
+        [InlineData(SharedStates.TenureInvestigationPassed)]
+        [InlineData(SharedStates.TenureInvestigationFailed)]
+        public void ThrowsFormDataInvalidExceptionOnHOApprovalWhenRecommendationIsNotOneOfCorrectValues(string initialState)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(initialState);
+            var invalidRecommendation = "some invalid value";
+            var formData = new Dictionary<string, object>
+            {
+                {  SharedKeys.HORecommendation, invalidRecommendation },
+                { SharedKeys.HousingAreaManagerName, "ManagerName"},
+                { SharedKeys.Reason, "Some reason"}
+            };
+            var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.HOApproval, formData);
+            var expectedRecommendationValues = new List<string>()
+            {
+                SharedValues.Approve,
+                SharedValues.Decline
+            };
+
+            var expectedErrorMessage = String.Format("The request's FormData is invalid: The form data value supplied for key {0} does not match any of the expected values ({1}). The value supplied was: {2}",
+                                                    SharedKeys.HORecommendation,
+                                                    String.Join(", ", expectedRecommendationValues),
+                                                    invalidRecommendation);
+
+            // Act & assert
+            _classUnderTest
+                .Invoking(cut => cut.Process(trigger, process, _token))
+                .Should().Throw<FormDataInvalidException>().WithMessage(expectedErrorMessage);
+        }
+
+        #endregion
+
+        #region Schedule Tenure Appointment
+        [Fact]
+        public async Task ProcessStateIsUpdatedToScheduleTenureAppointmentOnHOApprovalPassed()
+        {
+            // Arrange
+            var appointmentDateTime = DateTime.UtcNow.ToString("s", CultureInfo.InvariantCulture);
+            var process = CreateProcessWithCurrentState(SharedStates.HOApprovalPassed);
+            var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.ScheduleTenureAppointment, new Dictionary<string, object>
+            {
+                { SharedKeys.AppointmentDateTime, appointmentDateTime }
+            });
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SharedStates.TenureAppointmentScheduled,
+                new List<string> { SharedPermittedTriggers.RescheduleTenureAppointment, SharedPermittedTriggers.CancelProcess }
+             );
+
+            process.PreviousStates.Last().State.Should().Be(SharedStates.HOApprovalPassed);
+            VerifyThatProcessUpdatedEventIsTriggered(SharedStates.HOApprovalPassed, SharedStates.TenureAppointmentScheduled);
+        }
+
+
+        #endregion
+
+        #region Reschedule Tenure Appointment
+        [Theory]
+        [InlineData(SharedStates.TenureAppointmentScheduled)]
+        [InlineData(SharedStates.TenureAppointmentRescheduled)]
+        public async Task ProcessStateIsUpdatedToRescheduleTenureAppointmentOnScheduleAppointment(string initialState)
+        {
+            // Arrange
+            var appointmentDateTime = DateTime.UtcNow.ToString("s", CultureInfo.InvariantCulture);
+            var process = CreateProcessWithCurrentState(initialState, new Dictionary<string, object>
+            {
+                { SharedKeys.AppointmentDateTime, appointmentDateTime }
+            });
+            var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.RescheduleTenureAppointment, new Dictionary<string, object>
+            {
+                { SharedKeys.AppointmentDateTime, appointmentDateTime }
+            });
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SharedStates.TenureAppointmentRescheduled,
+                new List<string> { SharedPermittedTriggers.CancelProcess, SharedPermittedTriggers.RescheduleTenureAppointment, SharedPermittedTriggers.CloseProcess }
+            );
+
+            process.PreviousStates.Last().State.Should().Be(initialState);
+            VerifyThatProcessUpdatedEventIsTriggered(initialState, SharedStates.TenureAppointmentRescheduled);
         }
 
         #endregion

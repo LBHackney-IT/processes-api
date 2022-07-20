@@ -415,7 +415,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenAScheduleTenureAppointmentRequest()
         {
-            GivenAnUpdateProcessRequest(SoleToJointPermittedTriggers.ScheduleTenureAppointment);
+            GivenAnUpdateProcessRequest(SharedPermittedTriggers.ScheduleTenureAppointment);
 
             UpdateProcessRequestObject.FormData.Add(SharedKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
@@ -428,7 +428,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenARescheduleTenureAppointmentRequest()
         {
-            GivenAnUpdateProcessRequest(SoleToJointPermittedTriggers.RescheduleTenureAppointment);
+            GivenAnUpdateProcessRequest(SharedPermittedTriggers.RescheduleTenureAppointment);
 
             UpdateProcessRequestObject.FormData.Add(SharedKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }

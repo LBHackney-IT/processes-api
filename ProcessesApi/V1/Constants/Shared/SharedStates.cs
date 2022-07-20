@@ -18,5 +18,7 @@ namespace ProcessesApi.V1.Constants
         public const string InterviewRescheduled = "InterviewRescheduled";
         public const string HOApprovalFailed = "HOApprovalFailed";
         public const string HOApprovalPassed = "HOApprovalPassed";
+        public const string TenureAppointmentScheduled = "TenureAppointmentScheduled";
+        public const string TenureAppointmentRescheduled = "TenureAppointmentRescheduled";
     }
 }
