@@ -67,6 +67,8 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SharedStates.TenureInvestigationPassed, SharedPermittedTriggers.HOApproval, new string[] { SharedKeys.HousingAreaManagerName, SharedKeys.HORecommendation })]
         [InlineData(SharedStates.TenureInvestigationPassedWithInt, SharedPermittedTriggers.HOApproval, new string[] { SharedKeys.HousingAreaManagerName, SharedKeys.HORecommendation })]
         [InlineData(SharedStates.HOApprovalPassed, SharedPermittedTriggers.ScheduleTenureAppointment, new string[] { SharedKeys.AppointmentDateTime })]
+        [InlineData(SharedStates.TenureAppointmentScheduled, SharedPermittedTriggers.RescheduleTenureAppointment, new string[] { SharedKeys.AppointmentDateTime })]
+        [InlineData(SharedStates.TenureAppointmentRescheduled, SharedPermittedTriggers.RescheduleTenureAppointment, new string[] { SharedKeys.AppointmentDateTime })]
 
         public void ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
         {
