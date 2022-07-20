@@ -1,4 +1,5 @@
 using Hackney.Core.JWT;
+using Hackney.Core.Logging;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Constants;
 using ProcessesApi.V1.Domain;
@@ -22,6 +23,7 @@ namespace ProcessesApi.V1.UseCase
             _processServiceProvider = processServiceProvider;
         }
 
+        [LogCall]
         public async Task<Process> Execute(CreateProcess request, ProcessName processName, Token token)
         {
             var process = Process.Create(request.TargetId, request.TargetType, request.RelatedEntities, processName);

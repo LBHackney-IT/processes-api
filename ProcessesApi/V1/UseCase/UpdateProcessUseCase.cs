@@ -1,4 +1,5 @@
 using Hackney.Core.JWT;
+using Hackney.Core.Logging;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Gateways;
@@ -22,6 +23,7 @@ namespace ProcessesApi.V1.UseCase
             _processServiceProvider = processServiceProvider;
         }
 
+        [LogCall]
         public async Task<Process> Execute(UpdateProcessQuery request, UpdateProcessRequestObject requestObject, int? ifMatch, Token token)
         {
             var triggerObject = ProcessTrigger.Create(request.Id, request.ProcessTrigger, requestObject.FormData, requestObject.Documents);
