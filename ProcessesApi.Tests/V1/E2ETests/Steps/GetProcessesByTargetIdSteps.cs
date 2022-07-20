@@ -72,13 +72,13 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         public async Task ThenTheTargetProcessesAreReturned(List<ProcessesDb> expectedProcesses)
         {
             var apiResult = await ExtractResultFromHttpResponse(_lastResponse).ConfigureAwait(false);
-            apiResult.Results.Should().BeEquivalentTo(expectedProcesses);
+            apiResult.Results.Should().BeEquivalentTo(expectedProcesses, c => c.Excluding(x => x.VersionNumber));
         }
 
         public async Task ThenAllTheTargetProcessesAreReturnedWithNoPaginationToken(List<ProcessesDb> expectedProcesses)
         {
             var apiResult = await ExtractResultFromHttpResponse(_lastResponse).ConfigureAwait(false);
-            apiResult.Results.Should().BeEquivalentTo(expectedProcesses);
+            apiResult.Results.Should().BeEquivalentTo(expectedProcesses, c => c.Excluding(x => x.VersionNumber));
 
             apiResult.PaginationDetails.HasNext.Should().BeFalse();
             apiResult.PaginationDetails.NextToken.Should().BeNull();
@@ -92,7 +92,8 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
             var apiResult = await ExtractResultFromHttpResponse(_lastResponse).ConfigureAwait(false);
             apiResult.Results.Count.Should().Be(expectedPageSize);
-            apiResult.Results.Should().BeEquivalentTo(expectedProcesses.OrderBy(x => x.Id).Take(expectedPageSize));
+            apiResult.Results.Should().BeEquivalentTo(expectedProcesses.OrderBy(x => x.Id).Take(expectedPageSize),
+                                                      c => c.Excluding(x => x.VersionNumber));
         }
 
         public async Task ThenTheFirstPageOfTargetProcessesAreReturned(List<ProcessesDb> expectedProcesses)
@@ -100,12 +101,14 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             var apiResult = await ExtractResultFromHttpResponse(_lastResponse).ConfigureAwait(false);
             apiResult.PaginationDetails.NextToken.Should().NotBeNullOrEmpty();
             apiResult.Results.Count.Should().Be(10);
-            apiResult.Results.Should().BeEquivalentTo(expectedProcesses.OrderBy(x => x.Id).Take(10));
+            apiResult.Results.Should().BeEquivalentTo(expectedProcesses.OrderBy(x => x.Id).Take(10),
+                                                      c => c.Excluding(x => x.VersionNumber));
         }
 
         public void ThenAllTheTargetProcessesAreReturned(List<ProcessesDb> expectedProcesses)
         {
-            _pagedProcesses.Should().BeEquivalentTo(expectedProcesses.OrderBy(x => x.Id));
+            _pagedProcesses.Should().BeEquivalentTo(expectedProcesses.OrderBy(x => x.Id),
+                                                    c => c.Excluding(x => x.VersionNumber));
         }
 
         public void ThenBadRequestIsReturned()

@@ -53,6 +53,22 @@ namespace ProcessesApi.V1.Controllers
         }
 
         /// <summary>
+        /// Retrieve all processes with a specific target ID
+        /// </summary>
+        /// <response code="200">Sucessfully found processes requested </response>
+        /// <response code="500">Internal Server Error</response>
+        [ProducesResponseType(typeof(PagedResult<ProcessResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [HttpGet]
+        [LogCall(LogLevel.Information)]
+        public async Task<IActionResult> GetByTargetId([FromQuery] GetProcessesByTargetIdRequest request)
+        {
+            var result = await _getProcessesByTargetIdUseCase.Execute(request).ConfigureAwait(false);
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Retrieve all details about a particular process
         /// </summary>
         /// <response code="200">Successfully retrieved details for a particular process</response>
@@ -177,24 +193,6 @@ namespace ProcessesApi.V1.Controllers
             {
                 return Conflict(vncErr.Message);
             }
-        }
-
-        /// <summary>
-        /// Retrieve all processes with a specific target ID
-        /// </summary>
-        /// <response code="200">Sucessfully found processes requested </response>
-        /// <response code="500">Internal Server Error</response>
-        [ProducesResponseType(typeof(PagedResult<ProcessResponse>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [HttpGet]
-        [LogCall(LogLevel.Information)]
-        [Route("/")]
-
-        public async Task<IActionResult> GetByTargetId(GetProcessesByTargetIdRequest request)
-        {
-            var result = await _getProcessesByTargetIdUseCase.Execute(request).ConfigureAwait(false);
-            return Ok(result);
         }
 
         private int? GetIfMatchFromHeader()

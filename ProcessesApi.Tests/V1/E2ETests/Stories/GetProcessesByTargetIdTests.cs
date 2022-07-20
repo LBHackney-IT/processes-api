@@ -101,7 +101,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         {
             this.Given(g => _processFixture.GivenATargetIdHasNoProcesses())
                 .When(w => _steps.WhenTheTargetProcessesAreRequested(_processFixture.TargetId))
-                .Then(t => _steps.ThenAllTheTargetProcessesAreReturned(_processFixture.Processes))
+                .Then(t => _steps.ThenAllTheTargetProcessesAreReturnedWithNoPaginationToken(_processFixture.Processes))
                 .BDDfy();
         }
 
