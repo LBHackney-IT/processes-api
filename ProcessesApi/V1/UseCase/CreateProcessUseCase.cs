@@ -1,4 +1,5 @@
 using Hackney.Core.JWT;
+using Hackney.Core.Logging;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Constants;
 using ProcessesApi.V1.Domain;
@@ -6,7 +7,6 @@ using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Services.Interfaces;
 using ProcessesApi.V1.UseCase.Interfaces;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.UseCase
@@ -23,9 +23,11 @@ namespace ProcessesApi.V1.UseCase
             _processServiceProvider = processServiceProvider;
         }
 
+        [LogCall]
         public async Task<Process> Execute(CreateProcess request, ProcessName processName, Token token)
         {
-            var process = Process.Create(Guid.NewGuid(), new List<ProcessState>(), null, request.TargetId, request.TargetType, request.RelatedEntities, processName, null);
+            var process = Process.Create(request.TargetId, request.TargetType, request.RelatedEntities, processName);
+
             var triggerObject = ProcessTrigger.Create(process.Id, SharedPermittedTriggers.StartApplication, request.FormData, request.Documents);
 
             IProcessService service = _processServiceProvider(processName);

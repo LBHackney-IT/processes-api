@@ -1,21 +1,15 @@
 using FluentAssertions;
-using Hackney.Core.Sns;
 using Hackney.Core.Testing.DynamoDb;
-using Hackney.Core.Testing.Sns;
 using Hackney.Shared.Person;
 using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Infrastructure;
-using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Constants.SoleToJoint;
 using ProcessesApi.V1.Infrastructure;
-using ProcessesApi.V1.Infrastructure.JWT;
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
-using JsonSerializer = System.Text.Json.JsonSerializer;
 using ProcessesApi.V1.Constants;
 using ProcessesApi.Tests.V1.E2ETests.Steps;
 
@@ -81,20 +75,6 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         public async Task ThenTheProcessStateIsUpdatedToDocumentsRequestedAppointment(UpdateProcessQuery request)
         {
             await CheckProcessState(request.Id, SharedStates.DocumentsRequestedAppointment, SoleToJointStates.BreachChecksPassed).ConfigureAwait(false);
-        }
-
-        public async Task ThenTheProcessStateIsUpdatedToScheduleTenureAppointment(UpdateProcessQuery request)
-        {
-            await CheckProcessState(request.Id, SoleToJointStates.TenureAppointmentScheduled, SharedStates.HOApprovalPassed).ConfigureAwait(false);
-        }
-
-        public async Task ThenTheProcessStateIsUpdatedToRescheduleTenureAppointment(UpdateProcessQuery request)
-        {
-            await CheckProcessState(request.Id, SoleToJointStates.TenureAppointmentRescheduled, SoleToJointStates.TenureAppointmentScheduled).ConfigureAwait(false);
-        }
-        public async Task ThenTheProcessStateRemainsTenureAppointmentRescheduled(UpdateProcessQuery request)
-        {
-            await CheckProcessState(request.Id, SoleToJointStates.TenureAppointmentRescheduled, SoleToJointStates.TenureAppointmentRescheduled).ConfigureAwait(false);
         }
         public async Task ThenTheProcessStateIsUpdatedToUpdateTenure(UpdateProcessQuery request, string initialState, Guid incomingTenantId)
         {

@@ -122,8 +122,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [InlineData(SharedStates.HOApprovalPassed)]
         [InlineData(SharedStates.InterviewScheduled)]
         [InlineData(SharedStates.InterviewRescheduled)]
-        [InlineData(SoleToJointStates.TenureAppointmentScheduled)]
-        [InlineData(SoleToJointStates.TenureAppointmentRescheduled)]
+        [InlineData(SharedStates.TenureAppointmentScheduled)]
+        [InlineData(SharedStates.TenureAppointmentRescheduled)]
         public void ProcessStateIsUpdatedToProcessCancelled(string fromState)
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(fromState))
@@ -548,7 +548,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                     .And(a => _processFixture.GivenAScheduleTenureAppointmentRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessStateIsUpdatedToScheduleTenureAppointment(_processFixture.UpdateProcessRequest))
-                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SharedStates.HOApprovalPassed, SoleToJointStates.TenureAppointmentScheduled))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SharedStates.HOApprovalPassed, SharedStates.TenureAppointmentScheduled))
                 .BDDfy();
         }
 
@@ -569,30 +569,30 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [Fact]
         public void ProcessStateIsUpdatedToRescheduleTenureAppointment()
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.TenureAppointmentScheduled))
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SharedStates.TenureAppointmentScheduled))
                     .And(a => _processFixture.GivenARescheduleTenureAppointmentRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessStateIsUpdatedToRescheduleTenureAppointment(_processFixture.UpdateProcessRequest))
-                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SoleToJointStates.TenureAppointmentScheduled, SoleToJointStates.TenureAppointmentRescheduled))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SharedStates.TenureAppointmentScheduled, SharedStates.TenureAppointmentRescheduled))
                 .BDDfy();
         }
 
         [Fact]
         public void MultipleTenureAppointmentReschedulesArePermitted()
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.TenureAppointmentRescheduled))
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SharedStates.TenureAppointmentRescheduled))
                     .And(a => _processFixture.GivenARescheduleTenureAppointmentRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, _processFixture.Process.VersionNumber))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
                     .And(a => _steps.ThenTheProcessStateRemainsTenureAppointmentRescheduled(_processFixture.UpdateProcessRequest))
-                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SoleToJointStates.TenureAppointmentRescheduled, SoleToJointStates.TenureAppointmentRescheduled))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(_snsFixture, _processFixture.ProcessId, SharedStates.TenureAppointmentRescheduled, SharedStates.TenureAppointmentRescheduled))
                 .BDDfy();
         }
 
         [Fact]
         public void BadRequestIsReturnedWhenRescheduleTenureAppointmentDataIsMissing()
         {
-            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.TenureAppointmentScheduled))
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SharedStates.TenureAppointmentScheduled))
                     .And(a => _processFixture.GivenARescheduleTenureAppointmentRequestWithMissingData())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(t => _steps.ThenBadRequestIsReturned())
@@ -604,8 +604,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         #region Update Tenure
 
         [Theory]
-        [InlineData(SoleToJointStates.TenureAppointmentScheduled)]
-        [InlineData(SoleToJointStates.TenureAppointmentRescheduled)]
+        [InlineData(SharedStates.TenureAppointmentScheduled)]
+        [InlineData(SharedStates.TenureAppointmentRescheduled)]
         public void ProcessStateIsUpdatedToProcessCompleted(string initialState)
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(initialState))

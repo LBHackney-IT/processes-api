@@ -12,6 +12,7 @@ using ProcessesApi.V1.Infrastructure.Extensions;
 using ProcessesApi.V1.Constants.SoleToJoint;
 using ProcessesApi.V1.Constants;
 using ProcessesApi.V1.Constants.ChangeOfName;
+using System.Linq;
 
 namespace ProcessesApi.Tests.V1.E2E.Fixtures
 {
@@ -22,6 +23,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         private readonly IAmazonSimpleNotificationService _amazonSimpleNotificationService;
         public Process Process { get; private set; }
         public Guid ProcessId { get; private set; }
+        public Guid TargetId { get; private set; }
         public ProcessName ProcessName { get; private set; }
         public CreateProcess CreateProcessRequest { get; private set; }
         public UpdateProcessQuery UpdateProcessRequest { get; private set; }
@@ -29,9 +31,10 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public ProcessQuery UpdateProcessByIdRequest { get; private set; }
         public UpdateProcessByIdRequestObject UpdateProcessByIdRequestObject { get; private set; }
         public Guid IncomingTenantId { get; private set; }
-
         public Guid TenantId { get; private set; }
         public List<Guid> PersonTenures { get; private set; }
+        public const int MAXPROCESSES = 10;
+        public List<ProcessesDb> Processes { get; private set; } = new List<ProcessesDb>();
 
         public ProcessFixture(IDynamoDBContext context, IAmazonSimpleNotificationService amazonSimpleNotificationService)
         {
@@ -71,6 +74,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                         .Create();
             Process = process;
             ProcessId = process.Id;
+            TargetId = process.TargetId;
             ProcessName = process.ProcessName;
             IncomingTenantId = Guid.NewGuid();
             TenantId = Guid.NewGuid();
@@ -415,7 +419,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenAScheduleTenureAppointmentRequest()
         {
-            GivenAnUpdateProcessRequest(SoleToJointPermittedTriggers.ScheduleTenureAppointment);
+            GivenAnUpdateProcessRequest(SharedPermittedTriggers.ScheduleTenureAppointment);
 
             UpdateProcessRequestObject.FormData.Add(SharedKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
@@ -428,7 +432,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenARescheduleTenureAppointmentRequest()
         {
-            GivenAnUpdateProcessRequest(SoleToJointPermittedTriggers.RescheduleTenureAppointment);
+            GivenAnUpdateProcessRequest(SharedPermittedTriggers.RescheduleTenureAppointment);
 
             UpdateProcessRequestObject.FormData.Add(SharedKeys.AppointmentDateTime, DateTime.UtcNow.ToIsoString());
         }
@@ -456,5 +460,44 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             GivenANameSubmittedRequest();
             UpdateProcessRequestObject.FormData.Clear();
         }
+
+        public void GivenTargetProcessesAlreadyExist()
+        {
+            GivenTargetProcessesAlreadyExist(MAXPROCESSES);
+        }
+
+        public void GivenTargetProcessesAlreadyExist(int count)
+        {
+            if (!Processes.Any())
+            {
+                var random = new Random();
+                TargetId = Guid.NewGuid();
+                Processes.AddRange(_fixture.Build<ProcessesDb>()
+                                           .With(x => x.TargetType, TargetType.person)
+                                           .With(x => x.TargetId, TargetId)
+                                           .With(x => x.CurrentState, (ProcessState) null)
+                                           .With(x => x.PreviousStates, new List<ProcessState>())
+                                           .With(x => x.VersionNumber, (int?) null)
+                                           .CreateMany(count));
+                foreach (var process in Processes)
+                    _dbContext.SaveAsync(process).GetAwaiter().GetResult();
+            }
+        }
+
+        public void GivenTargetProcessesWithMultiplePagesAlreadyExist()
+        {
+            GivenTargetProcessesAlreadyExist(35);
+        }
+
+        public void GivenATargetIdHasNoProcesses()
+        {
+            TargetId = Guid.NewGuid();
+        }
+
+        public void GivenAnInvalidTargetId()
+        {
+            TargetId = Guid.Empty;
+        }
+
     }
 }

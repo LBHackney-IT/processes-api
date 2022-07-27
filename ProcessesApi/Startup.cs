@@ -193,6 +193,7 @@ namespace ProcessesApi
             services.AddScoped<ICreateProcessUseCase, CreateProcessUseCase>();
             services.AddScoped<IUpdateProcessUseCase, UpdateProcessUseCase>();
             services.AddScoped<IUpdateProcessByIdUseCase, UpdateProcessByIdUseCase>();
+            services.AddScoped<IGetProcessesByTargetIdUseCase, GetProcessesByTargetIdUseCase>();
         }
 
         private static void RegisterHelpers(IServiceCollection services)

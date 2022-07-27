@@ -14,6 +14,7 @@ namespace ProcessesApi.V1.UseCase
         {
             _gateway = gateway;
         }
+
         [LogCall]
         public async Task<Process> Execute(ProcessQuery query)
         {

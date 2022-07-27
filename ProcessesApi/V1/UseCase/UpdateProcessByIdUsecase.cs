@@ -1,4 +1,5 @@
 using Hackney.Core.JWT;
+using Hackney.Core.Logging;
 using Hackney.Core.Sns;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
@@ -24,6 +25,7 @@ namespace ProcessesApi.V1.UseCase
             _snsGateway = snsGateway;
         }
 
+        [LogCall]
         public async Task<ProcessState> Execute(ProcessQuery query, UpdateProcessByIdRequestObject requestObject, string requestBody, int? ifMatch, Token token)
         {
 

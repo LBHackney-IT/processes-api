@@ -10,6 +10,20 @@ resource "aws_dynamodb_table" "processesapi_dynamodb_table" {
     type = "S"
   }
 
+  attribute {
+    name = "targetId"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name               = "ProcessesByTargetId"
+    hash_key           = "targetId"
+    range_key          = "id"
+    write_capacity     = 10
+    read_capacity      = 10
+    projection_type    = "ALL"
+  }
+  
   tags = merge(
     local.default_tags,
     { BackupPolicy = "Prod" }

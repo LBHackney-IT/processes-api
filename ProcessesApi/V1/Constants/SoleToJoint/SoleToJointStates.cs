@@ -9,8 +9,6 @@ namespace ProcessesApi.V1.Constants.SoleToJoint
         public const string ManualChecksPassed = "ManualChecksPassed";
         public const string BreachChecksFailed = "BreachChecksFailed";
         public const string BreachChecksPassed = "BreachChecksPassed";
-        public const string TenureAppointmentScheduled = "TenureAppointmentScheduled";
-        public const string TenureAppointmentRescheduled = "TenureAppointmentRescheduled";
         public const string TenureUpdated = "TenureUpdated";
 
     }
