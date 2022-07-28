@@ -101,7 +101,6 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         // List all states that CloseProcess can be triggered from
         [Theory]
         [InlineData(SoleToJointStates.AutomatedChecksFailed)]
-        [InlineData(SoleToJointStates.ManualChecksFailed)]
         [InlineData(SoleToJointStates.BreachChecksFailed)]
         [InlineData(SharedStates.DocumentsRequestedDes)]
         [InlineData(SharedStates.DocumentsRequestedAppointment)]
@@ -124,6 +123,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [InlineData(SharedStates.InterviewRescheduled)]
         [InlineData(SharedStates.TenureAppointmentScheduled)]
         [InlineData(SharedStates.TenureAppointmentRescheduled)]
+        [InlineData(SoleToJointStates.ManualChecksFailed)]
+
         public void ProcessStateIsUpdatedToProcessCancelled(string fromState)
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(fromState))
