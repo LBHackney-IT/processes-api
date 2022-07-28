@@ -83,7 +83,6 @@ namespace ProcessesApi.Tests.V1.Services
         // List all states that CloseProcess can be triggered from
         [Theory]
         [InlineData(SoleToJointStates.AutomatedChecksFailed)]
-        [InlineData(SoleToJointStates.ManualChecksFailed)]
         [InlineData(SoleToJointStates.BreachChecksFailed)]
         [InlineData(SharedStates.DocumentsRequestedDes)]
         [InlineData(SharedStates.DocumentsRequestedAppointment)]
@@ -103,6 +102,7 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SharedStates.InterviewRescheduled)]
         [InlineData(SharedStates.TenureAppointmentScheduled)]
         [InlineData(SharedStates.TenureAppointmentRescheduled)]
+        [InlineData(SoleToJointStates.ManualChecksFailed)]
 
         public async Task ProcessStateIsUpdatedToProcessCancelledAndProcessClosedEventIsRaised(string fromState)
         {
@@ -281,7 +281,7 @@ namespace ProcessesApi.Tests.V1.Services
             CurrentStateShouldContainCorrectData(process,
                                                  triggerObject,
                                                  SoleToJointStates.ManualChecksFailed,
-                                                 new List<string>() { SharedPermittedTriggers.CloseProcess });
+                                                 new List<string>() { SharedPermittedTriggers.CancelProcess });
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.AutomatedChecksPassed, SoleToJointStates.ManualChecksFailed);
         }

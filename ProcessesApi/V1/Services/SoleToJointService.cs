@@ -217,7 +217,7 @@ namespace ProcessesApi.V1.Services
                     .Permit(SoleToJointInternalTriggers.ManualEligibilityPassed, SoleToJointStates.ManualChecksPassed);
 
             _machine.Configure(SoleToJointStates.ManualChecksFailed)
-                    .Permit(SharedPermittedTriggers.CloseProcess, SharedStates.ProcessClosed);
+                    .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
 
             _machine.Configure(SoleToJointStates.ManualChecksPassed)
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckTenancyBreach, CheckTenancyBreach)
