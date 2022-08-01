@@ -105,6 +105,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [InlineData(SharedStates.DocumentsRequestedDes)]
         [InlineData(SharedStates.DocumentsRequestedAppointment)]
         [InlineData(SharedStates.DocumentsAppointmentRescheduled)]
+        [InlineData(SoleToJointStates.ManualChecksFailed)]
+
         public void ProcessStateIsUpdatedToProcessClosedWithReason(string fromState)
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(fromState))
@@ -123,7 +125,10 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [InlineData(SharedStates.InterviewRescheduled)]
         [InlineData(SharedStates.TenureAppointmentScheduled)]
         [InlineData(SharedStates.TenureAppointmentRescheduled)]
-        [InlineData(SoleToJointStates.ManualChecksFailed)]
+        [InlineData(SoleToJointStates.AutomatedChecksPassed)]
+        [InlineData(SoleToJointStates.ManualChecksPassed)]
+        [InlineData(SoleToJointStates.BreachChecksPassed)]
+        [InlineData(SharedStates.TenureInvestigationPassed)]
 
         public void ProcessStateIsUpdatedToProcessCancelled(string fromState)
         {
