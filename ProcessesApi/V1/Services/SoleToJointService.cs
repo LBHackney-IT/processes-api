@@ -76,7 +76,7 @@ namespace ProcessesApi.V1.Services
             processRequest.ValidateManualCheck(SoleToJointInternalTriggers.BreachChecksPassed,
                                                SoleToJointInternalTriggers.BreachChecksFailed,
                                                (SoleToJointKeys.BR5, "false"),
-                                               (SoleToJointKeys.BR10, "false"),
+                                               (SoleToJointKeys.BR10, "true"),
                                                (SoleToJointKeys.BR17, "false"),
                                                (SoleToJointKeys.BR18, "false"));
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
