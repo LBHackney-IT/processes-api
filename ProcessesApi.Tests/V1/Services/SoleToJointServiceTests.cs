@@ -40,7 +40,7 @@ namespace ProcessesApi.Tests.V1.Services
         private readonly Dictionary<string, object> _tenancyBreachPassData = new Dictionary<string, object>
         {
             { SoleToJointKeys.BR5, "false" },
-            { SoleToJointKeys.BR10, "false" },
+            { SoleToJointKeys.BR10, "true" },
             { SoleToJointKeys.BR17, "false" },
             { SoleToJointKeys.BR18, "false" }
         };
@@ -83,13 +83,13 @@ namespace ProcessesApi.Tests.V1.Services
         // List all states that CloseProcess can be triggered from
         [Theory]
         [InlineData(SoleToJointStates.AutomatedChecksFailed)]
-        [InlineData(SoleToJointStates.ManualChecksFailed)]
         [InlineData(SoleToJointStates.BreachChecksFailed)]
         [InlineData(SharedStates.DocumentsRequestedDes)]
         [InlineData(SharedStates.DocumentsRequestedAppointment)]
         [InlineData(SharedStates.DocumentsAppointmentRescheduled)]
         [InlineData(SharedStates.HOApprovalFailed)]
         [InlineData(SharedStates.TenureAppointmentRescheduled)]
+        [InlineData(SoleToJointStates.ManualChecksFailed)]
 
         public async Task ProcessStateIsUpdatedToProcessClosedAndEventIsRaised(string fromState)
         {
@@ -103,7 +103,10 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SharedStates.InterviewRescheduled)]
         [InlineData(SharedStates.TenureAppointmentScheduled)]
         [InlineData(SharedStates.TenureAppointmentRescheduled)]
-
+        [InlineData(SoleToJointStates.AutomatedChecksPassed)]
+        [InlineData(SoleToJointStates.ManualChecksPassed)]
+        [InlineData(SoleToJointStates.BreachChecksPassed)]
+        [InlineData(SharedStates.TenureInvestigationPassed)]
         public async Task ProcessStateIsUpdatedToProcessCancelledAndProcessClosedEventIsRaised(string fromState)
         {
             await ProcessStateShouldUpdateToProcessCancelledAndProcessClosedEventIsRaised(fromState).ConfigureAwait(false);
@@ -222,7 +225,7 @@ namespace ProcessesApi.Tests.V1.Services
             CurrentStateShouldContainCorrectData(process,
                                                  triggerObject,
                                                  SoleToJointStates.AutomatedChecksPassed,
-                                                 new List<string>() { SoleToJointPermittedTriggers.CheckManualEligibility });
+                                                 new List<string>() { SoleToJointPermittedTriggers.CheckManualEligibility, SharedPermittedTriggers.CancelProcess });
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
 
             _mockDbOperationsHelper.Verify(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId), Times.Once());
@@ -251,7 +254,7 @@ namespace ProcessesApi.Tests.V1.Services
             CurrentStateShouldContainCorrectData(process,
                                                  triggerObject,
                                                  SoleToJointStates.ManualChecksPassed,
-                                                 new List<string> { "CheckTenancyBreach" });
+                                                 new List<string> { SoleToJointPermittedTriggers.CheckTenancyBreach, SharedPermittedTriggers.CancelProcess });
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.AutomatedChecksPassed);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.AutomatedChecksPassed, SoleToJointStates.ManualChecksPassed);
         }
@@ -304,7 +307,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SoleToJointStates.BreachChecksPassed,
-                new List<string> { SharedPermittedTriggers.RequestDocumentsDes, SharedPermittedTriggers.RequestDocumentsAppointment });
+                new List<string> { SharedPermittedTriggers.RequestDocumentsDes, SharedPermittedTriggers.RequestDocumentsAppointment, SharedPermittedTriggers.CancelProcess });
 
             process.PreviousStates.Last().State.Should().Be(SoleToJointStates.ManualChecksPassed);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.ManualChecksPassed, SoleToJointStates.BreachChecksPassed);
@@ -312,7 +315,7 @@ namespace ProcessesApi.Tests.V1.Services
 
         [Theory]
         [InlineData(SoleToJointKeys.BR5, "true")]
-        [InlineData(SoleToJointKeys.BR10, "true")]
+        [InlineData(SoleToJointKeys.BR10, "false")]
         [InlineData(SoleToJointKeys.BR17, "true")]
         [InlineData(SoleToJointKeys.BR18, "true")]
         public async Task ProcessStateIsUpdatedToBreachChecksFailedWhenBreachCheckFail(string checkId, string value)
@@ -495,7 +498,6 @@ namespace ProcessesApi.Tests.V1.Services
         }
 
         [Theory]
-        [InlineData(SharedValues.Approve, SharedStates.TenureInvestigationPassed)]
         [InlineData(SharedValues.Decline, SharedStates.TenureInvestigationFailed)]
         [InlineData(SharedValues.Appointment, SharedStates.TenureInvestigationPassedWithInt)]
         public async Task ProcessStateIsUpdatedOnTenureInvestigationTrigger(string tenureInvestigationRecommendation, string expectedState)
@@ -518,6 +520,29 @@ namespace ProcessesApi.Tests.V1.Services
             );
             process.PreviousStates.Last().State.Should().Be(SharedStates.ApplicationSubmitted);
             VerifyThatProcessUpdatedEventIsTriggered(SharedStates.ApplicationSubmitted, expectedState);
+        }
+
+        [Fact]
+        public async Task ProcessStateIsUpdatedToTenureInvestigationPassed()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SharedStates.ApplicationSubmitted);
+            var formData = new Dictionary<string, object>
+            {
+                {  SharedKeys.TenureInvestigationRecommendation, SharedValues.Approve }
+            };
+            var trigger = CreateProcessTrigger(process, SharedPermittedTriggers.TenureInvestigation, formData);
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SharedStates.TenureInvestigationPassed,
+                new List<string> { SharedPermittedTriggers.ScheduleInterview, SharedPermittedTriggers.HOApproval, SharedPermittedTriggers.CancelProcess }
+            );
+            process.PreviousStates.Last().State.Should().Be(SharedStates.ApplicationSubmitted);
+            VerifyThatProcessUpdatedEventIsTriggered(SharedStates.ApplicationSubmitted, SharedStates.TenureInvestigationPassed);
         }
 
         [Fact]

@@ -76,7 +76,7 @@ namespace ProcessesApi.V1.Services
             processRequest.ValidateManualCheck(SoleToJointInternalTriggers.BreachChecksPassed,
                                                SoleToJointInternalTriggers.BreachChecksFailed,
                                                (SoleToJointKeys.BR5, "false"),
-                                               (SoleToJointKeys.BR10, "false"),
+                                               (SoleToJointKeys.BR10, "true"),
                                                (SoleToJointKeys.BR17, "false"),
                                                (SoleToJointKeys.BR18, "false"));
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
@@ -214,7 +214,9 @@ namespace ProcessesApi.V1.Services
             _machine.Configure(SoleToJointStates.AutomatedChecksPassed)
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckManualEligibility, CheckManualEligibility)
                     .Permit(SoleToJointInternalTriggers.ManualEligibilityFailed, SoleToJointStates.ManualChecksFailed)
-                    .Permit(SoleToJointInternalTriggers.ManualEligibilityPassed, SoleToJointStates.ManualChecksPassed);
+                    .Permit(SoleToJointInternalTriggers.ManualEligibilityPassed, SoleToJointStates.ManualChecksPassed)
+                    .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
+
 
             _machine.Configure(SoleToJointStates.ManualChecksFailed)
                     .Permit(SharedPermittedTriggers.CloseProcess, SharedStates.ProcessClosed);
@@ -222,14 +224,18 @@ namespace ProcessesApi.V1.Services
             _machine.Configure(SoleToJointStates.ManualChecksPassed)
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckTenancyBreach, CheckTenancyBreach)
                     .Permit(SoleToJointInternalTriggers.BreachChecksPassed, SoleToJointStates.BreachChecksPassed)
-                    .Permit(SoleToJointInternalTriggers.BreachChecksFailed, SoleToJointStates.BreachChecksFailed);
+                    .Permit(SoleToJointInternalTriggers.BreachChecksFailed, SoleToJointStates.BreachChecksFailed)
+                    .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
+
 
             _machine.Configure(SoleToJointStates.BreachChecksFailed)
                     .Permit(SharedPermittedTriggers.CloseProcess, SharedStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.BreachChecksPassed)
                     .Permit(SharedPermittedTriggers.RequestDocumentsDes, SharedStates.DocumentsRequestedDes)
-                    .Permit(SharedPermittedTriggers.RequestDocumentsAppointment, SharedStates.DocumentsRequestedAppointment);
+                    .Permit(SharedPermittedTriggers.RequestDocumentsAppointment, SharedStates.DocumentsRequestedAppointment)
+                    .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
+
 
             _machine.Configure(SharedStates.DocumentsRequestedDes)
                     .InternalTransitionAsync(SharedPermittedTriggers.ReviewDocuments, ReviewDocumentsCheck)
@@ -270,13 +276,15 @@ namespace ProcessesApi.V1.Services
                    .Permit(SharedPermittedTriggers.ScheduleInterview, SharedStates.InterviewScheduled)
                    .InternalTransitionAsync(SharedPermittedTriggers.HOApproval, CheckHOApproval)
                    .Permit(SharedInternalTriggers.HOApprovalFailed, SharedStates.HOApprovalFailed)
-                   .Permit(SharedInternalTriggers.HOApprovalPassed, SharedStates.HOApprovalPassed); ;
+                   .Permit(SharedInternalTriggers.HOApprovalPassed, SharedStates.HOApprovalPassed)
+                   .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
+
 
             _machine.Configure(SharedStates.TenureInvestigationFailed)
                     .Permit(SharedPermittedTriggers.ScheduleInterview, SharedStates.InterviewScheduled)
                     .InternalTransitionAsync(SharedPermittedTriggers.HOApproval, CheckHOApproval)
                     .Permit(SharedInternalTriggers.HOApprovalFailed, SharedStates.HOApprovalFailed)
-                    .Permit(SharedInternalTriggers.HOApprovalPassed, SharedStates.HOApprovalPassed); ;
+                    .Permit(SharedInternalTriggers.HOApprovalPassed, SharedStates.HOApprovalPassed);
 
             _machine.Configure(SharedStates.InterviewScheduled)
                     .OnEntry(AddAppointmentDateTimeToEvent)
