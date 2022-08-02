@@ -225,7 +225,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
             UpdateProcessRequestObject.FormData = new Dictionary<string, object>
             {
-                { SoleToJointKeys.BR5, (!isEligible).ToString() },
+                { SoleToJointKeys.BR5, (isEligible).ToString() },
                 { SoleToJointKeys.BR10, "true" },
                 { SoleToJointKeys.BR17, "false" },
                 { SoleToJointKeys.BR18, "false" }
