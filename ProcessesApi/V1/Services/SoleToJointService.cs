@@ -71,16 +71,15 @@ namespace ProcessesApi.V1.Services
 
         private async Task CheckTenancyBreach(StateMachine<string, string>.Transition transition)
         {
-
             var processRequest = transition.Parameters[0] as ProcessTrigger;
+            var expectedFormDataKeys = new List<string> { SoleToJointKeys.BR5, SoleToJointKeys.BR10, SoleToJointKeys.BR17, SoleToJointKeys.BR18 };
+            processRequest.FormData.ValidateKeys(expectedFormDataKeys);
+
             processRequest.ValidateManualCheck(SoleToJointInternalTriggers.BreachChecksPassed,
                                                SoleToJointInternalTriggers.BreachChecksFailed,
+                                               (SoleToJointKeys.BR5, processRequest.FormData[SoleToJointKeys.BR10].ToString()),
                                                (SoleToJointKeys.BR17, "false"),
                                                (SoleToJointKeys.BR18, "false"));
-
-            processRequest.FormData.ValidateKeys(new List<string> { SoleToJointKeys.BR10, SoleToJointKeys.BR5 });
-            if (processRequest.FormData[SoleToJointKeys.BR10] != processRequest.FormData[SoleToJointKeys.BR5])
-                processRequest.Trigger = SoleToJointInternalTriggers.BreachChecksFailed;
 
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
