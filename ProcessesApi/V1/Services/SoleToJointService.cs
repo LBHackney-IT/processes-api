@@ -75,10 +75,13 @@ namespace ProcessesApi.V1.Services
             var processRequest = transition.Parameters[0] as ProcessTrigger;
             processRequest.ValidateManualCheck(SoleToJointInternalTriggers.BreachChecksPassed,
                                                SoleToJointInternalTriggers.BreachChecksFailed,
-                                               (SoleToJointKeys.BR5, "true"),
-                                               (SoleToJointKeys.BR10, "true"),
                                                (SoleToJointKeys.BR17, "false"),
                                                (SoleToJointKeys.BR18, "false"));
+
+            processRequest.FormData.ValidateKeys(new List<string> { SoleToJointKeys.BR10, SoleToJointKeys.BR5 });
+            if (processRequest.FormData[SoleToJointKeys.BR10] != processRequest.FormData[SoleToJointKeys.BR5])
+                processRequest.Trigger = SoleToJointInternalTriggers.BreachChecksFailed;
+
             await TriggerStateMachine(processRequest).ConfigureAwait(false);
         }
 
