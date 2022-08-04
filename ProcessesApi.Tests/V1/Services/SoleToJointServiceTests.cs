@@ -39,8 +39,8 @@ namespace ProcessesApi.Tests.V1.Services
 
         private readonly Dictionary<string, object> _tenancyBreachPassData = new Dictionary<string, object>
         {
-            { SoleToJointKeys.BR5, "false" },
-            { SoleToJointKeys.BR10, "false" },
+            { SoleToJointKeys.BR5, "true" },
+            { SoleToJointKeys.BR10, "true" },
             { SoleToJointKeys.BR17, "false" },
             { SoleToJointKeys.BR18, "false" }
         };
@@ -314,8 +314,8 @@ namespace ProcessesApi.Tests.V1.Services
         }
 
         [Theory]
-        [InlineData(SoleToJointKeys.BR5, "true")]
-        [InlineData(SoleToJointKeys.BR10, "true")]
+        [InlineData(SoleToJointKeys.BR5, "false")]
+        [InlineData(SoleToJointKeys.BR10, "false")]
         [InlineData(SoleToJointKeys.BR17, "true")]
         [InlineData(SoleToJointKeys.BR18, "true")]
         public async Task ProcessStateIsUpdatedToBreachChecksFailedWhenBreachCheckFail(string checkId, string value)

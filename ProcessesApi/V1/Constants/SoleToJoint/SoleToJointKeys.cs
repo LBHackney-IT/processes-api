@@ -70,7 +70,7 @@ namespace ProcessesApi.V1.Constants.SoleToJoint
         public const string BR5 = "br5";
 
         /// <summary>
-        ///     Does the tenant have rent arrears remaining with LBH or another local authority or housing association property?
+        ///    If Yes to above then Allow application to proceed or deny application
         /// </summary>
         public const string BR10 = "br10";
 
