@@ -39,8 +39,8 @@ namespace ProcessesApi.Tests.V1.Services
 
         private readonly Dictionary<string, object> _tenancyBreachPassData = new Dictionary<string, object>
         {
-            { SoleToJointKeys.BR5, "false" },
-            { SoleToJointKeys.BR10, "false" },
+            { SoleToJointKeys.BR5, "true" },
+            { SoleToJointKeys.BR10, "true" },
             { SoleToJointKeys.BR17, "false" },
             { SoleToJointKeys.BR18, "false" }
         };
@@ -313,9 +313,31 @@ namespace ProcessesApi.Tests.V1.Services
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.ManualChecksPassed, SoleToJointStates.BreachChecksPassed);
         }
 
+        [Fact]
+        public async Task ProcessStateIsUpdatedToBreachChecksPassedWhenBreachCheckSucceeds()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SoleToJointStates.ManualChecksPassed);
+            _tenancyBreachPassData[SoleToJointKeys.BR5] = "false";
+            _tenancyBreachPassData[SoleToJointKeys.BR10] = "false";
+            var trigger = CreateProcessTrigger(
+                process, SoleToJointPermittedTriggers.CheckTenancyBreach, _tenancyBreachPassData);
+
+            // Act
+            await _classUnderTest.Process(trigger, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(
+                process, trigger, SoleToJointStates.BreachChecksPassed,
+                new List<string> { SharedPermittedTriggers.RequestDocumentsDes, SharedPermittedTriggers.RequestDocumentsAppointment, SharedPermittedTriggers.CancelProcess });
+
+            process.PreviousStates.Last().State.Should().Be(SoleToJointStates.ManualChecksPassed);
+            VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.ManualChecksPassed, SoleToJointStates.BreachChecksPassed);
+        }
+
         [Theory]
-        [InlineData(SoleToJointKeys.BR5, "true")]
-        [InlineData(SoleToJointKeys.BR10, "true")]
+        [InlineData(SoleToJointKeys.BR5, "false")]
+        [InlineData(SoleToJointKeys.BR10, "false")]
         [InlineData(SoleToJointKeys.BR17, "true")]
         [InlineData(SoleToJointKeys.BR18, "true")]
         public async Task ProcessStateIsUpdatedToBreachChecksFailedWhenBreachCheckFail(string checkId, string value)
