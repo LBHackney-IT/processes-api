@@ -23,30 +23,34 @@ using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Services.Exceptions;
 using Xunit;
 using ProcessesApi.V1.Domain.Finance;
+using Hackney.Shared.Person.Infrastructure;
+using Hackney.Shared.Person.Boundary.Request;
+using ProcessesApi.V1.Constants.ChangeOfName;
 
 namespace ProcessesApi.Tests.V1.Helpers
 {
     [Collection("LogCall collection")]
-    public class SoleToJointDbOperationsHelperTests
+    public class SharedDbOperationsHelperTests
     {
         private readonly Fixture _fixture = new Fixture();
         private Mock<IIncomeApiGateway> _mockIncomeApi;
         private Mock<IPersonDbGateway> _mockPersonDb;
         private Mock<ITenureDbGateway> _mockTenureDb;
         private Mock<ISnsGateway> _mockSnsGateway;
-        private SoleToJointDbOperationsHelper _classUnderTest;
+        private SharedDbOperationsHelper _classUnderTest;
 
-        public SoleToJointDbOperationsHelperTests()
+        public SharedDbOperationsHelperTests()
         {
             _mockIncomeApi = new Mock<IIncomeApiGateway>();
             _mockPersonDb = new Mock<IPersonDbGateway>();
             _mockTenureDb = new Mock<ITenureDbGateway>();
             _mockSnsGateway = new Mock<ISnsGateway>();
 
-            _classUnderTest = new SoleToJointDbOperationsHelper(_mockIncomeApi.Object,
+            _classUnderTest = new SharedDbOperationsHelper(_mockIncomeApi.Object,
                                                                 _mockPersonDb.Object,
                                                                 _mockTenureDb.Object,
                                                                 new TenureSnsFactory(),
+                                                                new PersonSnsFactory(),
                                                                 _mockSnsGateway.Object);
         }
 
@@ -125,6 +129,18 @@ namespace ProcessesApi.Tests.V1.Helpers
             process.RelatedEntities = new List<RelatedEntity> { tenantRelatedEntity, proposedTenantRelatedEntity };
 
             return (process, proposedTenant, tenure, tenant.Id, tenancyRef);
+        }
+
+        private (Process, Person) CreateProcessAndPerson()
+        {
+            var person = _fixture.Create<Person>();
+            var process = _fixture.Build<Process>().With(x => x.TargetId, person.Id).Create();
+            process.PreviousStates.Add(_fixture.Build<ProcessState>()
+                                               .With(x => x.State, ChangeOfNameStates.NameSubmitted)
+                                               .Create()
+                                      );
+            process.PreviousStates.Find(x => x.State == ChangeOfNameStates.NameSubmitted).ProcessData.FormData.Add(ChangeOfNameKeys.FirstName, "NewFirstName");
+            return (process, person);
         }
 
         private async Task<bool> SetupAndCheckAutomatedEligibility(TenureInformation tenure, Person proposedTenant, Guid tenantId)
@@ -412,6 +428,35 @@ namespace ProcessesApi.Tests.V1.Helpers
             var numberOfEvents = tenure.HouseholdMembers.Count() + 2; // 1 event per hm, plus on update old tenure & on create new tenure
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(numberOfEvents));
         }
+
+        #endregion
+
+        #region UpdateName
+
+        private bool VerifyUpdateName(UpdatePersonRequestObject requestObject, Process process)
+        {
+            requestObject.FirstName.Should().Be(process.PreviousStates.Find(x => x.State == ChangeOfNameStates.NameSubmitted).ProcessData.FormData.GetValueOrDefault(ChangeOfNameKeys.FirstName).ToString());
+            return true;
+        }
+
+        [Fact]
+        public async Task UpdatePersonWithNewName()
+        {
+            (var process, var person) = CreateProcessAndPerson();
+
+            _mockPersonDb.Setup(x => x.GetPersonById(person.Id)).ReturnsAsync(person);
+
+            var updateResult = _fixture.Create<UpdateEntityResult<PersonDbEntity>>();
+            _mockPersonDb.Setup(x => x.UpdatePersonByIdAsync(person.Id, It.IsAny<UpdatePersonRequestObject>())).ReturnsAsync(updateResult);
+
+            await _classUnderTest.UpdatePerson(process, new Token()).ConfigureAwait(false);
+
+            _mockPersonDb.Verify(g => g.GetPersonById(person.Id), Times.Once);
+            _mockPersonDb.Verify(g => g.UpdatePersonByIdAsync(person.Id, It.Is<UpdatePersonRequestObject>(x => VerifyUpdateName(x, process))), Times.Once);
+            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+
+        }
+
 
         #endregion
     }

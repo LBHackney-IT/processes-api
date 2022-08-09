@@ -15,17 +15,20 @@ namespace ProcessesApi.V1.Services
 {
     public class ChangeOfNameService : ProcessService, IChangeOfNameService
     {
-        public ChangeOfNameService(ISnsFactory snsFactory, ISnsGateway snsGateway) : base(snsFactory, snsGateway)
+        private readonly ISharedDbOperationsHelper _dbOperationsHelper;
+
+        public ChangeOfNameService(ISnsFactory snsFactory, ISnsGateway snsGateway, ISharedDbOperationsHelper dbOperationsHelper) : base(snsFactory, snsGateway)
         {
             _snsFactory = snsFactory;
             _snsGateway = snsGateway;
-
+            _dbOperationsHelper = dbOperationsHelper;
             _permittedTriggersType = typeof(ChangeOfNamePermittedTriggers);
             _ignoredTriggersForProcessUpdated = new List<string>
             {
                 SharedPermittedTriggers.CloseProcess,
                 SharedPermittedTriggers.CancelProcess,
-                SharedPermittedTriggers.StartApplication
+                SharedPermittedTriggers.StartApplication,
+                ChangeOfNamePermittedTriggers.UpdateName
             };
         }
 
@@ -61,6 +64,15 @@ namespace ProcessesApi.V1.Services
             await PublishProcessClosedEvent(x).ConfigureAwait(false);
         }
 
+        private async Task OnProcessCompleted(Stateless.StateMachine<string, string>.Transition x)
+        {
+            var processRequest = x.Parameters[0] as ProcessTrigger;
+            _eventData = processRequest.ValidateHasNotifiedResident();
+
+            await _dbOperationsHelper.UpdatePerson(_process, _token).ConfigureAwait(false);
+
+            await PublishProcessCompletedEvent(x).ConfigureAwait(false);
+        }
         private async Task ReviewDocumentsCheck(StateMachine<string, string>.Transition transition)
         {
             var processRequest = transition.Parameters[0] as ProcessTrigger;
@@ -216,13 +228,18 @@ namespace ProcessesApi.V1.Services
             _machine.Configure(SharedStates.TenureAppointmentScheduled)
                      .OnEntry(AddAppointmentDateTimeToEvent)
                      .Permit(SharedPermittedTriggers.RescheduleTenureAppointment, SharedStates.TenureAppointmentRescheduled)
+                     .Permit(ChangeOfNamePermittedTriggers.UpdateName, ChangeOfNameStates.NameUpdated)
                      .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
 
             _machine.Configure(SharedStates.TenureAppointmentRescheduled)
                     .OnEntry(AddAppointmentDateTimeToEvent)
                     .PermitReentry(SharedPermittedTriggers.RescheduleTenureAppointment)
+                    .Permit(ChangeOfNamePermittedTriggers.UpdateName, ChangeOfNameStates.NameUpdated)
                     .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled)
                     .Permit(SharedPermittedTriggers.CloseProcess, SharedStates.ProcessClosed);
+
+            _machine.Configure(ChangeOfNameStates.NameUpdated)
+                    .OnEntryAsync(OnProcessCompleted);
 
 
 

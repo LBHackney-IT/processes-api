@@ -198,7 +198,7 @@ namespace ProcessesApi
 
         private static void RegisterHelpers(IServiceCollection services)
         {
-            services.AddScoped<ISoleToJointDbOperationsHelper, SoleToJointDbOperationsHelper>();
+            services.AddScoped<ISharedDbOperationsHelper, SharedDbOperationsHelper>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

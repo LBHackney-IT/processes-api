@@ -23,7 +23,7 @@ namespace ProcessesApi.Tests.V1.Services
     [Collection("AppTest collection")]
     public class SoleToJointServiceTests : ProcessServiceBaseTests, IDisposable
     {
-        private Mock<ISoleToJointDbOperationsHelper> _mockDbOperationsHelper;
+        private Mock<ISharedDbOperationsHelper> _mockDbOperationsHelper;
 
         private Dictionary<string, object> _manualEligibilityPassData => new Dictionary<string, object>
         {
@@ -48,7 +48,7 @@ namespace ProcessesApi.Tests.V1.Services
         public SoleToJointServiceTests(AwsMockWebApplicationFactory<Startup> appFactory) : base(appFactory)
         {
             _mockSnsGateway = new Mock<ISnsGateway>();
-            _mockDbOperationsHelper = new Mock<ISoleToJointDbOperationsHelper>();
+            _mockDbOperationsHelper = new Mock<ISharedDbOperationsHelper>();
 
             _classUnderTest = new SoleToJointService(new ProcessesSnsFactory(), _mockSnsGateway.Object, _mockDbOperationsHelper.Object);
 

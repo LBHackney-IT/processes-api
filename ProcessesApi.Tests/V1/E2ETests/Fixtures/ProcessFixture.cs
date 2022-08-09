@@ -104,6 +104,19 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             Process.VersionNumber = 0;
         }
 
+        public async Task GivenAChangeOfNameProcessExistsWithPreviousState(string state)
+        {
+            createProcess(state, ProcessName.changeofname);
+
+            Process.PreviousStates.Add(_fixture.Build<ProcessState>()
+                                               .With(x => x.State, ChangeOfNameStates.NameSubmitted)
+                                               .Create()
+                                      );
+            Process.PreviousStates.Find(x => x.State == ChangeOfNameStates.NameSubmitted).ProcessData.FormData.Add(ChangeOfNameKeys.FirstName, "NewFirstName");
+            await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
+            Process.VersionNumber = 0;
+        }
+
         public async Task GivenASoleToJointProcessExistsWithoutRelatedEntities(string state)
         {
             createProcess(state, ProcessName.soletojoint);
@@ -459,6 +472,14 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             GivenANameSubmittedRequest();
             UpdateProcessRequestObject.FormData.Clear();
+        }
+
+        public void GivenAUpdateNameRequest()
+        {
+            GivenAnUpdateProcessRequest(ChangeOfNamePermittedTriggers.UpdateName);
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.HasNotifiedResident, true);
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.Reason, "This is a reason");
+            UpdateProcessRequestObject.FormData.Add(ChangeOfNameKeys.FirstName, "NewFirstName");
         }
 
         public void GivenTargetProcessesAlreadyExist()

@@ -107,6 +107,7 @@ namespace ProcessesApi.Tests
                 SnsFixture = serviceProvider.GetRequiredService<ISnsFixture>();
                 SnsFixture.CreateSnsTopic<EntityEventSns>("processes.fifo", "PROCESS_SNS_ARN");
                 SnsFixture.CreateSnsTopic<EntityEventSns>("tenure.fifo", "TENURE_SNS_ARN");
+                SnsFixture.CreateSnsTopic<EntityEventSns>("person.fifo", "PERSON_SNS_ARN");
             });
         }
     }
