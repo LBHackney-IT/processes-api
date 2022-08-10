@@ -326,9 +326,9 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
             if (!snsResult && snsVerifier.LastException != null) throw snsVerifier.LastException;
         }
 
-        public async Task ThenTheProcessCompletedEventIsRaised(ISnsFixture snsFixture, Guid processId, string oldState)
+        public async Task ThenTheProcessCompletedEventIsRaised(ISnsFixture snsFixture, Guid processId, string oldState, string newState)
         {
-            await VerifyProcessCompletedEventIsRaised(snsFixture, processId, oldState, SoleToJointStates.TenureUpdated).ConfigureAwait(false);
+            await VerifyProcessCompletedEventIsRaised(snsFixture, processId, oldState, newState).ConfigureAwait(false);
             // todo figure out how to verify other events e.g. tenure updated
         }
         # endregion
