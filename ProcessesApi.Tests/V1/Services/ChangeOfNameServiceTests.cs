@@ -23,12 +23,12 @@ namespace ProcessesApi.Tests.V1.Services
     [Collection("AppTest collection")]
     public class ChangeOfNameServiceTests : ProcessServiceBaseTests, IDisposable
     {
-        private Mock<ISharedDbOperationsHelper> _mockDbOperationsHelper;
+        private Mock<IDbOperationsHelper> _mockDbOperationsHelper;
 
         public ChangeOfNameServiceTests(AwsMockWebApplicationFactory<Startup> appFactory) : base(appFactory)
         {
             _mockSnsGateway = new Mock<ISnsGateway>();
-            _mockDbOperationsHelper = new Mock<ISharedDbOperationsHelper>();
+            _mockDbOperationsHelper = new Mock<IDbOperationsHelper>();
             _classUnderTest = new ChangeOfNameService(new ProcessesSnsFactory(), _mockSnsGateway.Object, _mockDbOperationsHelper.Object);
 
             _mockSnsGateway

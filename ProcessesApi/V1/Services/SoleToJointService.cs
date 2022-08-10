@@ -16,9 +16,9 @@ namespace ProcessesApi.V1.Services
 {
     public class SoleToJointService : ProcessService, ISoleToJointService
     {
-        private readonly ISharedDbOperationsHelper _dbOperationsHelper;
+        private readonly IDbOperationsHelper _dbOperationsHelper;
 
-        public SoleToJointService(ISnsFactory snsFactory, ISnsGateway snsGateway, ISharedDbOperationsHelper automatedChecksHelper)
+        public SoleToJointService(ISnsFactory snsFactory, ISnsGateway snsGateway, IDbOperationsHelper automatedChecksHelper)
             : base(snsFactory, snsGateway)
         {
             _snsFactory = snsFactory;

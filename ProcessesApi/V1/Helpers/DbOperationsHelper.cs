@@ -26,7 +26,7 @@ using System.Text.Json.Serialization;
 
 namespace ProcessesApi.V1.Helpers
 {
-    public class SharedDbOperationsHelper : ISharedDbOperationsHelper
+    public class DbOperationsHelper : IDbOperationsHelper
     {
         private readonly IIncomeApiGateway _incomeApiGateway;
         private readonly IPersonDbGateway _personDbGateway;
@@ -38,7 +38,7 @@ namespace ProcessesApi.V1.Helpers
 
         public Dictionary<string, bool> EligibilityResults { get; private set; }
 
-        public SharedDbOperationsHelper(IIncomeApiGateway incomeApiGateway,
+        public DbOperationsHelper(IIncomeApiGateway incomeApiGateway,
                                              IPersonDbGateway personDbGateway,
                                              ITenureDbGateway tenureDbGateway,
                                              ITenureSnsFactory tenureSnsFactory,
@@ -260,23 +260,12 @@ namespace ProcessesApi.V1.Helpers
 
         #region Update Name
 
-        protected JsonSerializerOptions CreateJsonOptions()
-        {
-            return new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = true,
-                Converters =
-                {
-                    (JsonConverter)new JsonStringEnumConverter()
-                }
-            };
-        }
         public async Task UpdatePerson(Process process, Token token)
         {
             _token = token;
 
             var existingPerson = await _personDbGateway.GetPersonById(process.TargetId).ConfigureAwait(false);
+            if (existingPerson == null) throw new PersonNotFoundException(process.TargetId);
 
             var nameSubmitted = process.PreviousStates.Find(x => x.State == ChangeOfNameStates.NameSubmitted).ProcessData.FormData;
             var personRequestObject = new UpdatePersonRequestObject();
@@ -294,11 +283,6 @@ namespace ProcessesApi.V1.Helpers
             var message = _personSnsFactory.Update(result, _token);
             var topicArn = Environment.GetEnvironmentVariable("PERSON_SNS_ARN");
             await _snsGateway.Publish(message, topicArn).ConfigureAwait(false);
-        }
-
-        public Task UpdatePerson(Process process, Token token, ProcessTrigger processTrigger)
-        {
-            throw new NotImplementedException();
         }
 
         #endregion

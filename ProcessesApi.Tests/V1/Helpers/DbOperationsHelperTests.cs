@@ -30,23 +30,23 @@ using ProcessesApi.V1.Constants.ChangeOfName;
 namespace ProcessesApi.Tests.V1.Helpers
 {
     [Collection("LogCall collection")]
-    public class SharedDbOperationsHelperTests
+    public class DbOperationsHelperTests
     {
         private readonly Fixture _fixture = new Fixture();
         private Mock<IIncomeApiGateway> _mockIncomeApi;
         private Mock<IPersonDbGateway> _mockPersonDb;
         private Mock<ITenureDbGateway> _mockTenureDb;
         private Mock<ISnsGateway> _mockSnsGateway;
-        private SharedDbOperationsHelper _classUnderTest;
+        private DbOperationsHelper _classUnderTest;
 
-        public SharedDbOperationsHelperTests()
+        public DbOperationsHelperTests()
         {
             _mockIncomeApi = new Mock<IIncomeApiGateway>();
             _mockPersonDb = new Mock<IPersonDbGateway>();
             _mockTenureDb = new Mock<ITenureDbGateway>();
             _mockSnsGateway = new Mock<ISnsGateway>();
 
-            _classUnderTest = new SharedDbOperationsHelper(_mockIncomeApi.Object,
+            _classUnderTest = new DbOperationsHelper(_mockIncomeApi.Object,
                                                                 _mockPersonDb.Object,
                                                                 _mockTenureDb.Object,
                                                                 new TenureSnsFactory(),
@@ -440,7 +440,7 @@ namespace ProcessesApi.Tests.V1.Helpers
         }
 
         [Fact]
-        public async Task UpdatePersonWithNewName()
+        public async Task CallsDbToUpdatePersonWithNewName()
         {
             (var process, var person) = CreateProcessAndPerson();
 

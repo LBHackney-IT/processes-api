@@ -15,9 +15,9 @@ namespace ProcessesApi.V1.Services
 {
     public class ChangeOfNameService : ProcessService, IChangeOfNameService
     {
-        private readonly ISharedDbOperationsHelper _dbOperationsHelper;
+        private readonly IDbOperationsHelper _dbOperationsHelper;
 
-        public ChangeOfNameService(ISnsFactory snsFactory, ISnsGateway snsGateway, ISharedDbOperationsHelper dbOperationsHelper) : base(snsFactory, snsGateway)
+        public ChangeOfNameService(ISnsFactory snsFactory, ISnsGateway snsGateway, IDbOperationsHelper dbOperationsHelper) : base(snsFactory, snsGateway)
         {
             _snsFactory = snsFactory;
             _snsGateway = snsGateway;
