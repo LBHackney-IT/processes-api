@@ -17,6 +17,7 @@ using System.Globalization;
 using ProcessesApi.V1.Constants.Shared;
 using ProcessesApi.V1.Services.Exceptions;
 using ProcessesApi.V1.Helpers;
+using Hackney.Shared.Person.Domain;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -61,7 +62,7 @@ namespace ProcessesApi.Tests.V1.Services
         }
 
         [Theory]
-        [InlineData(ChangeOfNameStates.EnterNewName, ChangeOfNamePermittedTriggers.EnterNewName, new string[] { ChangeOfNameKeys.Title, ChangeOfNameKeys.FirstName, ChangeOfNameKeys.MiddleName, ChangeOfNameKeys.Surname })]
+        [InlineData(ChangeOfNameStates.EnterNewName, ChangeOfNamePermittedTriggers.EnterNewName, new string[] { ChangeOfNameKeys.FirstName, ChangeOfNameKeys.Surname, ChangeOfNameKeys.Title })]
         [InlineData(SharedStates.DocumentsAppointmentRescheduled, SharedPermittedTriggers.RescheduleDocumentsAppointment, new string[] { SharedKeys.AppointmentDateTime })]
         [InlineData(SharedStates.DocumentsRequestedAppointment, SharedPermittedTriggers.RescheduleDocumentsAppointment, new string[] { SharedKeys.AppointmentDateTime })]
         [InlineData(ChangeOfNameStates.NameSubmitted, SharedPermittedTriggers.RequestDocumentsAppointment, new string[] { SharedKeys.AppointmentDateTime })]
@@ -117,6 +118,8 @@ namespace ProcessesApi.Tests.V1.Services
             var formData = new Dictionary<string, object>
             {
                 { ChangeOfNameKeys.FirstName, newName },
+                { ChangeOfNameKeys.Surname, "newSurname"},
+                {ChangeOfNameKeys.Title,  Title.Miss}
             };
 
             var triggerObject = CreateProcessTrigger(process,

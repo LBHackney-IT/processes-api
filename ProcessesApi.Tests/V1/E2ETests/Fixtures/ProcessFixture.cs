@@ -13,6 +13,7 @@ using ProcessesApi.V1.Constants.SoleToJoint;
 using ProcessesApi.V1.Constants;
 using ProcessesApi.V1.Constants.ChangeOfName;
 using System.Linq;
+using Hackney.Shared.Person.Domain;
 
 namespace ProcessesApi.Tests.V1.E2E.Fixtures
 {
@@ -113,6 +114,8 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                                                .Create()
                                       );
             Process.PreviousStates.Find(x => x.State == ChangeOfNameStates.NameSubmitted).ProcessData.FormData.Add(ChangeOfNameKeys.FirstName, "NewFirstName");
+            Process.PreviousStates.Find(x => x.State == ChangeOfNameStates.NameSubmitted).ProcessData.FormData.Add(ChangeOfNameKeys.Surname, "newSurname");
+            Process.PreviousStates.Find(x => x.State == ChangeOfNameStates.NameSubmitted).ProcessData.FormData.Add(ChangeOfNameKeys.Title, Title.Miss);
             await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
             Process.VersionNumber = 0;
         }
@@ -466,6 +469,8 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             GivenAnUpdateProcessRequest(ChangeOfNamePermittedTriggers.EnterNewName);
             UpdateProcessRequestObject.FormData.Add(ChangeOfNameKeys.FirstName, "newName");
+            UpdateProcessRequestObject.FormData.Add(ChangeOfNameKeys.Surname, "newSurname");
+            UpdateProcessRequestObject.FormData.Add(ChangeOfNameKeys.Title, Title.Mrs);
         }
 
         public void GivenANameSubmittedRequestWithMissingData()

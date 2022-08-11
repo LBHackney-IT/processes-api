@@ -35,7 +35,10 @@ namespace ProcessesApi.V1.Services
         public void AddNewNameToEvent(Stateless.StateMachine<string, string>.Transition transition)
         {
             var trigger = transition.Parameters[0] as ProcessTrigger;
-            ProcessHelper.ValidateOptionalKeys(trigger.FormData, new List<string>() { ChangeOfNameKeys.Title, ChangeOfNameKeys.FirstName, ChangeOfNameKeys.MiddleName, ChangeOfNameKeys.Surname });
+            trigger.FormData.ValidateKeys(new List<string>() { ChangeOfNameKeys.FirstName, ChangeOfNameKeys.Surname, ChangeOfNameKeys.Title });
+            var eventDataKeys = new List<string>() { ChangeOfNameKeys.FirstName, ChangeOfNameKeys.Surname, ChangeOfNameKeys.Title };
+            if (trigger.FormData.ContainsKey(ChangeOfNameKeys.MiddleName))
+                eventDataKeys.Add(ChangeOfNameKeys.MiddleName);
 
             _eventData = ProcessHelper.CreateEventData(trigger.FormData, new List<string> { ChangeOfNameKeys.Title, ChangeOfNameKeys.FirstName, ChangeOfNameKeys.MiddleName, ChangeOfNameKeys.Surname });
         }
