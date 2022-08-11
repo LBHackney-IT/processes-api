@@ -17,6 +17,7 @@ using System.Globalization;
 using ProcessesApi.V1.Constants.Shared;
 using ProcessesApi.V1.Services.Exceptions;
 using ProcessesApi.V1.Helpers;
+using Hackney.Shared.Person.Domain;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -72,6 +73,7 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SharedStates.HOApprovalPassed, SharedPermittedTriggers.ScheduleTenureAppointment, new string[] { SharedKeys.AppointmentDateTime })]
         [InlineData(SharedStates.TenureAppointmentScheduled, SharedPermittedTriggers.RescheduleTenureAppointment, new string[] { SharedKeys.AppointmentDateTime })]
         [InlineData(SharedStates.TenureAppointmentRescheduled, SharedPermittedTriggers.RescheduleTenureAppointment, new string[] { SharedKeys.AppointmentDateTime })]
+        [InlineData(ChangeOfNameStates.EnterNewName, ChangeOfNamePermittedTriggers.EnterNewName, new string[] { ChangeOfNameKeys.FirstName, ChangeOfNameKeys.Surname, ChangeOfNameKeys.Title})]
 
         public void ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
         {
@@ -117,6 +119,8 @@ namespace ProcessesApi.Tests.V1.Services
             var formData = new Dictionary<string, object>
             {
                 { ChangeOfNameKeys.FirstName, newName },
+                { ChangeOfNameKeys.Surname, "newSurname"},
+                {ChangeOfNameKeys.Title,  Title.Miss}
             };
 
             var triggerObject = CreateProcessTrigger(process,

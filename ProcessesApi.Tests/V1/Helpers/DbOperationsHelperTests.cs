@@ -140,6 +140,8 @@ namespace ProcessesApi.Tests.V1.Helpers
                                                .Create()
                                       );
             process.PreviousStates.Find(x => x.State == ChangeOfNameStates.NameSubmitted).ProcessData.FormData.Add(ChangeOfNameKeys.FirstName, "NewFirstName");
+            process.PreviousStates.Find(x => x.State == ChangeOfNameStates.NameSubmitted).ProcessData.FormData.Add(ChangeOfNameKeys.Surname, "NewSurname");
+            process.PreviousStates.Find(x => x.State == ChangeOfNameStates.NameSubmitted).ProcessData.FormData.Add(ChangeOfNameKeys.Title, Title.Miss);
             return (process, person);
         }
 
@@ -435,7 +437,10 @@ namespace ProcessesApi.Tests.V1.Helpers
 
         private bool VerifyUpdateName(UpdatePersonRequestObject requestObject, Process process)
         {
-            requestObject.FirstName.Should().Be(process.PreviousStates.Find(x => x.State == ChangeOfNameStates.NameSubmitted).ProcessData.FormData.GetValueOrDefault(ChangeOfNameKeys.FirstName).ToString());
+            var updatedNameData = process.PreviousStates.Find(x => x.State == ChangeOfNameStates.NameSubmitted).ProcessData.FormData;
+            requestObject.FirstName.Should().Be(updatedNameData.GetValueOrDefault(ChangeOfNameKeys.FirstName).ToString());
+            requestObject.Surname.Should().Be(updatedNameData.GetValueOrDefault(ChangeOfNameKeys.Surname).ToString());
+            requestObject.Title.Should().Be(Enum.Parse(typeof(Title), updatedNameData.GetValueOrDefault(ChangeOfNameKeys.Title).ToString()));
             return true;
         }
 

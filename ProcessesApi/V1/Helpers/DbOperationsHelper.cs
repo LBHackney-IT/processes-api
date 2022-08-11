@@ -269,14 +269,13 @@ namespace ProcessesApi.V1.Helpers
 
             var nameSubmitted = process.PreviousStates.Find(x => x.State == ChangeOfNameStates.NameSubmitted).ProcessData.FormData;
             var personRequestObject = new UpdatePersonRequestObject();
-            if (nameSubmitted.ContainsKey(ChangeOfNameKeys.FirstName))
+
+                personRequestObject.Title = (Title?) Enum.Parse(typeof(Title), nameSubmitted.GetValueOrDefault(ChangeOfNameKeys.Title).ToString());
                 personRequestObject.FirstName = nameSubmitted.GetValueOrDefault(ChangeOfNameKeys.FirstName).ToString();
-            if (nameSubmitted.ContainsKey(ChangeOfNameKeys.Surname))
                 personRequestObject.Surname = nameSubmitted.GetValueOrDefault(ChangeOfNameKeys.Surname).ToString();
+
             if (nameSubmitted.ContainsKey(ChangeOfNameKeys.MiddleName))
                 personRequestObject.MiddleName = nameSubmitted.GetValueOrDefault(ChangeOfNameKeys.MiddleName).ToString();
-            if (nameSubmitted.ContainsKey(ChangeOfNameKeys.Title))
-                personRequestObject.Title = (Title?) nameSubmitted.GetValueOrDefault(ChangeOfNameKeys.Title);
 
             var result = await _personDbGateway.UpdatePersonByIdAsync(process.TargetId, personRequestObject).ConfigureAwait(false);
 

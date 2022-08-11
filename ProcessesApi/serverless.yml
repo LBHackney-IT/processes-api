@@ -104,6 +104,11 @@ resources:
                     - "sns:Publish"
                   Resource:
                     - ${ssm:/sns-topic/${self:provider.stage}/tenure/arn}
+                - Effect: Allow
+                  Action:
+                    - "sns:Publish"
+                  Resource:
+                    - ${ssm:/sns-topic/${self:provider.stage}/person/arn}
           - PolicyName: dynamoDBAccess
             PolicyDocument:
               Version: '2012-10-17'
