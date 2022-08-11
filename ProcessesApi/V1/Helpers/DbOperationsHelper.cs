@@ -270,9 +270,9 @@ namespace ProcessesApi.V1.Helpers
             var nameSubmitted = process.PreviousStates.Find(x => x.State == ChangeOfNameStates.NameSubmitted).ProcessData.FormData;
             var personRequestObject = new UpdatePersonRequestObject();
 
-                personRequestObject.Title = (Title?) Enum.Parse(typeof(Title), nameSubmitted.GetValueOrDefault(ChangeOfNameKeys.Title).ToString());
-                personRequestObject.FirstName = nameSubmitted.GetValueOrDefault(ChangeOfNameKeys.FirstName).ToString();
-                personRequestObject.Surname = nameSubmitted.GetValueOrDefault(ChangeOfNameKeys.Surname).ToString();
+            personRequestObject.Title = (Title?) Enum.Parse(typeof(Title), nameSubmitted.GetValueOrDefault(ChangeOfNameKeys.Title).ToString());
+            personRequestObject.FirstName = nameSubmitted.GetValueOrDefault(ChangeOfNameKeys.FirstName).ToString();
+            personRequestObject.Surname = nameSubmitted.GetValueOrDefault(ChangeOfNameKeys.Surname).ToString();
 
             if (nameSubmitted.ContainsKey(ChangeOfNameKeys.MiddleName))
                 personRequestObject.MiddleName = nameSubmitted.GetValueOrDefault(ChangeOfNameKeys.MiddleName).ToString();

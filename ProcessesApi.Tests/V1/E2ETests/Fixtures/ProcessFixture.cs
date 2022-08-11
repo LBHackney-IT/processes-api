@@ -469,6 +469,8 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             GivenAnUpdateProcessRequest(ChangeOfNamePermittedTriggers.EnterNewName);
             UpdateProcessRequestObject.FormData.Add(ChangeOfNameKeys.FirstName, "newName");
+            UpdateProcessRequestObject.FormData.Add(ChangeOfNameKeys.Surname, "newSurname");
+            UpdateProcessRequestObject.FormData.Add(ChangeOfNameKeys.Title, Title.Mrs);
         }
 
         public void GivenANameSubmittedRequestWithMissingData()
