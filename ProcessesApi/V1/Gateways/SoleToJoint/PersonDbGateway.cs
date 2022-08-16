@@ -28,19 +28,6 @@ namespace ProcessesApi.V1.Gateways
             _updater = updater;
         }
 
-        private JsonSerializerOptions GetJsonSerializerOptions()
-        {
-            var options = new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = true,
-                IgnoreNullValues = true
-            };
-            options.Converters.Add(new JsonStringEnumConverter());
-
-            return options;
-        }
-
         public async Task<Person> GetPersonById(Guid id)
         {
             _logger.LogDebug($"Calling IDynamoDBContext.LoadAsync for Person ID: {id}");
@@ -56,7 +43,7 @@ namespace ProcessesApi.V1.Gateways
             var existingPerson = await _dynamoDbContext.LoadAsync<PersonDbEntity>(id).ConfigureAwait(false);
             if (existingPerson == null) return null;
 
-            var requestBody = JsonSerializer.Serialize(updatePersonRequest, GetJsonSerializerOptions());
+            var requestBody = JsonSerializer.Serialize(updatePersonRequest, GatewayHelpers.GetJsonSerializerOptions());
             var response = _updater.UpdateEntity(existingPerson, requestBody, updatePersonRequest);
 
             if (response.NewValues.Any())
