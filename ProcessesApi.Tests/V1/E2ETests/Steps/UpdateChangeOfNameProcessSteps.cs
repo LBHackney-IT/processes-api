@@ -27,6 +27,14 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
         public async Task ThenTheProcessStateIsUpdatedToUpdateName(UpdateProcessQuery request, string initialState)
         {
             await CheckProcessState(request.Id, ChangeOfNameStates.NameUpdated, initialState).ConfigureAwait(false);
+
+            var process = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
+            var updatedName = process.PreviousStates.Find(x => x.State == ChangeOfNameStates.NameSubmitted).ProcessData.FormData;
+
+            var person = await _dbFixture.DynamoDbContext.LoadAsync<PersonDbEntity>(process.TargetId).ConfigureAwait(false);
+            if (updatedName.ContainsKey(ChangeOfNameKeys.FirstName)) person.FirstName.Should().BeEquivalentTo(updatedName[ChangeOfNameKeys.FirstName].ToString());
+            if (updatedName.ContainsKey(ChangeOfNameKeys.MiddleName)) person.MiddleName.Should().BeEquivalentTo(updatedName[ChangeOfNameKeys.MiddleName].ToString());
+            if (updatedName.ContainsKey(ChangeOfNameKeys.Surname)) person.Surname.Should().BeEquivalentTo(updatedName[ChangeOfNameKeys.Surname].ToString());
         }
     }
 }

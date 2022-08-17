@@ -43,14 +43,7 @@ namespace ProcessesApi.V1.Gateways
             var existingPerson = await _dynamoDbContext.LoadAsync<PersonDbEntity>(id).ConfigureAwait(false);
             if (existingPerson == null) return null;
 
-            var options = new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = true
-            };
-            options.Converters.Add(new JsonStringEnumConverter());
-
-            var requestBody = JsonSerializer.Serialize(updatePersonRequest, options);
+            var requestBody = JsonSerializer.Serialize(updatePersonRequest, GatewayHelpers.GetJsonSerializerOptions());
             var response = _updater.UpdateEntity(existingPerson, requestBody, updatePersonRequest);
 
             if (response.NewValues.Any())

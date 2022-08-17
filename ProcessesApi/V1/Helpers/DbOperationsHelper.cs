@@ -268,8 +268,8 @@ namespace ProcessesApi.V1.Helpers
             if (existingPerson == null) throw new PersonNotFoundException(process.TargetId);
 
             var nameSubmitted = process.PreviousStates.Find(x => x.State == ChangeOfNameStates.NameSubmitted).ProcessData.FormData;
-            var personRequestObject = new UpdatePersonRequestObject();
 
+            var personRequestObject = new UpdatePersonRequestObject();
             personRequestObject.Title = (Title?) Enum.Parse(typeof(Title), nameSubmitted.GetValueOrDefault(ChangeOfNameKeys.Title).ToString());
             personRequestObject.FirstName = nameSubmitted.GetValueOrDefault(ChangeOfNameKeys.FirstName).ToString();
             personRequestObject.Surname = nameSubmitted.GetValueOrDefault(ChangeOfNameKeys.Surname).ToString();
