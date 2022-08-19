@@ -46,14 +46,7 @@ namespace ProcessesApi.V1.Gateways
             var existingTenure = await _dynamoDbContext.LoadAsync<TenureInformationDb>(id).ConfigureAwait(false);
             if (existingTenure == null) return null;
 
-            var options = new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = true
-            };
-            options.Converters.Add(new JsonStringEnumConverter());
-
-            var requestBody = JsonSerializer.Serialize(updateTenureRequest, options);
+            var requestBody = JsonSerializer.Serialize(updateTenureRequest, GatewayHelpers.GetJsonSerializerOptions());
             var response = _updater.UpdateEntity(existingTenure, requestBody, updateTenureRequest);
 
             if (response.NewValues.Any())

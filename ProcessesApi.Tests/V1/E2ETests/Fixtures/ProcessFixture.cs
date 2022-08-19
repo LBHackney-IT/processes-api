@@ -13,6 +13,7 @@ using ProcessesApi.V1.Constants.SoleToJoint;
 using ProcessesApi.V1.Constants;
 using ProcessesApi.V1.Constants.ChangeOfName;
 using System.Linq;
+using Hackney.Shared.Person.Domain;
 
 namespace ProcessesApi.Tests.V1.E2E.Fixtures
 {
@@ -100,6 +101,21 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             createProcess(state, ProcessName.changeofname);
 
+            await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
+            Process.VersionNumber = 0;
+        }
+
+        public async Task GivenAChangeOfNameProcessExistsWithPreviousState(string state)
+        {
+            createProcess(state, ProcessName.changeofname);
+
+            Process.PreviousStates.Add(_fixture.Build<ProcessState>()
+                                               .With(x => x.State, ChangeOfNameStates.NameSubmitted)
+                                               .Create()
+                                      );
+            Process.PreviousStates.Find(x => x.State == ChangeOfNameStates.NameSubmitted).ProcessData.FormData.Add(ChangeOfNameKeys.FirstName, "NewFirstName");
+            Process.PreviousStates.Find(x => x.State == ChangeOfNameStates.NameSubmitted).ProcessData.FormData.Add(ChangeOfNameKeys.Surname, "newSurname");
+            Process.PreviousStates.Find(x => x.State == ChangeOfNameStates.NameSubmitted).ProcessData.FormData.Add(ChangeOfNameKeys.Title, Title.Miss);
             await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
             Process.VersionNumber = 0;
         }
@@ -453,12 +469,22 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             GivenAnUpdateProcessRequest(ChangeOfNamePermittedTriggers.EnterNewName);
             UpdateProcessRequestObject.FormData.Add(ChangeOfNameKeys.FirstName, "newName");
+            UpdateProcessRequestObject.FormData.Add(ChangeOfNameKeys.Surname, "newSurname");
+            UpdateProcessRequestObject.FormData.Add(ChangeOfNameKeys.Title, Title.Mrs);
         }
 
         public void GivenANameSubmittedRequestWithMissingData()
         {
             GivenANameSubmittedRequest();
             UpdateProcessRequestObject.FormData.Clear();
+        }
+
+        public void GivenAUpdateNameRequest()
+        {
+            GivenAnUpdateProcessRequest(ChangeOfNamePermittedTriggers.UpdateName);
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.HasNotifiedResident, true);
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.Reason, "This is a reason");
+            UpdateProcessRequestObject.FormData.Add(ChangeOfNameKeys.FirstName, "NewFirstName");
         }
 
         public void GivenTargetProcessesAlreadyExist()

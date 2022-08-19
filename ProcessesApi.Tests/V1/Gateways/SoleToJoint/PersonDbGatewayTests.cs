@@ -14,6 +14,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
 using Hackney.Shared.Person;
+using ProcessesApi.V1.Infrastructure;
+using Hackney.Shared.Person.Boundary.Request;
 
 namespace ProcessesApi.Tests.V1.Gateways
 {
@@ -22,6 +24,7 @@ namespace ProcessesApi.Tests.V1.Gateways
     {
         private readonly Fixture _fixture = new Fixture();
         private readonly IDynamoDbFixture _dbFixture;
+        private readonly EntityUpdater _updater;
         private IDynamoDBContext _dynamoDb => _dbFixture.DynamoDbContext;
         private PersonDbGateway _classUnderTest;
         private readonly Mock<ILogger<PersonDbGateway>> _logger;
@@ -31,7 +34,9 @@ namespace ProcessesApi.Tests.V1.Gateways
         {
             _dbFixture = appFactory.DynamoDbFixture;
             _logger = new Mock<ILogger<PersonDbGateway>>();
-            _classUnderTest = new PersonDbGateway(_dbFixture.DynamoDbContext, _logger.Object);
+            var entityUpdaterlogger = new Mock<ILogger<EntityUpdater>>();
+            _updater = new EntityUpdater(entityUpdaterlogger.Object);
+            _classUnderTest = new PersonDbGateway(_dbFixture.DynamoDbContext, _logger.Object, _updater);
         }
 
         public void Dispose()
@@ -90,7 +95,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         {
             // Arrange
             var mockDynamoDb = new Mock<IDynamoDBContext>();
-            _classUnderTest = new PersonDbGateway(mockDynamoDb.Object, _logger.Object);
+            _classUnderTest = new PersonDbGateway(mockDynamoDb.Object, _logger.Object, _updater);
 
             var id = Guid.NewGuid();
             var exception = new ApplicationException("Test Exception");
@@ -103,6 +108,28 @@ namespace ProcessesApi.Tests.V1.Gateways
             func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
             mockDynamoDb.Verify(x => x.LoadAsync<PersonDbEntity>(id, default), Times.Once);
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Person ID: {id}", Times.Once());
+        }
+
+        [Fact]
+        public async Task UpdatePersonByIdReturnsUpdatesPersonName()
+        {
+            // Arrange
+            var entity = _fixture.Build<Person>()
+                                 .With(x => x.VersionNumber, (int?) null)
+                                 .Create();
+
+            await InsertDatatoDynamoDB(entity.ToDatabase()).ConfigureAwait(false);
+
+            var request = new UpdatePersonRequestObject()
+            {
+                FirstName = _fixture.Create<string>()
+            };
+
+            var response = await _classUnderTest.UpdatePersonByIdAsync(entity.Id, request).ConfigureAwait(false);
+            // Assert
+            var updatePerson = await _classUnderTest.GetPersonById(entity.Id).ConfigureAwait(false);
+            response.NewValues.Should().ContainKey("firstName");
+            _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync to update person id {entity.Id}", Times.Once());
         }
 
     }

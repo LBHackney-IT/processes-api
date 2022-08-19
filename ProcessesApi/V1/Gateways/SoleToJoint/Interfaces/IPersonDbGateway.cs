@@ -1,12 +1,15 @@
 using System;
 using System.Threading.Tasks;
 using Hackney.Shared.Person;
+using Hackney.Shared.Person.Boundary.Request;
+using Hackney.Shared.Person.Infrastructure;
+using ProcessesApi.V1.Infrastructure;
 
 namespace ProcessesApi.V1.Gateways
 {
     public interface IPersonDbGateway
     {
-        public Task<Person> GetPersonById(Guid id);
-        public Task<Person> UpdatePersonById(Person person);
+        Task<Person> GetPersonById(Guid id);
+        Task<UpdateEntityResult<PersonDbEntity>> UpdatePersonByIdAsync(Guid id, UpdatePersonRequestObject updatePersonRequest);
     }
 }

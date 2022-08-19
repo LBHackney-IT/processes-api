@@ -5,5 +5,6 @@ namespace ProcessesApi.V1.Constants.ChangeOfName
         public const string NameSubmitted = "NameSubmitted";
 
         public const string EnterNewName = "EnterNewName";
+        public const string NameUpdated = "NameUpdated";
     }
 }

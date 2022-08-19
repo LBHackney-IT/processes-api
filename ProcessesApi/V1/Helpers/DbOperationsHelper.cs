@@ -16,30 +16,40 @@ using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Gateways.Exceptions;
 using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Services.Exceptions;
+using ProcessesApi.V1.Constants.ChangeOfName;
+using Hackney.Shared.Person.Domain;
+using Hackney.Shared.Person.Factories;
+using Hackney.Shared.Person.Boundary.Request;
+using ProcessesApi.V1.Boundary.Request;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ProcessesApi.V1.Helpers
 {
-    public class SoleToJointDbOperationsHelper : ISoleToJointDbOperationsHelper
+    public class DbOperationsHelper : IDbOperationsHelper
     {
         private readonly IIncomeApiGateway _incomeApiGateway;
         private readonly IPersonDbGateway _personDbGateway;
         private readonly ITenureDbGateway _tenureDbGateway;
         private readonly ITenureSnsFactory _tenureSnsFactory;
+        private readonly IPersonSnsFactory _personSnsFactory;
         private readonly ISnsGateway _snsGateway;
         private Token _token;
 
         public Dictionary<string, bool> EligibilityResults { get; private set; }
 
-        public SoleToJointDbOperationsHelper(IIncomeApiGateway incomeApiGateway,
+        public DbOperationsHelper(IIncomeApiGateway incomeApiGateway,
                                              IPersonDbGateway personDbGateway,
                                              ITenureDbGateway tenureDbGateway,
                                              ITenureSnsFactory tenureSnsFactory,
+                                             IPersonSnsFactory personSnsFactory,
                                              ISnsGateway snsGateway)
         {
             _incomeApiGateway = incomeApiGateway;
             _personDbGateway = personDbGateway;
             _tenureDbGateway = tenureDbGateway;
             _tenureSnsFactory = tenureSnsFactory;
+            _personSnsFactory = personSnsFactory;
             _snsGateway = snsGateway;
         }
 
@@ -244,6 +254,34 @@ namespace ProcessesApi.V1.Helpers
             await UpdatePersonRecords(newTenure).ConfigureAwait(false);
 
             return newTenure.Id;
+        }
+
+        #endregion
+
+        #region Update Name
+
+        public async Task UpdatePerson(Process process, Token token)
+        {
+            _token = token;
+
+            var existingPerson = await _personDbGateway.GetPersonById(process.TargetId).ConfigureAwait(false);
+            if (existingPerson == null) throw new PersonNotFoundException(process.TargetId);
+
+            var nameSubmitted = process.PreviousStates.Find(x => x.State == ChangeOfNameStates.NameSubmitted).ProcessData.FormData;
+
+            var personRequestObject = new UpdatePersonRequestObject();
+            personRequestObject.Title = (Title?) Enum.Parse(typeof(Title), nameSubmitted.GetValueOrDefault(ChangeOfNameKeys.Title).ToString());
+            personRequestObject.FirstName = nameSubmitted.GetValueOrDefault(ChangeOfNameKeys.FirstName).ToString();
+            personRequestObject.Surname = nameSubmitted.GetValueOrDefault(ChangeOfNameKeys.Surname).ToString();
+
+            if (nameSubmitted.ContainsKey(ChangeOfNameKeys.MiddleName))
+                personRequestObject.MiddleName = nameSubmitted.GetValueOrDefault(ChangeOfNameKeys.MiddleName).ToString();
+
+            var result = await _personDbGateway.UpdatePersonByIdAsync(process.TargetId, personRequestObject).ConfigureAwait(false);
+
+            var message = _personSnsFactory.Update(result, _token);
+            var topicArn = Environment.GetEnvironmentVariable("PERSON_SNS_ARN");
+            await _snsGateway.Publish(message, topicArn).ConfigureAwait(false);
         }
 
         #endregion

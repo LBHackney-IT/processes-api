@@ -16,17 +16,21 @@ using System.Linq;
 using System.Globalization;
 using ProcessesApi.V1.Constants.Shared;
 using ProcessesApi.V1.Services.Exceptions;
+using ProcessesApi.V1.Helpers;
+using Hackney.Shared.Person.Domain;
 
 namespace ProcessesApi.Tests.V1.Services
 {
     [Collection("AppTest collection")]
     public class ChangeOfNameServiceTests : ProcessServiceBaseTests, IDisposable
     {
+        private Mock<IDbOperationsHelper> _mockDbOperationsHelper;
 
         public ChangeOfNameServiceTests(AwsMockWebApplicationFactory<Startup> appFactory) : base(appFactory)
         {
             _mockSnsGateway = new Mock<ISnsGateway>();
-            _classUnderTest = new ChangeOfNameService(new ProcessesSnsFactory(), _mockSnsGateway.Object);
+            _mockDbOperationsHelper = new Mock<IDbOperationsHelper>();
+            _classUnderTest = new ChangeOfNameService(new ProcessesSnsFactory(), _mockSnsGateway.Object, _mockDbOperationsHelper.Object);
 
             _mockSnsGateway
                 .Setup(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()))
@@ -58,7 +62,7 @@ namespace ProcessesApi.Tests.V1.Services
         }
 
         [Theory]
-        [InlineData(ChangeOfNameStates.EnterNewName, ChangeOfNamePermittedTriggers.EnterNewName, new string[] { ChangeOfNameKeys.Title, ChangeOfNameKeys.FirstName, ChangeOfNameKeys.MiddleName, ChangeOfNameKeys.Surname })]
+        [InlineData(ChangeOfNameStates.EnterNewName, ChangeOfNamePermittedTriggers.EnterNewName, new string[] { ChangeOfNameKeys.FirstName, ChangeOfNameKeys.Surname, ChangeOfNameKeys.Title })]
         [InlineData(SharedStates.DocumentsAppointmentRescheduled, SharedPermittedTriggers.RescheduleDocumentsAppointment, new string[] { SharedKeys.AppointmentDateTime })]
         [InlineData(SharedStates.DocumentsRequestedAppointment, SharedPermittedTriggers.RescheduleDocumentsAppointment, new string[] { SharedKeys.AppointmentDateTime })]
         [InlineData(ChangeOfNameStates.NameSubmitted, SharedPermittedTriggers.RequestDocumentsAppointment, new string[] { SharedKeys.AppointmentDateTime })]
@@ -114,6 +118,8 @@ namespace ProcessesApi.Tests.V1.Services
             var formData = new Dictionary<string, object>
             {
                 { ChangeOfNameKeys.FirstName, newName },
+                { ChangeOfNameKeys.Surname, "newSurname"},
+                {ChangeOfNameKeys.Title,  Title.Miss}
             };
 
             var triggerObject = CreateProcessTrigger(process,
@@ -456,7 +462,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SharedStates.TenureAppointmentScheduled,
-                new List<string> { SharedPermittedTriggers.RescheduleTenureAppointment, SharedPermittedTriggers.CancelProcess }
+                new List<string> { SharedPermittedTriggers.RescheduleTenureAppointment, ChangeOfNamePermittedTriggers.UpdateName, SharedPermittedTriggers.CancelProcess }
              );
 
             process.PreviousStates.Last().State.Should().Be(SharedStates.HOApprovalPassed);
@@ -489,7 +495,7 @@ namespace ProcessesApi.Tests.V1.Services
             // Assert
             CurrentStateShouldContainCorrectData(
                 process, trigger, SharedStates.TenureAppointmentRescheduled,
-                new List<string> { SharedPermittedTriggers.CancelProcess, SharedPermittedTriggers.RescheduleTenureAppointment, SharedPermittedTriggers.CloseProcess }
+                new List<string> { SharedPermittedTriggers.CancelProcess, SharedPermittedTriggers.RescheduleTenureAppointment, ChangeOfNamePermittedTriggers.UpdateName, SharedPermittedTriggers.CloseProcess }
             );
 
             process.PreviousStates.Last().State.Should().Be(initialState);
@@ -498,6 +504,64 @@ namespace ProcessesApi.Tests.V1.Services
 
         #endregion
 
+        #region UpdateName
+
+        [Theory]
+        [InlineData(SharedStates.TenureAppointmentScheduled)]
+        [InlineData(SharedStates.TenureAppointmentRescheduled)]
+        public async Task ProcessStateIsUpdatedToProcessCompletedAndEventIsRaisedOnUpdateName(string initialState)
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(initialState);
+            var formData = new Dictionary<string, object>()
+            {
+                { SharedKeys.HasNotifiedResident, true },
+            };
+            var random = new Random();
+            if (random.Next() % 2 == 0) // randomly add reason to formdata
+                formData.Add(SharedKeys.Reason, "this is a reason.");
+
+            var triggerObject = CreateProcessTrigger(process,
+                                                     ChangeOfNamePermittedTriggers.UpdateName,
+                                                     formData);
+            _mockDbOperationsHelper.Setup(x => x.UpdatePerson(process, _token));
+
+            // Act
+            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(process,
+                                                 triggerObject,
+                                                 ChangeOfNameStates.NameUpdated,
+                                                 new List<string>());
+            process.PreviousStates.LastOrDefault().State.Should().Be(initialState);
+
+            _mockDbOperationsHelper.Verify(x => x.UpdatePerson(process, _token), Times.Once);
+            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_COMPLETED_EVENT);
+        }
+
+        [Fact]
+        public void ThrowsErrorIfDbOperationsHelperThrowsError()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SharedStates.TenureAppointmentScheduled);
+
+            var formData = new Dictionary<string, object> {
+                { SharedKeys.HasNotifiedResident, true },
+            };
+
+            var triggerObject = CreateProcessTrigger(process,
+                                                     ChangeOfNamePermittedTriggers.UpdateName,
+                                                     formData);
+            _mockDbOperationsHelper.Setup(x => x.UpdatePerson(process, _token)).Throws(new Exception("Test Exception"));
+
+            // Act + Assert
+            _classUnderTest.Invoking(x => x.Process(triggerObject, process, _token))
+                           .Should().Throw<Exception>();
+        }
+
+        #endregion
 
     }
 }

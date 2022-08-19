@@ -20,6 +20,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
     {
         private readonly IDynamoDbFixture _dbFixture;
         private readonly ISnsFixture _snsFixture;
+        private readonly PersonFixture _personFixture;
         private readonly ProcessFixture _processFixture;
         private readonly UpdateChangeOfNameProcessSteps _steps;
 
@@ -27,6 +28,8 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         {
             _dbFixture = appFactory.DynamoDbFixture;
             _snsFixture = appFactory.SnsFixture;
+            _personFixture = new PersonFixture(_dbFixture.DynamoDbContext);
+
             _processFixture = new ProcessFixture(_dbFixture.DynamoDbContext, _snsFixture.SimpleNotificationService);
 
             _steps = new UpdateChangeOfNameProcessSteps(appFactory.Client, _dbFixture);
@@ -44,6 +47,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
             if (disposing && !_disposed)
             {
                 _processFixture?.Dispose();
+                _personFixture?.Dispose();
                 _snsFixture?.PurgeAllQueueMessages();
 
                 _disposed = true;
@@ -474,5 +478,23 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
 
         #endregion
 
+        #region UpdateName
+
+        [Theory]
+        [InlineData(SharedStates.TenureAppointmentScheduled)]
+        [InlineData(SharedStates.TenureAppointmentRescheduled)]
+        public void ProcessStateIsUpdatedToProcessCompleted(string initialState)
+        {
+            this.Given(g => _processFixture.GivenAChangeOfNameProcessExistsWithPreviousState(initialState))
+                    .And(a => _personFixture.GivenAPersonExists(_processFixture.Process.TargetId))
+                    .And(a => _processFixture.GivenAUpdateNameRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheProcessStateIsUpdatedToUpdateName(_processFixture.UpdateProcessRequest, initialState))
+                    .And(a => _steps.ThenTheProcessCompletedEventIsRaised(_snsFixture, _processFixture.ProcessId, initialState, ChangeOfNameStates.NameUpdated))
+                .BDDfy();
+        }
+
+        #endregion
     }
 }

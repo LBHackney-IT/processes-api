@@ -6,18 +6,26 @@ using Microsoft.Extensions.Logging;
 using Hackney.Shared.Person.Infrastructure;
 using Hackney.Shared.Person.Factories;
 using Hackney.Shared.Person;
+using ProcessesApi.V1.Infrastructure;
+using Hackney.Shared.Person.Boundary.Request;
+using ProcessesApi.V1.UseCase.Exceptions;
+using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ProcessesApi.V1.Gateways
 {
     public class PersonDbGateway : IPersonDbGateway
     {
         private readonly IDynamoDBContext _dynamoDbContext;
+        private readonly IEntityUpdater _updater;
         private readonly ILogger<PersonDbGateway> _logger;
 
-        public PersonDbGateway(IDynamoDBContext dynamoDbContext, ILogger<PersonDbGateway> logger)
+        public PersonDbGateway(IDynamoDBContext dynamoDbContext, ILogger<PersonDbGateway> logger, IEntityUpdater updater)
         {
             _dynamoDbContext = dynamoDbContext;
             _logger = logger;
+            _updater = updater;
         }
 
         public async Task<Person> GetPersonById(Guid id)
@@ -28,11 +36,23 @@ namespace ProcessesApi.V1.Gateways
             return result?.ToDomain();
         }
 
-        public async Task<Person> UpdatePersonById(Person person)
+        public async Task<UpdateEntityResult<PersonDbEntity>> UpdatePersonByIdAsync(Guid id, UpdatePersonRequestObject updatePersonRequest)
         {
-            _logger.LogDebug($"Calling IDynamoDBContext.SaveAsync for Person ID: {person.Id}");
-            await _dynamoDbContext.SaveAsync(person.ToDatabase()).ConfigureAwait(false);
-            return person;
+            _logger.LogDebug($"Calling IDynamoDBContext.LoadAsync for person id {id}");
+
+            var existingPerson = await _dynamoDbContext.LoadAsync<PersonDbEntity>(id).ConfigureAwait(false);
+            if (existingPerson == null) return null;
+
+            var requestBody = JsonSerializer.Serialize(updatePersonRequest, GatewayHelpers.GetJsonSerializerOptions());
+            var response = _updater.UpdateEntity(existingPerson, requestBody, updatePersonRequest);
+
+            if (response.NewValues.Any())
+            {
+                _logger.LogDebug($"Calling IDynamoDBContext.SaveAsync to update person id {id}");
+                await _dynamoDbContext.SaveAsync<PersonDbEntity>(response.UpdatedEntity).ConfigureAwait(false);
+            }
+
+            return response;
         }
     }
 }
