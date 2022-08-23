@@ -825,12 +825,13 @@ namespace ProcessesApi.Tests.V1.Services
         {
             // Arrange
             var process = CreateProcessWithCurrentState(initialState);
-            var formData = new Dictionary<string, object> { { SoleToJointKeys.TenureStartDate, _fixture.Create<DateTime>() } };
+            var startDate = _fixture.Create<DateTime>();
+            var formData = new Dictionary<string, object> { { SoleToJointKeys.TenureStartDate, startDate } };
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.UpdateTenure,
                                                      formData);
             var newTenureId = Guid.NewGuid();
-            _mockDbOperationsHelper.Setup(x => x.UpdateTenures(process, _token, formData)).ReturnsAsync(newTenureId);
+            _mockDbOperationsHelper.Setup(x => x.UpdateTenures(process, _token, formData)).ReturnsAsync((newTenureId, startDate));
 
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);

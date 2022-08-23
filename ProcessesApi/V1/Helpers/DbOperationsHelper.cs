@@ -242,7 +242,7 @@ namespace ProcessesApi.V1.Helpers
             }
         }
 
-        public async Task<Guid> UpdateTenures(Process process, Token token, Dictionary<string, object> formData)
+        public async Task<(Guid, DateTime)> UpdateTenures(Process process, Token token, Dictionary<string, object> formData)
         {
             _token = token;
 
@@ -257,7 +257,7 @@ namespace ProcessesApi.V1.Helpers
             var newTenure = await CreateNewTenure(existingTenure, incomingTenant.Id, startDate).ConfigureAwait(false);
             await UpdatePersonRecords(newTenure).ConfigureAwait(false);
 
-            return newTenure.Id;
+            return (newTenure.Id, startDate);
         }
 
         #endregion

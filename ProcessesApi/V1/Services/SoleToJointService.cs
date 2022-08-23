@@ -188,10 +188,14 @@ namespace ProcessesApi.V1.Services
         private async Task UpdateTenures(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
-            var newTenureId = await _dbOperationsHelper.UpdateTenures(_process, _token, processRequest.FormData).ConfigureAwait(false);
+            (var newTenureId, var tenureStartDate) = await _dbOperationsHelper.UpdateTenures(_process, _token, processRequest.FormData).ConfigureAwait(false);
 
             _process.AddNewTenureToRelatedEntities(newTenureId);
-            _eventData = new Dictionary<string, object> { { SoleToJointKeys.NewTenureId, newTenureId } };
+            _eventData = new Dictionary<string, object>
+            {
+                { SoleToJointKeys.NewTenureId, newTenureId },
+                { SoleToJointKeys.TenureStartDate,  tenureStartDate }
+            };
         }
 
         #endregion

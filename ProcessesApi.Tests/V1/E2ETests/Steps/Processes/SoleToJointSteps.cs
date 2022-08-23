@@ -104,13 +104,14 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             householdMember.PersonTenureType.Should().Be(PersonTenureType.Tenant);
         }
 
-        public async Task ThenTheProcessUpdatedEventIsRaisedWithNewTenureId(ISnsFixture snsFixture, Guid processId, string oldState, string newState)
+        public async Task ThenTheProcessUpdatedEventIsRaisedWithNewTenureIdAndStartDate(ISnsFixture snsFixture, Guid processId, string oldState, string newState)
         {
             Action<string> verifyData = (dataAsString) =>
             {
                 var dataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(dataAsString, _jsonOptions);
                 var stateData = JsonSerializer.Deserialize<Dictionary<string, object>>(dataDic["stateData"].ToString(), _jsonOptions);
                 stateData.Should().ContainKey(SoleToJointKeys.NewTenureId);
+                stateData.Should().ContainKey(SoleToJointKeys.TenureStartDate);
             };
 
             await VerifyProcessUpdatedEventIsRaised(snsFixture, processId, oldState, newState, verifyData).ConfigureAwait(false);
