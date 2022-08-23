@@ -164,12 +164,12 @@ namespace ProcessesApi.V1.Helpers
 
         #region Update tenures
 
-        private async Task EndExistingTenure(TenureInformation tenure)
+        private async Task EndExistingTenure(TenureInformation tenure, DateTime endDate)
         {
             var request = new EditTenureDetailsRequestObject
             {
                 StartOfTenureDate = tenure.StartOfTenureDate,
-                EndOfTenureDate = DateTime.UtcNow,
+                EndOfTenureDate = endDate,
                 TenureType = tenure.TenureType
             };
 
@@ -181,7 +181,7 @@ namespace ProcessesApi.V1.Helpers
             await _snsGateway.Publish(message, topicArn).ConfigureAwait(false);
         }
 
-        private async Task<TenureInformation> CreateNewTenure(TenureInformation oldTenure, Guid incomingTenantId)
+        private async Task<TenureInformation> CreateNewTenure(TenureInformation oldTenure, Guid incomingTenantId, DateTime startDate)
         {
             var request = new CreateTenureRequestObject()
             {
@@ -193,6 +193,7 @@ namespace ProcessesApi.V1.Helpers
                 LegacyReferences = oldTenure.LegacyReferences.ToList(),
                 Terminated = oldTenure.Terminated,
                 TenureType = oldTenure.TenureType,
+                StartOfTenureDate = startDate,
                 EndOfTenureDate = oldTenure.EndOfTenureDate,
                 Charges = oldTenure.Charges,
                 TenuredAsset = oldTenure.TenuredAsset,
@@ -206,9 +207,8 @@ namespace ProcessesApi.V1.Helpers
             if (oldTenure.IsMutualExchange.HasValue) request.IsMutualExchange = oldTenure.IsMutualExchange.Value;
             if (oldTenure.IsTenanted.HasValue) request.IsTenanted = oldTenure.IsTenanted.Value;
 
-            request.StartOfTenureDate = DateTime.UtcNow;
             var householdMember = request.HouseholdMembers.Find(x => x.Id == incomingTenantId);
-            if (householdMember is null) throw new Exception("Not household member");
+            if (householdMember is null) throw new Exception("Incoming Tenant is not a household member.");
             householdMember.PersonTenureType = PersonTenureType.Tenant;
             householdMember.IsResponsible = true;
 
@@ -242,18 +242,22 @@ namespace ProcessesApi.V1.Helpers
             }
         }
 
-        public async Task<Guid> UpdateTenures(Process process, Token token)
+        public async Task<(Guid, DateTime)> UpdateTenures(Process process, Token token, Dictionary<string, object> formData)
         {
             _token = token;
+
+            formData.ValidateKeys(new List<string> { SoleToJointKeys.TenureStartDate });
+            var isDateTime = DateTime.TryParse(formData[SoleToJointKeys.TenureStartDate].ToString(), out var startDate);
+            if (!isDateTime) throw new FormDataFormatException(typeof(DateTime), formData[SoleToJointKeys.TenureStartDate]);
 
             var incomingTenant = process.RelatedEntities.Find(x => x.SubType == SubType.householdMember);
             var existingTenure = await _tenureDbGateway.GetTenureById(process.TargetId).ConfigureAwait(false);
 
-            await EndExistingTenure(existingTenure).ConfigureAwait(false);
-            var newTenure = await CreateNewTenure(existingTenure, incomingTenant.Id).ConfigureAwait(false);
+            await EndExistingTenure(existingTenure, startDate).ConfigureAwait(false);
+            var newTenure = await CreateNewTenure(existingTenure, incomingTenant.Id, startDate).ConfigureAwait(false);
             await UpdatePersonRecords(newTenure).ConfigureAwait(false);
 
-            return newTenure.Id;
+            return (newTenure.Id, startDate);
         }
 
         #endregion

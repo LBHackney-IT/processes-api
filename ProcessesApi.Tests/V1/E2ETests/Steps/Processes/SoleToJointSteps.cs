@@ -12,14 +12,17 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using ProcessesApi.V1.Constants;
 using ProcessesApi.Tests.V1.E2ETests.Steps;
+using Hackney.Core.Testing.Sns;
+using System.Text.Json;
+using System.Collections.Generic;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {
-    public class UpdateSoleToJointProcessSteps : UpdateProcessBaseSteps
+    public class SoleToJointSteps : UpdateProcessBaseSteps
     {
         private readonly IDynamoDbFixture _dbFixture;
 
-        public UpdateSoleToJointProcessSteps(HttpClient httpClient, IDynamoDbFixture dbFixture) : base(httpClient, dbFixture)
+        public SoleToJointSteps(HttpClient httpClient, IDynamoDbFixture dbFixture) : base(httpClient, dbFixture)
         {
             _dbFixture = dbFixture;
         }
@@ -76,7 +79,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         {
             await CheckProcessState(request.Id, SharedStates.DocumentsRequestedAppointment, SoleToJointStates.BreachChecksPassed).ConfigureAwait(false);
         }
-        public async Task ThenTheProcessStateIsUpdatedToUpdateTenure(UpdateProcessQuery request, string initialState, Guid incomingTenantId)
+        public async Task ThenTheProcessStateIsUpdatedToUpdateTenure(UpdateProcessQuery request, UpdateProcessRequestObject requestObject, string initialState, Guid incomingTenantId)
         {
             await CheckProcessState(request.Id, SoleToJointStates.TenureUpdated, initialState).ConfigureAwait(false);
 
@@ -85,12 +88,13 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             var newTenureDetails = process.RelatedEntities.Find(x => x.TargetType == TargetType.tenure
                                                               && x.SubType == SubType.newTenure);
             newTenureDetails.Should().NotBeNull();
+            var tenureDate = DateTime.Parse(requestObject.FormData[SoleToJointKeys.TenureStartDate].ToString());
             // oldTenure
             var oldTenure = await _dbFixture.DynamoDbContext.LoadAsync<TenureInformationDb>(process.TargetId).ConfigureAwait(false);
-            oldTenure.EndOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 3000);
+            oldTenure.EndOfTenureDate.Should().Be(tenureDate);
             // newTenure
             var newTenure = await _dbFixture.DynamoDbContext.LoadAsync<TenureInformationDb>(newTenureDetails.Id).ConfigureAwait(false);
-            newTenure.StartOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 3000);
+            newTenure.StartOfTenureDate.Should().Be(tenureDate);
             newTenure.Should().BeEquivalentTo(oldTenure, c => c.Excluding(x => x.Id)
                                                                .Excluding(x => x.HouseholdMembers)
                                                                .Excluding(x => x.StartOfTenureDate)
@@ -98,6 +102,19 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                                                                .Excluding(x => x.VersionNumber));
             var householdMember = newTenure.HouseholdMembers.Find(x => x.Id == incomingTenantId);
             householdMember.PersonTenureType.Should().Be(PersonTenureType.Tenant);
+        }
+
+        public async Task ThenTheProcessUpdatedEventIsRaisedWithNewTenureIdAndStartDate(ISnsFixture snsFixture, Guid processId, string oldState, string newState)
+        {
+            Action<string> verifyData = (dataAsString) =>
+            {
+                var dataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(dataAsString, _jsonOptions);
+                var stateData = JsonSerializer.Deserialize<Dictionary<string, object>>(dataDic["stateData"].ToString(), _jsonOptions);
+                stateData.Should().ContainKey(SoleToJointKeys.NewTenureId);
+                stateData.Should().ContainKey(SoleToJointKeys.TenureStartDate);
+            };
+
+            await VerifyProcessUpdatedEventIsRaised(snsFixture, processId, oldState, newState, verifyData).ConfigureAwait(false);
         }
     }
 }

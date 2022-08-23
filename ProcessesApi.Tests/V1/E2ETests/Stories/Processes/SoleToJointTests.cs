@@ -16,7 +16,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         IWant = "The system to automatically check a tenant and an applicants eligibility for a Sole to Joint application",
         SoThat = "I can more quickly determine if I should continue with the application")]
     [Collection("AppTest collection")]
-    public class UpdateSoleToJointProcessTests : IDisposable
+    public class SoleToJointTests : IDisposable
     {
         private readonly IDynamoDbFixture _dbFixture;
         private readonly ISnsFixture _snsFixture;
@@ -25,9 +25,9 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         private readonly TenureFixture _tenureFixture;
         private readonly IncomeApiAgreementsFixture _agreementsApiFixture;
         private readonly IncomeApiTenanciesFixture _tenanciesApiFixture;
-        private readonly UpdateSoleToJointProcessSteps _steps;
+        private readonly SoleToJointSteps _steps;
 
-        public UpdateSoleToJointProcessTests(AwsMockWebApplicationFactory<Startup> appFactory)
+        public SoleToJointTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
             _dbFixture = appFactory.DynamoDbFixture;
             _snsFixture = appFactory.SnsFixture;
@@ -37,7 +37,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
             _agreementsApiFixture = new IncomeApiAgreementsFixture();
             _tenanciesApiFixture = new IncomeApiTenanciesFixture();
 
-            _steps = new UpdateSoleToJointProcessSteps(appFactory.Client, _dbFixture);
+            _steps = new SoleToJointSteps(appFactory.Client, _dbFixture);
         }
 
         public void Dispose()
@@ -612,7 +612,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
         [Theory]
         [InlineData(SharedStates.TenureAppointmentScheduled)]
         [InlineData(SharedStates.TenureAppointmentRescheduled)]
-        public void ProcessStateIsUpdatedToProcessCompleted(string initialState)
+        public void ProcessStateIsUpdatedToTenureUpdated(string initialState)
         {
             this.Given(g => _processFixture.GivenASoleToJointProcessExists(initialState))
                     .And(a => _tenureFixture.GivenATenureExistsAndAPersonIsAddedAsAHouseholdMember(_processFixture.Process.TargetId, _processFixture.IncomingTenantId))
@@ -620,8 +620,20 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                     .And(a => _processFixture.GivenAUpdateTenureRequest())
                 .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
                 .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
-                    .And(a => _steps.ThenTheProcessStateIsUpdatedToUpdateTenure(_processFixture.UpdateProcessRequest, initialState, _processFixture.IncomingTenantId))
-                    .And(a => _steps.ThenTheProcessCompletedEventIsRaised(_snsFixture, _processFixture.ProcessId, initialState, SoleToJointStates.TenureUpdated))
+                    .And(a => _steps.ThenTheProcessStateIsUpdatedToUpdateTenure(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, initialState, _processFixture.IncomingTenantId))
+                    .And(a => _steps.ThenTheProcessUpdatedEventIsRaisedWithNewTenureIdAndStartDate(_snsFixture, _processFixture.ProcessId, initialState, SoleToJointStates.TenureUpdated))
+                .BDDfy();
+        }
+
+        [Fact]
+        public void ProcessStateIsUpdatedToProcessCompleted()
+        {
+            this.Given(g => _processFixture.GivenASoleToJointProcessExists(SoleToJointStates.TenureUpdated))
+                    .And(a => _processFixture.GivenACompleteProcessRequest())
+                .When(w => _steps.WhenAnUpdateProcessRequestIsMade(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject, 0))
+                .Then(a => _steps.ThenTheProcessDataIsUpdated(_processFixture.UpdateProcessRequest, _processFixture.UpdateProcessRequestObject))
+                    .And(a => _steps.ThenTheProcessStateIsUpdatedToProcessCompleted(_processFixture.UpdateProcessRequest, SoleToJointStates.TenureUpdated))
+                    .And(a => _steps.ThenTheProcessCompletedEventIsRaised(_snsFixture, _processFixture.ProcessId, SoleToJointStates.TenureUpdated, SharedStates.ProcessCompleted))
                 .BDDfy();
         }
 
