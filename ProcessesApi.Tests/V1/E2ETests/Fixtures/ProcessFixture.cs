@@ -187,6 +187,12 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             UpdateProcessRequestObject.FormData.Add(SharedKeys.Comment, "This is a comment");
         }
 
+        public void GivenACompleteProcessRequest()
+        {
+            GivenAnUpdateProcessRequest(SharedPermittedTriggers.CompleteProcess);
+            UpdateProcessRequestObject.FormData.Add(SharedKeys.HasNotifiedResident, true);
+        }
+
         public void GivenACheckAutomatedEligibilityRequest()
         {
             GivenAnUpdateProcessRequest(SoleToJointPermittedTriggers.CheckAutomatedEligibility);
@@ -461,8 +467,6 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public void GivenAUpdateTenureRequest()
         {
             GivenAnUpdateProcessRequest(SoleToJointPermittedTriggers.UpdateTenure);
-            UpdateProcessRequestObject.FormData.Add(SharedKeys.HasNotifiedResident, true);
-            UpdateProcessRequestObject.FormData.Add(SharedKeys.Reason, "This is a reason");
         }
 
         public void GivenANameSubmittedRequest()

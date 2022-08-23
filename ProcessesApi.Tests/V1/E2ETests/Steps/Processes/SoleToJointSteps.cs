@@ -12,14 +12,17 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using ProcessesApi.V1.Constants;
 using ProcessesApi.Tests.V1.E2ETests.Steps;
+using Hackney.Core.Testing.Sns;
+using System.Text.Json;
+using System.Collections.Generic;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {
-    public class UpdateSoleToJointProcessSteps : UpdateProcessBaseSteps
+    public class SoleToJointSteps : UpdateProcessBaseSteps
     {
         private readonly IDynamoDbFixture _dbFixture;
 
-        public UpdateSoleToJointProcessSteps(HttpClient httpClient, IDynamoDbFixture dbFixture) : base(httpClient, dbFixture)
+        public SoleToJointSteps(HttpClient httpClient, IDynamoDbFixture dbFixture) : base(httpClient, dbFixture)
         {
             _dbFixture = dbFixture;
         }
@@ -98,6 +101,18 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
                                                                .Excluding(x => x.VersionNumber));
             var householdMember = newTenure.HouseholdMembers.Find(x => x.Id == incomingTenantId);
             householdMember.PersonTenureType.Should().Be(PersonTenureType.Tenant);
+        }
+
+        public async Task ThenTheProcessUpdatedEventIsRaisedWithNewTenureId(ISnsFixture snsFixture, Guid processId, string oldState, string newState)
+        {
+            Action<string> verifyData = (dataAsString) =>
+            {
+                var dataDic = JsonSerializer.Deserialize<Dictionary<string, object>>(dataAsString, _jsonOptions);
+                var stateData = JsonSerializer.Deserialize<Dictionary<string, object>>(dataDic["stateData"].ToString(), _jsonOptions);
+                stateData.Should().ContainKey(SoleToJointKeys.NewTenureId);
+            };
+
+            await VerifyProcessUpdatedEventIsRaised(snsFixture, processId, oldState, newState, verifyData).ConfigureAwait(false);
         }
     }
 }

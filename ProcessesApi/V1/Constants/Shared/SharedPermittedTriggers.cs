@@ -5,6 +5,7 @@ namespace ProcessesApi.V1.Constants
         public const string StartApplication = "StartApplication";
         public const string CancelProcess = "CancelProcess";
         public const string CloseProcess = "CloseProcess";
+        public const string CompleteProcess = "CompleteProcess";
         public const string RequestDocuments = "RequestDocuments";
         public const string RequestDocumentsDes = "RequestDocumentsDes";
         public const string RequestDocumentsAppointment = "RequestDocumentsAppointment";

@@ -28,10 +28,10 @@ namespace ProcessesApi.V1.Services
             _permittedTriggersType = typeof(SoleToJointPermittedTriggers);
             _ignoredTriggersForProcessUpdated = new List<string>
             {
+                SharedPermittedTriggers.StartApplication,
                 SharedPermittedTriggers.CloseProcess,
                 SharedPermittedTriggers.CancelProcess,
-                SharedPermittedTriggers.StartApplication,
-                SoleToJointPermittedTriggers.UpdateTenure
+                SharedPermittedTriggers.CompleteProcess
             };
         }
 
@@ -167,11 +167,6 @@ namespace ProcessesApi.V1.Services
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
             _eventData = processRequest.ValidateHasNotifiedResident();
-
-            var newTenureId = await _dbOperationsHelper.UpdateTenures(_process, _token).ConfigureAwait(false);
-            _eventData.Add(SoleToJointKeys.NewTenureId, newTenureId);
-            _process.AddNewTenureToRelatedEntities(newTenureId);
-
             await PublishProcessCompletedEvent(x).ConfigureAwait(false);
         }
 
@@ -188,6 +183,15 @@ namespace ProcessesApi.V1.Services
             trigger.FormData.ValidateKeys(new List<string>() { SharedKeys.AppointmentDateTime });
 
             _eventData = trigger.FormData.CreateEventData(new List<string> { SharedKeys.AppointmentDateTime });
+        }
+
+        private async Task UpdateTenures(Stateless.StateMachine<string, string>.Transition x)
+        {
+            var processRequest = x.Parameters[0] as ProcessTrigger;
+            var newTenureId = await _dbOperationsHelper.UpdateTenures(_process, _token).ConfigureAwait(false);
+
+            _process.AddNewTenureToRelatedEntities(newTenureId);
+            _eventData = new Dictionary<string, object> { { SoleToJointKeys.NewTenureId, newTenureId } };
         }
 
         #endregion
@@ -327,6 +331,10 @@ namespace ProcessesApi.V1.Services
                      .Permit(SharedPermittedTriggers.CloseProcess, SharedStates.ProcessClosed);
 
             _machine.Configure(SoleToJointStates.TenureUpdated)
+                    .OnEntryAsync(UpdateTenures)
+                    .Permit(SharedPermittedTriggers.CompleteProcess, SharedStates.ProcessCompleted);
+
+            _machine.Configure(SharedStates.ProcessCompleted)
                     .OnEntryAsync(OnProcessCompleted);
         }
     }

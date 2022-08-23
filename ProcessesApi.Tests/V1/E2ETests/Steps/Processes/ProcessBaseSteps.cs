@@ -102,6 +102,11 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
             await CheckProcessState(request.Id, SharedStates.ProcessClosed, previousState).ConfigureAwait(false);
         }
 
+        public async Task ThenTheProcessStateIsUpdatedToProcessCompleted(UpdateProcessQuery request, string previousState)
+        {
+            await CheckProcessState(request.Id, SharedStates.ProcessCompleted, previousState).ConfigureAwait(false);
+        }
+
         public async Task ThenTheProcessStateIsUpdatedToDocumentsAppointmentRescheduled(UpdateProcessQuery request)
         {
             await CheckProcessState(request.Id, SharedStates.DocumentsAppointmentRescheduled, SharedStates.DocumentsRequestedAppointment).ConfigureAwait(false);
@@ -207,6 +212,7 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
         public async Task ThenTheProcessUpdatedEventIsRaised(ISnsFixture snsFixture, Guid processId, string oldState, string newState)
         {
             await VerifyProcessUpdatedEventIsRaised(snsFixture, processId, oldState, newState).ConfigureAwait(false);
+            // todo figure out how to verify other events e.g. tenure updated
         }
 
         public async Task ThenTheProcessUpdatedEventIsRaisedWithAppointmentDetails(ISnsFixture snsFixture, Guid processId, string oldState, string newState)
@@ -329,7 +335,6 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
         public async Task ThenTheProcessCompletedEventIsRaised(ISnsFixture snsFixture, Guid processId, string oldState, string newState)
         {
             await VerifyProcessCompletedEventIsRaised(snsFixture, processId, oldState, newState).ConfigureAwait(false);
-            // todo figure out how to verify other events e.g. tenure updated
         }
         # endregion
     }

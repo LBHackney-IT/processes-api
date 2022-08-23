@@ -10,11 +10,11 @@ using System.Threading.Tasks;
 
 namespace ProcessesApi.Tests.V1.E2ETests.Steps
 {
-    public class UpdateChangeOfNameProcessSteps : UpdateProcessBaseSteps
+    public class ChangeOfNameSteps : UpdateProcessBaseSteps
     {
         private readonly IDynamoDbFixture _dbFixture;
 
-        public UpdateChangeOfNameProcessSteps(HttpClient httpClient, IDynamoDbFixture dbFixture) : base(httpClient, dbFixture)
+        public ChangeOfNameSteps(HttpClient httpClient, IDynamoDbFixture dbFixture) : base(httpClient, dbFixture)
         {
             _dbFixture = dbFixture;
         }
