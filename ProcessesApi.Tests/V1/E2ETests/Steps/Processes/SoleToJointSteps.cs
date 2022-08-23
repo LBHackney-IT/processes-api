@@ -79,7 +79,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         {
             await CheckProcessState(request.Id, SharedStates.DocumentsRequestedAppointment, SoleToJointStates.BreachChecksPassed).ConfigureAwait(false);
         }
-        public async Task ThenTheProcessStateIsUpdatedToUpdateTenure(UpdateProcessQuery request, string initialState, Guid incomingTenantId)
+        public async Task ThenTheProcessStateIsUpdatedToUpdateTenure(UpdateProcessQuery request, UpdateProcessRequestObject requestObject, string initialState, Guid incomingTenantId)
         {
             await CheckProcessState(request.Id, SoleToJointStates.TenureUpdated, initialState).ConfigureAwait(false);
 
@@ -88,12 +88,13 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             var newTenureDetails = process.RelatedEntities.Find(x => x.TargetType == TargetType.tenure
                                                               && x.SubType == SubType.newTenure);
             newTenureDetails.Should().NotBeNull();
+            var tenureDate = DateTime.Parse(requestObject.FormData[SoleToJointKeys.TenureStartDate].ToString());
             // oldTenure
             var oldTenure = await _dbFixture.DynamoDbContext.LoadAsync<TenureInformationDb>(process.TargetId).ConfigureAwait(false);
-            oldTenure.EndOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 3000);
+            oldTenure.EndOfTenureDate.Should().Be(tenureDate);
             // newTenure
             var newTenure = await _dbFixture.DynamoDbContext.LoadAsync<TenureInformationDb>(newTenureDetails.Id).ConfigureAwait(false);
-            newTenure.StartOfTenureDate.Should().BeCloseTo(DateTime.UtcNow, 3000);
+            newTenure.StartOfTenureDate.Should().Be(tenureDate);
             newTenure.Should().BeEquivalentTo(oldTenure, c => c.Excluding(x => x.Id)
                                                                .Excluding(x => x.HouseholdMembers)
                                                                .Excluding(x => x.StartOfTenureDate)

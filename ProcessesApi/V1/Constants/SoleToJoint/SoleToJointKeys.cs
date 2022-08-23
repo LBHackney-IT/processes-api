@@ -114,5 +114,6 @@ namespace ProcessesApi.V1.Constants.SoleToJoint
         #endregion
 
         public const string NewTenureId = "newTenureId";
+        public const string TenureStartDate = "tenureStartDate";
     }
 }

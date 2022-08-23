@@ -467,6 +467,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public void GivenAUpdateTenureRequest()
         {
             GivenAnUpdateProcessRequest(SoleToJointPermittedTriggers.UpdateTenure);
+            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.TenureStartDate, DateTime.Parse(_fixture.Create<DateTime>().ToLongDateString()));
         }
 
         public void GivenANameSubmittedRequest()

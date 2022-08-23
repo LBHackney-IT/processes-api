@@ -61,6 +61,8 @@ namespace ProcessesApi.Tests.V1.Services
         [Theory]
         [InlineData(SoleToJointStates.AutomatedChecksFailed, SharedPermittedTriggers.CloseProcess, new string[] { SharedKeys.HasNotifiedResident })]
         [InlineData(SharedStates.DocumentsRequestedDes, SharedPermittedTriggers.CloseProcess, new string[] { SharedKeys.HasNotifiedResident })]
+        [InlineData(SoleToJointStates.TenureUpdated, SharedPermittedTriggers.CompleteProcess, new string[] { SharedKeys.HasNotifiedResident })]
+
         [InlineData(SoleToJointStates.SelectTenants, SoleToJointPermittedTriggers.CheckAutomatedEligibility, new string[] { SoleToJointKeys.IncomingTenantId, SoleToJointKeys.TenantId })]
         [InlineData(SoleToJointStates.AutomatedChecksPassed, SoleToJointPermittedTriggers.CheckManualEligibility, new string[] { SoleToJointKeys.BR11, SoleToJointKeys.BR12, SoleToJointKeys.BR13,
                                                                                                                                 SoleToJointKeys.BR15, SoleToJointKeys.BR16, SoleToJointKeys.BR7, SoleToJointKeys.BR8, SoleToJointKeys.BR9 })]
@@ -823,10 +825,12 @@ namespace ProcessesApi.Tests.V1.Services
         {
             // Arrange
             var process = CreateProcessWithCurrentState(initialState);
+            var formData = new Dictionary<string, object> { { SoleToJointKeys.TenureStartDate, _fixture.Create<DateTime>() } };
             var triggerObject = CreateProcessTrigger(process,
-                                                     SoleToJointPermittedTriggers.UpdateTenure);
+                                                     SoleToJointPermittedTriggers.UpdateTenure,
+                                                     formData);
             var newTenureId = Guid.NewGuid();
-            _mockDbOperationsHelper.Setup(x => x.UpdateTenures(process, _token)).ReturnsAsync(newTenureId);
+            _mockDbOperationsHelper.Setup(x => x.UpdateTenures(process, _token, formData)).ReturnsAsync(newTenureId);
 
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
@@ -842,7 +846,7 @@ namespace ProcessesApi.Tests.V1.Services
                                                           && x.TargetType == TargetType.tenure
                                                           && x.SubType == SubType.newTenure);
 
-            _mockDbOperationsHelper.Verify(x => x.UpdateTenures(process, _token), Times.Once);
+            _mockDbOperationsHelper.Verify(x => x.UpdateTenures(process, _token, formData), Times.Once);
             VerifyThatProcessUpdatedEventIsTriggered(initialState, SoleToJointStates.TenureUpdated);
         }
 
@@ -852,10 +856,12 @@ namespace ProcessesApi.Tests.V1.Services
         {
             // Arrange
             var process = CreateProcessWithCurrentState(SharedStates.TenureAppointmentScheduled);
+            var formData = new Dictionary<string, object> { { SoleToJointKeys.TenureStartDate, _fixture.Create<DateTime>() } };
 
             var triggerObject = CreateProcessTrigger(process,
-                                                     SoleToJointPermittedTriggers.UpdateTenure);
-            _mockDbOperationsHelper.Setup(x => x.UpdateTenures(process, _token)).Throws(new Exception("Test Exception"));
+                                                     SoleToJointPermittedTriggers.UpdateTenure,
+                                                     formData);
+            _mockDbOperationsHelper.Setup(x => x.UpdateTenures(process, _token, formData)).Throws(new Exception("Test Exception"));
 
             // Act + Assert
             _classUnderTest.Invoking(x => x.Process(triggerObject, process, _token))
