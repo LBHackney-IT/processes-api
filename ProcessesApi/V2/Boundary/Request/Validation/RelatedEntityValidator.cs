@@ -4,7 +4,7 @@ using System;
 
 namespace ProcessesApi.V2.Boundary.Request.Validation
 {
-    public partial class RelatedEntityValidator : AbstractValidator<RelatedEntity>
+    public class RelatedEntityValidator : AbstractValidator<RelatedEntity>
     {
         public RelatedEntityValidator()
         {

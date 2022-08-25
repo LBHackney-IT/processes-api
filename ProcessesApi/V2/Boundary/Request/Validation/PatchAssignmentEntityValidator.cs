@@ -4,7 +4,7 @@ using System;
 
 namespace ProcessesApi.V2.Boundary.Request.Validation
 {
-    public partial class PatchAssignmentEntityValidator : AbstractValidator<PatchAssignmentEntity>
+    public class PatchAssignmentEntityValidator : AbstractValidator<PatchAssignmentEntity>
     {
         public PatchAssignmentEntityValidator()
         {

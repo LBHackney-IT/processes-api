@@ -4,7 +4,7 @@ using System;
 
 namespace ProcessesApi.V2.Boundary.Request.Validation
 {
-    public partial class ProcessDataValidator : AbstractValidator<ProcessData>
+    public class ProcessDataValidator : AbstractValidator<ProcessData>
     {
         public ProcessDataValidator()
         {
