@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ProcessesApi.V1.Services.Exceptions;
 
 namespace ProcessesApi.V2.Services.Exceptions
 {

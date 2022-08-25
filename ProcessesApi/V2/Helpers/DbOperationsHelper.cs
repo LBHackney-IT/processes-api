@@ -16,7 +16,6 @@ using ProcessesApi.V2.Factories;
 using ProcessesApi.V2.Gateways;
 using ProcessesApi.V2.Gateways.Exceptions;
 using ProcessesApi.V2.Infrastructure;
-using ProcessesApi.V2.Services.Exceptions;
 using ProcessesApi.V1.Constants.ChangeOfName;
 using Hackney.Shared.Person.Domain;
 using Hackney.Shared.Person.Factories;
@@ -24,7 +23,9 @@ using Hackney.Shared.Person.Boundary.Request;
 using ProcessesApi.V2.Boundary.Request;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ProcessesApi.V1.Services.Exceptions;
 using ProcessesApi.V1.Services.Interfaces;
+using FormDataInvalidException = ProcessesApi.V1.Services.Exceptions.FormDataInvalidException;
 
 namespace ProcessesApi.V2.Helpers
 {

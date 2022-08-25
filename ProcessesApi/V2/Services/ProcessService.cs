@@ -12,6 +12,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using ProcessesApi.V1.Domain;
+using ProcessesApi.V1.Services.Exceptions;
 using Process = ProcessesApi.V2.Domain.Process;
 using ProcessData = ProcessesApi.V2.Domain.ProcessData;
 using ProcessState = ProcessesApi.V2.Domain.ProcessState;

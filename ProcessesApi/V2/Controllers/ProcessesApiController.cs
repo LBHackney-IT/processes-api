@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using ProcessesApi.V2.Boundary.Request;
 using ProcessesApi.V2.Boundary.Response;
 using ProcessesApi.V2.Domain;
-using ProcessesApi.V2.Services.Exceptions;
+using ProcessesApi.V1.Services.Exceptions;
 using ProcessesApi.V2.UseCase.Interfaces;
 using System;
 using System.Threading.Tasks;

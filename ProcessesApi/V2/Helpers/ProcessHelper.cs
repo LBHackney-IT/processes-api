@@ -1,9 +1,11 @@
 using ProcessesApi.V1.Constants;
 using ProcessesApi.V2.Domain;
-using ProcessesApi.V2.Services.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ProcessesApi.V1.Services.Exceptions;
+using FormDataInvalidException = ProcessesApi.V1.Services.Exceptions.FormDataInvalidException;
+using FormDataNotFoundException = ProcessesApi.V1.Services.Exceptions.FormDataNotFoundException;
 
 namespace ProcessesApi.V2.Helpers
 {
