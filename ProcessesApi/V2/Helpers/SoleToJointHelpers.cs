@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ProcessesApi.V1.Services.Exceptions;
 using ProcessesApi.V2.Domain;
-using ProcessesApi.V2.Services.Exceptions;
 
 namespace ProcessesApi.V2.Helpers
 {
