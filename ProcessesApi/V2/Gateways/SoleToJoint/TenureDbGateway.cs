@@ -6,13 +6,10 @@ using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Factories;
 using Hackney.Shared.Tenure.Infrastructure;
 using Microsoft.Extensions.Logging;
-using Hackney.Shared.Person.Factories;
 using Hackney.Shared.Tenure.Boundary.Requests;
-using ProcessesApi.V2.Factories;
 using ProcessesApi.V2.Infrastructure;
 using System.Text.Json;
 using System.Linq;
-using System.Text.Json.Serialization;
 
 namespace ProcessesApi.V2.Gateways
 {

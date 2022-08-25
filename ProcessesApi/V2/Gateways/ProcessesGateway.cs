@@ -1,16 +1,10 @@
 using Amazon.DynamoDBv2.DataModel;
-using Amazon.DynamoDBv2.DocumentModel;
-using Hackney.Core.DynamoDb;
 using Hackney.Core.Logging;
 using Microsoft.Extensions.Logging;
-using ProcessesApi.V2.Boundary.Request;
 using ProcessesApi.V2.Domain;
 using ProcessesApi.V2.Factories;
 using ProcessesApi.V2.Infrastructure;
-using ProcessesApi.V2.UseCase.Exceptions;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace ProcessesApi.V2.Gateways
