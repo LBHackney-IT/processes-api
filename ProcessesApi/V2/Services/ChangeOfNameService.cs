@@ -7,7 +7,7 @@ using ProcessesApi.V1.Constants.Shared;
 using ProcessesApi.V2.Domain;
 using ProcessesApi.V2.Factories;
 using ProcessesApi.V2.Helpers;
-using ProcessesApi.V2.Infrastructure.JWT;
+using ProcessesApi.V1.Infrastructure.JWT;
 using ProcessesApi.V2.Services.Interfaces;
 using Stateless;
 

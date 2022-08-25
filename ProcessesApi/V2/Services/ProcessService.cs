@@ -2,7 +2,7 @@ using Hackney.Core.JWT;
 using Hackney.Core.Sns;
 using ProcessesApi.V1.Constants;
 using ProcessesApi.V2.Factories;
-using ProcessesApi.V2.Infrastructure.JWT;
+using ProcessesApi.V1.Infrastructure.JWT;
 using ProcessesApi.V1.Services.Exceptions;
 using ProcessesApi.V2.Services.Interfaces;
 using Stateless;

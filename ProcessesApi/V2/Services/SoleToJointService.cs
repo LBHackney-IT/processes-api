@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Hackney.Core.Sns;
 using ProcessesApi.V2.Factories;
 using ProcessesApi.V2.Helpers;
-using ProcessesApi.V2.Infrastructure.JWT;
+using ProcessesApi.V1.Infrastructure.JWT;
 using ProcessesApi.V1.Constants;
 using ProcessesApi.V1.Constants.Shared;
 
