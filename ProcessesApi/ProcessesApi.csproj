@@ -44,6 +44,7 @@
 
   <ItemGroup>
     <Folder Include="terraform\" />
+    <Folder Include="V2\Boundary\Constants" />
   </ItemGroup>
 
 </Project>
