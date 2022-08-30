@@ -16,15 +16,15 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
     IWant = "to enter the applicants new name",
     SoThat = "I can change the legal name of the applicant in the system")]
     [Collection("AppTest collection")]
-    public class UpdateChangeOfNameProcessTests : IDisposable
+    public class ChangeOfNameTests : IDisposable
     {
         private readonly IDynamoDbFixture _dbFixture;
         private readonly ISnsFixture _snsFixture;
         private readonly PersonFixture _personFixture;
         private readonly ProcessFixture _processFixture;
-        private readonly UpdateChangeOfNameProcessSteps _steps;
+        private readonly ChangeOfNameSteps _steps;
 
-        public UpdateChangeOfNameProcessTests(AwsMockWebApplicationFactory<Startup> appFactory)
+        public ChangeOfNameTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
             _dbFixture = appFactory.DynamoDbFixture;
             _snsFixture = appFactory.SnsFixture;
@@ -32,7 +32,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
 
             _processFixture = new ProcessFixture(_dbFixture.DynamoDbContext, _snsFixture.SimpleNotificationService);
 
-            _steps = new UpdateChangeOfNameProcessSteps(appFactory.Client, _dbFixture);
+            _steps = new ChangeOfNameSteps(appFactory.Client, _dbFixture);
         }
 
         public void Dispose()

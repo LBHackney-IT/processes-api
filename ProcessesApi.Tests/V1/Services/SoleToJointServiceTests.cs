@@ -61,6 +61,8 @@ namespace ProcessesApi.Tests.V1.Services
         [Theory]
         [InlineData(SoleToJointStates.AutomatedChecksFailed, SharedPermittedTriggers.CloseProcess, new string[] { SharedKeys.HasNotifiedResident })]
         [InlineData(SharedStates.DocumentsRequestedDes, SharedPermittedTriggers.CloseProcess, new string[] { SharedKeys.HasNotifiedResident })]
+        [InlineData(SoleToJointStates.TenureUpdated, SharedPermittedTriggers.CompleteProcess, new string[] { SharedKeys.HasNotifiedResident })]
+
         [InlineData(SoleToJointStates.SelectTenants, SoleToJointPermittedTriggers.CheckAutomatedEligibility, new string[] { SoleToJointKeys.IncomingTenantId, SoleToJointKeys.TenantId })]
         [InlineData(SoleToJointStates.AutomatedChecksPassed, SoleToJointPermittedTriggers.CheckManualEligibility, new string[] { SoleToJointKeys.BR11, SoleToJointKeys.BR12, SoleToJointKeys.BR13,
                                                                                                                                 SoleToJointKeys.BR15, SoleToJointKeys.BR16, SoleToJointKeys.BR7, SoleToJointKeys.BR8, SoleToJointKeys.BR9 })]
@@ -819,23 +821,17 @@ namespace ProcessesApi.Tests.V1.Services
         [Theory]
         [InlineData(SharedStates.TenureAppointmentScheduled)]
         [InlineData(SharedStates.TenureAppointmentRescheduled)]
-        public async Task ProcessStateIsUpdatedToProcessCompletedAndEventIsRaisedOnUpdateTenure(string initialState)
+        public async Task ProcessStateIsUpdatedToTenureUpdatedAndEventIsRaisedOnUpdateTenure(string initialState)
         {
             // Arrange
             var process = CreateProcessWithCurrentState(initialState);
-            var formData = new Dictionary<string, object>()
-            {
-                { SharedKeys.HasNotifiedResident, true }
-            };
-            var random = new Random();
-            if (random.Next() % 2 == 0) // randomly add reason to formdata
-                formData.Add(SharedKeys.Reason, "this is a reason.");
-
+            var startDate = _fixture.Create<DateTime>();
+            var formData = new Dictionary<string, object> { { SoleToJointKeys.TenureStartDate, startDate } };
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.UpdateTenure,
                                                      formData);
             var newTenureId = Guid.NewGuid();
-            _mockDbOperationsHelper.Setup(x => x.UpdateTenures(process, _token)).ReturnsAsync(newTenureId);
+            _mockDbOperationsHelper.Setup(x => x.UpdateTenures(process, _token, formData)).ReturnsAsync((newTenureId, startDate));
 
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
@@ -844,33 +840,57 @@ namespace ProcessesApi.Tests.V1.Services
             CurrentStateShouldContainCorrectData(process,
                                                  triggerObject,
                                                  SoleToJointStates.TenureUpdated,
-                                                 new List<string>());
+                                                 new List<string> { SharedPermittedTriggers.CompleteProcess });
             process.PreviousStates.LastOrDefault().State.Should().Be(initialState);
 
             process.RelatedEntities.Should().Contain(x => x.Id == newTenureId
                                                           && x.TargetType == TargetType.tenure
                                                           && x.SubType == SubType.newTenure);
 
-            _mockDbOperationsHelper.Verify(x => x.UpdateTenures(process, _token), Times.Once);
-            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_COMPLETED_EVENT);
+            _mockDbOperationsHelper.Verify(x => x.UpdateTenures(process, _token, formData), Times.Once);
+            VerifyThatProcessUpdatedEventIsTriggered(initialState, SoleToJointStates.TenureUpdated);
         }
 
+
         [Fact]
-        public void ThrowsErrorIfDbOperationsHelperThrowsError()
+        public void ThrowsErrorIfDbOperationsHelperThrowsErrorInTenureUpdatedStep()
         {
             // Arrange
             var process = CreateProcessWithCurrentState(SharedStates.TenureAppointmentScheduled);
-            var formData = new Dictionary<string, object> { { SharedKeys.HasNotifiedResident, true } };
+            var formData = new Dictionary<string, object> { { SoleToJointKeys.TenureStartDate, _fixture.Create<DateTime>() } };
 
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.UpdateTenure,
                                                      formData);
-            _mockDbOperationsHelper.Setup(x => x.UpdateTenures(process, _token)).Throws(new Exception("Test Exception"));
+            _mockDbOperationsHelper.Setup(x => x.UpdateTenures(process, _token, formData)).Throws(new Exception("Test Exception"));
 
             // Act + Assert
             _classUnderTest.Invoking(x => x.Process(triggerObject, process, _token))
                            .Should().Throw<Exception>();
+        }
+
+        [Fact]
+        public async Task ProcessStateIsUpdatedToProcessCompleted()
+        {
+            // Arrange
+            var process = CreateProcessWithCurrentState(SoleToJointStates.TenureUpdated);
+            var formData = new Dictionary<string, object> { { SharedKeys.HasNotifiedResident, true } };
+
+            var triggerObject = CreateProcessTrigger(process,
+                                                     SharedPermittedTriggers.CompleteProcess,
+                                                     formData);
+            // Act
+            await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
+
+            // Assert
+            CurrentStateShouldContainCorrectData(process,
+                                                 triggerObject,
+                                                 SharedStates.ProcessCompleted,
+                                                 new List<string>());
+            process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.TenureUpdated);
+
+            _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_COMPLETED_EVENT);
         }
 
         #endregion

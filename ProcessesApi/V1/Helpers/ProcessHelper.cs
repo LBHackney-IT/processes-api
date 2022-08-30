@@ -51,7 +51,7 @@ namespace ProcessesApi.V1.Helpers
             }
             else
             {
-                throw new FormDataFormatException("boolean", hasNotifiedResidentString);
+                throw new FormDataFormatException(typeof(bool), hasNotifiedResidentString);
             }
         }
 

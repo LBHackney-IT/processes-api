@@ -1,3 +1,5 @@
+using System;
+
 namespace ProcessesApi.V1.Services.Exceptions
 {
     public class FormDataFormatException : FormDataInvalidException
@@ -6,8 +8,8 @@ namespace ProcessesApi.V1.Services.Exceptions
         {
         }
 
-        public FormDataFormatException(string valueType, object value)
-            : base($"The {valueType} provided ({value.ToString()}) is not in the correct format.")
+        public FormDataFormatException(Type valueType, object value)
+            : base($"The value provided ({value.ToString()}) is not in the correct format. Expected {valueType}.")
         {
         }
     }
