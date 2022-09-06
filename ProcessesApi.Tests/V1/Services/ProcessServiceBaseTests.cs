@@ -11,9 +11,11 @@ using FluentAssertions;
 using ProcessesApi.V1.Services.Exceptions;
 using ProcessesApi.V1.Infrastructure.JWT;
 using System.Threading.Tasks;
-using ProcessesApi.V1.Constants;
 using System.Linq;
 using AutoFixture;
+using Hackney.Shared.Processes.Constants;
+using SharedKeys = Hackney.Shared.Processes.Constants.SharedKeys;
+using SharedPermittedTriggers = Hackney.Shared.Processes.Constants.SharedPermittedTriggers;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -102,7 +104,7 @@ namespace ProcessesApi.Tests.V1.Services
 
         protected void ShouldThrowFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
         {
-            // Arrange 
+            // Arrange
             var process = CreateProcessWithCurrentState(initialState);
 
             var triggerObject = CreateProcessTrigger(process,

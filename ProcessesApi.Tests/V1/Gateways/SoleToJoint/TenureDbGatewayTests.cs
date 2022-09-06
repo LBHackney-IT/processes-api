@@ -7,7 +7,6 @@ using Hackney.Shared.Tenure.Infrastructure;
 using Hackney.Shared.Tenure.Factories;
 using Microsoft.Extensions.Logging;
 using Moq;
-using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
 using System;
 using System.Collections.Generic;

@@ -15,11 +15,13 @@ using Hackney.Core.Testing.DynamoDb;
 using ProcessesApi.Tests.V1.E2E.Fixtures;
 using Hackney.Core.Testing.Sns;
 using Hackney.Core.Sns;
+using Hackney.Shared.Processes.Constants.ChangeOfName;
+using Hackney.Shared.Processes.Constants.SoleToJoint;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
 using ProcessesApi.V1.Infrastructure.JWT;
 using ProcessesApi.V1.Factories;
-using ProcessesApi.V1.Constants.SoleToJoint;
-using ProcessesApi.V1.Constants.ChangeOfName;
+using ChangeOfNameStates = Hackney.Shared.Processes.Constants.ChangeOfName.ChangeOfNameStates;
+using SoleToJointPermittedTriggers = Hackney.Shared.Processes.Constants.SoleToJoint.SoleToJointPermittedTriggers;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {

@@ -1,13 +1,13 @@
 using Hackney.Core.JWT;
 using Hackney.Core.Logging;
 using ProcessesApi.V2.Boundary.Request;
-using ProcessesApi.V1.Constants;
 using ProcessesApi.V2.Domain;
 using ProcessesApi.V2.Gateways;
 using ProcessesApi.V2.Services.Interfaces;
 using ProcessesApi.V2.UseCase.Interfaces;
 using System;
 using System.Threading.Tasks;
+using Hackney.Shared.Processes.Constants;
 
 namespace ProcessesApi.V2.UseCase
 {

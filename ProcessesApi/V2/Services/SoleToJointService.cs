@@ -1,16 +1,23 @@
 using ProcessesApi.V2.Domain;
-using ProcessesApi.V1.Constants.SoleToJoint;
 using ProcessesApi.V2.Services.Interfaces;
 using Stateless;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Hackney.Core.Sns;
+using Hackney.Shared.Processes.Constants.SoleToJoint;
 using ProcessesApi.V2.Factories;
 using ProcessesApi.V2.Helpers;
 using ProcessesApi.V1.Infrastructure.JWT;
-using ProcessesApi.V1.Constants;
-using ProcessesApi.V1.Constants.Shared;
+using Hackney.Shared.Processes.Constants;
+using Hackney.Shared.Processes.Constants.Shared;
+using SharedInternalTriggers = Hackney.Shared.Processes.Constants.SharedInternalTriggers;
+using SharedKeys = Hackney.Shared.Processes.Constants.SharedKeys;
+using SharedPermittedTriggers = Hackney.Shared.Processes.Constants.SharedPermittedTriggers;
+using SharedStates = Hackney.Shared.Processes.Constants.SharedStates;
+using SoleToJointInternalTriggers = Hackney.Shared.Processes.Constants.SoleToJoint.SoleToJointInternalTriggers;
+using SoleToJointKeys = Hackney.Shared.Processes.Constants.SoleToJoint.SoleToJointKeys;
+using SoleToJointPermittedTriggers = Hackney.Shared.Processes.Constants.SoleToJoint.SoleToJointPermittedTriggers;
 
 namespace ProcessesApi.V2.Services
 {

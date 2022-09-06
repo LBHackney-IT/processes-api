@@ -2,7 +2,6 @@ using AutoFixture;
 using FluentAssertions;
 using Moq;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Constants.SoleToJoint;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,8 +14,13 @@ using ProcessesApi.V1.Services;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Services.Exceptions;
 using System.Globalization;
-using ProcessesApi.V1.Constants;
-using ProcessesApi.V1.Constants.Shared;
+using Hackney.Shared.Processes.Constants;
+using Hackney.Shared.Processes.Constants.SoleToJoint;
+using Hackney.Shared.Processes.Constants.Shared;
+using SharedKeys = Hackney.Shared.Processes.Constants.SharedKeys;
+using SharedPermittedTriggers = Hackney.Shared.Processes.Constants.SharedPermittedTriggers;
+using SoleToJointKeys = Hackney.Shared.Processes.Constants.SoleToJoint.SoleToJointKeys;
+using SoleToJointPermittedTriggers = Hackney.Shared.Processes.Constants.SoleToJoint.SoleToJointPermittedTriggers;
 
 namespace ProcessesApi.Tests.V1.Services
 {

@@ -1,11 +1,11 @@
 using AutoFixture;
 using FluentAssertions;
-using ProcessesApi.V1.Constants;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Services.Exceptions;
 using System;
 using System.Collections.Generic;
+using Hackney.Shared.Processes.Constants;
 using Xunit;
 
 namespace ProcessesApi.Tests.V1.Helpers

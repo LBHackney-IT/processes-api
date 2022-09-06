@@ -1,6 +1,5 @@
 using Hackney.Core.JWT;
 using Hackney.Core.Sns;
-using ProcessesApi.V1.Constants;
 using ProcessesApi.V2.Factories;
 using ProcessesApi.V1.Infrastructure.JWT;
 using ProcessesApi.V1.Services.Exceptions;
@@ -11,11 +10,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Hackney.Shared.Processes.Constants;
 using ProcessesApi.V1.Domain;
 using Process = ProcessesApi.V2.Domain.Process;
 using ProcessData = ProcessesApi.V2.Domain.ProcessData;
 using ProcessState = ProcessesApi.V2.Domain.ProcessState;
 using ProcessTrigger = ProcessesApi.V2.Domain.ProcessTrigger;
+using SharedPermittedTriggers = Hackney.Shared.Processes.Constants.SharedPermittedTriggers;
 
 namespace ProcessesApi.V2.Services
 {

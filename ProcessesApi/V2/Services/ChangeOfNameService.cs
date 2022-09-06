@@ -1,15 +1,20 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Hackney.Core.Sns;
-using ProcessesApi.V1.Constants;
-using ProcessesApi.V1.Constants.ChangeOfName;
-using ProcessesApi.V1.Constants.Shared;
+using Hackney.Shared.Processes.Constants;
+using Hackney.Shared.Processes.Constants.ChangeOfName;
+using Hackney.Shared.Processes.Constants.Shared;
 using ProcessesApi.V2.Domain;
 using ProcessesApi.V2.Factories;
 using ProcessesApi.V2.Helpers;
 using ProcessesApi.V1.Infrastructure.JWT;
 using ProcessesApi.V2.Services.Interfaces;
 using Stateless;
+using ChangeOfNamePermittedTriggers = Hackney.Shared.Processes.Constants.ChangeOfName.ChangeOfNamePermittedTriggers;
+using ChangeOfNameStates = Hackney.Shared.Processes.Constants.ChangeOfName.ChangeOfNameStates;
+using SharedInternalTriggers = Hackney.Shared.Processes.Constants.SharedInternalTriggers;
+using SharedKeys = Hackney.Shared.Processes.Constants.SharedKeys;
+using SharedPermittedTriggers = Hackney.Shared.Processes.Constants.SharedPermittedTriggers;
 
 namespace ProcessesApi.V2.Services
 {

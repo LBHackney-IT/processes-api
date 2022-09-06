@@ -46,4 +46,10 @@
     <Folder Include="terraform\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="Hackney.Shared.Processes">
+      <HintPath>..\..\processes-shared\Hackney.Shared.Processes\bin\Debug\netstandard2.1\Hackney.Shared.Processes.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

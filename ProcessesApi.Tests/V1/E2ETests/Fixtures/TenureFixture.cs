@@ -6,7 +6,6 @@ using AutoFixture;
 using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Factories;
 using Hackney.Shared.Tenure.Infrastructure;
-using ProcessesApi.V1.Factories;
 
 namespace ProcessesApi.Tests.V1.E2E.Fixtures
 {

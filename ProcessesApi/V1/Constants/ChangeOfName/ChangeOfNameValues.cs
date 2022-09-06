@@ -1,6 +1,6 @@
-namespace ProcessesApi.V1.Constants.ChangeOfName
-{
-    public static class ChangeOfNameValues
-    {
-    }
-}
+// namespace ProcessesApi.V1.Constants.ChangeOfName
+// {
+//     public static class ChangeOfNameValues
+//     {
+//     }
+// }

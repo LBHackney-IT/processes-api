@@ -6,7 +6,6 @@ using Hackney.Shared.Person;
 using Hackney.Shared.Person.Domain;
 using Hackney.Shared.Person.Factories;
 using Hackney.Shared.Person.Infrastructure;
-using ProcessesApi.V1.Factories;
 using Amazon.DynamoDBv2.DataModel;
 using System.Linq;
 using Hackney.Shared.Tenure.Domain;
