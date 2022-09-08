@@ -5,9 +5,10 @@ using ProcessesApi.Tests.V1.E2E.Steps;
 using TestStack.BDDfy;
 using Xunit;
 using Hackney.Core.Testing.Sns;
-using ProcessesApi.V1.Constants.SoleToJoint;
-using ProcessesApi.V1.Constants;
-using ProcessesApi.V1.Constants.Shared;
+using Hackney.Shared.Processes.Constants;
+using Hackney.Shared.Processes.Constants.SoleToJoint;
+using Hackney.Shared.Processes.Constants.Shared;
+using SharedPermittedTriggers = Hackney.Shared.Processes.Constants.SharedPermittedTriggers;
 
 namespace ProcessesApi.Tests.V1.E2E.Stories
 {
@@ -96,7 +97,7 @@ namespace ProcessesApi.Tests.V1.E2E.Stories
                 .BDDfy();
         }
 
-        #region Close or Cancel a Process 
+        #region Close or Cancel a Process
 
         // List all states that CloseProcess can be triggered from
         [Theory]

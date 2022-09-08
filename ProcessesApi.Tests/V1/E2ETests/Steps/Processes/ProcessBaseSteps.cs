@@ -7,8 +7,6 @@ using Newtonsoft.Json;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
 using ProcessesApi.V1.Boundary.Constants;
 using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.Constants;
-using ProcessesApi.V1.Constants.SoleToJoint;
 using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Infrastructure.JWT;
 using System;
@@ -18,7 +16,9 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Hackney.Shared.Processes.Constants;
 using JsonSerializer = System.Text.Json.JsonSerializer;
+using SharedKeys = Hackney.Shared.Processes.Constants.SharedKeys;
 
 namespace ProcessesApi.Tests.V1.E2ETests.Steps
 {

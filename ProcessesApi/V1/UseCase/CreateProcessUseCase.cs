@@ -1,7 +1,7 @@
 using Hackney.Core.JWT;
 using Hackney.Core.Logging;
 using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.Constants;
+using Hackney.Shared.Processes.Constants;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Services.Interfaces;

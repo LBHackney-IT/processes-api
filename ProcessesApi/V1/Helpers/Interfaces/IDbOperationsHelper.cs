@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Hackney.Core.JWT;
-using Hackney.Shared.Person;
-using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
 
 namespace ProcessesApi.V1.Helpers

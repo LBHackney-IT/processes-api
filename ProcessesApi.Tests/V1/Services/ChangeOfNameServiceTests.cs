@@ -2,7 +2,6 @@ using AutoFixture;
 using FluentAssertions;
 using Moq;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Constants.ChangeOfName;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -11,13 +10,18 @@ using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure.JWT;
 using Xunit;
 using ProcessesApi.V1.Services;
-using ProcessesApi.V1.Constants;
 using System.Linq;
 using System.Globalization;
-using ProcessesApi.V1.Constants.Shared;
+using Hackney.Shared.Processes.Constants.Shared;
 using ProcessesApi.V1.Services.Exceptions;
 using ProcessesApi.V1.Helpers;
 using Hackney.Shared.Person.Domain;
+using Hackney.Shared.Processes.Constants;
+using Hackney.Shared.Processes.Constants.ChangeOfName;
+using ChangeOfNameKeys = Hackney.Shared.Processes.Constants.ChangeOfName.ChangeOfNameKeys;
+using ChangeOfNamePermittedTriggers = Hackney.Shared.Processes.Constants.ChangeOfName.ChangeOfNamePermittedTriggers;
+using SharedKeys = Hackney.Shared.Processes.Constants.SharedKeys;
+using SharedPermittedTriggers = Hackney.Shared.Processes.Constants.SharedPermittedTriggers;
 
 namespace ProcessesApi.Tests.V1.Services
 {

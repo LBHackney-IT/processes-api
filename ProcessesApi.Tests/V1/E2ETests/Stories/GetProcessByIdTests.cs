@@ -5,7 +5,7 @@ using ProcessesApi.Tests.V1.E2E.Steps;
 using TestStack.BDDfy;
 using Xunit;
 using Hackney.Core.Testing.Sns;
-using ProcessesApi.V1.Constants;
+using Hackney.Shared.Processes.Constants;
 
 namespace ProcessesApi.Tests.V1.E2E.Stories
 {

@@ -5,16 +5,17 @@ using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Infrastructure;
 using ProcessesApi.V1.Boundary.Request;
 using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Constants.SoleToJoint;
 using ProcessesApi.V1.Infrastructure;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
-using ProcessesApi.V1.Constants;
+using Hackney.Shared.Processes.Constants;
 using ProcessesApi.Tests.V1.E2ETests.Steps;
 using Hackney.Core.Testing.Sns;
 using System.Text.Json;
 using System.Collections.Generic;
+using Hackney.Shared.Processes.Constants.SoleToJoint;
+using SoleToJointKeys = Hackney.Shared.Processes.Constants.SoleToJoint.SoleToJointKeys;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {

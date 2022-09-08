@@ -12,8 +12,8 @@ using ProcessesApi.V1.UseCase;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Hackney.Shared.Processes.Constants;
 using Xunit;
-using ProcessesApi.V1.Constants;
 
 namespace ProcessesApi.Tests.V1.UseCase
 {

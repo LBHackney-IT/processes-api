@@ -9,11 +9,16 @@ using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Infrastructure.Extensions;
-using ProcessesApi.V1.Constants.SoleToJoint;
-using ProcessesApi.V1.Constants;
-using ProcessesApi.V1.Constants.ChangeOfName;
 using System.Linq;
 using Hackney.Shared.Person.Domain;
+using Hackney.Shared.Processes.Constants;
+using Hackney.Shared.Processes.Constants.ChangeOfName;
+using Hackney.Shared.Processes.Constants.SoleToJoint;
+using ChangeOfNameKeys = Hackney.Shared.Processes.Constants.ChangeOfName.ChangeOfNameKeys;
+using ChangeOfNamePermittedTriggers = Hackney.Shared.Processes.Constants.ChangeOfName.ChangeOfNamePermittedTriggers;
+using SharedKeys = Hackney.Shared.Processes.Constants.SharedKeys;
+using SharedPermittedTriggers = Hackney.Shared.Processes.Constants.SharedPermittedTriggers;
+using SoleToJointKeys = Hackney.Shared.Processes.Constants.SoleToJoint.SoleToJointKeys;
 
 namespace ProcessesApi.Tests.V1.E2E.Fixtures
 {
