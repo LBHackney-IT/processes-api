@@ -17,11 +17,7 @@ using ProcessesApi.V1.Gateways.Exceptions;
 using ProcessesApi.V1.Infrastructure;
 using ProcessesApi.V1.Services.Exceptions;
 using Hackney.Shared.Person.Domain;
-using Hackney.Shared.Person.Factories;
 using Hackney.Shared.Person.Boundary.Request;
-using ProcessesApi.V1.Boundary.Request;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Hackney.Shared.Processes.Constants.ChangeOfName;
 using ChangeOfNameKeys = Hackney.Shared.Processes.Constants.ChangeOfName.ChangeOfNameKeys;
 
