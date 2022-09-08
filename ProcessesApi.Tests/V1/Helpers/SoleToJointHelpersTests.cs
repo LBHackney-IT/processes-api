@@ -4,10 +4,11 @@ using FluentAssertions;
 using AutoFixture;
 using ProcessesApi.V1.Domain;
 using System.Collections.Generic;
-using ProcessesApi.V1.Constants.Shared;
-using ProcessesApi.V1.Constants;
+using Hackney.Shared.Processes.Constants.Shared;
 using System;
+using Hackney.Shared.Processes.Constants;
 using ProcessesApi.V1.Services.Exceptions;
+using SharedInternalTriggers = Hackney.Shared.Processes.Constants.SharedInternalTriggers;
 
 namespace ProcessesApi.Tests.V1.Helpers
 {

@@ -1,6 +1,5 @@
 using Hackney.Core.JWT;
 using Hackney.Core.Sns;
-using ProcessesApi.V1.Constants;
 using ProcessesApi.V1.Domain;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Infrastructure.JWT;
@@ -12,6 +11,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Hackney.Shared.Processes.Constants;
+using SharedPermittedTriggers = Hackney.Shared.Processes.Constants.SharedPermittedTriggers;
 
 namespace ProcessesApi.V1.Services
 {
