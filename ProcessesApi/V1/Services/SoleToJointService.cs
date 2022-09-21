@@ -215,10 +215,10 @@ namespace ProcessesApi.V1.Services
                     .OnEntryAsync(OnProcessCancelled);
 
             _machine.Configure(SharedStates.ApplicationInitialised)
-                    .Permit(SharedPermittedTriggers.StartApplication, SoleToJointStates.SelectTenants)
-                    .OnExitAsync(() => PublishProcessStartedEvent(ProcessEventConstants.PROCESS_STARTED_AGAINST_TENURE_EVENT));
+                    .Permit(SharedPermittedTriggers.StartApplication, SoleToJointStates.SelectTenants);
 
             _machine.Configure(SoleToJointStates.SelectTenants)
+                    .OnEntryAsync(() => PublishProcessStartedEvent(ProcessEventConstants.PROCESS_STARTED_AGAINST_TENURE_EVENT))
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckAutomatedEligibility, CheckAutomatedEligibility)
                     .Permit(SoleToJointInternalTriggers.EligibiltyFailed, SoleToJointStates.AutomatedChecksFailed)
                     .Permit(SoleToJointInternalTriggers.EligibiltyPassed, SoleToJointStates.AutomatedChecksPassed)
