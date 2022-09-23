@@ -2,13 +2,13 @@ using ProcessesApi.V1.Helpers;
 using Xunit;
 using FluentAssertions;
 using AutoFixture;
-using ProcessesApi.V1.Domain;
+using Hackney.Shared.Processes.Domain;
 using System.Collections.Generic;
-using Hackney.Shared.Processes.Constants.Shared;
+using Hackney.Shared.Processes.Domain.Constants.Shared;
 using System;
-using Hackney.Shared.Processes.Constants;
+using Hackney.Shared.Processes.Domain.Constants;
 using ProcessesApi.V1.Services.Exceptions;
-using SharedInternalTriggers = Hackney.Shared.Processes.Constants.SharedInternalTriggers;
+using SharedInternalTriggers = Hackney.Shared.Processes.Domain.Constants.SharedInternalTriggers;
 
 namespace ProcessesApi.Tests.V1.Helpers
 {

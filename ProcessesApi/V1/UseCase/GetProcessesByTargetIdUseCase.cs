@@ -1,8 +1,8 @@
 using Hackney.Core.DynamoDb;
 using Hackney.Core.Logging;
-using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.Boundary.Response;
-using ProcessesApi.V1.Factories;
+using Hackney.Shared.Processes.Boundary.Request;
+using Hackney.Shared.Processes.Boundary.Response;
+using Hackney.Shared.Processes.Factories;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.UseCase.Interfaces;
 using System.Threading.Tasks;

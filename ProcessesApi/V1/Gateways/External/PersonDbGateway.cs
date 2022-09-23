@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using Hackney.Shared.Person.Infrastructure;
 using Hackney.Shared.Person.Factories;
 using Hackney.Shared.Person;
-using ProcessesApi.V1.Infrastructure;
+using Hackney.Shared.Processes.Infrastructure;
 using Hackney.Shared.Person.Boundary.Request;
 using System.Linq;
 using System.Text.Json;

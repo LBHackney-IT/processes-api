@@ -3,19 +3,18 @@ using System;
 using System.Collections.Generic;
 using Hackney.Core.JWT;
 using Hackney.Core.Sns;
-using ProcessesApi.V1.Factories;
 using Xunit;
 using ProcessesApi.V1.Services.Interfaces;
-using ProcessesApi.V1.Domain;
+using Hackney.Shared.Processes.Domain;
 using FluentAssertions;
 using ProcessesApi.V1.Services.Exceptions;
-using ProcessesApi.V1.Infrastructure.JWT;
 using System.Threading.Tasks;
 using System.Linq;
 using AutoFixture;
-using Hackney.Shared.Processes.Constants;
-using SharedKeys = Hackney.Shared.Processes.Constants.SharedKeys;
-using SharedPermittedTriggers = Hackney.Shared.Processes.Constants.SharedPermittedTriggers;
+using Hackney.Shared.Processes.Domain.Constants;
+using SharedKeys = Hackney.Shared.Processes.Domain.Constants.SharedKeys;
+using SharedPermittedTriggers = Hackney.Shared.Processes.Domain.Constants.SharedPermittedTriggers;
+using Hackney.Shared.Processes.Sns;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -97,7 +96,7 @@ namespace ProcessesApi.Tests.V1.Services
         protected void VerifyThatProcessUpdatedEventIsTriggered(string oldState, string newState)
         {
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_UPDATED_EVENT);
+            _lastSnsEvent.EventType.Should().Be(EventConstants.PROCESS_UPDATED_EVENT);
             (_lastSnsEvent.EventData.OldData as ProcessStateChangeData).State.Should().Be(oldState);
             (_lastSnsEvent.EventData.NewData as ProcessStateChangeData).State.Should().Be(newState);
         }
@@ -145,7 +144,7 @@ namespace ProcessesApi.Tests.V1.Services
             process.PreviousStates.LastOrDefault().State.Should().Be(fromState);
 
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_CLOSED_EVENT);
+            _lastSnsEvent.EventType.Should().Be(EventConstants.PROCESS_CLOSED_EVENT);
         }
 
 
@@ -173,7 +172,7 @@ namespace ProcessesApi.Tests.V1.Services
             process.PreviousStates.LastOrDefault().State.Should().Be(fromState);
 
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_CLOSED_EVENT);
+            _lastSnsEvent.EventType.Should().Be(EventConstants.PROCESS_CLOSED_EVENT);
         }
     }
 }

@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Hackney.Shared.Person;
 using Hackney.Shared.Person.Boundary.Request;
 using Hackney.Shared.Person.Infrastructure;
-using ProcessesApi.V1.Infrastructure;
+using Hackney.Shared.Processes.Infrastructure;
 
 namespace ProcessesApi.V1.Gateways
 {

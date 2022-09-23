@@ -21,7 +21,6 @@
     <PackageReference Include="Hackney.Core.Testing.DynamoDb" Version="1.57.0" />
     <PackageReference Include="Hackney.Core.Testing.Shared" Version="1.66.0" />
     <PackageReference Include="Hackney.Core.Testing.Sns" Version="1.71.0" />
-    <PackageReference Include="Hackney.Shared.Processes" Version="0.0.6" />
     <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="6.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="3.1.4" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />

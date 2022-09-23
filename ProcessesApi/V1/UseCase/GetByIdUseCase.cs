@@ -1,6 +1,6 @@
 using Hackney.Core.Logging;
-using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.Domain;
+using Hackney.Shared.Processes.Boundary.Request;
+using Hackney.Shared.Processes.Domain;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.UseCase.Interfaces;
 using System.Threading.Tasks;

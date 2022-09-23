@@ -1,26 +1,25 @@
 using AutoFixture;
 using FluentAssertions;
 using Moq;
-using ProcessesApi.V1.Domain;
+using Hackney.Shared.Processes.Domain;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Hackney.Core.Sns;
-using ProcessesApi.V1.Factories;
-using ProcessesApi.V1.Infrastructure.JWT;
 using Xunit;
 using ProcessesApi.V1.Services;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Services.Exceptions;
 using System.Globalization;
-using Hackney.Shared.Processes.Constants;
-using Hackney.Shared.Processes.Constants.SoleToJoint;
-using Hackney.Shared.Processes.Constants.Shared;
-using SharedKeys = Hackney.Shared.Processes.Constants.SharedKeys;
-using SharedPermittedTriggers = Hackney.Shared.Processes.Constants.SharedPermittedTriggers;
-using SoleToJointKeys = Hackney.Shared.Processes.Constants.SoleToJoint.SoleToJointKeys;
-using SoleToJointPermittedTriggers = Hackney.Shared.Processes.Constants.SoleToJoint.SoleToJointPermittedTriggers;
+using Hackney.Shared.Processes.Domain.Constants;
+using Hackney.Shared.Processes.Domain.Constants.SoleToJoint;
+using Hackney.Shared.Processes.Domain.Constants.Shared;
+using SharedKeys = Hackney.Shared.Processes.Domain.Constants.SharedKeys;
+using SharedPermittedTriggers = Hackney.Shared.Processes.Domain.Constants.SharedPermittedTriggers;
+using SoleToJointKeys = Hackney.Shared.Processes.Domain.Constants.SoleToJoint.SoleToJointKeys;
+using SoleToJointPermittedTriggers = Hackney.Shared.Processes.Domain.Constants.SoleToJoint.SoleToJointPermittedTriggers;
+using Hackney.Shared.Processes.Sns;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -54,7 +53,7 @@ namespace ProcessesApi.Tests.V1.Services
             _mockSnsGateway = new Mock<ISnsGateway>();
             _mockDbOperationsHelper = new Mock<IDbOperationsHelper>();
 
-            _classUnderTest = new SoleToJointService(new ProcessesSnsFactory(), _mockSnsGateway.Object, _mockDbOperationsHelper.Object);
+            _classUnderTest = new SoleToJointService(_mockSnsGateway.Object, _mockDbOperationsHelper.Object);
 
             _mockSnsGateway
                 .Setup(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()))
@@ -141,7 +140,7 @@ namespace ProcessesApi.Tests.V1.Services
             process.PreviousStates.Should().BeEmpty();
 
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
-            _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_STARTED_AGAINST_TENURE_EVENT);
+            _lastSnsEvent.EventType.Should().Be(EventConstants.PROCESS_STARTED_AGAINST_TENURE_EVENT);
         }
 
         #region Automated eligibility checks
@@ -894,7 +893,7 @@ namespace ProcessesApi.Tests.V1.Services
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.TenureUpdated);
 
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            _lastSnsEvent.EventType.Should().Be(ProcessEventConstants.PROCESS_COMPLETED_EVENT);
+            _lastSnsEvent.EventType.Should().Be(EventConstants.PROCESS_COMPLETED_EVENT);
         }
 
         #endregion

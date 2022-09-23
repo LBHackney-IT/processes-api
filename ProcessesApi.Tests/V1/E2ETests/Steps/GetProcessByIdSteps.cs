@@ -1,9 +1,9 @@
 using FluentAssertions;
 using Hackney.Core.Testing.Shared.E2E;
-using ProcessesApi.V1.Boundary.Constants;
-using ProcessesApi.V1.Boundary.Response;
-using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Factories;
+using Hackney.Shared.Processes.Boundary.Constants;
+using Hackney.Shared.Processes.Boundary.Response;
+using Hackney.Shared.Processes.Domain;
+using Hackney.Shared.Processes.Factories;
 using System;
 using System.Linq;
 using System.Net;

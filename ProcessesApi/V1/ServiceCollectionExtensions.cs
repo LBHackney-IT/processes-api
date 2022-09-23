@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel;
 using Microsoft.Extensions.DependencyInjection;
-using ProcessesApi.V1.Domain;
+using Hackney.Shared.Processes.Domain;
 using ProcessesApi.V1.Services;
 using ProcessesApi.V1.Services.Interfaces;
 

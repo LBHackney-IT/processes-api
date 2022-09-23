@@ -1,10 +1,10 @@
 using FluentAssertions;
 using Hackney.Core.Testing.Shared.E2E;
 using Newtonsoft.Json;
-using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.Boundary.Response;
-using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Infrastructure;
+using Hackney.Shared.Processes.Boundary.Request;
+using Hackney.Shared.Processes.Boundary.Response;
+using Hackney.Shared.Processes.Domain;
+using Hackney.Shared.Processes.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -15,13 +15,13 @@ using Hackney.Core.Testing.DynamoDb;
 using ProcessesApi.Tests.V1.E2E.Fixtures;
 using Hackney.Core.Testing.Sns;
 using Hackney.Core.Sns;
-using Hackney.Shared.Processes.Constants.ChangeOfName;
-using Hackney.Shared.Processes.Constants.SoleToJoint;
+using Hackney.Shared.Processes.Domain.Constants.ChangeOfName;
+using Hackney.Shared.Processes.Domain.Constants.SoleToJoint;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
-using ProcessesApi.V1.Infrastructure.JWT;
-using ProcessesApi.V1.Factories;
-using ChangeOfNamePermittedTriggers = Hackney.Shared.Processes.Constants.ChangeOfName.ChangeOfNamePermittedTriggers;
-using SoleToJointPermittedTriggers = Hackney.Shared.Processes.Constants.SoleToJoint.SoleToJointPermittedTriggers;
+using Hackney.Shared.Processes.Factories;
+using ChangeOfNamePermittedTriggers = Hackney.Shared.Processes.Domain.Constants.ChangeOfName.ChangeOfNamePermittedTriggers;
+using SoleToJointPermittedTriggers = Hackney.Shared.Processes.Domain.Constants.SoleToJoint.SoleToJointPermittedTriggers;
+using Hackney.Shared.Processes.Sns;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {
@@ -105,13 +105,13 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
 
                 actual.EventData.OldData.Should().BeNull();
 
-                actual.EventType.Should().Be(ProcessEventConstants.PROCESS_STARTED_EVENT);
+                actual.EventType.Should().Be(EventConstants.PROCESS_STARTED_EVENT);
                 actual.Id.Should().NotBeEmpty();
-                actual.SourceDomain.Should().Be(ProcessEventConstants.SOURCE_DOMAIN);
-                actual.SourceSystem.Should().Be(ProcessEventConstants.SOURCE_SYSTEM);
+                actual.SourceDomain.Should().Be(EventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(EventConstants.SOURCE_SYSTEM);
                 actual.User.Email.Should().Be(TestToken.UserEmail);
                 actual.User.Name.Should().Be(TestToken.UserName);
-                actual.Version.Should().Be(ProcessEventConstants.V1_VERSION);
+                actual.Version.Should().Be(EventConstants.V1_VERSION);
             };
 
             var snsVerifier = snsFixture.GetSnsEventVerifier<EntityEventSns>();

@@ -1,22 +1,21 @@
-using ProcessesApi.V1.Domain;
+using Hackney.Shared.Processes.Domain;
 using ProcessesApi.V1.Services.Interfaces;
 using Stateless;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Hackney.Core.Sns;
-using Hackney.Shared.Processes.Constants;
-using Hackney.Shared.Processes.Constants.SoleToJoint;
-using ProcessesApi.V1.Factories;
+using Hackney.Shared.Processes.Domain.Constants;
+using Hackney.Shared.Processes.Domain.Constants.SoleToJoint;
 using ProcessesApi.V1.Helpers;
-using ProcessesApi.V1.Infrastructure.JWT;
-using Hackney.Shared.Processes.Constants.Shared;
-using SharedInternalTriggers = Hackney.Shared.Processes.Constants.SharedInternalTriggers;
-using SharedKeys = Hackney.Shared.Processes.Constants.SharedKeys;
-using SharedPermittedTriggers = Hackney.Shared.Processes.Constants.SharedPermittedTriggers;
-using SoleToJointInternalTriggers = Hackney.Shared.Processes.Constants.SoleToJoint.SoleToJointInternalTriggers;
-using SoleToJointKeys = Hackney.Shared.Processes.Constants.SoleToJoint.SoleToJointKeys;
-using SoleToJointPermittedTriggers = Hackney.Shared.Processes.Constants.SoleToJoint.SoleToJointPermittedTriggers;
+using Hackney.Shared.Processes.Domain.Constants.Shared;
+using SharedInternalTriggers = Hackney.Shared.Processes.Domain.Constants.SharedInternalTriggers;
+using SharedKeys = Hackney.Shared.Processes.Domain.Constants.SharedKeys;
+using SharedPermittedTriggers = Hackney.Shared.Processes.Domain.Constants.SharedPermittedTriggers;
+using SoleToJointInternalTriggers = Hackney.Shared.Processes.Domain.Constants.SoleToJoint.SoleToJointInternalTriggers;
+using SoleToJointKeys = Hackney.Shared.Processes.Domain.Constants.SoleToJoint.SoleToJointKeys;
+using SoleToJointPermittedTriggers = Hackney.Shared.Processes.Domain.Constants.SoleToJoint.SoleToJointPermittedTriggers;
+using Hackney.Shared.Processes.Sns;
 
 namespace ProcessesApi.V1.Services
 {
@@ -24,10 +23,9 @@ namespace ProcessesApi.V1.Services
     {
         private readonly IDbOperationsHelper _dbOperationsHelper;
 
-        public SoleToJointService(ISnsFactory snsFactory, ISnsGateway snsGateway, IDbOperationsHelper automatedChecksHelper)
-            : base(snsFactory, snsGateway)
+        public SoleToJointService(ISnsGateway snsGateway, IDbOperationsHelper automatedChecksHelper)
+            : base(snsGateway)
         {
-            _snsFactory = snsFactory;
             _snsGateway = snsGateway;
             _dbOperationsHelper = automatedChecksHelper;
 
@@ -218,7 +216,7 @@ namespace ProcessesApi.V1.Services
                     .Permit(SharedPermittedTriggers.StartApplication, SoleToJointStates.SelectTenants);
 
             _machine.Configure(SoleToJointStates.SelectTenants)
-                    .OnEntryAsync(() => PublishProcessStartedEvent(ProcessEventConstants.PROCESS_STARTED_AGAINST_TENURE_EVENT))
+                    .OnEntryAsync(() => PublishProcessStartedEvent(EventConstants.PROCESS_STARTED_AGAINST_TENURE_EVENT))
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckAutomatedEligibility, CheckAutomatedEligibility)
                     .Permit(SoleToJointInternalTriggers.EligibiltyFailed, SoleToJointStates.AutomatedChecksFailed)
                     .Permit(SoleToJointInternalTriggers.EligibiltyPassed, SoleToJointStates.AutomatedChecksPassed)

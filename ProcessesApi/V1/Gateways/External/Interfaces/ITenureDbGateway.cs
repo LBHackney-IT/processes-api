@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Hackney.Shared.Tenure.Boundary.Requests;
 using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Infrastructure;
-using ProcessesApi.V1.Infrastructure;
+using Hackney.Shared.Processes.Infrastructure;
 
 namespace ProcessesApi.V1.Gateways
 {

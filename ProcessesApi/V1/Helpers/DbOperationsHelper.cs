@@ -9,17 +9,18 @@ using Hackney.Shared.Tenure.Boundary.Requests;
 using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Factories;
 using Hackney.Shared.Tenure.Infrastructure;
-using ProcessesApi.V1.Domain;
-using Hackney.Shared.Processes.Constants.SoleToJoint;
+using Hackney.Shared.Processes.Domain;
+using Hackney.Shared.Processes.Domain.Constants.SoleToJoint;
+using Hackney.Shared.Processes.Factories;
 using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Gateways.Exceptions;
-using ProcessesApi.V1.Infrastructure;
+using Hackney.Shared.Processes.Infrastructure;
 using ProcessesApi.V1.Services.Exceptions;
 using Hackney.Shared.Person.Domain;
 using Hackney.Shared.Person.Boundary.Request;
-using Hackney.Shared.Processes.Constants.ChangeOfName;
-using ChangeOfNameKeys = Hackney.Shared.Processes.Constants.ChangeOfName.ChangeOfNameKeys;
+using Hackney.Shared.Processes.Domain.Constants.ChangeOfName;
+using ChangeOfNameKeys = Hackney.Shared.Processes.Domain.Constants.ChangeOfName.ChangeOfNameKeys;
 
 namespace ProcessesApi.V1.Helpers
 {

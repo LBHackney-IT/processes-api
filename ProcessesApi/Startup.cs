@@ -24,10 +24,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
-using ProcessesApi.V1.Boundary.Request.Validation;
-using ProcessesApi.V1.Factories;
+using Hackney.Shared.Processes.Boundary.Request.Validation;
 using ProcessesApi.V1.Gateways;
-using ProcessesApi.V1.Infrastructure;
+using Hackney.Shared.Processes.Infrastructure;
 using ProcessesApi.V1.UseCase;
 using ProcessesApi.V1.UseCase.Interfaces;
 using ProcessesApi.Versioning;
@@ -41,6 +40,7 @@ using System.Reflection;
 using System.Text.Json.Serialization;
 using ProcessesApi.V1;
 using ProcessesApi.V1.Helpers;
+using ProcessesApi.V1.Factories;
 
 namespace ProcessesApi
 {
@@ -161,7 +161,6 @@ namespace ProcessesApi
 
             services.AddSingleton<IConfiguration>(Configuration);
 
-            services.AddScoped<ISnsFactory, ProcessesSnsFactory>();
             services.AddScoped<IPersonSnsFactory, PersonSnsFactory>();
             services.AddScoped<ITenureSnsFactory, TenureSnsFactory>();
 
