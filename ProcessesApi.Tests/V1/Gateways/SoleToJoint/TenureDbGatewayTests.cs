@@ -16,7 +16,7 @@ using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Boundary.Requests;
 using Hackney.Shared.Person;
 using System.Linq;
-using ProcessesApi.V1.Infrastructure;
+using Hackney.Shared.Processes.Infrastructure;
 
 namespace ProcessesApi.Tests.V1.Gateways
 {

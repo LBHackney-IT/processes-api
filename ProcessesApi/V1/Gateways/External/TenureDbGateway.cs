@@ -7,7 +7,7 @@ using Hackney.Shared.Tenure.Factories;
 using Hackney.Shared.Tenure.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Hackney.Shared.Tenure.Boundary.Requests;
-using ProcessesApi.V1.Infrastructure;
+using Hackney.Shared.Processes.Infrastructure;
 using System.Text.Json;
 using System.Linq;
 

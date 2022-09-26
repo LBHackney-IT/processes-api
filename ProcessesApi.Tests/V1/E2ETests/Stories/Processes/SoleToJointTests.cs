@@ -5,10 +5,10 @@ using ProcessesApi.Tests.V1.E2E.Steps;
 using TestStack.BDDfy;
 using Xunit;
 using Hackney.Core.Testing.Sns;
-using Hackney.Shared.Processes.Constants;
-using Hackney.Shared.Processes.Constants.SoleToJoint;
-using Hackney.Shared.Processes.Constants.Shared;
-using SharedPermittedTriggers = Hackney.Shared.Processes.Constants.SharedPermittedTriggers;
+using Hackney.Shared.Processes.Domain.Constants;
+using Hackney.Shared.Processes.Domain.Constants.SoleToJoint;
+using Hackney.Shared.Processes.Domain.Constants.Shared;
+using SharedPermittedTriggers = Hackney.Shared.Processes.Domain.Constants.SharedPermittedTriggers;
 
 namespace ProcessesApi.Tests.V1.E2E.Stories
 {

@@ -5,12 +5,11 @@ using Hackney.Core.Testing.Shared.E2E;
 using Hackney.Core.Testing.Sns;
 using ProcessesApi.Tests.V1.E2E.Fixtures;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
-using ProcessesApi.V1.Boundary.Constants;
-using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Factories;
-using ProcessesApi.V1.Infrastructure;
-using ProcessesApi.V1.Infrastructure.JWT;
+using Hackney.Shared.Processes.Boundary.Constants;
+using Hackney.Shared.Processes.Boundary.Request;
+using Hackney.Shared.Processes.Domain;
+using Hackney.Shared.Processes.Factories;
+using Hackney.Shared.Processes.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -18,6 +17,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using JsonSerializer = System.Text.Json.JsonSerializer;
+using Hackney.Shared.Processes.Sns;
 
 namespace ProcessesApi.Tests.V1.E2ETests.Steps
 {
@@ -69,10 +69,10 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
                 verifyData(actual.EventData.OldData.ToString(), processFixture.Process.ToDatabase());
                 verifyData(actual.EventData.NewData.ToString(), dbEntity);
 
-                actual.EventType.Should().Be(ProcessEventConstants.PROCESS_UPDATED_EVENT);
-                actual.SourceDomain.Should().Be(ProcessEventConstants.SOURCE_DOMAIN);
-                actual.SourceSystem.Should().Be(ProcessEventConstants.SOURCE_SYSTEM);
-                actual.Version.Should().Be(ProcessEventConstants.V1_VERSION);
+                actual.EventType.Should().Be(EventConstants.PROCESS_UPDATED_EVENT);
+                actual.SourceDomain.Should().Be(EventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(EventConstants.SOURCE_SYSTEM);
+                actual.Version.Should().Be(EventConstants.V1_VERSION);
 
                 actual.User.Email.Should().Be(TestToken.UserEmail);
                 actual.User.Name.Should().Be(TestToken.UserName);

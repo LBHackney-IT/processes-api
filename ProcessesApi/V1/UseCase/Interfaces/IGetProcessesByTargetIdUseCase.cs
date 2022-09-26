@@ -1,6 +1,6 @@
 using Hackney.Core.DynamoDb;
-using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.Boundary.Response;
+using Hackney.Shared.Processes.Boundary.Request;
+using Hackney.Shared.Processes.Boundary.Response;
 using System.Threading.Tasks;
 
 namespace ProcessesApi.V1.UseCase.Interfaces

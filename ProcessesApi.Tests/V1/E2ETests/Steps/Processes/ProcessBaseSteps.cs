@@ -5,10 +5,9 @@ using Hackney.Core.Testing.Shared.E2E;
 using Hackney.Core.Testing.Sns;
 using Newtonsoft.Json;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
-using ProcessesApi.V1.Boundary.Constants;
-using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.Infrastructure;
-using ProcessesApi.V1.Infrastructure.JWT;
+using Hackney.Shared.Processes.Boundary.Constants;
+using Hackney.Shared.Processes.Boundary.Request;
+using Hackney.Shared.Processes.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,9 +15,10 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Hackney.Shared.Processes.Constants;
+using Hackney.Shared.Processes.Domain.Constants;
 using JsonSerializer = System.Text.Json.JsonSerializer;
-using SharedKeys = Hackney.Shared.Processes.Constants.SharedKeys;
+using SharedKeys = Hackney.Shared.Processes.Domain.Constants.SharedKeys;
+using Hackney.Shared.Processes.Sns;
 
 namespace ProcessesApi.Tests.V1.E2ETests.Steps
 {
@@ -194,10 +194,10 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
                 verifyData(actual.EventData.NewData.ToString(), newState);
                 verifyNewStateData?.Invoke(actual.EventData.NewData.ToString());
 
-                actual.EventType.Should().Be(ProcessEventConstants.PROCESS_UPDATED_EVENT);
-                actual.SourceDomain.Should().Be(ProcessEventConstants.SOURCE_DOMAIN);
-                actual.SourceSystem.Should().Be(ProcessEventConstants.SOURCE_SYSTEM);
-                actual.Version.Should().Be(ProcessEventConstants.V1_VERSION);
+                actual.EventType.Should().Be(EventConstants.PROCESS_UPDATED_EVENT);
+                actual.SourceDomain.Should().Be(EventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(EventConstants.SOURCE_SYSTEM);
+                actual.Version.Should().Be(EventConstants.V1_VERSION);
 
                 actual.User.Email.Should().Be(TestToken.UserEmail);
                 actual.User.Name.Should().Be(TestToken.UserName);
@@ -259,10 +259,10 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
                 verifyData(actual.EventData.NewData.ToString(), newState);
                 verifyNewStateData?.Invoke(actual.EventData.NewData.ToString());
 
-                actual.EventType.Should().Be(ProcessEventConstants.PROCESS_CLOSED_EVENT);
-                actual.SourceDomain.Should().Be(ProcessEventConstants.SOURCE_DOMAIN);
-                actual.SourceSystem.Should().Be(ProcessEventConstants.SOURCE_SYSTEM);
-                actual.Version.Should().Be(ProcessEventConstants.V1_VERSION);
+                actual.EventType.Should().Be(EventConstants.PROCESS_CLOSED_EVENT);
+                actual.SourceDomain.Should().Be(EventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(EventConstants.SOURCE_SYSTEM);
+                actual.Version.Should().Be(EventConstants.V1_VERSION);
 
                 actual.User.Email.Should().Be(TestToken.UserEmail);
                 actual.User.Name.Should().Be(TestToken.UserName);
@@ -317,10 +317,10 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
                 verifyData(actual.EventData.NewData.ToString(), newState);
                 verifyNewStateData?.Invoke(actual.EventData.NewData.ToString());
 
-                actual.EventType.Should().Be(ProcessEventConstants.PROCESS_COMPLETED_EVENT);
-                actual.SourceDomain.Should().Be(ProcessEventConstants.SOURCE_DOMAIN);
-                actual.SourceSystem.Should().Be(ProcessEventConstants.SOURCE_SYSTEM);
-                actual.Version.Should().Be(ProcessEventConstants.V1_VERSION);
+                actual.EventType.Should().Be(EventConstants.PROCESS_COMPLETED_EVENT);
+                actual.SourceDomain.Should().Be(EventConstants.SOURCE_DOMAIN);
+                actual.SourceSystem.Should().Be(EventConstants.SOURCE_SYSTEM);
+                actual.Version.Should().Be(EventConstants.V1_VERSION);
 
                 actual.User.Email.Should().Be(TestToken.UserEmail);
                 actual.User.Name.Should().Be(TestToken.UserName);

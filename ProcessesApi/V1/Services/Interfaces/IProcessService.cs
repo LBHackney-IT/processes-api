@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 using Hackney.Core.JWT;
-using ProcessesApi.V1.Domain;
+using Hackney.Shared.Processes.Domain;
 
 namespace ProcessesApi.V1.Services.Interfaces
 {
