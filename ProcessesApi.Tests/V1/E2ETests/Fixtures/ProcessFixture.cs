@@ -4,16 +4,21 @@ using System.Threading.Tasks;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.SimpleNotificationService;
 using AutoFixture;
-using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Factories;
-using ProcessesApi.V1.Infrastructure;
-using ProcessesApi.V1.Infrastructure.Extensions;
-using ProcessesApi.V1.Constants.SoleToJoint;
-using ProcessesApi.V1.Constants;
-using ProcessesApi.V1.Constants.ChangeOfName;
+using Hackney.Shared.Processes.Boundary.Request;
+using Hackney.Shared.Processes.Domain;
+using Hackney.Shared.Processes.Factories;
+using Hackney.Shared.Processes.Infrastructure;
+using Hackney.Shared.Processes.Infrastructure.Extensions;
 using System.Linq;
 using Hackney.Shared.Person.Domain;
+using Hackney.Shared.Processes.Domain.Constants;
+using Hackney.Shared.Processes.Domain.Constants.ChangeOfName;
+using Hackney.Shared.Processes.Domain.Constants.SoleToJoint;
+using ChangeOfNameKeys = Hackney.Shared.Processes.Domain.Constants.ChangeOfName.ChangeOfNameKeys;
+using ChangeOfNamePermittedTriggers = Hackney.Shared.Processes.Domain.Constants.ChangeOfName.ChangeOfNamePermittedTriggers;
+using SharedKeys = Hackney.Shared.Processes.Domain.Constants.SharedKeys;
+using SharedPermittedTriggers = Hackney.Shared.Processes.Domain.Constants.SharedPermittedTriggers;
+using SoleToJointKeys = Hackney.Shared.Processes.Domain.Constants.SoleToJoint.SoleToJointKeys;
 
 namespace ProcessesApi.Tests.V1.E2E.Fixtures
 {

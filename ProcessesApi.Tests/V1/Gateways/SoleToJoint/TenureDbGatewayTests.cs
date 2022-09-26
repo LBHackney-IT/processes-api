@@ -7,7 +7,6 @@ using Hackney.Shared.Tenure.Infrastructure;
 using Hackney.Shared.Tenure.Factories;
 using Microsoft.Extensions.Logging;
 using Moq;
-using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
 using System;
 using System.Collections.Generic;
@@ -17,7 +16,7 @@ using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Boundary.Requests;
 using Hackney.Shared.Person;
 using System.Linq;
-using ProcessesApi.V1.Infrastructure;
+using Hackney.Shared.Processes.Infrastructure;
 
 namespace ProcessesApi.Tests.V1.Gateways
 {

@@ -7,14 +7,13 @@ using Hackney.Shared.Person.Infrastructure;
 using Hackney.Shared.Person.Factories;
 using Microsoft.Extensions.Logging;
 using Moq;
-using ProcessesApi.V1.Factories;
 using ProcessesApi.V1.Gateways;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
 using Hackney.Shared.Person;
-using ProcessesApi.V1.Infrastructure;
+using Hackney.Shared.Processes.Infrastructure;
 using Hackney.Shared.Person.Boundary.Request;
 
 namespace ProcessesApi.Tests.V1.Gateways

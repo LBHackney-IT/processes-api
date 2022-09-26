@@ -1,9 +1,7 @@
 using Hackney.Core.JWT;
 using Hackney.Core.Sns;
-using ProcessesApi.V1.Constants;
-using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Factories;
-using ProcessesApi.V1.Infrastructure.JWT;
+using Hackney.Shared.Processes.Domain;
+using Hackney.Shared.Processes.Factories;
 using ProcessesApi.V1.Services.Exceptions;
 using ProcessesApi.V1.Services.Interfaces;
 using Stateless;
@@ -12,6 +10,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Hackney.Shared.Processes.Domain.Constants;
+using SharedPermittedTriggers = Hackney.Shared.Processes.Domain.Constants.SharedPermittedTriggers;
+using Hackney.Shared.Processes.Sns;
 
 namespace ProcessesApi.V1.Services
 {
@@ -39,14 +40,11 @@ namespace ProcessesApi.V1.Services
 
         protected List<string> _ignoredTriggersForProcessUpdated;
         protected Dictionary<string, object> _eventData;
-
-        protected ISnsFactory _snsFactory;
         protected ISnsGateway _snsGateway;
         protected Token _token;
 
-        public ProcessService(ISnsFactory snsFactory, ISnsGateway snsGateway)
+        public ProcessService(ISnsGateway snsGateway)
         {
-            _snsFactory = snsFactory;
             _snsGateway = snsGateway;
         }
 
@@ -73,12 +71,12 @@ namespace ProcessesApi.V1.Services
         protected async Task PublishProcessStartedEvent(string additionalEvent = null)
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processStartedSnsMessage = _snsFactory.ProcessStarted(_process, _token);
+            var processStartedSnsMessage = _process.CreateProcessStartedEvent(_token);
             await _snsGateway.Publish(processStartedSnsMessage, processTopicArn).ConfigureAwait(false);
 
             if (additionalEvent is null) return;
 
-            var processEntityMessage = _snsFactory.ProcessStartedAgainstEntity(_process, _token, additionalEvent);
+            var processEntityMessage = _process.CreateProcessStartedAgainstEntityEvent(_token, additionalEvent);
             await _snsGateway.Publish(processEntityMessage, processTopicArn).ConfigureAwait(false);
         }
 
@@ -87,7 +85,7 @@ namespace ProcessesApi.V1.Services
             if (!_ignoredTriggersForProcessUpdated.Contains(transition.Trigger))
             {
                 var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-                var processSnsMessage = _snsFactory.ProcessStateUpdated(transition, _eventData, _token, ProcessEventConstants.PROCESS_UPDATED_EVENT);
+                var processSnsMessage = transition.CreateProcessStateUpdatedEvent(_eventData, EventConstants.PROCESS_UPDATED_EVENT, _token);
 
                 await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
             }
@@ -96,7 +94,7 @@ namespace ProcessesApi.V1.Services
         protected async Task PublishProcessClosedEvent(StateMachine<string, string>.Transition transition)
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = _snsFactory.ProcessStateUpdated(transition, _eventData, _token, ProcessEventConstants.PROCESS_CLOSED_EVENT);
+            var processSnsMessage = transition.CreateProcessStateUpdatedEvent(_eventData, EventConstants.PROCESS_CLOSED_EVENT, _token);
 
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
@@ -104,7 +102,7 @@ namespace ProcessesApi.V1.Services
         protected async Task PublishProcessCompletedEvent(StateMachine<string, string>.Transition transition)
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = _snsFactory.ProcessStateUpdated(transition, _eventData, _token, ProcessEventConstants.PROCESS_COMPLETED_EVENT);
+            var processSnsMessage = transition.CreateProcessStateUpdatedEvent(_eventData, EventConstants.PROCESS_COMPLETED_EVENT, _token);
 
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }

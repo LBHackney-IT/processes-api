@@ -1,7 +1,7 @@
 using Hackney.Core.DynamoDb;
-using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Infrastructure;
+using Hackney.Shared.Processes.Boundary.Request;
+using Hackney.Shared.Processes.Domain;
+using Hackney.Shared.Processes.Infrastructure;
 using System;
 using System.Threading.Tasks;
 

@@ -2,7 +2,7 @@ using Hackney.Core.JWT;
 using Hackney.Core.Sns;
 using Hackney.Shared.Person;
 using Hackney.Shared.Person.Infrastructure;
-using ProcessesApi.V1.Infrastructure;
+using Hackney.Shared.Processes.Infrastructure;
 
 namespace ProcessesApi.V1.Factories
 {

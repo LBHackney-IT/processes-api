@@ -2,6 +2,7 @@ using Hackney.Core.JWT;
 using Hackney.Core.Sns;
 using Hackney.Shared.Person;
 using Hackney.Shared.Person.Infrastructure;
+using Hackney.Shared.Processes.Infrastructure;
 using ProcessesApi.V1.Infrastructure;
 using System;
 

@@ -1,7 +1,7 @@
 using AutoFixture;
 using FluentAssertions;
-using ProcessesApi.V1.Constants;
-using ProcessesApi.V1.Domain;
+using Hackney.Shared.Processes.Domain.Constants;
+using Hackney.Shared.Processes.Domain;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Services.Exceptions;
 using System;

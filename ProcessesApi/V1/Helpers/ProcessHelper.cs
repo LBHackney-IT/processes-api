@@ -1,9 +1,9 @@
-using ProcessesApi.V1.Constants;
-using ProcessesApi.V1.Domain;
+using Hackney.Shared.Processes.Domain;
 using ProcessesApi.V1.Services.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Hackney.Shared.Processes.Domain.Constants;
 
 namespace ProcessesApi.V1.Helpers
 {

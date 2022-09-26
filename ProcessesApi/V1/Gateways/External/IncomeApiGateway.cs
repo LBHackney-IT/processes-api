@@ -4,7 +4,6 @@ using Hackney.Core.Logging;
 using Microsoft.Extensions.Logging;
 using Hackney.Core.Http;
 using ProcessesApi.V1.Domain.Finance;
-
 namespace ProcessesApi.V1.Gateways
 {
     public class IncomeApiGateway : IIncomeApiGateway

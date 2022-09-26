@@ -13,19 +13,21 @@ using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Factories;
 using Hackney.Shared.Tenure.Infrastructure;
 using Moq;
-using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Constants.SoleToJoint;
-using ProcessesApi.V1.Factories;
+using Hackney.Shared.Processes.Domain;
+using Hackney.Shared.Processes.Factories;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Gateways.Exceptions;
 using ProcessesApi.V1.Helpers;
-using ProcessesApi.V1.Infrastructure;
+using Hackney.Shared.Processes.Infrastructure;
 using ProcessesApi.V1.Services.Exceptions;
 using Xunit;
 using ProcessesApi.V1.Domain.Finance;
 using Hackney.Shared.Person.Infrastructure;
 using Hackney.Shared.Person.Boundary.Request;
-using ProcessesApi.V1.Constants.ChangeOfName;
+using Hackney.Shared.Processes.Domain.Constants.ChangeOfName;
+using Hackney.Shared.Processes.Domain.Constants.SoleToJoint;
+using ChangeOfNameKeys = Hackney.Shared.Processes.Domain.Constants.ChangeOfName.ChangeOfNameKeys;
+using ProcessesApi.V1.Factories;
 
 namespace ProcessesApi.Tests.V1.Helpers
 {

@@ -2,12 +2,13 @@ using Hackney.Core.Testing.DynamoDb;
 using Hackney.Core.Testing.Sns;
 using ProcessesApi.Tests.V1.E2E.Fixtures;
 using ProcessesApi.Tests.V1.E2ETests.Steps;
-using ProcessesApi.V1.Constants;
-using ProcessesApi.V1.Constants.ChangeOfName;
-using ProcessesApi.V1.Constants.Shared;
+using Hackney.Shared.Processes.Domain.Constants.ChangeOfName;
+using Hackney.Shared.Processes.Domain.Constants.Shared;
 using System;
+using Hackney.Shared.Processes.Domain.Constants;
 using TestStack.BDDfy;
 using Xunit;
+using SharedPermittedTriggers = Hackney.Shared.Processes.Domain.Constants.SharedPermittedTriggers;
 
 namespace ProcessesApi.Tests.V1.E2E.Stories
 {

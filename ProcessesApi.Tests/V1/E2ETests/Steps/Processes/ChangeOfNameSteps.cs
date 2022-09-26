@@ -1,12 +1,13 @@
 using FluentAssertions;
 using Hackney.Core.Testing.DynamoDb;
 using Hackney.Shared.Person.Infrastructure;
-using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.Constants;
-using ProcessesApi.V1.Constants.ChangeOfName;
-using ProcessesApi.V1.Infrastructure;
+using Hackney.Shared.Processes.Boundary.Request;
+using Hackney.Shared.Processes.Infrastructure;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Hackney.Shared.Processes.Domain.Constants;
+using Hackney.Shared.Processes.Domain.Constants.ChangeOfName;
+using ChangeOfNameKeys = Hackney.Shared.Processes.Domain.Constants.ChangeOfName.ChangeOfNameKeys;
 
 namespace ProcessesApi.Tests.V1.E2ETests.Steps
 {

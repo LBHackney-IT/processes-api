@@ -6,16 +6,17 @@ using Hackney.Core.Middleware;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.Boundary.Response;
-using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Factories;
+using Hackney.Shared.Processes.Boundary.Request;
+using Hackney.Shared.Processes.Boundary.Response;
+using Hackney.Shared.Processes.Domain;
+using Hackney.Shared.Processes.Factories;
 using ProcessesApi.V1.Services.Exceptions;
 using ProcessesApi.V1.UseCase.Exceptions;
 using ProcessesApi.V1.UseCase.Interfaces;
 using System;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using HeaderConstants = Hackney.Shared.Processes.Boundary.Constants.HeaderConstants;
 
 namespace ProcessesApi.V1.Controllers
 {
@@ -90,7 +91,7 @@ namespace ProcessesApi.V1.Controllers
             if (process.VersionNumber.HasValue)
                 eTag = process.VersionNumber.ToString();
 
-            HttpContext.Response.Headers.Add(Boundary.Constants.HeaderConstants.ETag, EntityTagHeaderValue.Parse($"\"{eTag}\"").Tag);
+            HttpContext.Response.Headers.Add(HeaderConstants.ETag, EntityTagHeaderValue.Parse($"\"{eTag}\"").Tag);
 
             return Ok(process.ToResponse());
         }
@@ -197,7 +198,7 @@ namespace ProcessesApi.V1.Controllers
 
         private int? GetIfMatchFromHeader()
         {
-            var header = HttpContext.Request.Headers.GetHeaderValue(Boundary.Constants.HeaderConstants.IfMatch);
+            var header = HttpContext.Request.Headers.GetHeaderValue(HeaderConstants.IfMatch);
 
             if (header == null)
                 return null;

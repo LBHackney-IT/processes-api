@@ -3,18 +3,19 @@ using Hackney.Core.Testing.DynamoDb;
 using Hackney.Shared.Person;
 using Hackney.Shared.Tenure.Domain;
 using Hackney.Shared.Tenure.Infrastructure;
-using ProcessesApi.V1.Boundary.Request;
-using ProcessesApi.V1.Domain;
-using ProcessesApi.V1.Constants.SoleToJoint;
-using ProcessesApi.V1.Infrastructure;
+using Hackney.Shared.Processes.Boundary.Request;
+using Hackney.Shared.Processes.Domain;
+using Hackney.Shared.Processes.Infrastructure;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
-using ProcessesApi.V1.Constants;
+using Hackney.Shared.Processes.Domain.Constants;
 using ProcessesApi.Tests.V1.E2ETests.Steps;
 using Hackney.Core.Testing.Sns;
 using System.Text.Json;
 using System.Collections.Generic;
+using Hackney.Shared.Processes.Domain.Constants.SoleToJoint;
+using SoleToJointKeys = Hackney.Shared.Processes.Domain.Constants.SoleToJoint.SoleToJointKeys;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {

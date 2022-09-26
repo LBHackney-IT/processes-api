@@ -1,17 +1,14 @@
 using System;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2.DataModel;
-using Hackney.Shared.Tenure.Factories;
 using Microsoft.Extensions.Logging;
 using Hackney.Shared.Person.Infrastructure;
 using Hackney.Shared.Person.Factories;
 using Hackney.Shared.Person;
-using ProcessesApi.V1.Infrastructure;
+using Hackney.Shared.Processes.Infrastructure;
 using Hackney.Shared.Person.Boundary.Request;
-using ProcessesApi.V1.UseCase.Exceptions;
 using System.Linq;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace ProcessesApi.V1.Gateways
 {
