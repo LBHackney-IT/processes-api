@@ -14,11 +14,7 @@ using Hackney.Shared.Person.Domain;
 using Hackney.Shared.Processes.Domain.Constants;
 using Hackney.Shared.Processes.Domain.Constants.ChangeOfName;
 using Hackney.Shared.Processes.Domain.Constants.SoleToJoint;
-using ChangeOfNameKeys = Hackney.Shared.Processes.Domain.Constants.ChangeOfName.ChangeOfNameKeys;
-using ChangeOfNamePermittedTriggers = Hackney.Shared.Processes.Domain.Constants.ChangeOfName.ChangeOfNamePermittedTriggers;
-using SharedKeys = Hackney.Shared.Processes.Domain.Constants.SharedKeys;
-using SharedPermittedTriggers = Hackney.Shared.Processes.Domain.Constants.SharedPermittedTriggers;
-using SoleToJointKeys = Hackney.Shared.Processes.Domain.Constants.SoleToJoint.SoleToJointKeys;
+using Hackney.Shared.Processes.Boundary.Request.V1;
 
 namespace ProcessesApi.Tests.V1.E2E.Fixtures
 {

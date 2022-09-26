@@ -38,7 +38,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json.Serialization;
-using ProcessesApi.V1;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Factories;
 
@@ -189,10 +188,12 @@ namespace ProcessesApi
         private static void RegisterUseCases(IServiceCollection services)
         {
             services.AddScoped<IGetByIdUseCase, GetProcessByIdUseCase>();
-            services.AddScoped<ICreateProcessUseCase, CreateProcessUseCase>();
+            services.AddScoped<V1.UseCase.Interfaces.ICreateProcessUseCase, V1.UseCase.CreateProcessUseCase>();
             services.AddScoped<IUpdateProcessUseCase, UpdateProcessUseCase>();
             services.AddScoped<IUpdateProcessByIdUseCase, UpdateProcessByIdUseCase>();
             services.AddScoped<IGetProcessesByTargetIdUseCase, GetProcessesByTargetIdUseCase>();
+
+            services.AddScoped<V2.UseCase.Interfaces.ICreateProcessUseCase, V2.UseCase.CreateProcessUseCase>();
         }
 
         private static void RegisterHelpers(IServiceCollection services)

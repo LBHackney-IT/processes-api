@@ -17,6 +17,7 @@ using System;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using HeaderConstants = Hackney.Shared.Processes.Boundary.Constants.HeaderConstants;
+using Hackney.Shared.Processes.Boundary.Request.V1;
 
 namespace ProcessesApi.V1.Controllers
 {
