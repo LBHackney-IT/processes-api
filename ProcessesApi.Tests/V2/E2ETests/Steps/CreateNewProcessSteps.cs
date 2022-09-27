@@ -11,17 +11,17 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Hackney.Core.Testing.DynamoDb;
-using ProcessesApi.Tests.V1.E2E.Fixtures;
+using ProcessesApi.Tests.V2.E2E.Fixtures;
 using Hackney.Core.Testing.Sns;
 using Hackney.Core.Sns;
 using Hackney.Shared.Processes.Domain.Constants.ChangeOfName;
 using Hackney.Shared.Processes.Domain.Constants.SoleToJoint;
-using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
+using ProcessesApi.Tests.V2.E2ETests.Steps.Constants;
 using Hackney.Shared.Processes.Factories;
 using Hackney.Shared.Processes.Sns;
-using Hackney.Shared.Processes.Boundary.Request.V1;
+using Hackney.Shared.Processes.Boundary.Request.V2;
 
-namespace ProcessesApi.Tests.V1.E2E.Steps
+namespace ProcessesApi.Tests.V2.E2E.Steps
 {
     public class CreateNewProcessSteps : BaseSteps
     {
@@ -35,7 +35,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         public async Task WhenACreateProcessRequestIsMade(CreateProcess request, ProcessName processName)
         {
             var token = TestToken.Value;
-            var uri = new Uri($"api/v1/process/{processName}/", UriKind.Relative);
+            var uri = new Uri($"api/v2/process/{processName}/", UriKind.Relative);
             var message = new HttpRequestMessage(HttpMethod.Post, uri);
             message.Content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
             message.Headers.Add("Authorization", token);
@@ -57,7 +57,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             dbRecord.TargetId.Should().Be(request.TargetId);
             dbRecord.RelatedEntities.Should().BeEquivalentTo(request.RelatedEntities);
             dbRecord.ProcessName.Should().Be(processName);
-            dbRecord.PatchAssignment.Should().BeNull();
+            dbRecord.PatchAssignment.Should().BeEquivalentTo(request.PatchAssignment);
 
             dbRecord.CurrentState.State.Should().Be(state);
             dbRecord.CurrentState.PermittedTriggers.Should().BeEquivalentTo(permittedTriggers);

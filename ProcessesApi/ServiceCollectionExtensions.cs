@@ -5,7 +5,7 @@ using Hackney.Shared.Processes.Domain;
 using ProcessesApi.V1.Services;
 using ProcessesApi.V1.Services.Interfaces;
 
-namespace ProcessesApi.V1
+namespace ProcessesApi
 {
     public static class ServiceCollectionExtensions
     {

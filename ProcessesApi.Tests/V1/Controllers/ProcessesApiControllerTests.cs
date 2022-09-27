@@ -25,6 +25,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
+using Hackney.Shared.Processes.Boundary.Request.V1;
 
 namespace ProcessesApi.Tests.V1.Controllers
 {
