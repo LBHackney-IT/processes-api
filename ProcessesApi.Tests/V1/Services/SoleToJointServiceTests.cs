@@ -161,11 +161,12 @@ namespace ProcessesApi.Tests.V1.Services
             process.RelatedEntities.Add(new RelatedEntity
             {
                 Id = Guid.NewGuid(),
-                TargetType = TargetType.tenure,
+                TargetType = TargetType.person,
                 SubType = SubType.tenant,
                 Description = "tenantId"
             });
-            _mockDbOperationsHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, process.RelatedEntities.FirstOrDefault().Id)).ReturnsAsync(true);
+            var tenantId = process.RelatedEntities.FirstOrDefault().Id;
+            _mockDbOperationsHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(true);
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 
@@ -192,12 +193,13 @@ namespace ProcessesApi.Tests.V1.Services
             process.RelatedEntities.Add(new RelatedEntity
             {
                 Id = Guid.NewGuid(),
-                TargetType = TargetType.tenure,
+                TargetType = TargetType.person,
                 SubType = SubType.tenant,
                 Description = "tenantId"
             });
+            var tenantId = process.RelatedEntities.FirstOrDefault().Id;
 
-            _mockDbOperationsHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, process.RelatedEntities.FirstOrDefault().Id)).ReturnsAsync(false);
+            _mockDbOperationsHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(false);
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 
@@ -208,7 +210,7 @@ namespace ProcessesApi.Tests.V1.Services
                                                  new List<string>() { SharedPermittedTriggers.CloseProcess });
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
 
-            _mockDbOperationsHelper.Verify(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, process.RelatedEntities.FirstOrDefault().Id), Times.Once());
+            _mockDbOperationsHelper.Verify(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId), Times.Once());
             _mockDbOperationsHelper.Verify(x => x.AddIncomingTenantToRelatedEntities(triggerObject.FormData, process), Times.Once);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.SelectTenants, SoleToJointStates.AutomatedChecksFailed);
         }
@@ -232,12 +234,14 @@ namespace ProcessesApi.Tests.V1.Services
             process.RelatedEntities.Add(new RelatedEntity
             {
                 Id = Guid.NewGuid(),
-                TargetType = TargetType.tenure,
+                TargetType = TargetType.person,
                 SubType = SubType.tenant,
                 Description = "tenantId"
             });
+            var tenantId = process.RelatedEntities.FirstOrDefault().Id;
 
-            _mockDbOperationsHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, process.RelatedEntities.FirstOrDefault().Id)).ReturnsAsync(true);
+
+            _mockDbOperationsHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(true);
 
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
@@ -249,7 +253,7 @@ namespace ProcessesApi.Tests.V1.Services
                                                  new List<string>() { SoleToJointPermittedTriggers.CheckManualEligibility, SharedPermittedTriggers.CancelProcess });
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
 
-            _mockDbOperationsHelper.Verify(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, process.RelatedEntities.FirstOrDefault().Id), Times.Once());
+            _mockDbOperationsHelper.Verify(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId), Times.Once());
             _mockDbOperationsHelper.Verify(x => x.AddIncomingTenantToRelatedEntities(triggerObject.FormData, process), Times.Once);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.SelectTenants, SoleToJointStates.AutomatedChecksPassed);
         }

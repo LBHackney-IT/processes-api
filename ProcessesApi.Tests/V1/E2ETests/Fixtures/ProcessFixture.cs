@@ -129,7 +129,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             Process.RelatedEntities.Add(new RelatedEntity
             {
                 Id = TenantId,
-                TargetType = TargetType.tenure,
+                TargetType = TargetType.person,
                 SubType = SubType.tenant,
                 Description = "tenantId"
             });

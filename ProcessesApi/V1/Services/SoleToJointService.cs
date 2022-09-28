@@ -46,13 +46,13 @@ namespace ProcessesApi.V1.Services
         {
             var processRequest = transition.Parameters[0] as ProcessTrigger;
             var process = transition.Parameters[1] as Process;
-            var relatedEntity = process.RelatedEntities.Where(x => x.SubType == SubType.tenant);
+            var tenantDetails = process.RelatedEntities.Find(x => x.SubType == SubType.tenant);
             var formData = processRequest.FormData;
             formData.ValidateKeys(new List<string>() { SoleToJointKeys.IncomingTenantId });
 
             var isEligible = await _dbOperationsHelper.CheckAutomatedEligibility(_process.TargetId,
                                                                                     Guid.Parse(processRequest.FormData[SoleToJointKeys.IncomingTenantId].ToString()),
-                                                                                    relatedEntity.FirstOrDefault().Id)
+                                                                                    tenantDetails.Id)
                                                                                     .ConfigureAwait(false);
 
             processRequest.Trigger = isEligible ? SoleToJointInternalTriggers.EligibiltyPassed : SoleToJointInternalTriggers.EligibiltyFailed;
