@@ -4,12 +4,12 @@ using Hackney.Shared.Processes.Domain.Constants;
 using Hackney.Shared.Processes.Domain;
 using ProcessesApi.V1.Gateways;
 using ProcessesApi.V1.Services.Interfaces;
-using ProcessesApi.V1.UseCase.Interfaces;
+using ProcessesApi.V2.UseCase.Interfaces;
 using System;
 using System.Threading.Tasks;
-using Hackney.Shared.Processes.Boundary.Request.V1;
+using Hackney.Shared.Processes.Boundary.Request.V2;
 
-namespace ProcessesApi.V1.UseCase
+namespace ProcessesApi.V2.UseCase
 {
     public class CreateProcessUseCase : ICreateProcessUseCase
     {
@@ -26,7 +26,7 @@ namespace ProcessesApi.V1.UseCase
         [LogCall]
         public async Task<Process> Execute(CreateProcess request, ProcessName processName, Token token)
         {
-            var process = Process.Create(request.TargetId, request.TargetType, request.RelatedEntities, processName);
+            var process = Process.Create(request.TargetId, request.TargetType, request.RelatedEntities, processName, request.PatchAssignment);
 
             var triggerObject = ProcessTrigger.Create(process.Id, SharedPermittedTriggers.StartApplication, request.FormData, request.Documents);
 

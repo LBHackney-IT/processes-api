@@ -8,10 +8,10 @@ using ProcessesApi.V1.Services.Interfaces;
 using System;
 using System.Threading.Tasks;
 using Xunit;
-using ProcessesApi.V1.UseCase;
-using Hackney.Shared.Processes.Boundary.Request.V1;
+using ProcessesApi.V2.UseCase;
+using Hackney.Shared.Processes.Boundary.Request.V2;
 
-namespace ProcessesApi.Tests.V1.UseCase
+namespace ProcessesApi.Tests.V2.UseCase
 {
     [Collection("LogCall collection")]
     public class CreateProcessUseCaseTests
@@ -47,7 +47,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             response.TargetId.Should().Be(request.TargetId);
             response.ProcessName.Should().Be(processName);
             response.RelatedEntities.Should().BeEquivalentTo(request.RelatedEntities);
-            response.PatchAssignment.Should().BeNull();
+            response.PatchAssignment.Should().Be(request.PatchAssignment);
         }
 
         [Fact]

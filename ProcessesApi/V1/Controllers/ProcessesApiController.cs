@@ -17,6 +17,7 @@ using System;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using HeaderConstants = Hackney.Shared.Processes.Boundary.Constants.HeaderConstants;
+using Hackney.Shared.Processes.Boundary.Request.V1;
 
 namespace ProcessesApi.V1.Controllers
 {
@@ -114,7 +115,7 @@ namespace ProcessesApi.V1.Controllers
             try
             {
                 var result = await _createProcessUseCase.Execute(request, processName, token).ConfigureAwait(false);
-                return Created(new Uri($"api/v1/processes/{processName}/{result.Id}", UriKind.Relative), result);
+                return Created(new Uri($"api/v1/process/{processName}/{result.Id}", UriKind.Relative), result);
             }
             catch (Exception ex) when (ex is FormDataInvalidException
                                       || ex is InvalidTriggerException)
