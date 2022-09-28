@@ -37,7 +37,7 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
             relatedEntity.Should().NotBeNull();
             relatedEntity.TargetType.Should().Be(TargetType.person);
             relatedEntity.SubType.Should().Be(SubType.householdMember);
-            //relatedEntity.Description.Should().Be($"{person.FirstName} {person.Surname}");
+            relatedEntity.Description.Should().Be($"{person.FirstName} {person.Surname}");
         }
 
         public async Task ThenTheProcessStateIsUpdatedToAutomatedEligibilityChecksPassed(UpdateProcessQuery request)
