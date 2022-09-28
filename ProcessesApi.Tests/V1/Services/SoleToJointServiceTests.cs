@@ -66,7 +66,7 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SharedStates.DocumentsRequestedDes, SharedPermittedTriggers.CloseProcess, new string[] { SharedKeys.HasNotifiedResident })]
         [InlineData(SoleToJointStates.TenureUpdated, SharedPermittedTriggers.CompleteProcess, new string[] { SharedKeys.HasNotifiedResident })]
 
-        [InlineData(SoleToJointStates.SelectTenants, SoleToJointPermittedTriggers.CheckAutomatedEligibility, new string[] { SoleToJointKeys.IncomingTenantId, SoleToJointKeys.TenantId })]
+        [InlineData(SoleToJointStates.SelectTenants, SoleToJointPermittedTriggers.CheckAutomatedEligibility, new string[] { SoleToJointKeys.IncomingTenantId })]
         [InlineData(SoleToJointStates.AutomatedChecksPassed, SoleToJointPermittedTriggers.CheckManualEligibility, new string[] { SoleToJointKeys.BR11, SoleToJointKeys.BR12, SoleToJointKeys.BR13,
                                                                                                                                 SoleToJointKeys.BR15, SoleToJointKeys.BR16, SoleToJointKeys.BR7, SoleToJointKeys.BR8, SoleToJointKeys.BR9 })]
         [InlineData(SoleToJointStates.ManualChecksPassed, SoleToJointPermittedTriggers.CheckTenancyBreach, new string[] { SoleToJointKeys.BR5, SoleToJointKeys.BR10, SoleToJointKeys.BR17, SoleToJointKeys.BR18 })]
@@ -152,16 +152,20 @@ namespace ProcessesApi.Tests.V1.Services
             var process = CreateProcessWithCurrentState(SoleToJointStates.SelectTenants);
 
             var incomingTenantId = Guid.NewGuid();
-            var tenantId = Guid.NewGuid();
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.CheckAutomatedEligibility,
                                                      new Dictionary<string, object>
                                                     {
-                                                        { SoleToJointKeys.IncomingTenantId, incomingTenantId },
-                                                        { SoleToJointKeys.TenantId, tenantId },
+                                                        { SoleToJointKeys.IncomingTenantId, incomingTenantId }
                                                     });
-
-            _mockDbOperationsHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(true);
+            process.RelatedEntities.Add(new RelatedEntity
+            {
+                Id = Guid.NewGuid(),
+                TargetType = TargetType.tenure,
+                SubType = SubType.tenant,
+                Description = "tenantId"
+            });
+            _mockDbOperationsHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, process.RelatedEntities.FirstOrDefault().Id)).ReturnsAsync(true);
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 
@@ -176,18 +180,24 @@ namespace ProcessesApi.Tests.V1.Services
             var process = CreateProcessWithCurrentState(SoleToJointStates.SelectTenants);
 
             var incomingTenantId = Guid.NewGuid();
-            var tenantId = Guid.NewGuid();
             var formData = new Dictionary<string, object>
             {
                 { SoleToJointKeys.IncomingTenantId, incomingTenantId },
-                { SoleToJointKeys.TenantId, tenantId },
             };
 
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.CheckAutomatedEligibility,
                                                      formData);
 
-            _mockDbOperationsHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(false);
+            process.RelatedEntities.Add(new RelatedEntity
+            {
+                Id = Guid.NewGuid(),
+                TargetType = TargetType.tenure,
+                SubType = SubType.tenant,
+                Description = "tenantId"
+            });
+
+            _mockDbOperationsHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, process.RelatedEntities.FirstOrDefault().Id)).ReturnsAsync(false);
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
 
@@ -198,7 +208,7 @@ namespace ProcessesApi.Tests.V1.Services
                                                  new List<string>() { SharedPermittedTriggers.CloseProcess });
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
 
-            _mockDbOperationsHelper.Verify(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId), Times.Once());
+            _mockDbOperationsHelper.Verify(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, process.RelatedEntities.FirstOrDefault().Id), Times.Once());
             _mockDbOperationsHelper.Verify(x => x.AddIncomingTenantToRelatedEntities(triggerObject.FormData, process), Times.Once);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.SelectTenants, SoleToJointStates.AutomatedChecksFailed);
         }
@@ -210,18 +220,24 @@ namespace ProcessesApi.Tests.V1.Services
             var process = CreateProcessWithCurrentState(SoleToJointStates.SelectTenants);
 
             var incomingTenantId = Guid.NewGuid();
-            var tenantId = Guid.NewGuid();
             var formData = new Dictionary<string, object>
             {
                 { SoleToJointKeys.IncomingTenantId, incomingTenantId },
-                { SoleToJointKeys.TenantId, tenantId },
             };
 
             var triggerObject = CreateProcessTrigger(process,
                                                      SoleToJointPermittedTriggers.CheckAutomatedEligibility,
                                                      formData);
 
-            _mockDbOperationsHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId)).ReturnsAsync(true);
+            process.RelatedEntities.Add(new RelatedEntity
+            {
+                Id = Guid.NewGuid(),
+                TargetType = TargetType.tenure,
+                SubType = SubType.tenant,
+                Description = "tenantId"
+            });
+
+            _mockDbOperationsHelper.Setup(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, process.RelatedEntities.FirstOrDefault().Id)).ReturnsAsync(true);
 
             // Act
             await _classUnderTest.Process(triggerObject, process, _token).ConfigureAwait(false);
@@ -233,7 +249,7 @@ namespace ProcessesApi.Tests.V1.Services
                                                  new List<string>() { SoleToJointPermittedTriggers.CheckManualEligibility, SharedPermittedTriggers.CancelProcess });
             process.PreviousStates.LastOrDefault().State.Should().Be(SoleToJointStates.SelectTenants);
 
-            _mockDbOperationsHelper.Verify(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, tenantId), Times.Once());
+            _mockDbOperationsHelper.Verify(x => x.CheckAutomatedEligibility(process.TargetId, incomingTenantId, process.RelatedEntities.FirstOrDefault().Id), Times.Once());
             _mockDbOperationsHelper.Verify(x => x.AddIncomingTenantToRelatedEntities(triggerObject.FormData, process), Times.Once);
             VerifyThatProcessUpdatedEventIsTriggered(SoleToJointStates.SelectTenants, SoleToJointStates.AutomatedChecksPassed);
         }

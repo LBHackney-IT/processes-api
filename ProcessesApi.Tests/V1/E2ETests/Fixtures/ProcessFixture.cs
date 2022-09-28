@@ -124,7 +124,15 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public async Task GivenASoleToJointProcessExistsWithoutRelatedEntities(string state)
         {
             createProcess(state, ProcessName.soletojoint);
+
             Process.RelatedEntities = new List<RelatedEntity>();
+            Process.RelatedEntities.Add(new RelatedEntity
+            {
+                Id = TenantId,
+                TargetType = TargetType.tenure,
+                SubType = SubType.tenant,
+                Description = "tenantId"
+            });
 
             await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
             Process.VersionNumber = 0;
@@ -198,7 +206,6 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         {
             GivenAnUpdateProcessRequest(SoleToJointPermittedTriggers.CheckAutomatedEligibility);
             UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.IncomingTenantId, IncomingTenantId);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.TenantId, TenantId);
         }
 
         public void GivenACheckAutomatedEligibilityRequestWithMissingData()
