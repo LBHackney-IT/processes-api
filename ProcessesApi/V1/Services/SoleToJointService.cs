@@ -16,6 +16,7 @@ using SoleToJointInternalTriggers = Hackney.Shared.Processes.Domain.Constants.So
 using SoleToJointKeys = Hackney.Shared.Processes.Domain.Constants.SoleToJoint.SoleToJointKeys;
 using SoleToJointPermittedTriggers = Hackney.Shared.Processes.Domain.Constants.SoleToJoint.SoleToJointPermittedTriggers;
 using Hackney.Shared.Processes.Sns;
+using System.Linq;
 
 namespace ProcessesApi.V1.Services
 {
@@ -44,13 +45,15 @@ namespace ProcessesApi.V1.Services
         private async Task CheckAutomatedEligibility(StateMachine<string, string>.Transition transition)
         {
             var processRequest = transition.Parameters[0] as ProcessTrigger;
+            var process = transition.Parameters[1] as Process;
+            var tenantDetails = process.RelatedEntities.Find(x => x.SubType == SubType.tenant);
             var formData = processRequest.FormData;
-            formData.ValidateKeys(new List<string>() { SoleToJointKeys.IncomingTenantId, SoleToJointKeys.TenantId });
+            formData.ValidateKeys(new List<string>() { SoleToJointKeys.IncomingTenantId });
 
             var isEligible = await _dbOperationsHelper.CheckAutomatedEligibility(_process.TargetId,
                                                                                     Guid.Parse(processRequest.FormData[SoleToJointKeys.IncomingTenantId].ToString()),
-                                                                                    Guid.Parse(processRequest.FormData[SoleToJointKeys.TenantId].ToString())
-                                                                                   ).ConfigureAwait(false);
+                                                                                    tenantDetails.Id)
+                                                                                    .ConfigureAwait(false);
 
             processRequest.Trigger = isEligible ? SoleToJointInternalTriggers.EligibiltyPassed : SoleToJointInternalTriggers.EligibiltyFailed;
 
