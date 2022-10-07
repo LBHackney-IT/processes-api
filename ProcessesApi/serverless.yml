@@ -1,7 +1,7 @@
 service: processes-api
 provider:
   name: aws
-  runtime: dotnetcore3.1
+  runtime: dotnet6
   memorySize: 2048
   tracing:
     lambda: true
@@ -15,7 +15,7 @@ plugins:
   - '@serverless/safeguards-plugin'
 
 package:
-  artifact: ./bin/release/netcoreapp3.1/processes-api.zip
+  artifact: ./bin/release/net6.0/processes-api.zip
 
 functions:
   ProcessesApi:
