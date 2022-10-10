@@ -64,8 +64,8 @@ namespace ProcessesApi.Tests.V2.E2E.Steps
             // TODO: Add test for assignment when implemented
             dbRecord.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(request.FormData);
             dbRecord.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(request.Documents);
-            dbRecord.CurrentState.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
-            dbRecord.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            dbRecord.CurrentState.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMilliseconds(2000));
+            dbRecord.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMilliseconds(2000));
 
             dbRecord.PreviousStates.Should().BeEmpty();
             // Cleanup
@@ -94,7 +94,7 @@ namespace ProcessesApi.Tests.V2.E2E.Steps
             Action<EntityEventSns> verifyFunc = (actual) =>
             {
                 actual.CorrelationId.Should().NotBeEmpty();
-                actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
+                actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMilliseconds(2000));
                 actual.EntityId.Should().Be(dbRecord.Id);
 
                 var expected = dbRecord.ToDomain();

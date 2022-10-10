@@ -90,7 +90,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         }
 
         [Fact]
-        public void GetPersonByIdExceptionIsThrown()
+        public async Task GetPersonByIdExceptionIsThrown()
         {
             // Arrange
             var mockDynamoDb = new Mock<IDynamoDBContext>();
@@ -104,7 +104,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             // Act
             Func<Task<Person>> func = async () => await _classUnderTest.GetPersonById(id).ConfigureAwait(false);
             // Assert
-            func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
+            (await func.Should().ThrowAsync<ApplicationException>()).WithMessage(exception.Message);
             mockDynamoDb.Verify(x => x.LoadAsync<PersonDbEntity>(id, default), Times.Once);
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Person ID: {id}", Times.Once());
         }

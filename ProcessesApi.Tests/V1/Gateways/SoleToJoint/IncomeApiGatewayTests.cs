@@ -83,7 +83,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         }
 
         [Fact]
-        public void GetPaymentAgreementsByTenancyReferenceExceptionThrown()
+        public async Task GetPaymentAgreementsByTenancyReferenceExceptionThrown()
         {
             // Arrange
             var reference = _fixture.Create<String>();
@@ -92,9 +92,9 @@ namespace ProcessesApi.Tests.V1.Gateways
                            .ThrowsAsync(new Exception(exMessage));
 
             // Act + Assert
-            _classUnderTest
+            (await _classUnderTest
                 .Invoking(cut => cut.GetPaymentAgreementsByTenancyReference(reference, Guid.NewGuid()))
-                .Should().Throw<Exception>().WithMessage(exMessage);
+                .Should().ThrowAsync<Exception>()).WithMessage(exMessage);
         }
 
         [Fact]
@@ -123,7 +123,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         }
 
         [Fact]
-        public void GetTenancyByReferenceExceptionThrown()
+        public async Task GetTenancyByReferenceExceptionThrown()
         {
             // Arrange
             var reference = _fixture.Create<String>();
@@ -132,9 +132,9 @@ namespace ProcessesApi.Tests.V1.Gateways
                            .ThrowsAsync(new Exception(exMessage));
 
             // Act + Assert
-            _classUnderTest
+            (await _classUnderTest
                 .Invoking(cut => cut.GetTenancyByReference(reference, Guid.NewGuid()))
-                .Should().Throw<Exception>().WithMessage(exMessage);
+                .Should().ThrowAsync<Exception>()).WithMessage(exMessage);
         }
     }
 }

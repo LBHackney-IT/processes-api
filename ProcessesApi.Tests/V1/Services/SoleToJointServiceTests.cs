@@ -593,7 +593,7 @@ namespace ProcessesApi.Tests.V1.Services
         }
 
         [Fact]
-        public void ThrowsFormDataInvalidExceptionOnTenureInvestigationWhenRecommendationIsNotOneOfCorrectValues()
+        public async Task ThrowsFormDataInvalidExceptionOnTenureInvestigationWhenRecommendationIsNotOneOfCorrectValues()
         {
             // Arrange
             var process = CreateProcessWithCurrentState(SharedStates.ApplicationSubmitted);
@@ -615,9 +615,9 @@ namespace ProcessesApi.Tests.V1.Services
                                                     invalidRecommendation);
 
             // Act & assert
-            _classUnderTest
+            (await _classUnderTest
                 .Invoking(cut => cut.Process(trigger, process, _token))
-                .Should().Throw<FormDataValueInvalidException>().WithMessage(expectedErrorMessage);
+                .Should().ThrowAsync<FormDataValueInvalidException>()).WithMessage(expectedErrorMessage);
         }
 
         #endregion
@@ -748,7 +748,7 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SharedStates.TenureInvestigationFailed)]
         [InlineData(SharedStates.InterviewScheduled)]
         [InlineData(SharedStates.InterviewRescheduled)]
-        public void ThrowsFormDataInvalidExceptionOnHOApprovalWhenRecommendationIsNotOneOfCorrectValues(string initialState)
+        public async Task ThrowsFormDataInvalidExceptionOnHOApprovalWhenRecommendationIsNotOneOfCorrectValues(string initialState)
         {
             // Arrange
             var process = CreateProcessWithCurrentState(initialState);
@@ -772,9 +772,9 @@ namespace ProcessesApi.Tests.V1.Services
                                                     invalidRecommendation);
 
             // Act & assert
-            _classUnderTest
+            (await _classUnderTest
                 .Invoking(cut => cut.Process(trigger, process, _token))
-                .Should().Throw<FormDataInvalidException>().WithMessage(expectedErrorMessage);
+                .Should().ThrowAsync<FormDataInvalidException>()).WithMessage(expectedErrorMessage);
         }
 
         #endregion
@@ -876,7 +876,7 @@ namespace ProcessesApi.Tests.V1.Services
 
 
         [Fact]
-        public void ThrowsErrorIfDbOperationsHelperThrowsErrorInTenureUpdatedStep()
+        public async Task ThrowsErrorIfDbOperationsHelperThrowsErrorInTenureUpdatedStep()
         {
             // Arrange
             var process = CreateProcessWithCurrentState(SharedStates.TenureAppointmentScheduled);
@@ -888,8 +888,8 @@ namespace ProcessesApi.Tests.V1.Services
             _mockDbOperationsHelper.Setup(x => x.UpdateTenures(process, _token, formData)).Throws(new Exception("Test Exception"));
 
             // Act + Assert
-            _classUnderTest.Invoking(x => x.Process(triggerObject, process, _token))
-                           .Should().Throw<Exception>();
+            await _classUnderTest.Invoking(x => x.Process(triggerObject, process, _token))
+                           .Should().ThrowAsync<Exception>();
         }
 
         [Fact]

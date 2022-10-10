@@ -179,7 +179,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         }
 
         [Fact]
-        public void GetTenureByIdExceptionIsThrown()
+        public async Task GetTenureByIdExceptionIsThrown()
         {
             // Arrange
             var mockDynamoDb = new Mock<IDynamoDBContext>();
@@ -193,7 +193,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             // Act
             Func<Task<TenureInformation>> func = async () => await _classUnderTest.GetTenureById(id).ConfigureAwait(false);
             // Assert
-            func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
+            (await func.Should().ThrowAsync<ApplicationException>()).WithMessage(exception.Message);
             mockDynamoDb.Verify(x => x.LoadAsync<TenureInformationDb>(id, default), Times.Once);
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.LoadAsync for Tenure ID: {id}", Times.Once());
         }

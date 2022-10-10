@@ -74,7 +74,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         [InlineData(null)]
         [InlineData("")]
         [InlineData("some-value")]
-        public void GetByTargetIdExceptionIsThrown(string paginationToken)
+        public async Task GetByTargetIdExceptionIsThrown(string paginationToken)
         {
             // Arrange
             var id = Guid.NewGuid();
@@ -83,9 +83,9 @@ namespace ProcessesApi.Tests.V1.UseCase
             _mockGateway.Setup(x => x.GetProcessesByTargetId(query)).ThrowsAsync(exception);
 
             // Act + Assert
-            _classUnderTest.Invoking(x => x.Execute(query))
+            (await _classUnderTest.Invoking(x => x.Execute(query))
                            .Should()
-                           .Throw<ApplicationException>()
+                           .ThrowAsync<ApplicationException>())
                            .WithMessage(exception.Message);
         }
     }

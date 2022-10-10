@@ -71,7 +71,7 @@ namespace ProcessesApi.Tests.V2.Controllers
         }
 
         [Fact]
-        public void CreateNewProcessExceptionIsThrown()
+        public async Task CreateNewProcessExceptionIsThrown()
         {
             var request = _fixture.Create<CreateProcess>();
             var processName = ProcessName.soletojoint;
@@ -79,7 +79,7 @@ namespace ProcessesApi.Tests.V2.Controllers
             _mockCreateProcessUseCase.Setup(x => x.Execute(request, processName, It.IsAny<Token>())).ThrowsAsync(exception);
 
             Func<Task<IActionResult>> func = async () => await _classUnderTest.CreateNewProcess(request, processName).ConfigureAwait(false);
-            func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
+            (await func.Should().ThrowAsync<ApplicationException>()).WithMessage(exception.Message);
         }
     }
 }

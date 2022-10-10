@@ -63,7 +63,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         }
 
         [Fact]
-        public void UpdateProcessThrowsErrorOnVersionConflict()
+        public async Task UpdateProcessThrowsErrorOnVersionConflict()
         {
             // Arrange
             var process = CreateProcessInInitialState();
@@ -75,14 +75,14 @@ namespace ProcessesApi.Tests.V1.UseCase
             _mockGateway.Setup(x => x.GetProcessById(process.Id)).ReturnsAsync(process);
 
             // Act + Assert
-            _classUnderTest.Invoking(x => x.Execute(request, requestObject, suppliedVersion, token))
+            (await _classUnderTest.Invoking(x => x.Execute(request, requestObject, suppliedVersion, token))
                            .Should()
-                           .Throw<VersionNumberConflictException>()
+                           .ThrowAsync<VersionNumberConflictException>())
                            .WithMessage($"The version number supplied ({suppliedVersion}) does not match the current value on the entity ({0}).");
         }
 
         [Fact]
-        public void UpdateProcessExceptionIsThrown()
+        public async Task UpdateProcessExceptionIsThrown()
         {
             //Arrange
             var process = CreateProcessInInitialState();
@@ -97,7 +97,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             Func<Task<Process>> func = async () => await _classUnderTest.Execute(request, requestObject, 0, token).ConfigureAwait(false);
 
             //Assert
-            func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
+            (await func.Should().ThrowAsync<ApplicationException>()).WithMessage(exception.Message);
         }
     }
 }

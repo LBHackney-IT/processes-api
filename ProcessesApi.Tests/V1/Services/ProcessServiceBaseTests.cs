@@ -89,8 +89,8 @@ namespace ProcessesApi.Tests.V1.Services
             process.CurrentState.PermittedTriggers.Should().BeEquivalentTo(expectedTriggers);
             process.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(triggerObject.FormData);
             process.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(triggerObject.Documents);
-            process.CurrentState.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
-            process.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            process.CurrentState.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMilliseconds(2000));
+            process.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMilliseconds(2000));
         }
 
         protected void VerifyThatProcessUpdatedEventIsTriggered(string oldState, string newState)
@@ -101,7 +101,7 @@ namespace ProcessesApi.Tests.V1.Services
             (_lastSnsEvent.EventData.NewData as ProcessStateChangeData).State.Should().Be(newState);
         }
 
-        protected void ShouldThrowFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
+        protected async Task ShouldThrowFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
         {
             // Arrange
             var process = CreateProcessWithCurrentState(initialState);
@@ -112,8 +112,8 @@ namespace ProcessesApi.Tests.V1.Services
 
             var expectedErrorMessage = $"The request's FormData is invalid: The form data keys supplied () do not include the expected values ({String.Join(", ", expectedFormDataKeys)}).";
             // Act + Assert
-            _classUnderTest.Invoking(x => x.Process(triggerObject, process, _token))
-                           .Should().Throw<FormDataNotFoundException>().WithMessage(expectedErrorMessage);
+            (await _classUnderTest.Invoking(x => x.Process(triggerObject, process, _token))
+                           .Should().ThrowAsync<FormDataNotFoundException>()).WithMessage(expectedErrorMessage);
         }
 
         protected async Task ProcessStateShouldUpdateToProcessClosedAndEventIsRaised(string fromState)

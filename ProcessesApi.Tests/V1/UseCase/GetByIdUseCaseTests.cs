@@ -55,7 +55,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         }
 
         [Fact]
-        public void GetProcessByIdExceptionIsThrown()
+        public async Task GetProcessByIdExceptionIsThrown()
         {
             var id = Guid.NewGuid();
             var exception = new ApplicationException("Test Exception");
@@ -63,7 +63,7 @@ namespace ProcessesApi.Tests.V1.UseCase
             var query = ConstructQuery(id);
 
             Func<Task<Process>> func = async () => await _classUnderTest.Execute(query).ConfigureAwait(false);
-            func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
+            (await func.Should().ThrowAsync<ApplicationException>()).WithMessage(exception.Message);
         }
     }
 }
