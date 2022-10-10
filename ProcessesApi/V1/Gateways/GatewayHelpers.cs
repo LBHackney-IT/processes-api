@@ -11,7 +11,7 @@ namespace ProcessesApi.V1.Gateways
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 WriteIndented = true,
-                IgnoreNullValues = true
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
             };
             options.Converters.Add(new JsonStringEnumConverter());
 
