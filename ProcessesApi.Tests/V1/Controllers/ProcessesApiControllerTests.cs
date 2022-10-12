@@ -170,7 +170,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         }
 
         [Fact]
-        public void GetProcessByIdExceptionIsThrown()
+        public async Task GetProcessByIdExceptionIsThrown()
         {
             //Arrange
             var id = Guid.NewGuid();
@@ -182,7 +182,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             Func<Task<IActionResult>> func = async () => await _classUnderTest.GetProcessById(query).ConfigureAwait(false);
 
             //Assert
-            func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
+            (await func.Should().ThrowAsync<ApplicationException>()).WithMessage(exception.Message);
         }
 
         #endregion
@@ -225,7 +225,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         }
 
         [Fact]
-        public void CreateNewProcessExceptionIsThrown()
+        public async Task CreateNewProcessExceptionIsThrown()
         {
             var request = _fixture.Create<CreateProcess>();
             var processName = ProcessName.soletojoint;
@@ -233,7 +233,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             _mockCreateProcessUseCase.Setup(x => x.Execute(request, processName, It.IsAny<Token>())).ThrowsAsync(exception);
 
             Func<Task<IActionResult>> func = async () => await _classUnderTest.CreateNewProcess(request, processName).ConfigureAwait(false);
-            func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
+            (await func.Should().ThrowAsync<ApplicationException>()).WithMessage(exception.Message);
         }
 
         #endregion
@@ -298,7 +298,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         }
 
         [Fact]
-        public void UpdateProcessStateExceptionIsThrown()
+        public async Task UpdateProcessStateExceptionIsThrown()
         {
             // Arrange
             var exception = new ApplicationException("Test exception");
@@ -309,7 +309,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             // Act
             Func<Task<IActionResult>> func = async () => await _classUnderTest.UpdateProcessState(requestObject, request).ConfigureAwait(false);
             // Assert
-            func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
+            (await func.Should().ThrowAsync<ApplicationException>()).WithMessage(exception.Message);
         }
 
         #endregion
@@ -357,7 +357,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         }
 
         [Fact]
-        public void UpdateProcessByIdExceptionIsThrown()
+        public async Task UpdateProcessByIdExceptionIsThrown()
         {
             // Arrange
             var exception = new ApplicationException("Test exception");
@@ -367,7 +367,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             // Act
             Func<Task<IActionResult>> func = async () => await _classUnderTest.UpdateProcessById(requestObject, request).ConfigureAwait(false);
             // Assert
-            func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
+            (await func.Should().ThrowAsync<ApplicationException>()).WithMessage(exception.Message);
         }
 
         #endregion
@@ -423,7 +423,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         [InlineData(null)]
         [InlineData("")]
         [InlineData("some-value")]
-        public void GetProcessesByTargetIdExceptionIsThrown(string paginationToken)
+        public async Task GetProcessesByTargetIdExceptionIsThrown(string paginationToken)
         {
             // Arrange
             var id = Guid.NewGuid();
@@ -435,7 +435,7 @@ namespace ProcessesApi.Tests.V1.Controllers
             Func<Task<IActionResult>> func = async () => await _classUnderTest.GetByTargetId(query).ConfigureAwait(false);
 
             // Assert
-            func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
+            (await func.Should().ThrowAsync<ApplicationException>()).WithMessage(exception.Message);
         }
 
         #endregion

@@ -51,7 +51,7 @@ namespace ProcessesApi.Tests.V2.UseCase
         }
 
         [Fact]
-        public void CreateNewProcessExceptionIsThrown()
+        public async Task CreateNewProcessExceptionIsThrown()
         {
             //Arrange
             var request = _fixture.Create<CreateProcess>();
@@ -64,7 +64,7 @@ namespace ProcessesApi.Tests.V2.UseCase
             Func<Task<Process>> func = async () => await _classUnderTest.Execute(request, process.ProcessName, token).ConfigureAwait(false);
 
             //Assert
-            func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
+            (await func.Should().ThrowAsync<ApplicationException>()).WithMessage(exception.Message);
         }
     }
 }

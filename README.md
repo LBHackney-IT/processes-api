@@ -5,7 +5,7 @@ View the API specification on [SwaggerHub](https://app.swaggerhub.com/apis-docs/
 
 ## Stack
 
-- .NET Core v3.1 as a web framework.
+- .NET 6 as a web framework.
 - xUnit as a test framework.
 - DynamoDb as a datastore.
 - [Stateless](https://github.com/dotnet-state-machine/stateless) to implement the process state machine. ([See more](#process-engine-implementation))

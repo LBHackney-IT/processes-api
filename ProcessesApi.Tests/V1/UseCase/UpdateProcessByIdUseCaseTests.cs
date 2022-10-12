@@ -99,7 +99,7 @@ namespace ProcessesApi.Tests.V1.UseCase
         [Theory]
         [InlineData(null)]
         [InlineData(3)]
-        public void UpdateProcessByIdExceptionIsThrown(int? ifMatch)
+        public async Task UpdateProcessByIdExceptionIsThrown(int? ifMatch)
         {
             var process = _fixture.Create<Process>();
             var query = ConstructQuery(process.Id);
@@ -113,7 +113,7 @@ namespace ProcessesApi.Tests.V1.UseCase
                 await _classUnderTest.Execute(query, request, "", ifMatch, It.IsAny<Token>()).ConfigureAwait(false);
 
             // Assert
-            func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
+            (await func.Should().ThrowAsync<ApplicationException>()).WithMessage(exception.Message);
         }
 
     }
