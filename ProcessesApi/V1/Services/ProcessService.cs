@@ -87,7 +87,6 @@ namespace ProcessesApi.V1.Services
                 var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
                 var processSnsMessage = transition.CreateProcessStateUpdatedEvent(stateStartedAt, _eventData,  EventConstants.PROCESS_UPDATED_EVENT, _token);
 
-
                 await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
             }
         }
