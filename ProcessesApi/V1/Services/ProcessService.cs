@@ -55,8 +55,6 @@ namespace ProcessesApi.V1.Services
                 var processRequest = x.Parameters[0] as ProcessTrigger;
                 var assignment = Assignment.Create("tenants"); // placeholder
 
-                await PublishProcessUpdatedEvent(x).ConfigureAwait(false);
-
                 _currentState = ProcessState.Create(
                     _machine.State,
                     _machine.PermittedTriggers
@@ -65,6 +63,8 @@ namespace ProcessesApi.V1.Services
                     ProcessData.Create(processRequest.FormData, processRequest.Documents),
                     DateTime.UtcNow, DateTime.UtcNow
                 );
+
+                await PublishProcessUpdatedEvent(x, _currentState.CreatedAt).ConfigureAwait(false);
             });
         }
 
@@ -80,12 +80,12 @@ namespace ProcessesApi.V1.Services
             await _snsGateway.Publish(processEntityMessage, processTopicArn).ConfigureAwait(false);
         }
 
-        protected async Task PublishProcessUpdatedEvent(StateMachine<string, string>.Transition transition)
+        protected async Task PublishProcessUpdatedEvent(StateMachine<string, string>.Transition transition, DateTime stateStartedAt)
         {
             if (!_ignoredTriggersForProcessUpdated.Contains(transition.Trigger))
             {
                 var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-                var processSnsMessage = transition.CreateProcessStateUpdatedEvent(_eventData, EventConstants.PROCESS_UPDATED_EVENT, _token);
+                var processSnsMessage = transition.CreateProcessStateUpdatedEvent(stateStartedAt, _eventData, EventConstants.PROCESS_UPDATED_EVENT, _token);
 
                 await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
             }
@@ -94,7 +94,7 @@ namespace ProcessesApi.V1.Services
         protected async Task PublishProcessClosedEvent(StateMachine<string, string>.Transition transition)
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = transition.CreateProcessStateUpdatedEvent(_eventData, EventConstants.PROCESS_CLOSED_EVENT, _token);
+            var processSnsMessage = transition.CreateProcessStateUpdatedEvent(DateTime.UtcNow, _eventData, EventConstants.PROCESS_CLOSED_EVENT, _token);
 
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
@@ -102,7 +102,7 @@ namespace ProcessesApi.V1.Services
         protected async Task PublishProcessCompletedEvent(StateMachine<string, string>.Transition transition)
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-            var processSnsMessage = transition.CreateProcessStateUpdatedEvent(_eventData, EventConstants.PROCESS_COMPLETED_EVENT, _token);
+            var processSnsMessage = transition.CreateProcessStateUpdatedEvent(DateTime.UtcNow, _eventData, EventConstants.PROCESS_COMPLETED_EVENT, _token);
 
             await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
         }
