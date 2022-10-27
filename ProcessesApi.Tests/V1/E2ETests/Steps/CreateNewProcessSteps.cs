@@ -3,7 +3,6 @@ using Hackney.Core.Testing.Shared.E2E;
 using Newtonsoft.Json;
 using Hackney.Shared.Processes.Boundary.Response;
 using Hackney.Shared.Processes.Domain;
-using Hackney.Shared.Processes.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -17,9 +16,10 @@ using Hackney.Core.Sns;
 using Hackney.Shared.Processes.Domain.Constants.ChangeOfName;
 using Hackney.Shared.Processes.Domain.Constants.SoleToJoint;
 using ProcessesApi.Tests.V1.E2ETests.Steps.Constants;
-using Hackney.Shared.Processes.Factories;
 using Hackney.Shared.Processes.Sns;
 using Hackney.Shared.Processes.Boundary.Request.V1;
+using ProcessesApi.V1.Infrastructure;
+using ProcessesApi.V1.Factories;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps
 {

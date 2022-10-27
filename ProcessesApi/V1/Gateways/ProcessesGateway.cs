@@ -5,13 +5,15 @@ using Hackney.Core.Logging;
 using Microsoft.Extensions.Logging;
 using Hackney.Shared.Processes.Boundary.Request;
 using Hackney.Shared.Processes.Domain;
-using Hackney.Shared.Processes.Factories;
-using Hackney.Shared.Processes.Infrastructure;
 using ProcessesApi.V1.UseCase.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ProcessesApi.V1.Infrastructure;
+using Hackney.Shared.Processes.Infrastructure;
+using ProcessesDb = ProcessesApi.V1.Infrastructure.ProcessesDb;
+using ProcessesApi.V1.Factories;
 
 namespace ProcessesApi.V1.Gateways
 {

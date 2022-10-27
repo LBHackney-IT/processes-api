@@ -26,7 +26,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Hackney.Shared.Processes.Boundary.Request.Validation;
 using ProcessesApi.V1.Gateways;
-using Hackney.Shared.Processes.Infrastructure;
 using ProcessesApi.V1.UseCase;
 using ProcessesApi.V1.UseCase.Interfaces;
 using ProcessesApi.Versioning;
@@ -43,6 +42,9 @@ using ProcessesApi.V1.Factories;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using ProcessesApi.V1.Infrastructure;
+using Hackney.Shared.Processes.Infrastructure;
+using ProcessesDb = ProcessesApi.V1.Infrastructure.ProcessesDb;
 
 namespace ProcessesApi
 {

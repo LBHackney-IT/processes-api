@@ -8,7 +8,7 @@ using FluentAssertions;
 using Hackney.Core.DynamoDb;
 using Hackney.Core.Testing.Shared.E2E;
 using Hackney.Shared.Processes.Boundary.Response;
-using Hackney.Shared.Processes.Infrastructure;
+using ProcessesApi.V1.Infrastructure;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace ProcessesApi.Tests.V1.E2E.Steps

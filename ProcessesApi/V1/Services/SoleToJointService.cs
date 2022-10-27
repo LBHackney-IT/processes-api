@@ -219,7 +219,7 @@ namespace ProcessesApi.V1.Services
                     .Permit(SharedPermittedTriggers.StartApplication, SoleToJointStates.SelectTenants);
 
             _machine.Configure(SoleToJointStates.SelectTenants)
-                    .OnEntryAsync(() => PublishProcessStartedEvent(EventConstants.PROCESS_STARTED_AGAINST_TENURE_EVENT))
+                    //.OnEntryAsync(() => PublishProcessStartedEvent(EventConstants.PROCESS_STARTED_AGAINST_TENURE_EVENT))
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckAutomatedEligibility, CheckAutomatedEligibility)
                     .Permit(SoleToJointInternalTriggers.EligibiltyFailed, SoleToJointStates.AutomatedChecksFailed)
                     .Permit(SoleToJointInternalTriggers.EligibiltyPassed, SoleToJointStates.AutomatedChecksPassed)

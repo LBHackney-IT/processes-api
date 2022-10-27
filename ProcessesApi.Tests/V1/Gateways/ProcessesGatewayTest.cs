@@ -8,15 +8,17 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Hackney.Shared.Processes.Boundary.Request;
 using Hackney.Shared.Processes.Domain;
-using Hackney.Shared.Processes.Factories;
 using ProcessesApi.V1.Gateways;
-using Hackney.Shared.Processes.Infrastructure;
 using ProcessesApi.V1.UseCase.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
+using ProcessesApi.V1.Factories;
+using ProcessesApi.V1.Infrastructure;
+using Hackney.Shared.Processes.Infrastructure;
+using ProcessesDb = ProcessesApi.V1.Infrastructure.ProcessesDb;
 
 namespace ProcessesApi.Tests.V1.Gateways
 {

@@ -4,8 +4,8 @@ using Amazon.DynamoDBv2.DataModel;
 using Amazon.SimpleNotificationService;
 using AutoFixture;
 using Hackney.Shared.Processes.Domain;
-using Hackney.Shared.Processes.Infrastructure;
 using Hackney.Shared.Processes.Boundary.Request.V2;
+using ProcessesApi.V1.Infrastructure;
 
 namespace ProcessesApi.Tests.V2.E2E.Fixtures
 {

@@ -6,8 +6,6 @@ using Amazon.SimpleNotificationService;
 using AutoFixture;
 using Hackney.Shared.Processes.Boundary.Request;
 using Hackney.Shared.Processes.Domain;
-using Hackney.Shared.Processes.Factories;
-using Hackney.Shared.Processes.Infrastructure;
 using Hackney.Shared.Processes.Infrastructure.Extensions;
 using System.Linq;
 using Hackney.Shared.Person.Domain;
@@ -15,6 +13,8 @@ using Hackney.Shared.Processes.Domain.Constants;
 using Hackney.Shared.Processes.Domain.Constants.ChangeOfName;
 using Hackney.Shared.Processes.Domain.Constants.SoleToJoint;
 using Hackney.Shared.Processes.Boundary.Request.V1;
+using ProcessesApi.V1.Infrastructure;
+using ProcessesApi.V1.Factories;
 
 namespace ProcessesApi.Tests.V1.E2E.Fixtures
 {
