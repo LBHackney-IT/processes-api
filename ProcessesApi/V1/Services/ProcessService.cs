@@ -55,16 +55,18 @@ namespace ProcessesApi.V1.Services
                 var processRequest = x.Parameters[0] as ProcessTrigger;
                 var assignment = Assignment.Create("tenants"); // placeholder
 
+                var createdAt = DateTime.UtcNow;
+                await PublishProcessUpdatedEvent(x, createdAt).ConfigureAwait(false);
+
                 _currentState = ProcessState.Create(
                     _machine.State,
                     _machine.PermittedTriggers
                         .Where(trigger => GetPermittedTriggers().Contains(trigger)).ToList(),
                     assignment,
                     ProcessData.Create(processRequest.FormData, processRequest.Documents),
-                    DateTime.UtcNow, DateTime.UtcNow
+                    createdAt, DateTime.UtcNow
                 );
 
-                await PublishProcessUpdatedEvent(x, _currentState.CreatedAt).ConfigureAwait(false);
             });
         }
 
