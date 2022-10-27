@@ -43,6 +43,7 @@ using ProcessesApi.V1.Factories;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using System.Text.Json;
 
 namespace ProcessesApi
 {
@@ -72,6 +73,8 @@ namespace ProcessesApi
                 .AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
                 })
                 .AddNewtonsoftJson(options =>
                 {
