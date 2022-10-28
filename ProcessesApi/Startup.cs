@@ -40,9 +40,6 @@ using System.Reflection;
 using System.Text.Json.Serialization;
 using ProcessesApi.V1.Helpers;
 using ProcessesApi.V1.Factories;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 
 namespace ProcessesApi
 {
@@ -72,13 +69,6 @@ namespace ProcessesApi
                 .AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-                })
-                .AddNewtonsoftJson(options =>
-                {
-                    options.SerializerSettings.Formatting = Formatting.Indented;
-                    options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-                    options.SerializerSettings.DateTimeZoneHandling = DateTimeZoneHandling.Utc;
-                    options.SerializerSettings.DateFormatHandling = DateFormatHandling.IsoDateFormat;
                 });
 
             services.AddFluentValidation(Assembly.GetAssembly(typeof(ProcessDataValidator)));
