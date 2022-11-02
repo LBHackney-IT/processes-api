@@ -270,6 +270,7 @@ namespace ProcessesApi.Tests.V1.Controllers
         [Theory]
         [InlineData(typeof(FormDataInvalidException))]
         [InlineData(typeof(InvalidTriggerException))]
+        [InlineData(typeof(InvalidRelatedEntitiesException))]
         public async Task UpdateProcessStateReturnsBadRequest(Type exceptionType)
         {
             (var processResponse, var request, var requestObject) = ConstructPatchRequest();

@@ -155,7 +155,8 @@ namespace ProcessesApi.V1.Controllers
                 return Conflict(vncErr.Message);
             }
             catch (Exception ex) when (ex is FormDataInvalidException
-                                      || ex is InvalidTriggerException)
+                                      || ex is InvalidTriggerException
+                                      || ex is InvalidRelatedEntitiesException)
             {
                 return BadRequest(ex.Message);
             }

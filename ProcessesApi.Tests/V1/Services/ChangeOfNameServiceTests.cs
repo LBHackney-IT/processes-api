@@ -77,9 +77,9 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SharedStates.TenureAppointmentScheduled, SharedPermittedTriggers.RescheduleTenureAppointment, new string[] { SharedKeys.AppointmentDateTime })]
         [InlineData(SharedStates.TenureAppointmentRescheduled, SharedPermittedTriggers.RescheduleTenureAppointment, new string[] { SharedKeys.AppointmentDateTime })]
 
-        public void ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
+        public async Task ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
         {
-            ShouldThrowFormDataNotFoundException(initialState, trigger, expectedFormDataKeys);
+            await ShouldThrowFormDataNotFoundException(initialState, trigger, expectedFormDataKeys).ConfigureAwait(false);
         }
 
         #region Close Process
