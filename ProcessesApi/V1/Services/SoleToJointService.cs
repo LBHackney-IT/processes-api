@@ -17,6 +17,7 @@ using SoleToJointKeys = Hackney.Shared.Processes.Domain.Constants.SoleToJoint.So
 using SoleToJointPermittedTriggers = Hackney.Shared.Processes.Domain.Constants.SoleToJoint.SoleToJointPermittedTriggers;
 using Hackney.Shared.Processes.Sns;
 using System.Linq;
+using ProcessesApi.V1.Services.Exceptions;
 
 namespace ProcessesApi.V1.Services
 {
@@ -47,6 +48,7 @@ namespace ProcessesApi.V1.Services
             var processRequest = transition.Parameters[0] as ProcessTrigger;
             var process = transition.Parameters[1] as Process;
             var tenantDetails = process.RelatedEntities.Find(x => x.SubType == SubType.tenant);
+            if (tenantDetails is null) throw new InvalidRelatedEntitiesException(tenantDetails.SubType.ToString(), process.RelatedEntities);
             var formData = processRequest.FormData;
             formData.ValidateKeys(new List<string>() { SoleToJointKeys.IncomingTenantId });
 
@@ -153,7 +155,14 @@ namespace ProcessesApi.V1.Services
         #endregion
 
         #region State Transition Actions
+        private void ValidateNewProcess(StateMachine<string, string>.Transition x)
+        {
 
+            if (!_process.RelatedEntities.Any(x => x.TargetType == TargetType.tenure) &&
+                !_process.RelatedEntities.Any(x => x.TargetType == TargetType.person && x.SubType == SubType.tenant) &&
+                !_process.RelatedEntities.Any(x => x.TargetType == TargetType.asset))
+                throw new InvalidRelatedEntitiesException($"{TargetType.asset}, {TargetType.person}, {TargetType.tenure}", _process.RelatedEntities);
+        }
         private async Task OnProcessClosed(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
@@ -216,6 +225,7 @@ namespace ProcessesApi.V1.Services
                     .OnEntryAsync(OnProcessCancelled);
 
             _machine.Configure(SharedStates.ApplicationInitialised)
+                    .OnEntry(ValidateNewProcess)
                     .Permit(SharedPermittedTriggers.StartApplication, SoleToJointStates.SelectTenants);
 
             _machine.Configure(SoleToJointStates.SelectTenants)
