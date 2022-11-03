@@ -59,7 +59,6 @@ namespace ProcessesApi.V1.Services
                 var processRequest = x.Parameters[0] as ProcessTrigger;
                 var assignment = Assignment.Create("tenants"); // placeholder
 
-                await PublishProcessUpdatedEvent(x, DateTime.Now).ConfigureAwait(false);
 
                 _currentState = ProcessState.Create(
                     _machine.State,
@@ -69,6 +68,7 @@ namespace ProcessesApi.V1.Services
                     ProcessData.Create(processRequest.FormData, processRequest.Documents),
                     DateTime.UtcNow, DateTime.UtcNow
                 );
+                await PublishProcessUpdatedEvent(x, _currentState.CreatedAt).ConfigureAwait(false);
             });
         }
 
