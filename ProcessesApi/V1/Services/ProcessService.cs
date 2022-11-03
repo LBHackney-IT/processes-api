@@ -143,9 +143,12 @@ namespace ProcessesApi.V1.Services
             if (!canFire)
                 throw new InvalidTriggerException(processRequest.Trigger, _machine.State);
 
-
             await _machine.FireAsync(res, processRequest, process).ConfigureAwait(false);
+
             _logger.LogInformation($"Process is {JsonConvert.SerializeObject(process)}");
+            _logger.LogInformation("---------------------------------------------------");
+
+            _logger.LogInformation($"_process is {JsonConvert.SerializeObject(_process)}");
 
             await process.AddState(_currentState);
             _logger.LogInformation($"Current State is {JsonConvert.SerializeObject(_currentState)}");
