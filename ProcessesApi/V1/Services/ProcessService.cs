@@ -14,6 +14,7 @@ using Hackney.Shared.Processes.Domain.Constants;
 using SharedPermittedTriggers = Hackney.Shared.Processes.Domain.Constants.SharedPermittedTriggers;
 using Hackney.Shared.Processes.Sns;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace ProcessesApi.V1.Services
 {
@@ -75,7 +76,7 @@ namespace ProcessesApi.V1.Services
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
             var processStartedSnsMessage = _process.CreateProcessStartedEvent(_token);
-            _logger.LogInformation($"Process Started Message is {processStartedSnsMessage}");
+            _logger.LogInformation($"Process Started Message is {JsonConvert.SerializeObject(processStartedSnsMessage)}");
             await _snsGateway.Publish(processStartedSnsMessage, processTopicArn).ConfigureAwait(false);
 
             if (additionalEvent is null) return;
