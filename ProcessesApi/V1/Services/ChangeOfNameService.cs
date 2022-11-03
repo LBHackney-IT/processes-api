@@ -14,6 +14,7 @@ using SharedInternalTriggers = Hackney.Shared.Processes.Domain.Constants.SharedI
 using SharedKeys = Hackney.Shared.Processes.Domain.Constants.SharedKeys;
 using SharedPermittedTriggers = Hackney.Shared.Processes.Domain.Constants.SharedPermittedTriggers;
 using Hackney.Shared.Processes.Sns;
+using Microsoft.Extensions.Logging;
 
 namespace ProcessesApi.V1.Services
 {
@@ -21,7 +22,7 @@ namespace ProcessesApi.V1.Services
     {
         private readonly IDbOperationsHelper _dbOperationsHelper;
 
-        public ChangeOfNameService(ISnsGateway snsGateway, IDbOperationsHelper dbOperationsHelper) : base(snsGateway)
+        public ChangeOfNameService(ISnsGateway snsGateway, IDbOperationsHelper dbOperationsHelper, ILogger<ProcessService> logger) : base(snsGateway, logger)
         {
             _snsGateway = snsGateway;
             _dbOperationsHelper = dbOperationsHelper;

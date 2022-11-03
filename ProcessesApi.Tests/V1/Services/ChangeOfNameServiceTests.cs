@@ -21,6 +21,7 @@ using ChangeOfNamePermittedTriggers = Hackney.Shared.Processes.Domain.Constants.
 using SharedKeys = Hackney.Shared.Processes.Domain.Constants.SharedKeys;
 using SharedPermittedTriggers = Hackney.Shared.Processes.Domain.Constants.SharedPermittedTriggers;
 using Hackney.Shared.Processes.Sns;
+using Microsoft.Extensions.Logging;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -32,8 +33,9 @@ namespace ProcessesApi.Tests.V1.Services
         public ChangeOfNameServiceTests(AwsMockWebApplicationFactory<Startup> appFactory) : base(appFactory)
         {
             _mockSnsGateway = new Mock<ISnsGateway>();
+            _mockLogger = new Mock<ILogger<ProcessService>>();
             _mockDbOperationsHelper = new Mock<IDbOperationsHelper>();
-            _classUnderTest = new ChangeOfNameService(_mockSnsGateway.Object, _mockDbOperationsHelper.Object);
+            _classUnderTest = new ChangeOfNameService(_mockSnsGateway.Object, _mockDbOperationsHelper.Object, _mockLogger.Object);
 
             _mockSnsGateway
                 .Setup(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()))

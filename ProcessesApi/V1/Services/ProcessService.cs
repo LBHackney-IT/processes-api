@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Hackney.Shared.Processes.Domain.Constants;
 using SharedPermittedTriggers = Hackney.Shared.Processes.Domain.Constants.SharedPermittedTriggers;
 using Hackney.Shared.Processes.Sns;
+using Microsoft.Extensions.Logging;
 
 namespace ProcessesApi.V1.Services
 {
@@ -42,10 +43,12 @@ namespace ProcessesApi.V1.Services
         protected Dictionary<string, object> _eventData;
         protected ISnsGateway _snsGateway;
         protected Token _token;
+        private readonly ILogger<ProcessService> _logger;
 
-        public ProcessService(ISnsGateway snsGateway)
+        public ProcessService(ISnsGateway snsGateway, ILogger<ProcessService> logger)
         {
             _snsGateway = snsGateway;
+            _logger = logger;
         }
 
         private void ConfigureStateTransitions()
@@ -72,6 +75,7 @@ namespace ProcessesApi.V1.Services
         {
             var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
             var processStartedSnsMessage = _process.CreateProcessStartedEvent(_token);
+            _logger.LogInformation($"Process Started Message is {processStartedSnsMessage}");
             await _snsGateway.Publish(processStartedSnsMessage, processTopicArn).ConfigureAwait(false);
 
             if (additionalEvent is null) return;

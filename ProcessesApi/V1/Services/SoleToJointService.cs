@@ -17,6 +17,7 @@ using SoleToJointKeys = Hackney.Shared.Processes.Domain.Constants.SoleToJoint.So
 using SoleToJointPermittedTriggers = Hackney.Shared.Processes.Domain.Constants.SoleToJoint.SoleToJointPermittedTriggers;
 using Hackney.Shared.Processes.Sns;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace ProcessesApi.V1.Services
 {
@@ -24,8 +25,8 @@ namespace ProcessesApi.V1.Services
     {
         private readonly IDbOperationsHelper _dbOperationsHelper;
 
-        public SoleToJointService(ISnsGateway snsGateway, IDbOperationsHelper automatedChecksHelper)
-            : base(snsGateway)
+        public SoleToJointService(ISnsGateway snsGateway, IDbOperationsHelper automatedChecksHelper, ILogger<ProcessService> logger)
+            : base(snsGateway, logger)
         {
             _snsGateway = snsGateway;
             _dbOperationsHelper = automatedChecksHelper;

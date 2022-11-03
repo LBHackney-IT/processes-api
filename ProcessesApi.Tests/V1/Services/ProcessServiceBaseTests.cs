@@ -15,6 +15,8 @@ using Hackney.Shared.Processes.Domain.Constants;
 using SharedKeys = Hackney.Shared.Processes.Domain.Constants.SharedKeys;
 using SharedPermittedTriggers = Hackney.Shared.Processes.Domain.Constants.SharedPermittedTriggers;
 using Hackney.Shared.Processes.Sns;
+using ProcessesApi.V1.Services;
+using Microsoft.Extensions.Logging;
 
 namespace ProcessesApi.Tests.V1.Services
 {
@@ -28,6 +30,7 @@ namespace ProcessesApi.Tests.V1.Services
         protected Mock<ISnsGateway> _mockSnsGateway;
         protected readonly Token _token = new Token();
         protected EntityEventSns _lastSnsEvent = new EntityEventSns();
+        protected Mock<ILogger<ProcessService>> _mockLogger;
 
         public void Dispose()
         {
@@ -51,7 +54,7 @@ namespace ProcessesApi.Tests.V1.Services
         public ProcessServiceBaseTests(AwsMockWebApplicationFactory<Startup> appFactory)
         {
             _mockSnsGateway = new Mock<ISnsGateway>();
-
+            _mockLogger = new Mock<ILogger<ProcessService>>();
             _mockSnsGateway
                 .Setup(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()))
                 .Callback<EntityEventSns, string, string>((ev, s1, s2) => _lastSnsEvent = ev);
