@@ -65,7 +65,7 @@ namespace ProcessesApi.Tests.V2.E2E.Fixtures
                 _fixture.Build<RelatedEntity>().With(x => x.TargetType, TargetType.asset).Create(),
                 _fixture.Build<RelatedEntity>().With(x => x.TargetType, TargetType.person).Create(),
                 _fixture.Build<RelatedEntity>().With(x => x.TargetType, TargetType.tenure).Create(),
-                _fixture.Build<RelatedEntity>().With(x => x.TargetType, TargetType.tenure).With(x => x.Id, targetId).Create()
+                _fixture.Build<RelatedEntity>().With(x => x.TargetType, targetType).With(x => x.Id, targetId).Create()
             };
 
             CreateProcessRequest = _fixture.Build<CreateProcess>()

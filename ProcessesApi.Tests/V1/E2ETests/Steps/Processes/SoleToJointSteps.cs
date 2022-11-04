@@ -83,24 +83,27 @@ namespace ProcessesApi.Tests.V1.E2E.Steps
         public async Task ThenTheProcessStateIsUpdatedToUpdateTenure(UpdateProcessQuery request, UpdateProcessRequestObject requestObject, string initialState, Guid incomingTenantId)
         {
             await CheckProcessState(request.Id, SoleToJointStates.TenureUpdated, initialState).ConfigureAwait(false);
-
             var process = await _dbFixture.DynamoDbContext.LoadAsync<ProcessesDb>(request.Id).ConfigureAwait(false);
-            // RelatedEntities
             var newTenureDetails = process.RelatedEntities.Find(x => x.TargetType == TargetType.tenure
-                                                              && x.SubType == SubType.newTenure);
+                                                                && x.SubType == SubType.newTenure);
             newTenureDetails.Should().NotBeNull();
             var tenureDate = DateTime.Parse(requestObject.FormData[SoleToJointKeys.TenureStartDate].ToString());
+
             // oldTenure
             var oldTenure = await _dbFixture.DynamoDbContext.LoadAsync<TenureInformationDb>(process.TargetId).ConfigureAwait(false);
             oldTenure.EndOfTenureDate.Should().Be(tenureDate);
+
             // newTenure
             var newTenure = await _dbFixture.DynamoDbContext.LoadAsync<TenureInformationDb>(newTenureDetails.Id).ConfigureAwait(false);
-            newTenure.StartOfTenureDate.Should().Be(tenureDate);
             newTenure.Should().BeEquivalentTo(oldTenure, c => c.Excluding(x => x.Id)
+                                                               .Excluding(x => x.PaymentReference)
                                                                .Excluding(x => x.HouseholdMembers)
                                                                .Excluding(x => x.StartOfTenureDate)
                                                                .Excluding(x => x.EndOfTenureDate)
                                                                .Excluding(x => x.VersionNumber));
+            newTenure.StartOfTenureDate.Value.Should().Be(tenureDate);
+            newTenure.PaymentReference.Should().BeNullOrEmpty();
+
             var householdMember = newTenure.HouseholdMembers.Find(x => x.Id == incomingTenantId);
             householdMember.PersonTenureType.Should().Be(PersonTenureType.Tenant);
         }

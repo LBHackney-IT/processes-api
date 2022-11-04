@@ -58,7 +58,7 @@ namespace ProcessesApi.Tests.V1.Services
                                                  triggerObject,
                                                  ChangeOfNameStates.EnterNewName,
                                                  new List<string>() { ChangeOfNamePermittedTriggers.EnterNewName });
-            process.PreviousStates.Should().BeEmpty();
+            process.PreviousStates.Should().HaveCount(1);
 
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
             _lastSnsEvent.EventType.Should().Be(EventConstants.PROCESS_STARTED_AGAINST_PERSON_EVENT);

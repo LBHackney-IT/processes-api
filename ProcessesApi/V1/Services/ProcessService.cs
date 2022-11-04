@@ -48,30 +48,39 @@ namespace ProcessesApi.V1.Services
             _snsGateway = snsGateway;
         }
 
+        protected async Task TransitionState(StateMachine<string, string>.Transition x)
+        {
+            var processRequest = x.Parameters[0] as ProcessTrigger;
+            var assignment = Assignment.Create("tenants"); // placeholder
+            var permittedTriggers = GetPermittedTriggers();
+
+            _currentState = ProcessState.Create(
+                _machine.State,
+                _machine.PermittedTriggers.Where(trigger => permittedTriggers.Contains(trigger)).ToList(),
+                assignment,
+                ProcessData.Create(processRequest.FormData, processRequest.Documents),
+                DateTime.UtcNow,
+                DateTime.UtcNow
+            );
+            await _process.AddState(_currentState);
+
+            await PublishProcessUpdatedEvent(x).ConfigureAwait(false);
+        }
+
         private void ConfigureStateTransitions()
         {
             _machine.OnTransitionCompletedAsync(async x =>
             {
-                var processRequest = x.Parameters[0] as ProcessTrigger;
-                var assignment = Assignment.Create("tenants"); // placeholder
-
-                _currentState = ProcessState.Create(
-                    _machine.State,
-                    _machine.PermittedTriggers
-                        .Where(trigger => GetPermittedTriggers().Contains(trigger)).ToList(),
-                    assignment,
-                    ProcessData.Create(processRequest.FormData, processRequest.Documents),
-                    DateTime.UtcNow, DateTime.UtcNow
-                );
-
-                await PublishProcessUpdatedEvent(x, _currentState.CreatedAt).ConfigureAwait(false);
+                await TransitionState(x).ConfigureAwait(false);
             });
         }
 
-        protected async Task PublishProcessStartedEvent(string additionalEvent = null)
+        protected async Task PublishProcessStartedEvent(StateMachine<string, string>.Transition x, string additionalEvent = null)
         {
-            var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
+            await TransitionState(x).ConfigureAwait(false);
             var processStartedSnsMessage = _process.CreateProcessStartedEvent(_token);
+
+            var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
             await _snsGateway.Publish(processStartedSnsMessage, processTopicArn).ConfigureAwait(false);
 
             if (additionalEvent is null) return;
@@ -80,12 +89,12 @@ namespace ProcessesApi.V1.Services
             await _snsGateway.Publish(processEntityMessage, processTopicArn).ConfigureAwait(false);
         }
 
-        protected async Task PublishProcessUpdatedEvent(StateMachine<string, string>.Transition transition, DateTime stateStartedAt)
+        protected async Task PublishProcessUpdatedEvent(StateMachine<string, string>.Transition transition)
         {
             if (!_ignoredTriggersForProcessUpdated.Contains(transition.Trigger))
             {
                 var processTopicArn = Environment.GetEnvironmentVariable("PROCESS_SNS_ARN");
-                var processSnsMessage = transition.CreateProcessStateUpdatedEvent(stateStartedAt, _eventData, EventConstants.PROCESS_UPDATED_EVENT, _token);
+                var processSnsMessage = transition.CreateProcessStateUpdatedEvent(_currentState.CreatedAt, _eventData, EventConstants.PROCESS_UPDATED_EVENT, _token);
 
                 await _snsGateway.Publish(processSnsMessage, processTopicArn).ConfigureAwait(false);
             }
@@ -140,8 +149,6 @@ namespace ProcessesApi.V1.Services
                 throw new InvalidTriggerException(processRequest.Trigger, _machine.State);
 
             await _machine.FireAsync(res, processRequest, process).ConfigureAwait(false);
-
-            await process.AddState(_currentState);
         }
     }
 }
