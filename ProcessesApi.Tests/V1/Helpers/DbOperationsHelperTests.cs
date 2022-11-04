@@ -381,8 +381,6 @@ namespace ProcessesApi.Tests.V1.Helpers
         private bool VerifyEndExistingTenure(EditTenureDetailsRequestObject requestObject, TenureInformation oldTenure, DateTime tenureStartDate)
         {
             requestObject.EndOfTenureDate.Should().Be(tenureStartDate);
-            requestObject.StartOfTenureDate.Should().Be(oldTenure.StartOfTenureDate);
-            requestObject.TenureType.Should().Be(oldTenure.TenureType);
             return true;
         }
 
