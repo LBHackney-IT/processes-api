@@ -58,7 +58,7 @@ namespace ProcessesApi.Tests.V1.Services
                                                  triggerObject,
                                                  ChangeOfNameStates.EnterNewName,
                                                  new List<string>() { ChangeOfNamePermittedTriggers.EnterNewName });
-            process.PreviousStates.Should().BeEmpty();
+            process.PreviousStates.Should().HaveCount(1);
 
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
             _lastSnsEvent.EventType.Should().Be(EventConstants.PROCESS_STARTED_AGAINST_PERSON_EVENT);
@@ -77,9 +77,9 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SharedStates.TenureAppointmentScheduled, SharedPermittedTriggers.RescheduleTenureAppointment, new string[] { SharedKeys.AppointmentDateTime })]
         [InlineData(SharedStates.TenureAppointmentRescheduled, SharedPermittedTriggers.RescheduleTenureAppointment, new string[] { SharedKeys.AppointmentDateTime })]
 
-        public void ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
+        public async Task ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
         {
-            ShouldThrowFormDataNotFoundException(initialState, trigger, expectedFormDataKeys);
+            await ShouldThrowFormDataNotFoundException(initialState, trigger, expectedFormDataKeys).ConfigureAwait(false);
         }
 
         #region Close Process

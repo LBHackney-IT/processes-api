@@ -145,10 +145,10 @@ namespace ProcessesApi.V1.Services
                     .OnEntryAsync(OnProcessCancelled);
 
             _machine.Configure(SharedStates.ApplicationInitialised)
-                    .Permit(SharedPermittedTriggers.StartApplication, ChangeOfNameStates.EnterNewName);
+                    .Permit(SharedPermittedTriggers.StartApplication, ChangeOfNameStates.EnterNewName)
+                    .OnExitAsync((x) => PublishProcessStartedEvent(x, EventConstants.PROCESS_STARTED_AGAINST_PERSON_EVENT));
 
             _machine.Configure(ChangeOfNameStates.EnterNewName)
-                    .OnEntryAsync(() => PublishProcessStartedEvent(EventConstants.PROCESS_STARTED_AGAINST_PERSON_EVENT))
                     .Permit(ChangeOfNamePermittedTriggers.EnterNewName, ChangeOfNameStates.NameSubmitted);
 
             _machine.Configure(ChangeOfNameStates.NameSubmitted)

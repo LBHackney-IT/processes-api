@@ -381,8 +381,6 @@ namespace ProcessesApi.Tests.V1.Helpers
         private bool VerifyEndExistingTenure(EditTenureDetailsRequestObject requestObject, TenureInformation oldTenure, DateTime tenureStartDate)
         {
             requestObject.EndOfTenureDate.Should().Be(tenureStartDate);
-            requestObject.StartOfTenureDate.Should().Be(oldTenure.StartOfTenureDate);
-            requestObject.TenureType.Should().Be(oldTenure.TenureType);
             return true;
         }
 
@@ -391,8 +389,10 @@ namespace ProcessesApi.Tests.V1.Helpers
             var newTenure = requestObject.ToDatabase();
             newTenure.Should().BeEquivalentTo(oldTenure, c => c.Excluding(x => x.Id)
                                                                .Excluding(x => x.HouseholdMembers)
+                                                               .Excluding(x => x.PaymentReference)
                                                                .Excluding(x => x.StartOfTenureDate));
             requestObject.StartOfTenureDate.Should().Be(tenureStartDate);
+            newTenure.PaymentReference.Should().BeNull();
             newTenure.HouseholdMembers.Should().HaveSameCount(oldTenure.HouseholdMembers);
 
             var householdMember = newTenure.HouseholdMembers.Find(x => x.Id == incomingTenantId);

@@ -56,15 +56,34 @@ namespace ProcessesApi.Tests.V2.E2E.Fixtures
             ProcessName = process.ProcessName;
         }
 
+        private void GivenANewProcessRequest()
+        {
+            var targetId = Guid.NewGuid();
+            var targetType = _fixture.Create<TargetType>();
+            var relatedEntities = new List<RelatedEntity>
+            {
+                _fixture.Build<RelatedEntity>().With(x => x.TargetType, TargetType.asset).Create(),
+                _fixture.Build<RelatedEntity>().With(x => x.TargetType, TargetType.person).Create(),
+                _fixture.Build<RelatedEntity>().With(x => x.TargetType, TargetType.tenure).Create(),
+                _fixture.Build<RelatedEntity>().With(x => x.TargetType, targetType).With(x => x.Id, targetId).Create()
+            };
+
+            CreateProcessRequest = _fixture.Build<CreateProcess>()
+                                           .With(x => x.TargetId, targetId)
+                                           .With(x => x.TargetType, targetType)
+                                           .With(x => x.RelatedEntities, relatedEntities)
+                                           .Create();
+        }
+
         public void GivenANewSoleToJointProcessRequest()
         {
-            CreateProcessRequest = _fixture.Create<CreateProcess>();
+            GivenANewProcessRequest();
             ProcessName = ProcessName.soletojoint;
         }
 
         public void GivenANewChangeOfNameProcessRequest()
         {
-            CreateProcessRequest = _fixture.Create<CreateProcess>();
+            GivenANewProcessRequest();
             ProcessName = ProcessName.changeofname;
         }
 
