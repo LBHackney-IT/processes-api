@@ -17,6 +17,7 @@ using SoleToJointKeys = Hackney.Shared.Processes.Domain.Constants.SoleToJoint.So
 using SoleToJointPermittedTriggers = Hackney.Shared.Processes.Domain.Constants.SoleToJoint.SoleToJointPermittedTriggers;
 using Hackney.Shared.Processes.Sns;
 using System.Linq;
+using ProcessesApi.V1.Services.Exceptions;
 
 namespace ProcessesApi.V1.Services
 {
@@ -46,7 +47,10 @@ namespace ProcessesApi.V1.Services
         {
             var processRequest = transition.Parameters[0] as ProcessTrigger;
             var process = transition.Parameters[1] as Process;
-            var tenantDetails = process.RelatedEntities.Find(x => x.SubType == SubType.tenant);
+
+            var tenantDetails = process.RelatedEntities.Find(x => x.TargetType == TargetType.person && x.SubType == SubType.tenant);
+            if (tenantDetails is null) throw new InvalidRelatedEntitiesException(TargetType.person, SubType.tenant, process.RelatedEntities);
+
             var formData = processRequest.FormData;
             formData.ValidateKeys(new List<string>() { SoleToJointKeys.IncomingTenantId });
 
@@ -153,7 +157,6 @@ namespace ProcessesApi.V1.Services
         #endregion
 
         #region State Transition Actions
-
         private async Task OnProcessClosed(Stateless.StateMachine<string, string>.Transition x)
         {
             var processRequest = x.Parameters[0] as ProcessTrigger;
@@ -216,10 +219,10 @@ namespace ProcessesApi.V1.Services
                     .OnEntryAsync(OnProcessCancelled);
 
             _machine.Configure(SharedStates.ApplicationInitialised)
-                    .Permit(SharedPermittedTriggers.StartApplication, SoleToJointStates.SelectTenants);
+                    .Permit(SharedPermittedTriggers.StartApplication, SoleToJointStates.SelectTenants)
+                    .OnExitAsync((x) => PublishProcessStartedEvent(x, EventConstants.PROCESS_STARTED_AGAINST_TENURE_EVENT));
 
             _machine.Configure(SoleToJointStates.SelectTenants)
-                    .OnEntryAsync(() => PublishProcessStartedEvent(EventConstants.PROCESS_STARTED_AGAINST_TENURE_EVENT))
                     .InternalTransitionAsync(SoleToJointPermittedTriggers.CheckAutomatedEligibility, CheckAutomatedEligibility)
                     .Permit(SoleToJointInternalTriggers.EligibiltyFailed, SoleToJointStates.AutomatedChecksFailed)
                     .Permit(SoleToJointInternalTriggers.EligibiltyPassed, SoleToJointStates.AutomatedChecksPassed)
@@ -233,7 +236,6 @@ namespace ProcessesApi.V1.Services
                     .Permit(SoleToJointInternalTriggers.ManualEligibilityFailed, SoleToJointStates.ManualChecksFailed)
                     .Permit(SoleToJointInternalTriggers.ManualEligibilityPassed, SoleToJointStates.ManualChecksPassed)
                     .Permit(SharedPermittedTriggers.CancelProcess, SharedStates.ProcessCancelled);
-
 
             _machine.Configure(SoleToJointStates.ManualChecksFailed)
                     .Permit(SharedPermittedTriggers.CloseProcess, SharedStates.ProcessClosed);

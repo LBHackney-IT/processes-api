@@ -63,7 +63,7 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
             {
                 actual.Id.Should().NotBeEmpty();
                 actual.CorrelationId.Should().NotBeEmpty();
-                actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
+                actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMilliseconds(2000));
                 actual.EntityId.Should().Be(processFixture.ProcessId);
 
                 verifyData(actual.EventData.OldData.ToString(), processFixture.Process.ToDatabase());
@@ -122,7 +122,7 @@ namespace ProcessesApi.Tests.V1.E2ETests.Steps
             dbRecord.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(requestBody.ProcessData.FormData);
             dbRecord.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(requestBody.ProcessData.Documents);
             dbRecord.CurrentState.Assignment.Should().BeEquivalentTo(requestBody.Assignment);
-            dbRecord.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            dbRecord.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMilliseconds(2000));
         }
     }
 }

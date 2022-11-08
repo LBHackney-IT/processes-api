@@ -84,7 +84,7 @@ namespace ProcessesApi.Tests.V1.Gateways
         }
 
         [Fact]
-        public void GetProcessByIdExceptionIsThrown()
+        public async Task GetProcessByIdExceptionIsThrown()
         {
             // Arrange
             var mockDynamoDb = new Mock<IDynamoDBContext>();
@@ -98,7 +98,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             // Act
             Func<Task<Process>> func = async () => await _classUnderTest.GetProcessById(id).ConfigureAwait(false);
             // Assert
-            func.Should().Throw<ApplicationException>().WithMessage(exception.Message);
+            (await func.Should().ThrowAsync<ApplicationException>()).WithMessage(exception.Message);
             mockDynamoDb.Verify(x => x.LoadAsync<ProcessesDb>(id, default), Times.Once);
         }
 
@@ -203,7 +203,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             load.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(updateProcessRequest.ProcessData.FormData);
             load.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(updateProcessRequest.ProcessData.Documents);
             load.CurrentState.Assignment.Should().BeEquivalentTo(updateProcessRequest.Assignment);
-            load.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            load.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMilliseconds(2000));
             load.VersionNumber.Should().Be(1);
 
             //Current State data not changed
@@ -260,7 +260,7 @@ namespace ProcessesApi.Tests.V1.Gateways
             //CurrentState data changed
             load.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(updateProcessRequest.ProcessData.FormData);
             load.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(updateProcessRequest.ProcessData.Documents);
-            load.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            load.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMilliseconds(2000));
             load.VersionNumber.Should().Be(1);
 
             //Current State data not changed
@@ -293,7 +293,7 @@ namespace ProcessesApi.Tests.V1.Gateways
 
             Func<Task<UpdateEntityResult<ProcessState>>> func = async () => await _classUnderTest.UpdateProcessById(updatedProcessQuery, updateProcessRequest, RequestBody, suppliedVersion).ConfigureAwait(false);
 
-            func.Should().Throw<VersionNumberConflictException>().WithMessage($"The version number supplied ({suppliedVersion}) does not match the current value on the entity ({0}).");
+            (await func.Should().ThrowAsync<VersionNumberConflictException>()).WithMessage($"The version number supplied ({suppliedVersion}) does not match the current value on the entity ({0}).");
             _logger.VerifyExact(LogLevel.Debug, $"Calling IDynamoDBContext.SaveAsync to update id {updatedProcessQuery.Id}", Times.Never());
 
             _cleanup.Add(async () => await _dynamoDb.DeleteAsync<ProcessesDb>(originalProcess.Id).ConfigureAwait(false));

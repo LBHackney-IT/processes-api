@@ -63,9 +63,10 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             }
         }
 
-        private void createProcess(string state, ProcessName processName)
+        private void createProcess(string state, ProcessName processName, TargetType targetType)
         {
             var process = _fixture.Build<Process>()
+                        .With(x => x.TargetType, targetType)
                         .With(x => x.ProcessName, processName)
                         .With(x => x.CurrentState,
                                 _fixture.Build<ProcessState>()
@@ -74,6 +75,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
                         .With(x => x.VersionNumber, (int?) null)
                         .With(x => x.RelatedEntities, new List<RelatedEntity>())
                         .Create();
+
             Process = process;
             ProcessId = process.Id;
             TargetId = process.TargetId;
@@ -81,18 +83,26 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
             IncomingTenantId = Guid.NewGuid();
             TenantId = Guid.NewGuid();
 
-            Process.RelatedEntities.Add(new RelatedEntity
+            var relatedEntities = new List<RelatedEntity>
             {
-                Id = IncomingTenantId,
-                TargetType = TargetType.person,
-                SubType = SubType.householdMember,
-                Description = "Some name"
-            });
+                _fixture.Build<RelatedEntity>().With(x => x.TargetType, TargetType.asset).Create(),
+                _fixture.Build<RelatedEntity>().With(x => x.TargetType, TargetType.person).With(x => x.SubType, SubType.tenant).Create(),
+                _fixture.Build<RelatedEntity>().With(x => x.TargetType, TargetType.tenure).With(x => x.SubType, (SubType?) null).Create(),
+                _fixture.Build<RelatedEntity>().With(x => x.TargetType, process.TargetType).With(x => x.Id, process.TargetId).Create(),
+                new RelatedEntity
+                {
+                    Id = IncomingTenantId,
+                    TargetType = TargetType.person,
+                    SubType = SubType.householdMember,
+                    Description = "Some name"
+                }
+            };
+            Process.RelatedEntities = relatedEntities;
         }
 
         public async Task GivenASoleToJointProcessExists(string state)
         {
-            createProcess(state, ProcessName.soletojoint);
+            createProcess(state, ProcessName.soletojoint, TargetType.tenure);
 
             await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
             Process.VersionNumber = 0;
@@ -100,7 +110,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public async Task GivenAChangeOfNameProcessExists(string state)
         {
-            createProcess(state, ProcessName.changeofname);
+            createProcess(state, ProcessName.changeofname, TargetType.person);
 
             await _dbContext.SaveAsync<ProcessesDb>(Process.ToDatabase()).ConfigureAwait(false);
             Process.VersionNumber = 0;
@@ -108,7 +118,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public async Task GivenAChangeOfNameProcessExistsWithPreviousState(string state)
         {
-            createProcess(state, ProcessName.changeofname);
+            createProcess(state, ProcessName.changeofname, TargetType.person);
 
             Process.PreviousStates.Add(_fixture.Build<ProcessState>()
                                                .With(x => x.State, ChangeOfNameStates.NameSubmitted)
@@ -123,7 +133,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public async Task GivenASoleToJointProcessExistsWithoutRelatedEntities(string state)
         {
-            createProcess(state, ProcessName.soletojoint);
+            createProcess(state, ProcessName.soletojoint, TargetType.tenure);
 
             Process.RelatedEntities = new List<RelatedEntity>();
             Process.RelatedEntities.Add(new RelatedEntity
@@ -140,12 +150,12 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
 
         public void GivenASoleToJointProcessDoesNotExist()
         {
-            createProcess(SharedStates.ApplicationInitialised, ProcessName.soletojoint);
+            createProcess(SharedStates.ApplicationInitialised, ProcessName.soletojoint, TargetType.tenure);
         }
 
         public void GivenAChangeOfNameProcessDoesNotExist()
         {
-            createProcess(SharedStates.ApplicationInitialised, ProcessName.changeofname);
+            createProcess(SharedStates.ApplicationInitialised, ProcessName.changeofname, TargetType.person);
         }
 
         public void GivenANewSoleToJointProcessRequest()
@@ -475,7 +485,7 @@ namespace ProcessesApi.Tests.V1.E2E.Fixtures
         public void GivenAUpdateTenureRequest()
         {
             GivenAnUpdateProcessRequest(SoleToJointPermittedTriggers.UpdateTenure);
-            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.TenureStartDate, DateTime.Parse(_fixture.Create<DateTime>().ToLongDateString()));
+            UpdateProcessRequestObject.FormData.Add(SoleToJointKeys.TenureStartDate, DateTime.UtcNow.Date);
         }
 
         public void GivenANameSubmittedRequest()

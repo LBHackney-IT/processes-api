@@ -166,9 +166,7 @@ namespace ProcessesApi.V1.Helpers
         {
             var request = new EditTenureDetailsRequestObject
             {
-                StartOfTenureDate = tenure.StartOfTenureDate,
-                EndOfTenureDate = endDate,
-                TenureType = tenure.TenureType
+                EndOfTenureDate = endDate
             };
 
             var result = await _tenureDbGateway.UpdateTenureById(tenure.Id, request).ConfigureAwait(false);
@@ -196,7 +194,6 @@ namespace ProcessesApi.V1.Helpers
                 Charges = oldTenure.Charges,
                 TenuredAsset = oldTenure.TenuredAsset,
                 HouseholdMembers = oldTenure.HouseholdMembers.ToList(),
-                PaymentReference = oldTenure.PaymentReference,
                 AgreementType = oldTenure.AgreementType
             };
 
@@ -248,7 +245,9 @@ namespace ProcessesApi.V1.Helpers
             var isDateTime = DateTime.TryParse(formData[SoleToJointKeys.TenureStartDate].ToString(), out var startDate);
             if (!isDateTime) throw new FormDataFormatException(typeof(DateTime), formData[SoleToJointKeys.TenureStartDate]);
 
-            var incomingTenant = process.RelatedEntities.Find(x => x.SubType == SubType.householdMember);
+            var incomingTenant = process.RelatedEntities.Find(x => x.TargetType == TargetType.person && x.SubType == SubType.householdMember);
+            if (incomingTenant is null) throw new InvalidRelatedEntitiesException(TargetType.person, SubType.householdMember, process.RelatedEntities);
+
             var existingTenure = await _tenureDbGateway.GetTenureById(process.TargetId).ConfigureAwait(false);
 
             await EndExistingTenure(existingTenure, startDate).ConfigureAwait(false);

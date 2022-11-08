@@ -178,7 +178,7 @@ namespace ProcessesApi.Tests.V1.Helpers
         }
 
         [Fact]
-        public void CheckAutomatedEligibilityThrowsErrorIfTheTargetTenureIsNotFound()
+        public async Task CheckAutomatedEligibilityThrowsErrorIfTheTargetTenureIsNotFound()
         {
             // Arrange
             (var process, var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateProcessAndRelatedEntities();
@@ -187,11 +187,11 @@ namespace ProcessesApi.Tests.V1.Helpers
             Func<Task<bool>> func = async () => await _classUnderTest.CheckAutomatedEligibility(tenure.Id, proposedTenant.Id, tenantId)
                                                                      .ConfigureAwait(false);
             // Assert
-            func.Should().Throw<TenureNotFoundException>().WithMessage($"Tenure with id {tenure.Id} not found.");
+            (await func.Should().ThrowAsync<TenureNotFoundException>()).WithMessage($"Tenure with id {tenure.Id} not found.");
         }
 
         [Fact]
-        public void CheckAutomatedEligibilityThrowsErrorIfTheProposedTenantIsNotFound()
+        public async Task CheckAutomatedEligibilityThrowsErrorIfTheProposedTenantIsNotFound()
         {
             // Arrange
             (var process, var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateProcessAndRelatedEntities();
@@ -200,11 +200,11 @@ namespace ProcessesApi.Tests.V1.Helpers
             Func<Task<bool>> func = async () => await _classUnderTest.CheckAutomatedEligibility(tenure.Id, proposedTenant.Id, tenantId)
                                                                      .ConfigureAwait(false);
             // Assert
-            func.Should().Throw<PersonNotFoundException>().WithMessage($"Person with id {proposedTenant.Id} not found.");
+            (await func.Should().ThrowAsync<PersonNotFoundException>()).WithMessage($"Person with id {proposedTenant.Id} not found.");
         }
 
         [Fact]
-        public void CheckAutomatedEligibilityThrowsErrorIfTheCurrentTenantIsNotListedAsAHouseholdMember()
+        public async Task CheckAutomatedEligibilityThrowsErrorIfTheCurrentTenantIsNotListedAsAHouseholdMember()
         {
             // Arrange
             (var process, var proposedTenant, var tenure, var tenantId, var tenancyRef) = CreateProcessAndRelatedEntities();
@@ -212,7 +212,7 @@ namespace ProcessesApi.Tests.V1.Helpers
             // Act
             Func<Task<bool>> func = async () => await SetupAndCheckAutomatedEligibility(tenure, proposedTenant, tenantId).ConfigureAwait(false);
             // Assert
-            func.Should().Throw<FormDataInvalidException>()
+            (await func.Should().ThrowAsync<FormDataInvalidException>())
                 .WithMessage($"The request's FormData is invalid: The tenant with ID {tenantId} is not listed as a household member of the tenure with ID {tenure.Id}");
         }
 
@@ -381,8 +381,6 @@ namespace ProcessesApi.Tests.V1.Helpers
         private bool VerifyEndExistingTenure(EditTenureDetailsRequestObject requestObject, TenureInformation oldTenure, DateTime tenureStartDate)
         {
             requestObject.EndOfTenureDate.Should().Be(tenureStartDate);
-            requestObject.StartOfTenureDate.Should().Be(oldTenure.StartOfTenureDate);
-            requestObject.TenureType.Should().Be(oldTenure.TenureType);
             return true;
         }
 
@@ -391,8 +389,10 @@ namespace ProcessesApi.Tests.V1.Helpers
             var newTenure = requestObject.ToDatabase();
             newTenure.Should().BeEquivalentTo(oldTenure, c => c.Excluding(x => x.Id)
                                                                .Excluding(x => x.HouseholdMembers)
+                                                               .Excluding(x => x.PaymentReference)
                                                                .Excluding(x => x.StartOfTenureDate));
             requestObject.StartOfTenureDate.Should().Be(tenureStartDate);
+            newTenure.PaymentReference.Should().BeNull();
             newTenure.HouseholdMembers.Should().HaveSameCount(oldTenure.HouseholdMembers);
 
             var householdMember = newTenure.HouseholdMembers.Find(x => x.Id == incomingTenantId);
@@ -446,7 +446,7 @@ namespace ProcessesApi.Tests.V1.Helpers
             var updatedNameData = process.PreviousStates.Find(x => x.State == ChangeOfNameStates.NameSubmitted).ProcessData.FormData;
             requestObject.FirstName.Should().Be(updatedNameData.GetValueOrDefault(ChangeOfNameKeys.FirstName).ToString());
             requestObject.Surname.Should().Be(updatedNameData.GetValueOrDefault(ChangeOfNameKeys.Surname).ToString());
-            requestObject.Title.Should().Be(Enum.Parse(typeof(Title), updatedNameData.GetValueOrDefault(ChangeOfNameKeys.Title).ToString()));
+            requestObject.Title.Should().Be((Title) Enum.Parse(typeof(Title), updatedNameData.GetValueOrDefault(ChangeOfNameKeys.Title).ToString()));
             return true;
         }
 

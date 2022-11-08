@@ -78,9 +78,9 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SharedStates.TenureInvestigationPassed, SharedPermittedTriggers.HOApproval, new string[] { SharedKeys.HousingAreaManagerName, SharedKeys.HORecommendation })]
         [InlineData(SharedStates.TenureInvestigationPassedWithInt, SharedPermittedTriggers.HOApproval, new string[] { SharedKeys.HousingAreaManagerName, SharedKeys.HORecommendation })]
         [InlineData(SharedStates.HOApprovalPassed, SharedPermittedTriggers.ScheduleTenureAppointment, new string[] { SharedKeys.AppointmentDateTime })]
-        public void ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
+        public async Task ThrowsFormDataNotFoundException(string initialState, string trigger, string[] expectedFormDataKeys)
         {
-            ShouldThrowFormDataNotFoundException(initialState, trigger, expectedFormDataKeys);
+            await ShouldThrowFormDataNotFoundException(initialState, trigger, expectedFormDataKeys).ConfigureAwait(false);
         }
 
         #region Close or Cancel Process
@@ -137,7 +137,7 @@ namespace ProcessesApi.Tests.V1.Services
                                                  triggerObject,
                                                  SoleToJointStates.SelectTenants,
                                                  new List<string>() { SoleToJointPermittedTriggers.CheckAutomatedEligibility });
-            process.PreviousStates.Should().BeEmpty();
+            process.PreviousStates.Should().HaveCount(1);
 
             _mockSnsGateway.Verify(g => g.Publish(It.IsAny<EntityEventSns>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
             _lastSnsEvent.EventType.Should().Be(EventConstants.PROCESS_STARTED_AGAINST_TENURE_EVENT);
@@ -593,7 +593,7 @@ namespace ProcessesApi.Tests.V1.Services
         }
 
         [Fact]
-        public void ThrowsFormDataInvalidExceptionOnTenureInvestigationWhenRecommendationIsNotOneOfCorrectValues()
+        public async Task ThrowsFormDataInvalidExceptionOnTenureInvestigationWhenRecommendationIsNotOneOfCorrectValues()
         {
             // Arrange
             var process = CreateProcessWithCurrentState(SharedStates.ApplicationSubmitted);
@@ -615,9 +615,9 @@ namespace ProcessesApi.Tests.V1.Services
                                                     invalidRecommendation);
 
             // Act & assert
-            _classUnderTest
+            (await _classUnderTest
                 .Invoking(cut => cut.Process(trigger, process, _token))
-                .Should().Throw<FormDataValueInvalidException>().WithMessage(expectedErrorMessage);
+                .Should().ThrowAsync<FormDataValueInvalidException>()).WithMessage(expectedErrorMessage);
         }
 
         #endregion
@@ -748,7 +748,7 @@ namespace ProcessesApi.Tests.V1.Services
         [InlineData(SharedStates.TenureInvestigationFailed)]
         [InlineData(SharedStates.InterviewScheduled)]
         [InlineData(SharedStates.InterviewRescheduled)]
-        public void ThrowsFormDataInvalidExceptionOnHOApprovalWhenRecommendationIsNotOneOfCorrectValues(string initialState)
+        public async Task ThrowsFormDataInvalidExceptionOnHOApprovalWhenRecommendationIsNotOneOfCorrectValues(string initialState)
         {
             // Arrange
             var process = CreateProcessWithCurrentState(initialState);
@@ -772,9 +772,9 @@ namespace ProcessesApi.Tests.V1.Services
                                                     invalidRecommendation);
 
             // Act & assert
-            _classUnderTest
+            (await _classUnderTest
                 .Invoking(cut => cut.Process(trigger, process, _token))
-                .Should().Throw<FormDataInvalidException>().WithMessage(expectedErrorMessage);
+                .Should().ThrowAsync<FormDataInvalidException>()).WithMessage(expectedErrorMessage);
         }
 
         #endregion
@@ -876,7 +876,7 @@ namespace ProcessesApi.Tests.V1.Services
 
 
         [Fact]
-        public void ThrowsErrorIfDbOperationsHelperThrowsErrorInTenureUpdatedStep()
+        public async Task ThrowsErrorIfDbOperationsHelperThrowsErrorInTenureUpdatedStep()
         {
             // Arrange
             var process = CreateProcessWithCurrentState(SharedStates.TenureAppointmentScheduled);
@@ -888,8 +888,8 @@ namespace ProcessesApi.Tests.V1.Services
             _mockDbOperationsHelper.Setup(x => x.UpdateTenures(process, _token, formData)).Throws(new Exception("Test Exception"));
 
             // Act + Assert
-            _classUnderTest.Invoking(x => x.Process(triggerObject, process, _token))
-                           .Should().Throw<Exception>();
+            await _classUnderTest.Invoking(x => x.Process(triggerObject, process, _token))
+                           .Should().ThrowAsync<Exception>();
         }
 
         [Fact]

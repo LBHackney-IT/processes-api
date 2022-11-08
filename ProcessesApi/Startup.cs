@@ -65,15 +65,13 @@ namespace ProcessesApi
             services.AddApiGateway();
 
             services
-                .AddMvc()
+                .AddControllers()
                 .AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-                })
-                .SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+                });
 
             services.AddFluentValidation(Assembly.GetAssembly(typeof(ProcessDataValidator)));
-
 
             services.AddApiVersioning(o =>
             {

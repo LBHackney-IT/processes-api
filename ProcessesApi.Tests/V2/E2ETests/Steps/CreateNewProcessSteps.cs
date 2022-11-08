@@ -20,6 +20,7 @@ using ProcessesApi.Tests.V2.E2ETests.Steps.Constants;
 using Hackney.Shared.Processes.Factories;
 using Hackney.Shared.Processes.Sns;
 using Hackney.Shared.Processes.Boundary.Request.V2;
+using Hackney.Shared.Processes.Domain.Constants;
 
 namespace ProcessesApi.Tests.V2.E2E.Steps
 {
@@ -64,10 +65,10 @@ namespace ProcessesApi.Tests.V2.E2E.Steps
             // TODO: Add test for assignment when implemented
             dbRecord.CurrentState.ProcessData.FormData.Should().BeEquivalentTo(request.FormData);
             dbRecord.CurrentState.ProcessData.Documents.Should().BeEquivalentTo(request.Documents);
-            dbRecord.CurrentState.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
-            dbRecord.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, 2000);
+            dbRecord.CurrentState.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMilliseconds(2000));
+            dbRecord.CurrentState.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMilliseconds(2000));
 
-            dbRecord.PreviousStates.Should().BeEmpty();
+            dbRecord.PreviousStates.Should().HaveCount(1);
             // Cleanup
             await _dbFixture.DynamoDbContext.DeleteAsync<ProcessesDb>(dbRecord.Id).ConfigureAwait(false);
         }
@@ -94,14 +95,16 @@ namespace ProcessesApi.Tests.V2.E2E.Steps
             Action<EntityEventSns> verifyFunc = (actual) =>
             {
                 actual.CorrelationId.Should().NotBeEmpty();
-                actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, 2000);
+                actual.DateTime.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMilliseconds(2000));
                 actual.EntityId.Should().Be(dbRecord.Id);
 
                 var expected = dbRecord.ToDomain();
                 var actualNewData = JsonConvert.DeserializeObject<Process>(actual.EventData.NewData.ToString());
                 actualNewData.Should().BeEquivalentTo(expected, c => c.Excluding(x => x.CurrentState)
+                                                                      .Excluding(x => x.PreviousStates)
                                                                       .Excluding(x => x.VersionNumber));
-
+                actualNewData.CurrentState.State.Should().Be(SharedStates.ApplicationInitialised);
+                actualNewData.PreviousStates.Should().BeEmpty();
                 actual.EventData.OldData.Should().BeNull();
 
                 actual.EventType.Should().Be(EventConstants.PROCESS_STARTED_EVENT);
