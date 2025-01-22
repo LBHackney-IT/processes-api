@@ -66,6 +66,10 @@ namespace ProcessesApi.Tests
             EnsureEnvVarConfigured("Sns_LocalMode", "true");
             EnsureEnvVarConfigured("Localstack_SnsServiceUrl", "http://localhost:4566");
 
+            EnsureEnvVarConfigured("AWS_REGION", "eu-west-2");
+            EnsureEnvVarConfigured("AWS_ACCESS_KEY_ID", "local");
+            EnsureEnvVarConfigured("AWS_SECRET_ACCESS_KEY", "local");
+
             Client = CreateClient();
         }
 
