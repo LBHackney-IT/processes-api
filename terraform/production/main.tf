@@ -61,6 +61,8 @@ resource "aws_sns_topic" "processes" {
   fifo_topic                  = true
   content_based_deduplication = true
   kms_master_key_id = "alias/aws/sns"
+  sqs_success_feedback_sample_rate = "100"
+  sqs_failure_feedback_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/LBH_SNS_DELIVERY_LOGGING_ROLE"
 }
 
 resource "aws_ssm_parameter" "processes_sns_arn" {
@@ -68,3 +70,12 @@ resource "aws_ssm_parameter" "processes_sns_arn" {
   type  = "String"
   value = aws_sns_topic.processes.arn
 } 
+    
+module "sns-delivery-failure-alarm" {
+  source           = "github.com/LBHackney-IT/aws-hackney-common-terraform.git//modules/cloudwatch/sns-delivery-metric-and-alarm"
+  environment_name = var.environment_name
+  region           = data.aws_region.current.name
+  account_id       = data.aws_caller_identity.current.account_id
+  sns_topic_name   = "processes.fifo"
+  sns_topic_arn_for_notifications = data.aws_ssm_parameter.cloudwatch_topic_arn.value
+}
