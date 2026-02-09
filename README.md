@@ -3,8 +3,7 @@
 This API provides a workflow engine that will allow housing officers and other members of staff to initiate new workflows, upload documents, assign them and capture form information for the Manage My Home project.
 View the API specification on [SwaggerHub](https://app.swaggerhub.com/apis-docs/Hackney/ProcessesApi/1.0.0). 
 
-## Stack
-
+## Stack   
 - .NET 6 as a web framework.
 - xUnit as a test framework.
 - DynamoDb as a datastore.
