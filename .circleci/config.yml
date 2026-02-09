@@ -56,6 +56,7 @@ commands:
           command: |
             cd ./terraform/<<parameters.environment>>/
             terraform plan -out=plan.out
+            terraform import aws_dynamodb_table.processesapi_dynamodb_table Processes
       - persist_to_workspace:
           root: *workspace_root
           paths:
