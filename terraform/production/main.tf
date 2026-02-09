@@ -28,7 +28,7 @@ locals {
   parameter_store = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter"
   default_tags = {
     Name              = "processes-api-${var.environment_name}"
-    Environment       = var.environment_name
+    Environment       = "prod"
     terraform-managed = true
     project_name      = var.project_name
   }
@@ -36,25 +36,25 @@ locals {
 
 terraform {
   backend "s3" {
-    bucket  = "terraform-state-housing-production"
+    bucket  = "terraform-state-disaster-recovery"
     encrypt = true
     region  = "eu-west-2"
     key     = "services/processes-api/state"
   }
 }
 
-data "aws_ssm_parameter" "cloudwatch_topic_arn" {
-  name = "/housing-tl/${var.environment_name}/cloudwatch-alarms-topic-arn"
-}
+# data "aws_ssm_parameter" "cloudwatch_topic_arn" {
+#   name = "/housing-tl/${var.environment_name}/cloudwatch-alarms-topic-arn"
+# }
 
-module "api-alarm" {
-  source           = "github.com/LBHackney-IT/aws-hackney-common-terraform.git//modules/cloudwatch/api-alarm"
-  environment_name = var.environment_name
-  api_name         = "processes-api"
-  alarm_period     = "300"
-  error_threshold  = "1"
-  sns_topic_arn    = data.aws_ssm_parameter.cloudwatch_topic_arn.value
-}
+# module "api-alarm" {
+#   source           = "github.com/LBHackney-IT/aws-hackney-common-terraform.git//modules/cloudwatch/api-alarm"
+#   environment_name = var.environment_name
+#   api_name         = "processes-api"
+#   alarm_period     = "300"
+#   error_threshold  = "1"
+#   sns_topic_arn    = data.aws_ssm_parameter.cloudwatch_topic_arn.value
+# }
 
 resource "aws_sns_topic" "processes" {
   name                        = "processes.fifo"
@@ -67,4 +67,5 @@ resource "aws_ssm_parameter" "processes_sns_arn" {
   name  = "/sns-topic/production/processes/arn"
   type  = "String"
   value = aws_sns_topic.processes.arn
+  overwrite = true  
 } 

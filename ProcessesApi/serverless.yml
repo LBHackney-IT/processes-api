@@ -27,9 +27,9 @@ functions:
       IncomeApiToken: ${ssm:/manage-arrears/${self:provider.stage}/income-api-key}
       TenureApiUrl: ${ssm:/housing-tl/${self:provider.stage}/tenure-api-url}
       TenureApiToken: ${ssm:/housing-tl/${self:provider.stage}/tenure-api-token}
-      PROCESS_SNS_ARN: ${ssm:/sns-topic/${self:provider.stage}/processes/arn}
-      TENURE_SNS_ARN: ${ssm:/sns-topic/${self:provider.stage}/tenure/arn}
-      PERSON_SNS_ARN: ${ssm:/sns-topic/${self:provider.stage}/person/arn}
+      # PROCESS_SNS_ARN: ${ssm:/sns-topic/${self:provider.stage}/processes/arn}
+      # TENURE_SNS_ARN: ${ssm:/sns-topic/${self:provider.stage}/tenure/arn}
+      # PERSON_SNS_ARN: ${ssm:/sns-topic/${self:provider.stage}/person/arn}
     events:
       - http:
           path: /{proxy+}
@@ -57,21 +57,21 @@ functions:
           method: GET
           private: false
 resources:
-  Conditions:
-    # Only create the Canaries for staging/prod
-    IsProdDeployment:
-      Fn::Equals:
-        - ${self:provider.stage}
-        - production
-    IsStagingDeployment:
-      Fn::Equals:
-        - ${self:provider.stage}
-        - staging
-    # Check if deployment is staging or prod
-    CreateCanary:
-      Fn::Or:
-        - Condition: IsStagingDeployment
-        - Condition: IsProdDeployment
+  # Conditions:
+  #   # Only create the Canaries for staging/prod
+  #   IsProdDeployment:
+  #     Fn::Equals:
+  #       - ${self:provider.stage}
+  #       - production
+  #   IsStagingDeployment:
+  #     Fn::Equals:
+  #       - ${self:provider.stage}
+  #       - staging
+  #   # Check if deployment is staging or prod
+  #   CreateCanary:
+  #     Fn::Or:
+  #       - Condition: IsStagingDeployment
+  #       - Condition: IsProdDeployment
   Resources:
     lambdaExecutionRole:
       Type: AWS::IAM::Role
@@ -90,25 +90,25 @@ resources:
           - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
           - arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess
         Policies:
-          - PolicyName: postToSns
-            PolicyDocument:
-              Version: '2012-10-17'
-              Statement:
-                - Effect: Allow
-                  Action:
-                    - "sns:Publish"
-                  Resource:
-                    - ${ssm:/sns-topic/${self:provider.stage}/processes/arn}
-                - Effect: Allow
-                  Action:
-                    - "sns:Publish"
-                  Resource:
-                    - ${ssm:/sns-topic/${self:provider.stage}/tenure/arn}
-                - Effect: Allow
-                  Action:
-                    - "sns:Publish"
-                  Resource:
-                    - ${ssm:/sns-topic/${self:provider.stage}/person/arn}
+          # - PolicyName: postToSns
+          #   PolicyDocument:
+          #     Version: '2012-10-17'
+          #     Statement:
+          #       - Effect: Allow
+          #         Action:
+          #           - "sns:Publish"
+          #         Resource:
+          #           - ${ssm:/sns-topic/${self:provider.stage}/processes/arn}
+          #       - Effect: Allow
+          #         Action:
+          #           - "sns:Publish"
+          #         Resource:
+          #           - ${ssm:/sns-topic/${self:provider.stage}/tenure/arn}
+          #       - Effect: Allow
+          #         Action:
+          #           - "sns:Publish"
+          #         Resource:
+          #           - ${ssm:/sns-topic/${self:provider.stage}/person/arn}
           - PolicyName: dynamoDBAccess
             PolicyDocument:
               Version: '2012-10-17'
@@ -163,31 +163,31 @@ resources:
                           - Ref: 'AWS::Region'
                           - Ref: 'AWS::AccountId'
                           - 'table/Persons'
-          - PolicyName: manageLogs
-            PolicyDocument:
-              Version: '2012-10-17'
-              Statement:
-                - Effect: Allow
-                  Action:
-                    - logs:CreateLogGroup
-                    - logs:CreateLogStream
-                    - logs:PutLogEvents
-                  Resource:
-                    - 'Fn::Join':
-                        - ':'
-                        - - 'arn:aws:logs'
-                          - Ref: 'AWS::Region'
-                          - Ref: 'AWS::AccountId'
-                          - 'log-group:/aws/lambda/*:*:*'
-                - Effect: "Allow"
-                  Action:
-                    - "s3:PutObject"
-                    - "s3:GetObject"
-                  Resource:
-                    Fn::Join:
-                      - ""
-                      - - "arn:aws:s3:::"
-                        - "Ref": "ServerlessDeploymentBucket"
+          # - PolicyName: manageLogs
+          #   PolicyDocument:
+          #     Version: '2012-10-17'
+          #     Statement:
+          #       - Effect: Allow
+          #         Action:
+          #           - logs:CreateLogGroup
+          #           - logs:CreateLogStream
+          #           - logs:PutLogEvents
+          #         Resource:
+          #           - 'Fn::Join':
+          #               - ':'
+          #               - - 'arn:aws:logs'
+          #                 - Ref: 'AWS::Region'
+          #                 - Ref: 'AWS::AccountId'
+          #                 - 'log-group:/aws/lambda/*:*:*'
+          #       - Effect: "Allow"
+          #         Action:
+          #           - "s3:PutObject"
+          #           - "s3:GetObject"
+          #         Resource:
+          #           Fn::Join:
+          #             - ""
+          #             - - "arn:aws:s3:::"
+          #               - "Ref": "ServerlessDeploymentBucket"
           - PolicyName: lambdaInvocation
             PolicyDocument:
               Version: '2012-10-17'
@@ -196,38 +196,38 @@ resources:
                   Action:
                     - "lambda:InvokeFunction"
                   Resource: "*"
-    Canary:
-      Type: AWS::Synthetics::Canary
-      Condition: CreateCanary
-      Properties:
-        Name: processes-healthcheck #Update name accordingly, max 21 characters
-        Code:
-          Handler: pageLoadBlueprint.handler
-          S3Bucket: lbh-cw-canaries-api-testing-script-${self:provider.stage}
-          S3Key: cw-canary-api-test-script.zip
-        ExecutionRoleArn:
-          Fn::Join:
-            - ':'
-            - - 'arn:aws:iam:'
-              - Ref: 'AWS::AccountId'
-              - role/LBH_Canary_Role
-        RuntimeVersion: syn-nodejs-puppeteer-3.1
-        RunConfig:
-          TimeoutInSeconds: 300
-          EnvironmentVariables:
-            hostname: ${self:custom.hostname}
-            path: /${self:provider.stage}/api/v1/healthcheck/ping
-            token: ${ssm:/housing-tl/${self:provider.stage}/processes-api-token} #Update value accordingly
-        ArtifactS3Location:
-          Fn::Join:
-            - '-'
-            - - s3://cw-syn-results
-              - Ref: 'AWS::AccountId'
-              - Ref: 'AWS::Region'
-        StartCanaryAfterCreation: true
-        Schedule:
-          Expression: rate(5 minutes)
-          DurationInSeconds: 0
+    # Canary:
+    #   Type: AWS::Synthetics::Canary
+    #   Condition: CreateCanary
+    #   Properties:
+    #     Name: processes-healthcheck #Update name accordingly, max 21 characters
+    #     Code:
+    #       Handler: pageLoadBlueprint.handler
+    #       S3Bucket: lbh-cw-canaries-api-testing-script-${self:provider.stage}
+    #       S3Key: cw-canary-api-test-script.zip
+    #     ExecutionRoleArn:
+    #       Fn::Join:
+    #         - ':'
+    #         - - 'arn:aws:iam:'
+    #           - Ref: 'AWS::AccountId'
+    #           - role/LBH_Canary_Role
+    #     RuntimeVersion: syn-nodejs-puppeteer-3.1
+    #     RunConfig:
+    #       TimeoutInSeconds: 300
+    #       EnvironmentVariables:
+    #         hostname: ${self:custom.hostname}
+    #         path: /${self:provider.stage}/api/v1/healthcheck/ping
+    #         token: ${ssm:/housing-tl/${self:provider.stage}/processes-api-token} #Update value accordingly
+    #     ArtifactS3Location:
+    #       Fn::Join:
+    #         - '-'
+    #         - - s3://cw-syn-results
+    #           - Ref: 'AWS::AccountId'
+    #           - Ref: 'AWS::Region'
+    #     StartCanaryAfterCreation: true
+    #     Schedule:
+    #       Expression: rate(5 minutes)
+    #       DurationInSeconds: 0
 custom:
   authorizerArns:
     development: arn:aws:lambda:eu-west-2:859159924354:function:api-auth-verify-token-new-development-apiauthverifytokennew
@@ -258,5 +258,5 @@ custom:
         - subnet-0ed7d7713d1127656
     production:
       subnetIds:
-        - subnet-01d3657f97a243261
-        - subnet-0b7b8fea07efabf34
+        - subnet-05e595c59b7d6c8df
+        - subnet-0e6bc9b4ac24493cc
