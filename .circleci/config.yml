@@ -95,7 +95,7 @@ commands:
           name: apply
           command: |
             cd ./terraform/<<parameters.environment>>/
-            terraform apply -auto-approve plan.out
+            terraform destroy -auto-approve
       - persist_to_workspace:
           root: *workspace_root
           paths:
@@ -118,18 +118,12 @@ commands:
           name: Install serverless CLI
           command: npm i -g serverless
       - run:
-          name: Build lambda
-          command: |
-            cd ./ProcessesApi/
-            chmod +x ./build.sh
-            ./build.sh
-      - run:
           name: Deploy lambda
           command: |
             cd ./ProcessesApi/
             npm i serverless-associate-waf
             npm i @serverless/safeguards-plugin --save-dev
-            sls deploy --stage <<parameters.stage>> --conceal
+            sls remove --stage <<parameters.stage>>
 
 jobs:
   check-code-formatting:
