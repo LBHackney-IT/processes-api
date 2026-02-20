@@ -43,6 +43,9 @@ commands:
       environment:
         type: string
     steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "SHA256:rPzp7kChj9Z72jls470HfO0YvieTbdUiB+y8hlxJN8c"
       - *attach_workspace
       - checkout
       - run:
@@ -89,6 +92,9 @@ commands:
       environment:
         type: string
     steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "SHA256:rPzp7kChj9Z72jls470HfO0YvieTbdUiB+y8hlxJN8c"
       - *attach_workspace
       - checkout
       - run:
