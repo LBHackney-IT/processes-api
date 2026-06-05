@@ -58,20 +58,11 @@ functions:
           private: false
 resources:
   Conditions:
-    # Only create the Canaries for staging/prod
-    IsProdDeployment:
+    # Only create the Canaries for prod
+    CreateCanary:
       Fn::Equals:
         - ${self:provider.stage}
         - production
-    IsStagingDeployment:
-      Fn::Equals:
-        - ${self:provider.stage}
-        - staging
-    # Check if deployment is staging or prod
-    CreateCanary:
-      Fn::Or:
-        - Condition: IsStagingDeployment
-        - Condition: IsProdDeployment
   Resources:
     lambdaExecutionRole:
       Type: AWS::IAM::Role
