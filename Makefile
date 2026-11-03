@@ -16,7 +16,8 @@ shell:
 
 .PHONY: test
 test:
-	docker compose up dynamodb-database & docker compose build processes-api-test && docker compose up processes-api-test
+	docker compose build processes-api-test
+	docker compose run --rm processes-api-test
 
 .PHONY: lint
 lint:

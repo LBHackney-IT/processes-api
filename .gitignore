@@ -36,6 +36,7 @@ ipch/
 *.bak
 
 #Tools
+.sonarqube/
 _ReSharper.*
 _ReSharper*/
 *.resharper

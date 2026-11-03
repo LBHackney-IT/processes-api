@@ -1,5 +1,3 @@
-version: "3.2"
-
 services:
   processes-api:
     image: processes-api
@@ -28,7 +26,6 @@ services:
       dockerfile: ProcessesApi.Tests/Dockerfile
       args:
         - LBHPACKAGESTOKEN=${LBHPACKAGESTOKEN}
-        - SONAR_TOKEN=${SONAR_TOKEN}
 
     environment:
       - DynamoDb_LocalMode=true

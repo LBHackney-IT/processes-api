@@ -59,15 +59,16 @@ Swagger UI is served at `/swagger`. Request and response schemas are available i
 
 ## Tests
 
-The `make test` target builds and runs the test container and starts its local DynamoDB and LocalStack dependencies. Supply both package-feed and SonarCloud credentials if required by the configured scanner:
+The `make test` target builds and runs the test container and starts its local DynamoDB and LocalStack dependencies. Supply the package-feed token; local tests do not require SonarCloud credentials:
 
 ```sh
 export LBHPACKAGESTOKEN=<token>
-export SONAR_TOKEN=<sonarcloud-token>
 make test
 ```
 
 The test suite includes unit, gateway, and end-to-end tests. Tests use DynamoDB Local and LocalStack-backed SNS fixtures.
+
+CircleCI runs SonarCloud analysis separately in the `sonar-analysis` job using SonarScanner for .NET 11.3.0 with automatic Java provisioning. The job uses the existing `SONAR_TOKEN` from the SonarCloud context. Both tests and analysis must succeed before deployment.
 
 ## Deployment
 
