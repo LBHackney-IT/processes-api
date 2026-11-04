@@ -25,6 +25,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Hackney.Shared.Processes.Boundary.Request.Validation;
+using Hackney.Shared.Processes.Boundary.Request.V2.Validation;
 using ProcessesApi.V1.Gateways;
 using Hackney.Shared.Processes.Infrastructure;
 using ProcessesApi.V1.UseCase;
@@ -72,6 +73,15 @@ namespace ProcessesApi
                 });
 
             services.AddFluentValidation(Assembly.GetAssembly(typeof(ProcessDataValidator)));
+
+            // The parent validator constructs this child with the current request.
+            // It cannot be created independently by dependency injection.
+            foreach (var registration in services
+                .Where(service => service.ImplementationType == typeof(RelatedEntitiesValidator))
+                .ToList())
+            {
+                services.Remove(registration);
+            }
 
             services.AddApiVersioning(o =>
             {

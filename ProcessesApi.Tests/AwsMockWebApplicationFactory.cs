@@ -93,17 +93,30 @@ namespace ProcessesApi.Tests
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
-            builder.ConfigureAppConfiguration(b => b.AddEnvironmentVariables())
+            builder.ConfigureAppConfiguration(b => b
+                .AddEnvironmentVariables()
+                // Fixture setup calls AWS before a request trace exists.
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    ["XRay:DisableXRayTracing"] = "true"
+                }))
                 .UseStartup<Startup>();
             builder.ConfigureServices(services =>
             {
-                services.ConfigureDynamoDB();
-                services.ConfigureDynamoDbFixture();
-                services.ConfigureSns();
-                services.ConfigureSnsFixture();
+                // Keep test fixtures out of the application's service provider.
+                IServiceCollection fixtureServices = new ServiceCollection();
+                foreach (var service in services)
+                {
+                    fixtureServices.Add(service);
+                }
+
+                fixtureServices.ConfigureDynamoDB();
+                fixtureServices.ConfigureDynamoDbFixture();
+                fixtureServices.ConfigureSns();
+                fixtureServices.ConfigureSnsFixture();
 
 
-                var serviceProvider = services.BuildServiceProvider();
+                var serviceProvider = fixtureServices.BuildServiceProvider();
 
                 DynamoDbFixture = serviceProvider.GetRequiredService<IDynamoDbFixture>();
                 DynamoDbFixture.EnsureTablesExist(_tables);

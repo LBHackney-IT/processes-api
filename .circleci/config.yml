@@ -2,6 +2,7 @@ version: 2.1
 
 orbs:
   aws_assume_role: lbh-hackit/aws_assume_role@0.1.0
+  sonarcloud: sonarsource/sonarcloud@4.0.0
 
 executors:
   docker-python:
@@ -153,26 +154,13 @@ jobs:
       - checkout:
           method: full
       - setup_remote_docker
+      - sonarcloud/scan
       - run:
           name: build
           command: docker compose build processes-api-test
       - run:
           name: Run tests
           command: docker compose run --rm processes-api-test
-  sonar-analysis:
-    executor: docker-dotnet
-    steps:
-      - checkout:
-          method: full
-      - run:
-          name: Install SonarScanner for .NET
-          command: dotnet tool install dotnet-sonarscanner --version 11.3.0 --tool-path /tmp/sonar-tools --source https://api.nuget.org/v3/index.json
-      - run:
-          name: Analyze .NET solution
-          command: |
-            /tmp/sonar-tools/dotnet-sonarscanner begin /k:"LBHackney-IT_processes-api" /o:"lbhackney-it" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.token="$SONAR_TOKEN"
-            dotnet build ProcessesApi.sln --configuration Release --no-incremental --disable-build-servers
-            /tmp/sonar-tools/dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
   assume-role-development:
     executor: docker-python
     steps:
@@ -260,13 +248,6 @@ workflows:
                 - master
                 - release
       - build-and-test:
-          context: api-nuget-token-context
-          filters:
-            branches:
-              ignore:
-                - master
-                - release
-      - sonar-analysis:
           context:
             - api-nuget-token-context
             - SonarCloud
@@ -284,11 +265,6 @@ workflows:
             branches:
               only: master
       - build-and-test:
-          context: api-nuget-token-context
-          filters:
-            branches:
-              only: master
-      - sonar-analysis:
           context:
             - api-nuget-token-context
             - SonarCloud
@@ -299,7 +275,6 @@ workflows:
           context: api-assume-role-housing-development-context
           requires:
             - build-and-test
-            - sonar-analysis
       - terraform-init-and-plan-development:
           requires:
             - assume-role-development
@@ -318,11 +293,6 @@ workflows:
   check-and-deploy-staging-and-production:
       jobs:
       - build-and-test:
-          context: api-nuget-token-context
-          filters:
-            branches:
-              only: release
-      - sonar-analysis:
           context:
             - api-nuget-token-context
             - SonarCloud
@@ -332,8 +302,7 @@ workflows:
       - assume-role-staging:
           context: api-assume-role-housing-staging-context
           requires:
-            - build-and-test
-            - sonar-analysis
+              - build-and-test
           filters:
              branches:
                only: release
