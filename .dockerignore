@@ -1,3 +1,13 @@
 .git
 .sonarqube
 sonar-project.properties
+.aws
+.localstack
+**/.env
+**/.env.*
+**/*.pfx
+**/*.pem
+**/*.key
+**/bin
+**/obj
+**/out
