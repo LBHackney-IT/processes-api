@@ -1,11 +1,11 @@
 # Processes API
 
 This API provides a workflow engine that will allow housing officers and other members of staff to initiate new workflows, upload documents, assign them and capture form information for the Manage My Home project.
-View the API specification on [SwaggerHub](https://app.swaggerhub.com/apis-docs/Hackney/ProcessesApi/1.0.0). 
+View the API specification on [SwaggerHub](https://app.swaggerhub.com/apis-docs/Hackney/ProcessesApi/1.0.0).
 
 ## Stack
 
-- .NET 6 as a web framework.
+- .NET 10 / ASP.NET Core as a web framework.
 - xUnit as a test framework.
 - DynamoDb as a datastore.
 - [Stateless](https://github.com/dotnet-state-machine/stateless) to implement the process state machine. ([See more](#process-engine-implementation))
@@ -19,28 +19,7 @@ View the API specification on [SwaggerHub](https://app.swaggerhub.com/apis-docs/
 
 ## Contributing
 
-### Branching Strategy
-
-This project utilises a Trunk-Based Development workflow. To see more information about this strategy, please refer to [this page on our API Playbook](https://playbook.hackney.gov.uk/API-Playbook/branching_strategies). 
-
-#### Development
-
-![Development CircleCI Workflow Example](docs/development_workflow.png)
-
-Automated tests (xUnit) & code linters are run on each push to any feature branch to ensure the code is of good quality. We use a pull request workflow, where changes are made on a branch and are approved by one or more other maintainers before the developer can merge into `master` branch.
-
-Once a PR is approved and merged to the `master` branch, the application is deployed to development automatically, where we confirm that our latest changes work well. 
-
-#### Staging & Production
-
-To deploy to staging or production, we create a PR from the `master` branch to the `release` branch. Once this is approved, the application is deployed to staging automatically.
-We manually confirm a production deployment in the CircleCI workflow once we're happy with our changes in staging.
-
-### Creating a Pull Request
-
-To help with making changes to code easier to understand when being reviewed, we've added a PR template.
-When a new PR is created on a repo that uses this API template, the PR template will automatically fill in the `Open a pull request` description textbox.
-The PR author can edit and change the PR description using the template as a guide.
+See [Contribution.md](Contribution.md) for branching, pull requests, and deployment guidance.
 
 ## Development
 
@@ -81,6 +60,8 @@ For full details on how to use the package(s) within this repository please read
 
 #### Running the tests
 
+Set `LBHPACKAGESTOKEN` to a GitHub token with access to the Hackney NuGet feed before building. Local tests do not require `SONAR_TOKEN`.
+
 ```sh
 $ make test
 ```
@@ -88,8 +69,10 @@ $ make test
 or
 
 ```sh
-$ docker-compose up processes-api-test
+$ docker compose run --rm processes-api-test
 ```
+
+CircleCI uses the SonarCloud orb 4.0.0 and the .NET scanner in the test image. The .NET scanner provisions its own Java runtime and runs when `SONAR_TOKEN` is supplied by the SonarCloud context.
 
 #### Agreed Testing Approach
 - Use xUnit, FluentAssertions and Moq
@@ -111,7 +94,7 @@ We use the [Stateless](https://github.com/dotnet-state-machine/stateless) NuGet 
 
 ### How to amend an existing workflow:
 1. If adding a new state or trigger to an existing process workflow, update the constants file with your new values. (In [ProcessesApi/V1/Domain](ProcessesApi/V1/Domain)).
-2. Update the [SetUpStates](#2---overriding-setupstates) method in the specific service class (in [ProcessesApi/V1/Services](ProcessesApi/V1/Services)) according to the new business logic. 
+2. Update the [SetUpStates](#2---overriding-setupstates) method in the specific service class (in [ProcessesApi/V1/Services](ProcessesApi/V1/Services)) according to the new business logic.
    - This could include adding new [Internal Transitions](#using-internal-transitions) if the API needs to carry out any logic before determining the next state.
    - This could include adding [State Transition Actions](#using-state-transition-actions), which are functions that run on state transitions (e.g. firing `ProcessUpdated` Events)
 3. Update relevant tests (Should normally just be the Service tests & E2E tests)
@@ -130,9 +113,9 @@ We use the [Stateless](https://github.com/dotnet-state-machine/stateless) NuGet 
 See the stateless documentation [here](https://github.com/dotnet-state-machine/stateless).
 
 #### 1 - Creating the class
-Create a new class derived from the ProcessService base class. 
+Create a new class derived from the ProcessService base class.
 
-In the constructor, add the following lines: 
+In the constructor, add the following lines:
 
 ```csharp
 _permittedTriggersType = typeof(**<SOME_TYPE>**);
@@ -149,7 +132,7 @@ We have configured the state machine to publish `ProcessUpdated` events every ti
 This method is specific for each process. Within this method, we define the states, what triggers they require based on the business logic, and what conditions need to be met to move to the next state. It should be overridden from the virtual method in the ProcessService base case.
 
 ##### Using Internal Transitions
-Internal Transitions are used in this API when it needs to do some logic using the data from the request, then update the state based on the result. 
+Internal Transitions are used in this API when it needs to do some logic using the data from the request, then update the state based on the result.
 
 For example, in the automated eligibility check stage of the Sole To Joint process, the API makes various calls and checks, then updates the state to AutomatedChecksFailed or AutomatedChecksPassed.
 
@@ -162,7 +145,7 @@ State transitions actions are small that happen when a state transition is made.
 There are a number of helper methods in the ProcessService base class:
 
 #### `ConfigureStateTransitions`
-Private method - this sets up actions that will happen on every state transition. 
+Private method - this sets up actions that will happen on every state transition.
 It publishes `ProcessUpdated` events on every state transition, unless the trigger is one of `_ignoredTriggersForProcessUpdated`.
 
 #### `TriggerStateMachine`
